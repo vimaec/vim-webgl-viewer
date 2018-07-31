@@ -1,0 +1,27 @@
+{
+  "name": "ara-viewer",
+  "version": "0.1.0",
+  "description": "A 3D model viewer.",
+  "main": "ara-viewer.js",
+  "homepage": "https://github.com/ara3d/ara-viewer",
+  "bugs": "https://github.com/ara3d/ara-viewer/issues",
+  "license": "MIT",
+  "author": {
+    "name": "Ara3D.com",
+    "email": "cdiggins@gmail.com"
+  },
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/ara3d/ara-viewer.git"
+  },
+  "devDependencies": {
+    "gulp": "^3.9.1",
+    "gulp-concat": "^2.6.1",
+    "gulp-rename": "^1.4.0",
+    "gulp-uglify": "^3.0.1"
+  },
+  "dependencies": {
+    "dat.gui": "^0.7.2",
+    "three": "^0.94.0"
+  }
+}
