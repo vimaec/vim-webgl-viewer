@@ -14,11 +14,16 @@
     "type": "git",
     "url": "https://github.com/ara3d/ara-viewer.git"
   },
+  "scripts": {
+    "build": "./node_modules/.bin/gulp",
+    "serve": "http-server"
+  },
   "devDependencies": {
     "gulp": "^3.9.1",
     "gulp-concat": "^2.6.1",
     "gulp-rename": "^1.4.0",
-    "gulp-uglify": "^3.0.1"
+    "gulp-uglify": "^3.0.1",
+    "gulp-uglify-es": "^1.0.4"
   },
   "dependencies": {
     "dat.gui": "^0.7.2",

@@ -1,16 +1,18 @@
 const ara = 
 {
-    view: function() 
+    view: function(options) 
     {
         if ( ! Detector.webgl ) {
             Detector.addGetWebGLMessage();
             return;
         }
 
+        // TODO: make these silly things part of the viewer object 
         var container, stats;
         var camera, cameraTarget, scene, renderer;
 
         init();
+        loadIntoScene(options.url, scene);
         animate();
 
         function init() {
@@ -123,8 +125,11 @@ const ara =
                     return;
                 }
                 case "obj": {
-                    const loader = new THREE.ObjLoader();
-                    loader.load(fileName, (obj) => scene.add(obj));
+                    const loader = new THREE.OBJLoader();
+                    loader.load(fileName, (obj) => {
+                        obj.scale.multiplyScalar(0.01);
+                        scene.add(obj);
+                    });
                     return;
                 }
                 case "pcd": {
