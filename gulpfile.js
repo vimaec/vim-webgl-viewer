@@ -33,6 +33,14 @@ gulp.task('build', function(){
     return gulp.src(srcFiles)
         .pipe(gp_concat('ara-viewer.js', {
             newLine:'\n;' // the newline is needed in case the file ends with a line comment, the semi-colon is needed if the last statement wasn't terminated
+        }))       
+        .pipe(gulp.dest('dist'));
+});
+
+gulp.task('dist', function(){
+    return gulp.src(srcFiles)
+        .pipe(gp_concat('ara-viewer.js', {
+            newLine:'\n;' // the newline is needed in case the file ends with a line comment, the semi-colon is needed if the last statement wasn't terminated
         }))
         .pipe(gulp.dest('dist'))
         .pipe(gp_rename('ara-viewer.min.js'))
@@ -42,5 +50,5 @@ gulp.task('build', function(){
 
 gulp.task('watch', function() {
     gulp.watch(srcFiles, gulp.series('build'));
-  });
+});
 
