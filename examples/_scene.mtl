@@ -1,0 +1,364 @@
+newmtl SH_resin_Floor_0
+ Ka 0.9960938 0.9960938 0.9960938
+ Kd 0.9960938 0.9960938 0.9960938
+ d 1
+newmtl Finishes___Interior___Plasterboard_1
+ Ka 0.9726563 0.9726563 0.9726563
+ Kd 0.9726563 0.9726563 0.9726563
+ d 1
+newmtl Concrete__Sand_Cement_Screed_2
+ Ka 0.4960938 0.4960938 0.4960938
+ Kd 0.4960938 0.4960938 0.4960938
+ d 1
+newmtl Default_Wall_3
+ Ka 0.5 0.5 0.5
+ Kd 0.5 0.5 0.5
+ d 1
+newmtl Finishes___Exterior___Timber_Cladding_4
+ Ka 0.5 0.25 0.125
+ Kd 0.5 0.25 0.125
+ d 1
+newmtl Steel_Kohler_NA_Stainless_5
+ Ka 0.7382813 0.7304688 0.7226563
+ Kd 0.7382813 0.7304688 0.7226563
+ d 1
+newmtl Chrome_Kohler_CP_Polished_Chrome_6
+ Ka 0.953125 0.953125 0.953125
+ Kd 0.953125 0.953125 0.953125
+ d 1
+newmtl Finishes___Interior___Gypsum_Wall_Board_7
+ Ka 0.8554688 0.8554688 0.8554688
+ Kd 0.8554688 0.8554688 0.8554688
+ d 1
+newmtl Gypsum_Wall_Board_8
+ Ka 0.9726563 0.9726563 0.9726563
+ Kd 0.9726563 0.9726563 0.9726563
+ d 1
+newmtl Roofing___Metal_Standing_Seam_9
+ Ka 0.6796875 0 0
+ Kd 0.6796875 0 0
+ d 1
+newmtl Earth_10
+ Ka 0.3789063 0.2929688 0.2421875
+ Kd 0.3789063 0.2929688 0.2421875
+ d 1
+newmtl Grass_11
+ Ka 0.109375 0.1367188 0.05859375
+ Kd 0.109375 0.1367188 0.05859375
+ d 1
+newmtl Concrete___Cast_in_Place_Concrete_12
+ Ka 0.75 0.75 0.75
+ Kd 0.75 0.75 0.75
+ d 1
+newmtl SH_Metal___Steel_13
+ Ka 0.4882813 0.4765625 0.4648438
+ Kd 0.4882813 0.4765625 0.4648438
+ d 1
+newmtl Metal___TOTO___Enameled___01_Cotton_14
+ Ka 0.8632813 0.8789063 0.8945313
+ Kd 0.8632813 0.8789063 0.8945313
+ d 1
+newmtl Plastic___TOTO___01_Cotton_15
+ Ka 0.8632813 0.8789063 0.8945313
+ Kd 0.8632813 0.8789063 0.8945313
+ d 1
+newmtl Door___Frame_16
+ Ka 0.859375 0.7929688 0.6640625
+ Kd 0.859375 0.7929688 0.6640625
+ d 1
+newmtl Door___Panel_17
+ Ka 0.859375 0.7929688 0.6640625
+ Kd 0.859375 0.7929688 0.6640625
+ d 1
+newmtl Glass_18
+ Ka 0 0.5 0.75
+ Kd 0 0.5 0.75
+ d 0.1
+newmtl SH_Aluminum__Anodized_Black_19
+ Ka 0.46875 0.46875 0.46875
+ Kd 0.46875 0.46875 0.46875
+ d 1
+newmtl Metal___Paint_Finish___Dark_Gray__Matte_20
+ Ka 0 0 0
+ Kd 0 0 0
+ d 1
+newmtl Wood_Walnut_black_21
+ Ka 0.4101563 0.375 0.34375
+ Kd 0.4101563 0.375 0.34375
+ d 1
+newmtl Metal___Aluminum_22
+ Ka 0.9648438 0.9648438 0.9648438
+ Kd 0.9648438 0.9648438 0.9648438
+ d 1
+newmtl CL_Concrete__panels_23
+ Ka 0.7382813 0.7539063 0.6796875
+ Kd 0.7382813 0.7539063 0.6796875
+ d 1
+newmtl Concrete__Cast_In_Situ_24
+ Ka 0.75 0.75 0.75
+ Kd 0.75 0.75 0.75
+ d 1
+newmtl Site___Hardcore_25
+ Ka 0.6445313 0.1640625 0.1640625
+ Kd 0.6445313 0.1640625 0.1640625
+ d 1
+newmtl Porcelain_26
+ Ka 0.953125 0.953125 0.953125
+ Kd 0.953125 0.953125 0.953125
+ d 1
+newmtl Metal___Steel___345_MPa_27
+ Ka 0.9648438 0.9648438 0.9648438
+ Kd 0.9648438 0.9648438 0.9648438
+ d 1
+newmtl Structure___Timber_Joist_Rafter_Layer_28
+ Ka 0.4960938 0.4960938 0.4960938
+ Kd 0.4960938 0.4960938 0.4960938
+ d 1
+newmtl Carpet__1__29
+ Ka 0.75 0.734375 0.6679688
+ Kd 0.75 0.734375 0.6679688
+ d 1
+newmtl Iron__Cast_30
+ Ka 0.46875 0.46875 0.46875
+ Kd 0.46875 0.46875 0.46875
+ d 1
+newmtl Stainless_Steel_1_31
+ Ka 0.7382813 0.7304688 0.7226563
+ Kd 0.7382813 0.7304688 0.7226563
+ d 1
+newmtl Concrete___Cast_In_Situ_32
+ Ka 0.75 0.75 0.75
+ Kd 0.75 0.75 0.75
+ d 1
+newmtl Buttons_33
+ Ka 0.9882813 0.4960938 0
+ Kd 0.9882813 0.4960938 0
+ d 1
+newmtl Main_body_34
+ Ka 0.9882813 0.9882813 0.9882813
+ Kd 0.9882813 0.9882813 0.9882813
+ d 1
+newmtl Black_panel_35
+ Ka 0.109375 0.109375 0.109375
+ Kd 0.109375 0.109375 0.109375
+ d 1
+newmtl Logo_36
+ Ka 0.7460938 0.7460938 0.7460938
+ Kd 0.7460938 0.7460938 0.7460938
+ d 1
+newmtl Door_37
+ Ka 0.4335938 0.4921875 0.5546875
+ Kd 0.4335938 0.4921875 0.5546875
+ d 1
+newmtl Silver_Aluminium_38
+ Ka 0.953125 0.953125 0.953125
+ Kd 0.953125 0.953125 0.953125
+ d 1
+newmtl Stainless_Steel_39
+ Ka 0 0 0
+ Kd 0 0 0
+ d 1
+newmtl Black_Glass_40
+ Ka 0 0 0
+ Kd 0 0 0
+ d 0.7
+newmtl Black_Plastic_41
+ Ka 0.01953125 0.01953125 0.01953125
+ Kd 0.01953125 0.01953125 0.01953125
+ d 1
+newmtl Lighting_42
+ Ka 0.9960938 0.5 0
+ Kd 0.9960938 0.5 0
+ d 0.4
+newmtl Clean_Steel_43
+ Ka 0.7382813 0.7304688 0.7226563
+ Kd 0.7382813 0.7304688 0.7226563
+ d 1
+newmtl Black_Glass_Pan_44
+ Ka 0 0 0
+ Kd 0 0 0
+ d 0.25
+newmtl Plastic_45
+ Ka 0.6953125 0.6953125 0.6953125
+ Kd 0.6953125 0.6953125 0.6953125
+ d 1
+newmtl Rubber_46
+ Ka 0.5351563 0.4453125 0.4453125
+ Kd 0.5351563 0.4453125 0.4453125
+ d 1
+newmtl Metal_47
+ Ka 0.953125 0.953125 0.953125
+ Kd 0.953125 0.953125 0.953125
+ d 1
+newmtl Metal_2_48
+ Ka 0.75 0.75 0.75
+ Kd 0.75 0.75 0.75
+ d 1
+newmtl Metal_1_49
+ Ka 0 0 0
+ Kd 0 0 0
+ d 0.9
+newmtl Cleansteel_50
+ Ka 0.7382813 0.7304688 0.7226563
+ Kd 0.7382813 0.7304688 0.7226563
+ d 1
+newmtl Acetal_Resin__Black_51
+ Ka 0.46875 0.46875 0.46875
+ Kd 0.46875 0.46875 0.46875
+ d 1
+newmtl Terrazzo_52
+ Ka 0.46875 0.46875 0.46875
+ Kd 0.46875 0.46875 0.46875
+ d 1
+newmtl Plinth_53
+ Ka 0.01953125 0.01953125 0.01953125
+ Kd 0.01953125 0.01953125 0.01953125
+ d 1
+newmtl Fascia_54
+ Ka 0.6523438 0.6523438 0.6523438
+ Kd 0.6523438 0.6523438 0.6523438
+ d 1
+newmtl Default_55
+ Ka 0.4960938 0.4960938 0.4960938
+ Kd 0.4960938 0.4960938 0.4960938
+ d 1
+newmtl Metal___TOTO___Chrome___Polished_56
+ Ka 0.953125 0.953125 0.953125
+ Kd 0.953125 0.953125 0.953125
+ d 1
+newmtl Epoxy_Resin___TOTO___61_Angelic_White_57
+ Ka 0.9960938 0.9960938 0.9960938
+ Kd 0.9960938 0.9960938 0.9960938
+ d 0.03
+newmtl Roofing___Asphalt_58
+ Ka 0.6054688 0.6054688 0.6054688
+ Kd 0.6054688 0.6054688 0.6054688
+ d 1
+newmtl Chair_Fabric_59
+ Ka 0.08203125 0.08203125 0.07421875
+ Kd 0.08203125 0.08203125 0.07421875
+ d 1
+newmtl Chair_wood_60
+ Ka 0.8867188 0.6640625 0.5
+ Kd 0.8867188 0.6640625 0.5
+ d 1
+newmtl Glass__Clear_Glazing_61
+ Ka 0 0.5 0.75
+ Kd 0 0.5 0.75
+ d 0.25
+newmtl Metal___Cooper_Industries___Aluminum_62
+ Ka 0.953125 0.953125 0.953125
+ Kd 0.953125 0.953125 0.953125
+ d 1
+newmtl Glass___SolarWorld___Tempered_Glass_63
+ Ka 0.8554688 0.8554688 0.8554688
+ Kd 0.8554688 0.8554688 0.8554688
+ d 0.5
+newmtl Metal___SolarWorld___BackSheet___White_64
+ Ka 0.8984375 0.9101563 0.9179688
+ Kd 0.8984375 0.9101563 0.9179688
+ d 1
+newmtl Metal___SolarWorld___Support_Framing___Silver_65
+ Ka 0.3007813 0.3046875 0.2890625
+ Kd 0.3007813 0.3046875 0.2890625
+ d 1
+newmtl Tankworks___Colorbond____Pale_Eucalypt__66
+ Ka 0.7109375 0.6445313 0.4726563
+ Kd 0.7109375 0.6445313 0.4726563
+ d 1
+newmtl Glass__White__High_Luminance_67
+ Ka 0.46875 0.46875 0.46875
+ Kd 0.46875 0.46875 0.46875
+ d 1
+newmtl Herman_Miller___Seat_Fabric_8T07_Crossing_Pumpkin_68
+ Ka 0.7382813 0.3828125 0.2109375
+ Kd 0.7382813 0.3828125 0.2109375
+ d 1
+newmtl Herman_Miller___Veneer_Z5_Maple_69
+ Ka 0.453125 0.3671875 0.3125
+ Kd 0.453125 0.3671875 0.3125
+ d 1
+newmtl Wood___Medium_Brown_70
+ Ka 0.3984375 0.171875 0.0625
+ Kd 0.3984375 0.171875 0.0625
+ d 1
+newmtl Metal___Stainless_71
+ Ka 0.9648438 0.9648438 0.9648438
+ Kd 0.9648438 0.9648438 0.9648438
+ d 1
+newmtl Glass___Transparent_72
+ Ka 0 0.5 0.9960938
+ Kd 0 0.5 0.9960938
+ d 0.1
+newmtl TV___Black_73
+ Ka 0.1914063 0.1914063 0.1914063
+ Kd 0.1914063 0.1914063 0.1914063
+ d 1
+newmtl TV___Screen_74
+ Ka 0 0 0
+ Kd 0 0 0
+ d 1
+newmtl TV___Glass_75
+ Ka 0.6132813 0.6132813 0.6132813
+ Kd 0.6132813 0.6132813 0.6132813
+ d 0.1
+newmtl Flower_76
+ Ka 0.6640625 0.1679688 0.1992188
+ Kd 0.6640625 0.1679688 0.1992188
+ d 0.1
+newmtl Stem_77
+ Ka 0.4179688 0.5390625 0.4023438
+ Kd 0.4179688 0.5390625 0.4023438
+ d 1
+newmtl Red_Vase_78
+ Ka 0.8554688 0.1484375 0.203125
+ Kd 0.8554688 0.1484375 0.203125
+ d 1
+newmtl Herman_Miller___Finish_47_Trivalent_Chrome_79
+ Ka 0.953125 0.953125 0.953125
+ Kd 0.953125 0.953125 0.953125
+ d 1
+newmtl Herman_Miller___Finish_PA_Polished_Aluminum_80
+ Ka 0.953125 0.953125 0.953125
+ Kd 0.953125 0.953125 0.953125
+ d 1
+newmtl Leather___Tan_81
+ Ka 0.3671875 0.34375 0.25
+ Kd 0.3671875 0.34375 0.25
+ d 1
+newmtl Herman_Miller___Veneer_OU_Walnut_82
+ Ka 0.4101563 0.375 0.34375
+ Kd 0.4101563 0.375 0.34375
+ d 1
+newmtl Herman_Miller___Veneer_UX_Walnut_on_Cherry_83
+ Ka 0.4101563 0.375 0.34375
+ Kd 0.4101563 0.375 0.34375
+ d 1
+newmtl Aluminum_Green_84
+ Ka 0.8945313 0.8945313 0.8945313
+ Kd 0.8945313 0.8945313 0.8945313
+ d 1
+newmtl Water_85
+ Ka 0.4101563 0.9453125 0.8398438
+ Kd 0.4101563 0.9453125 0.8398438
+ d 0.2
+newmtl Green_Glass_86
+ Ka 0.671875 0.7929688 0.7304688
+ Kd 0.671875 0.7929688 0.7304688
+ d 0.15
+newmtl Glass___Aalto___White_Paint_87
+ Ka 0.9453125 0.9453125 0.9960938
+ Kd 0.9453125 0.9453125 0.9960938
+ d 1
+newmtl Ceramic_Dish_88
+ Ka 0.9960938 0.9960938 0.9960938
+ Kd 0.9960938 0.9960938 0.9960938
+ d 1
+newmtl Juice_89
+ Ka 0.7578125 0.6132813 0.484375
+ Kd 0.7578125 0.6132813 0.484375
+ d 0.15
+newmtl Glass___Crystal_Wine_Glass_90
+ Ka 0.8632813 0.8632813 0.8632813
+ Kd 0.8632813 0.8632813 0.8632813
+ d 0.15

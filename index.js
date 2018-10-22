@@ -1,5 +1,4 @@
 /*
-
 Ara 3D Web Viewer
 Copyright Ara 3D, 2018
 Licensed under the terms of the MIT License
@@ -83,25 +82,30 @@ var PropValue = /** @class */ (function () {
  * A list of properties. The values can be get and set directly on this object.
  */
 var PropList = /** @class */ (function () {
-    function PropList(propDesc) {
-        this.propDesc = propDesc;
+    function PropList(desc, name) {
+        if (name === void 0) { name = ''; }
+        this.desc = desc;
+        this.name = name;
         this.items = [];
-        this.createPropVals('', propDesc);
-        var _loop_1 = function (pv) {
-            Object.defineProperty(this_1, pv.name, {
-                get: function () { return pv.value; },
-                set: function (v) { return pv.value = v; },
-            });
-        };
-        var this_1 = this;
-        for (var _i = 0, _a = this.items; _i < _a.length; _i++) {
-            var pv = _a[_i];
-            _loop_1(pv);
+        for (var k in desc) {
+            var v = desc[k];
+            if (v instanceof PropDesc)
+                this.items.push(new PropValue(v));
+            else
+                this.items.push(new PropList(v, k));
         }
     }
     PropList.prototype.fromJson = function (json) {
-        for (var k in json)
-            this[k] = json[k];
+        for (var _i = 0, _a = this.items; _i < _a.length; _i++) {
+            var pv = _a[_i];
+            if (pv.name in json) {
+                var v = json[pv.name];
+                if (pv instanceof PropValue)
+                    pv.value = v;
+                else
+                    pv.fromJson(v);
+            }
+        }
         return this;
     };
     Object.defineProperty(PropList.prototype, "toJson", {
@@ -109,140 +113,85 @@ var PropList = /** @class */ (function () {
             var r = {};
             for (var _i = 0, _a = this.items; _i < _a.length; _i++) {
                 var pv = _a[_i];
-                r[pv.name] = pv.value;
+                if (pv instanceof PropValue) {
+                    r[pv.name] = pv.value;
+                }
+                else {
+                    r[pv.name] = pv.toJson;
+                }
             }
             return r;
         },
         enumerable: true,
         configurable: true
     });
-    PropList.prototype.createPropVals = function (name, propDesc) {
-        if (propDesc instanceof PropDesc) {
-            propDesc = propDesc.setName(name);
-            if (propDesc.type === 'conditional') {
-                var options = propDesc.options;
-                this.items.push(new PropValue(propDesc));
-                for (var k in options) {
-                    var map = options[k];
-                    for (var k2 in map) {
-                        this.createPropVals(k + "." + k2, map[k2]);
-                    }
-                }
-            }
-            else {
-                this.items.push(new PropValue(propDesc));
-            }
-        }
-        else {
-            for (var k in propDesc) {
-                this.createPropVals(k, propDesc[k]);
-            }
-        }
-    };
     PropList.prototype.find = function (name) {
-        return this.items.find(function (v) { return v._desc.name === name; });
+        return this.items.find(function (v) { return v.name === name; });
     };
-    PropList.prototype.desc = function (name) {
-        return this.find(name)._desc;
-    };
-    Object.defineProperty(PropList.prototype, "descs", {
-        get: function () {
-            return this.items.map(function (v) { return v._desc; });
-        },
-        enumerable: true,
-        configurable: true
-    });
-    Object.defineProperty(PropList.prototype, "values", {
-        get: function () {
-            return this.items.map(function (v) { return v._value; });
-        },
-        enumerable: true,
-        configurable: true
-    });
-    Object.defineProperty(PropList.prototype, "keys", {
-        get: function () {
-            return this.items.map(function (v) { return v.name; });
-        },
-        enumerable: true,
-        configurable: true
-    });
     return PropList;
 }());
 /**
- * Fills out a dat.gui instance according to the properties and the property descriptor map.
+ * Fills out a dat.gui instance to a property list.
  */
-function bind(list, name, desc, gui, onChange) {
-    if (desc instanceof PropDesc) {
-        var pv_1 = list.find(name);
-        if (!pv_1)
-            throw new Error("Could not find parameter " + name);
-        if (desc.type === 'conditional') {
-            var vals_1 = desc.options;
-            var keys = Object.keys(vals_1);
-            var controller_1 = gui.add(pv_1, 'value', keys).name(pv_1.name).setValue(pv_1.value);
-            var folder_1 = null;
-            var buildParameters_1 = function () {
-                var local_gui = gui;
-                if (folder_1)
-                    local_gui.removeFolder(folder_1);
-                folder_1 = local_gui.addFolder(name + " parameters");
-                var baseName = pv_1.value;
-                var sub = vals_1[baseName];
-                // We bind the sub-properties ("MyOption.") 
-                for (var k in sub) {
-                    bind(list, baseName + "." + k, sub[k], folder_1, onChange);
-                }
-                controller_1.onChange(function () { buildParameters_1(); onChange(pv_1); });
-                folder_1.open();
-                return folder_1;
-            };
-            return buildParameters_1();
-        }
-        else if (desc.choices) {
-            return gui.add(pv_1, "value", desc.choices).name(pv_1.name).setValue(pv_1.value).onChange(function () { return onChange(pv_1); });
+function bindControls(list, gui, onChange) {
+    for (var k in list.desc) {
+        bindControl(list, k, gui, onChange);
+    }
+    return gui;
+}
+/**
+ * Fills out a dat.gui control to a property in a property list.
+ */
+function bindControl(list, name, gui, onChange) {
+    var pv = list.find(name);
+    if (!pv)
+        throw new Error("Could not find parameter " + name);
+    // Do I really need to pass a PropDesc?? 
+    if (pv instanceof PropValue) {
+        var desc = pv._desc;
+        if (desc.choices) {
+            return gui.add(pv, "value", desc.choices).name(pv.name).setValue(pv.value).onChange(function () { return onChange(pv); });
         }
         else if (desc.type === 'vec3') {
             var folder = gui.addFolder(desc.name);
             folder.open();
-            folder.add(pv_1._value, "x").step(0.1).onChange(function () { return onChange(pv_1); });
-            folder.add(pv_1._value, "y").step(0.1).onChange(function () { return onChange(pv_1); });
-            folder.add(pv_1._value, "z").step(0.1).onChange(function () { return onChange(pv_1); });
+            folder.add(pv.value, "x").step(0.1).onChange(function () { return onChange(pv); });
+            folder.add(pv.value, "y").step(0.1).onChange(function () { return onChange(pv); });
+            folder.add(pv.value, "z").step(0.1).onChange(function () { return onChange(pv); });
             return folder;
         }
         else if (desc.type === 'hsv') {
             var folder = gui.addFolder(desc.name);
             folder.open();
-            folder.add(pv_1._value, "x").name("hue").step(0.1).onChange(function () { return onChange(pv_1); });
-            folder.add(pv_1._value, "y").name("saturation").step(0.1).onChange(function () { return onChange(pv_1); });
-            folder.add(pv_1._value, "z").name("value").step(0.1).onChange(function () { return onChange(pv_1); });
+            folder.add(pv.value, "x").name("hue").step(0.1).onChange(function () { return onChange(pv); });
+            folder.add(pv.value, "y").name("saturation").step(0.1).onChange(function () { return onChange(pv); });
+            folder.add(pv.value, "z").name("value").step(0.1).onChange(function () { return onChange(pv); });
             return folder;
         }
         else if (desc.type === 'rot') {
             var folder = gui.addFolder(desc.name);
             folder.open();
-            folder.add(pv_1._value, "yaw", -1, 1, 0.01).onChange(function () { return onChange(pv_1); });
-            folder.add(pv_1._value, "pitch", -1, 1, 0.01).onChange(function () { return onChange(pv_1); });
-            folder.add(pv_1._value, "roll", -1, 1, 0.01).onChange(function () { return onChange(pv_1); });
+            folder.add(pv.value, "yaw", -1, 1, 0.01).onChange(function () { return onChange(pv); });
+            folder.add(pv.value, "pitch", -1, 1, 0.01).onChange(function () { return onChange(pv); });
+            folder.add(pv.value, "roll", -1, 1, 0.01).onChange(function () { return onChange(pv); });
             return folder;
         }
         else if (desc.type === 'color') {
-            var controller = gui.addColor(pv_1, "value").name(pv_1.name);
-            controller.onChange(function () { return onChange(pv_1); });
+            var controller = gui.addColor(pv, "value").name(pv.name);
+            controller.onChange(function () { return onChange(pv); });
             return controller;
         }
         else {
-            var controller = gui.add(pv_1, "value", desc.min, desc.max, desc.step).name(pv_1.name);
-            controller.onChange(function () { return onChange(pv_1); });
+            var controller = gui.add(pv, "value", desc.min, desc.max, desc.step).name(pv.name);
+            controller.onChange(function () { return onChange(pv); });
             return controller;
         }
     }
     else {
-        // I assume it is a property descriptor map. 
-        // We want the properties to be added hierarchically to gui.dat.
+        // It is a property list. We create a new folder, and add controls to the folder.
         var folder = gui.addFolder(name);
-        folder.open();
-        for (var k in desc)
-            bind(list, k, desc[k], folder, onChange);
+        //folder.open();
+        bindControls(pv, folder, onChange);
         return folder;
     }
 }
@@ -352,100 +301,136 @@ var ara = {
             return;
         }
         // Variables 
-        var container, stats, gui;
+        var container, stats, gui, controls;
         var camera, cameraTarget, scene, renderer, material, plane, sunlight, light1, light2, settings;
+        var materialsLoaded = false;
         var objects = [];
+        // Used with STL example 
+        //const material = new THREE.MeshPhongMaterial( { color: 0xff5533, specular: 0x111111, shininess: 200 } );
         // Default options object (merged with passed options)
         var defaultOptions = {
-            width: window.innerWidth,
-            height: window.innerHeight,
-            near: 1,
-            far: 15,
             camera: {
-                fov: 35,
-                position: {
-                    x: 3,
-                    y: 0.15,
-                    z: 3
-                },
-                target: {
-                    x: 0,
-                    y: -0.1,
-                    z: 0,
-                }
+                //near: 0.1,
+                //far: 1500,
+                fov: 50,
+                zoom: 1,
+                position: { x: 0, y: 5, z: -5 },
+                target: { x: 0, y: -1, z: 0, }
             },
             background: {
-                color: 0x72645b,
-            },
-            fog: {
-                color: 0x72645b,
-                near: 0.01,
-                far: 1500,
+                color: { r: 0x72, g: 0x64, b: 0x5b, }
             },
             plane: {
-                size: 400,
+                show: true,
                 material: {
-                    color: 0x999999,
-                    specular: 0x101010
+                    color: { r: 0x99, g: 0x99, b: 0x99, },
+                    specular: { r: 0x10, g: 0x10, b: 0x10, }
                 },
                 position: {
                     x: 0, y: -0.5, z: 0
                 }
             },
             sunlight: {
-                skyColor: 0x443333,
-                groundColor: 0x111122,
+                skyColor: { r: 0x44, g: 0x33, b: 0x33 },
+                groundColor: { r: 0x11, g: 0x11, b: 0x22 },
                 intensity: 1,
             },
             light1: {
+                // TODO: the positions of the lights are all wrong. 
                 position: { x: 1, y: 1, z: 1 },
-                color: 0xffffff,
+                color: { r: 0xFF, g: 0xFF, b: 0xFF },
                 intensity: 1.35,
             },
             light2: {
-                position: { x: 1, y: 1, z: 1 },
-                color: 0xffffff,
-                intensity: 1.35,
-            },
-            material: {
-                color: 0x0055ff,
-                flatShading: true,
-                emissive: 0,
-                emissiveIntensity: 0,
-                wireframe: false,
-                wireframeLinewidth: 0.1,
+                position: { x: 0.5, y: 1, z: -1 },
+                color: { r: 0xFF, g: 0xAA, b: 0x00 },
+                intensity: 1,
             },
             object: {
                 scale: 0.01,
-                position: { x: 0, y: 0, z: -5 },
+                position: { x: 0, y: 0, z: 0 },
+                rotation: { x: 0, y: 0, z: 0 },
+                material: {
+                    color: { r: 0x00, g: 0x55, b: 0xFF },
+                    emissive: { r: 0x00, g: 0x00, b: 0x00 },
+                    specular: { r: 0x11, g: 0x11, b: 0x11 },
+                    flatShading: true,
+                    shininess: 30,
+                    wireframe: false,
+                }
             }
         };
         // Initialization of scene, loading of objects, and launch animation loop
         init();
-        loadIntoScene(settings.url);
+        loadIntoScene(settings.url, settings.mtlurl);
         animate();
-        // Called every frame in case settings are updated 
-        function updateScene() {
+        function isColor(obj) {
+            return typeof (obj) === 'object' && 'r' in obj && 'g' in obj && 'b' in obj;
+        }
+        function toColor(c) {
+            if (!isColor(c))
+                throw new Error("Not a color");
+            return new THREE.Color(c.r / 255, c.g / 255, c.b / 255);
+        }
+        function toEuler(rot) {
+            return new THREE.Euler(rot.x * Math.PI / 180, rot.y * Math.PI / 180, rot.z * Math.PI / 180);
+        }
+        function updateMaterial(targetMaterial, settings) {
+            if ('color' in settings)
+                targetMaterial.color = toColor(settings.color);
+            if ('flatShading' in settings)
+                targetMaterial.flatShading = settings.flatShading;
+            if ('emissive' in settings)
+                targetMaterial.emissive = toColor(settings.emissive);
+            if ('specular' in settings)
+                targetMaterial.specular = toColor(settings.specular);
+            if ('wireframe' in settings)
+                targetMaterial.wireframe = settings.wireframe;
+            if ('shininess' in settings)
+                targetMaterial.shininess = settings.shininess;
+        }
+        function updateCamera() {
             camera.fov = settings.camera.fov;
-            camera.aspect = settings.camera.aspectRatio;
+            camera.zoom = settings.camera.zoom;
             camera.near = settings.camera.near;
             camera.far = settings.camera.far;
-            camera.position = toVec(settings.camera.position);
+            camera.position.copy(toVec(settings.camera.position));
             cameraTarget = toVec(settings.camera.target);
-            scene.background = new THREE.Color(settings.background.color);
-            scene.fog = new THREE.Fog(settings.fog.color, settings.fog.near, settings.fog.far);
-            plane.material.setValues(settings.plane.material);
-            plane.geometry.set;
-            light1.position = toVec(settings.light1.position);
-            light1.color = settings.light1.color;
+            camera.lookAt(cameraTarget);
+        }
+        // Called every frame in case settings are updated 
+        function updateScene() {
+            scene.background = toColor(settings.background.color);
+            // TODO: do we really need fog? I think it is useless. 
+            //scene.fog = new THREE.Fog( settings.fog.color, settings.fog.near, settings.fog.far );
+            plane.visible = settings.plane.show;
+            updateMaterial(plane.material, settings.plane.material);
+            plane.position.copy(toVec(settings.plane.position));
+            light1.position.copy(toVec(settings.light1.position));
+            light1.color = toColor(settings.light1.color);
             light1.intensity = settings.light1.intensity;
-            light2.position = toVec(settings.light2.position);
-            light2.color = settings.light2.color;
+            light2.position.copy(toVec(settings.light2.position));
+            light2.color = toColor(settings.light2.color);
             light2.intensity = settings.light2.intensity;
-            sunlight.skyColor = settings.sunlight.skyColor;
-            sunlight.groundColor = settings.sunlight.groundColor;
+            sunlight.skyColor = toColor(settings.sunlight.skyColor);
+            sunlight.groundColor = toColor(settings.sunlight.groundColor);
             sunlight.intensity = settings.sunlight.intensity;
-            plane.position.y = toVec(settings.plane.position);
+        }
+        function updateObjects() {
+            scene.traverse(function (child) {
+                if (child.isMesh && child !== plane) {
+                    child.castShadow = true;
+                    child.receiveShadow = true;
+                    var scale = scalarToVec(settings.object.scale);
+                    child.scale.copy(scale);
+                    if (!materialsLoaded) {
+                        updateMaterial(material, settings.object.material);
+                        child.material = material;
+                    }
+                    child.position.copy(settings.object.position);
+                    child.rotation.copy(toEuler(settings.object.rotation));
+                }
+            });
         }
         function objectToPropDesc(obj, pdm) {
             // TODO: look for common patterns (colors, positions, angles) and process these specially.
@@ -475,25 +460,35 @@ var ara = {
         function init() {
             // Initialize the settings 
             settings = (new DeepMerge()).deepMerge(defaultOptions, options, undefined);
-            if (settings.camera.aspectRatio === undefined)
-                settings.camera.aspectRatio = settings.width / settings.height;
-            // DOM Element Container 
-            container = document.createElement('div');
-            container.ondrop = dropHandler;
-            container.ondragover = dragOverHandler;
-            document.body.appendChild(container);
-            // Create scene, camera, and orbit controls 
+            // If a canvas is given, we will draw in it.
+            var canvas = document.getElementById(settings.canvasId);
+            renderer = new THREE.WebGLRenderer({ antialias: true, canvas: canvas });
+            if (!canvas) {
+                container = document.createElement('div');
+                document.body.appendChild(container);
+                container.appendChild(renderer.domElement);
+            }
+            else {
+                container = canvas.parentElement;
+            }
+            // Create scene and camera, 
             scene = new THREE.Scene();
             camera = new THREE.PerspectiveCamera();
-            new THREE.OrbitControls(camera, container);
             // Create a new DAT.gui controller 
             gui = new dat.GUI();
+            // Create a property descriptor 
             var propDesc = getOptionsDescriptor();
+            // Create a property list from the descriptor 
             var props = new PropList(propDesc);
+            // Iniitlaize the property list values             
             props.fromJson(options);
-            bind(props, "Controls", propDesc, gui, function () { return updateScene; });
+            // Bind the properties to the DAT.gui controller, returning the scene when it updates
+            bindControls(props, gui, function () {
+                settings = props.toJson;
+                updateScene();
+            });
             // Ground            
-            plane = new THREE.Mesh(new THREE.PlaneBufferGeometry(), new THREE.MeshPhongMaterial());
+            plane = new THREE.Mesh(new THREE.PlaneBufferGeometry(1000, 1000), new THREE.MeshPhongMaterial());
             plane.rotation.x = -Math.PI / 2;
             plane.receiveShadow = true;
             scene.add(plane);
@@ -503,55 +498,55 @@ var ara = {
             light1 = addShadowedLight(scene);
             light2 = addShadowedLight(scene);
             // Material 
-            material = new THREE.MeshPhongMaterial(settings.material);
+            material = new THREE.MeshPhongMaterial();
             // THREE JS renderer
-            renderer = new THREE.WebGLRenderer({ antialias: true });
             renderer.setPixelRatio(window.devicePixelRatio);
-            renderer.setSize(window.innerWidth, window.innerHeight);
+            renderer.setSize(canvas.clientWidth, canvas.clientHeight);
             renderer.gammaInput = true;
             renderer.gammaOutput = true;
             renderer.shadowMap.enabled = true;
-            container.appendChild(renderer.domElement);
+            // Initial scene update: happens if controls change 
+            updateScene();
+            // Create orbit controls
+            controls = new THREE.OrbitControls(camera, container);
+            controls.enableDamping = true; // an animation loop is required when either damping or auto-rotation are enabled
+            controls.dampingFactor = 0.25;
+            // Initial update of the camera
+            updateCamera();
             // Stats display 
             stats = new Stats();
             container.appendChild(stats.dom);
             // Resize listener 
+            // TODO: listen for container resize events 
             window.addEventListener('resize', onWindowResize, false);
         }
         function onWindowResize() {
-            camera.aspect = window.innerWidth / window.innerHeight;
+            camera.aspect = container.clientWidth / container.clientHeight;
             camera.updateProjectionMatrix();
-            renderer.setSize(window.innerWidth, window.innerHeight);
+            renderer.setSize(container.clientWidth, container.clientHeight);
         }
-        function loadIntoScene(fileName) {
+        function loadObject(obj) {
+            objects.push(obj);
+            scene.add(obj);
+        }
+        function loadIntoScene(fileName, mtlurl) {
             var extPos = fileName.lastIndexOf(".");
             var ext = fileName.slice(extPos + 1).toLowerCase();
             // Used with PLY example
-            // Used with STL example 
-            //const material = new THREE.MeshPhongMaterial( { color: 0xff5533, specular: 0x111111, shininess: 200 } );
             switch (ext) {
                 case "3ds": {
                     var loader = new THREE.TDSLoader();
-                    loader.load(fileName, function (obj) {
-                        objects.push(obj);
-                        scene.add(obj);
-                    });
+                    loader.load(fileName, loadObject);
                     return;
                 }
                 case "fbx": {
                     var loader = new THREE.FBXLoader();
-                    loader.load(fileName, function (obj) {
-                        objects.push(obj);
-                        scene.add(obj);
-                    });
+                    loader.load(fileName, loadObject);
                     return;
                 }
                 case "dae": {
                     var loader = new THREE.ColladaLoader();
-                    loader.load(fileName, function (obj) {
-                        objects.push(obj);
-                        scene.add(obj);
-                    });
+                    loader.load(fileName, loadObject);
                     return;
                 }
                 case "gltf": {
@@ -564,35 +559,37 @@ var ara = {
                 }
                 case "gcode": {
                     var loader = new THREE.GCodeLoader();
-                    loader.load(fileName, function (obj) {
-                        objects.push(obj);
-                        scene.add(obj);
-                    });
+                    loader.load(fileName, loadObject);
                     return;
                 }
                 case "obj": {
-                    var loader = new THREE.OBJLoader();
-                    loader.load(fileName, function (obj) {
-                        objects.push(obj);
-                        scene.add(obj);
-                    });
+                    var objLoader_1 = new THREE.OBJLoader();
+                    var mtlLoader = new THREE.MTLLoader();
+                    if (mtlurl) {
+                        mtlLoader.load(mtlurl, function (mats) {
+                            mats.preload();
+                            materialsLoaded = true;
+                            objLoader_1.setMaterials(mats).load(fileName, loadObject);
+                        }, null, function () {
+                            console.warn("Failed to load material " + mtlurl + " trying to load obj alone");
+                            objLoader_1.load(fileName, loadObject);
+                        });
+                    }
+                    else {
+                        objLoader_1.load(fileName, loadObject);
+                    }
                     return;
                 }
                 case "pcd": {
                     var loader = new THREE.PCDLoader();
-                    loader.load(fileName, function (obj) {
-                        objects.push(obj);
-                        scene.add(obj);
-                    });
+                    loader.load(fileName, loadObject);
                     return;
                 }
                 case "ply": {
                     var loader = new THREE.PLYLoader();
                     loader.load(fileName, function (geometry) {
                         geometry.computeVertexNormals();
-                        var obj = new THREE.Mesh(geometry);
-                        objects.push(obj);
-                        scene.add(obj);
+                        loadObject(new THREE.Mesh(geometry));
                     });
                     return;
                 }
@@ -600,27 +597,13 @@ var ara = {
                     var loader = new THREE.STLLoader();
                     loader.load(fileName, function (geometry) {
                         geometry.computeVertexNormals();
-                        var obj = new THREE.Mesh(geometry);
-                        objects.push(obj);
-                        scene.add(obj);
+                        loadObject(new THREE.Mesh(geometry));
                     });
                     return;
                 }
                 default:
                     throw new Error("Unrecognized file type extension '" + ext + "' for file " + fileName);
             }
-        }
-        function updateObjects() {
-            scene.traverse(function (child) {
-                if (child.isMesh) {
-                    child.castShadow = true;
-                    child.receiveShadow = true;
-                    var scale = scalarToVec(settings.object.scale);
-                    child.scale.copy(scale);
-                    child.material = material;
-                    child.position.copy(settings.object.position);
-                }
-            });
         }
         // Helper functions 
         function toVec(obj) {
@@ -654,7 +637,7 @@ var ara = {
         function droppedFile(file) {
             // TODO: deal with other data ... 
             var fileName = file.name;
-            loadIntoScene("../data/" + fileName);
+            loadIntoScene("../data/" + fileName, null);
         }
         function dropHandler(ev) {
             console.log('File(s) dropped');
@@ -698,11 +681,11 @@ var ara = {
         // Updates scene objects, moves the camera, and draws the scene 
         function render() {
             updateObjects();
-            updateScene();
+            //updateScene();
             var timer = Date.now() * 0.0005;
-            camera.position.x = Math.sin(timer) * 2.5;
-            camera.position.z = Math.cos(timer) * 2.5;
-            camera.lookAt(cameraTarget);
+            //camera.position.x = Math.sin( timer ) * 2.5;
+            //camera.position.z = Math.cos( timer ) * 2.5;
+            controls.update();
             renderer.render(scene, camera);
         }
     }

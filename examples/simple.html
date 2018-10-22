@@ -2,15 +2,24 @@
 <head>
 <title>Simple Ara Viewer Example</title>
 </head>
+<style>
+    .canvas3d {
+        min-width: 300px;
+        width: 300px;
+        min-height: 200px;
+        height: 200px;
+    }
+</style>
 <script src="../dist/ara-viewer.js"></script>
 <body>
+    <canvas id="canvas3d" width="300" height="200"></canvas>
 </body>
 <script>
     //ara.view({ url: '../models/ludovic_models/Fibrinogen_1.obj' });
     //ara.view({ url: '../models/dolphins.ply' });
     //ara.view({ url: './angel.obj' });
     //ara.view({ url: './dragon.ply', object: { scale: 0.2 } });
-    ara.view({ url: './texturedknot.obj' });
-    //ara.view({ url: './_scene.obj', object: { scale: 0.01 }, camera: { position: { z: -10 } } });
+    //ara.view({ url: './texturedknot.obj' });
+    ara.view({ canvasId: 'canvas3d', url: './_scene.obj', mtlurl: './_scene.mtl', object: { rotation: { x: -90 }, scale: 0.05 }, plane: { show: false }});
 </script>
 </html>

@@ -27,6 +27,7 @@ const srcFiles = [
     'node_modules/three/examples/js/loaders/PLYLoader.js',
     'node_modules/three/examples/js/loaders/STLLoader.js',
     'node_modules/three/examples/js/loaders/TDSLoader.js',
+    'node_modules/three/examples/js/loaders/MTLLoader.js',
 ];
 
 gulp.task('build', function(){
