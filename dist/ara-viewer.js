@@ -1,4 +1,3 @@
-"use strict";
 /*
 
 Ara 3D Web Viewer
@@ -22,16 +21,275 @@ Example usage:
 </script>
 </html>
 */
-var __importStar = (this && this.__importStar) || function (mod) {
-    if (mod && mod.__esModule) return mod;
-    var result = {};
-    if (mod != null) for (var k in mod) if (Object.hasOwnProperty.call(mod, k)) result[k] = mod[k];
-    result["default"] = mod;
-    return result;
-};
-Object.defineProperty(exports, "__esModule", { value: true });
-var dat = __importStar(require("./node_modules/dat.gui/build/dat.gui.js"));
-var Detector = __importStar(require("./node_modules/three/examples/js/Detector.js"));
+// Used to provide new IDs for each new property descriptor that is created.
+var gid = 0;
+/**
+ * Describes a property so that it can be found
+ */
+var PropDesc = /** @class */ (function () {
+    function PropDesc(type, def) {
+        this.type = type;
+        this.def = def;
+        this.id = gid++;
+        this.name = "";
+        this.vis = true;
+    }
+    PropDesc.prototype.setStep = function (step) {
+        this.step = step;
+        return this;
+    };
+    PropDesc.prototype.setRange = function (min, max) {
+        this.min = min;
+        this.max = max;
+        return this;
+    };
+    PropDesc.prototype.setName = function (name) {
+        this.name = name;
+        return this;
+    };
+    PropDesc.prototype.setChoices = function (xs) {
+        this.choices = xs;
+        return this;
+    };
+    PropDesc.prototype.setOptions = function (xs) {
+        this.options = xs;
+        return this;
+    };
+    return PropDesc;
+}());
+/**
+ * Holds a value, and a reference to the descriptor.
+ */
+var PropValue = /** @class */ (function () {
+    function PropValue(_desc) {
+        this._desc = _desc;
+        this._value = _desc.def;
+    }
+    Object.defineProperty(PropValue.prototype, "name", {
+        get: function () { return this._desc.name; },
+        enumerable: true,
+        configurable: true
+    });
+    ;
+    Object.defineProperty(PropValue.prototype, "value", {
+        get: function () { return this._value; },
+        set: function (value) { this._value = value; },
+        enumerable: true,
+        configurable: true
+    });
+    return PropValue;
+}());
+/**
+ * A list of properties. The values can be get and set directly on this object.
+ */
+var PropList = /** @class */ (function () {
+    function PropList(propDesc) {
+        this.propDesc = propDesc;
+        this.items = [];
+        this.createPropVals('', propDesc);
+        var _loop_1 = function (pv) {
+            Object.defineProperty(this_1, pv.name, {
+                get: function () { return pv.value; },
+                set: function (v) { return pv.value = v; },
+            });
+        };
+        var this_1 = this;
+        for (var _i = 0, _a = this.items; _i < _a.length; _i++) {
+            var pv = _a[_i];
+            _loop_1(pv);
+        }
+    }
+    PropList.prototype.fromJson = function (json) {
+        for (var k in json)
+            this[k] = json[k];
+        return this;
+    };
+    Object.defineProperty(PropList.prototype, "toJson", {
+        get: function () {
+            var r = {};
+            for (var _i = 0, _a = this.items; _i < _a.length; _i++) {
+                var pv = _a[_i];
+                r[pv.name] = pv.value;
+            }
+            return r;
+        },
+        enumerable: true,
+        configurable: true
+    });
+    PropList.prototype.createPropVals = function (name, propDesc) {
+        if (propDesc instanceof PropDesc) {
+            propDesc = propDesc.setName(name);
+            if (propDesc.type === 'conditional') {
+                var options = propDesc.options;
+                this.items.push(new PropValue(propDesc));
+                for (var k in options) {
+                    var map = options[k];
+                    for (var k2 in map) {
+                        this.createPropVals(k + "." + k2, map[k2]);
+                    }
+                }
+            }
+            else {
+                this.items.push(new PropValue(propDesc));
+            }
+        }
+        else {
+            for (var k in propDesc) {
+                this.createPropVals(k, propDesc[k]);
+            }
+        }
+    };
+    PropList.prototype.find = function (name) {
+        return this.items.find(function (v) { return v._desc.name === name; });
+    };
+    PropList.prototype.desc = function (name) {
+        return this.find(name)._desc;
+    };
+    Object.defineProperty(PropList.prototype, "descs", {
+        get: function () {
+            return this.items.map(function (v) { return v._desc; });
+        },
+        enumerable: true,
+        configurable: true
+    });
+    Object.defineProperty(PropList.prototype, "values", {
+        get: function () {
+            return this.items.map(function (v) { return v._value; });
+        },
+        enumerable: true,
+        configurable: true
+    });
+    Object.defineProperty(PropList.prototype, "keys", {
+        get: function () {
+            return this.items.map(function (v) { return v.name; });
+        },
+        enumerable: true,
+        configurable: true
+    });
+    return PropList;
+}());
+/**
+ * Fills out a dat.gui instance according to the properties and the property descriptor map.
+ */
+function bind(list, name, desc, gui, onChange) {
+    if (desc instanceof PropDesc) {
+        var pv_1 = list.find(name);
+        if (!pv_1)
+            throw new Error("Could not find parameter " + name);
+        if (desc.type === 'conditional') {
+            var vals_1 = desc.options;
+            var keys = Object.keys(vals_1);
+            var controller_1 = gui.add(pv_1, 'value', keys).name(pv_1.name).setValue(pv_1.value);
+            var folder_1 = null;
+            var buildParameters_1 = function () {
+                var local_gui = gui;
+                if (folder_1)
+                    local_gui.removeFolder(folder_1);
+                folder_1 = local_gui.addFolder(name + " parameters");
+                var baseName = pv_1.value;
+                var sub = vals_1[baseName];
+                // We bind the sub-properties ("MyOption.") 
+                for (var k in sub) {
+                    bind(list, baseName + "." + k, sub[k], folder_1, onChange);
+                }
+                controller_1.onChange(function () { buildParameters_1(); onChange(pv_1); });
+                folder_1.open();
+                return folder_1;
+            };
+            return buildParameters_1();
+        }
+        else if (desc.choices) {
+            return gui.add(pv_1, "value", desc.choices).name(pv_1.name).setValue(pv_1.value).onChange(function () { return onChange(pv_1); });
+        }
+        else if (desc.type === 'vec3') {
+            var folder = gui.addFolder(desc.name);
+            folder.open();
+            folder.add(pv_1._value, "x").step(0.1).onChange(function () { return onChange(pv_1); });
+            folder.add(pv_1._value, "y").step(0.1).onChange(function () { return onChange(pv_1); });
+            folder.add(pv_1._value, "z").step(0.1).onChange(function () { return onChange(pv_1); });
+            return folder;
+        }
+        else if (desc.type === 'hsv') {
+            var folder = gui.addFolder(desc.name);
+            folder.open();
+            folder.add(pv_1._value, "x").name("hue").step(0.1).onChange(function () { return onChange(pv_1); });
+            folder.add(pv_1._value, "y").name("saturation").step(0.1).onChange(function () { return onChange(pv_1); });
+            folder.add(pv_1._value, "z").name("value").step(0.1).onChange(function () { return onChange(pv_1); });
+            return folder;
+        }
+        else if (desc.type === 'rot') {
+            var folder = gui.addFolder(desc.name);
+            folder.open();
+            folder.add(pv_1._value, "yaw", -1, 1, 0.01).onChange(function () { return onChange(pv_1); });
+            folder.add(pv_1._value, "pitch", -1, 1, 0.01).onChange(function () { return onChange(pv_1); });
+            folder.add(pv_1._value, "roll", -1, 1, 0.01).onChange(function () { return onChange(pv_1); });
+            return folder;
+        }
+        else if (desc.type === 'color') {
+            var controller = gui.addColor(pv_1, "value").name(pv_1.name);
+            controller.onChange(function () { return onChange(pv_1); });
+            return controller;
+        }
+        else {
+            var controller = gui.add(pv_1, "value", desc.min, desc.max, desc.step).name(pv_1.name);
+            controller.onChange(function () { return onChange(pv_1); });
+            return controller;
+        }
+    }
+    else {
+        // I assume it is a property descriptor map. 
+        // We want the properties to be added hierarchically to gui.dat.
+        var folder = gui.addFolder(name);
+        folder.open();
+        for (var k in desc)
+            bind(list, k, desc[k], folder, onChange);
+        return folder;
+    }
+}
+// Helper functions for defining properties 
+function prop(type, def) { return new PropDesc(type, def); }
+function boolProp(x) { return prop("boolean", x); }
+function stringProp(x) { return prop("string", x); }
+function floatProp(x) {
+    if (x === void 0) { x = 0; }
+    return prop("float", x);
+}
+function smallFloatProp(x) {
+    if (x === void 0) { x = 0; }
+    return prop("float", x).setStep(0.01);
+}
+function colorCompProp(x) {
+    if (x === void 0) { x = 0; }
+    return rangedIntProp(x, 0, 255);
+}
+function intProp(x) { return prop("int", x); }
+function rangedIntProp(x, min, max) { return intProp(x).setRange(min, max); }
+function rangedFloatProp(x, min, max) { return floatProp(x).setRange(min, max); }
+function zeroToOneProp(x) { return floatProp(x).setRange(0, 1).setStep(0.01); }
+function oneOrMoreIntProp(x) { return intProp(x).setRange(1); }
+function timeProp(x) { return prop("time", x); }
+function choiceProp(xs) { return prop("choices", xs[0]).setChoices(xs); }
+function vec3Prop(x, y, z) {
+    if (x === void 0) { x = 0; }
+    if (y === void 0) { y = 0; }
+    if (z === void 0) { z = 0; }
+    return prop('vec3', { x: x, y: y, z: z });
+}
+function scaleProp() { return prop('vec3', { x: 1, y: 1, z: 1 }); }
+function rotProp(yaw, pitch, roll) {
+    if (yaw === void 0) { yaw = 0; }
+    if (pitch === void 0) { pitch = 0; }
+    if (roll === void 0) { roll = 0; }
+    return prop('rot', { yaw: yaw, pitch: pitch, roll: roll });
+}
+function axisProp() { return choiceProp(['x', 'y', 'z']).setName("axis"); }
+function conditionalProp(val, options) { return prop('conditional', val).setOptions(options); }
+function colorProp(r, g, b) {
+    if (r === void 0) { r = 0; }
+    if (g === void 0) { g = 0; }
+    if (b === void 0) { b = 0; }
+    return prop('color', [r, g, b]);
+}
 // BEGIN: Deep merge copy and paste (With mods)
 // The MIT License (MIT)
 // Copyright (c) 2012 Nicholas Fisher
@@ -189,6 +447,30 @@ var ara = {
             sunlight.intensity = settings.sunlight.intensity;
             plane.position.y = toVec(settings.plane.position);
         }
+        function objectToPropDesc(obj, pdm) {
+            // TODO: look for common patterns (colors, positions, angles) and process these specially.
+            for (var k in obj) {
+                var v = obj[k];
+                switch (typeof (v)) {
+                    case 'number':
+                        pdm[k] = floatProp(v).setName(k);
+                        break;
+                    case 'string':
+                        pdm[k] = stringProp(v).setName(k);
+                        break;
+                    case 'boolean':
+                        pdm[k] = boolProp(v).setName(k);
+                        break;
+                    case 'object':
+                        pdm[k] = objectToPropDesc(v, {});
+                        break;
+                }
+            }
+            return pdm;
+        }
+        function getOptionsDescriptor() {
+            return objectToPropDesc(defaultOptions, {});
+        }
         // Scene initialization
         function init() {
             // Initialize the settings 
@@ -206,6 +488,10 @@ var ara = {
             new THREE.OrbitControls(camera, container);
             // Create a new DAT.gui controller 
             gui = new dat.GUI();
+            var propDesc = getOptionsDescriptor();
+            var props = new PropList(propDesc);
+            props.fromJson(options);
+            bind(props, "Controls", propDesc, gui, function () { return updateScene; });
             // Ground            
             plane = new THREE.Mesh(new THREE.PlaneBufferGeometry(), new THREE.MeshPhongMaterial());
             plane.rotation.x = -Math.PI / 2;
@@ -421,7 +707,7 @@ var ara = {
         }
     }
 };
-
+//# sourceMappingURL=index.js.map
 ;/**
  * dat-gui JavaScript Controller Library
  * http://code.google.com/p/dat-gui
