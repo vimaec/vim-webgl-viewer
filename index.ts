@@ -482,8 +482,31 @@ const ara =
             return objectToPropDesc(defaultOptions, {});
         }
 
+        function getOrCreateDownloadLink() {
+            const downloadLinkId = "ara_download_link_id";
+            let downloadLink = document.getElementById(downloadLinkId);
+            if (!downloadLink) {
+                downloadLink = document.createElement("a");
+                downloadLink.id = downloadLinkId;
+                downloadLink.style.display = "none";
+                document.body.appendChild(downloadLink);
+            }
+            return downloadLink;
+        }
+
+        //https://stackoverflow.com/questions/17836273/export-javascript-data-to-csv-file-without-server-interaction
+        function exportFile() {
+            const downloadLink = getOrCreateDownloadLink() as HTMLAnchorElement;
+            downloadLink.download = 'model.g3d';
+            // TODO: fill out the G3D information in the blob.
+            const data = new Blob();
+            downloadLink.href = window.URL.createObjectURL(data);
+            downloadLink.click();
+        }
+
         // Scene initialization
-        function init() {
+        function init() 
+        {
             // Initialize the settings 
             settings = (new DeepMerge()).deepMerge(defaultOptions, options, undefined);
 
@@ -522,6 +545,10 @@ const ara =
                     settings = props.toJson;
                     updateScene();
                 });
+
+                // TODO: enable this.
+                var obj = { export:exportFile };
+                gui.add(obj, 'export' ).name("Export to G3D ... ");
             } 
 
             // Ground            
@@ -725,20 +752,20 @@ const ara =
             return new THREE.Vector3(x, x, x);
         }
         function addShadowedLight(scene) {
-            const directionalLight = new THREE.DirectionalLight();
-            scene.add( directionalLight );
-            directionalLight.castShadow = true;
+            const dirLight = new THREE.DirectionalLight();
+            scene.add( dirLight );
+            dirLight.castShadow = true;
             const d = 1;
-            directionalLight.shadow.camera.left = -d;
-            directionalLight.shadow.camera.right = d;
-            directionalLight.shadow.camera.top = d;
-            directionalLight.shadow.camera.bottom = -d;
-            directionalLight.shadow.camera.near = 0.01;
-            directionalLight.shadow.camera.far = 1000;
-            directionalLight.shadow.mapSize.width = 1024;
-            directionalLight.shadow.mapSize.height = 1024;
-            directionalLight.shadow.bias = -0.001;
-            return directionalLight;
+            dirLight.shadow.camera.left = -d;
+            dirLight.shadow.camera.right = d;
+            dirLight.shadow.camera.top = d;
+            dirLight.shadow.camera.bottom = -d;
+            dirLight.shadow.camera.near = 0.01;
+            dirLight.shadow.camera.far = 1000;
+            dirLight.shadow.mapSize.width = 1024;
+            dirLight.shadow.mapSize.height = 1024;
+            dirLight.shadow.bias = -0.001;
+            return dirLight;
         }        
 
         // https://developer.mozilla.org/en-US/docs/Web/API/HTML_Drag_and_Drop_API/File_drag_and_drop
@@ -801,6 +828,7 @@ const ara =
         }
 
         // Updates scene objects, and draws the scene 
+        // TODO: update the camera 
         function render() { 
             resizeCanvas(); 
             updateObjects();

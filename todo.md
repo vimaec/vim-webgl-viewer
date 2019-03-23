@@ -7,35 +7,32 @@
 * Don't auto-size canvas (I think?)
 * Better default colors of plane and background. 
 * Write a blog post it
-* Testing
-* Export button 
+* Export button, export code 
 * Write NPM converters between file formats using Node.JS. 
-* Export G3D 
 * Control "auto-rotate"
 * Convert every file
 * Create a model list. 
 * Output geometry stats 
 * Stop rotating on click
-
+* Fix the strange clipping behavior on the shadow maps
+* CAmeras don't update 
+* Write a Three.JS NPM unit test for the different file formats 
+    * Load files, report the stats for each one. 
+    * First copy the "OutputStats" code then actually load the Ara3D viewer library next
+    * Look for a way to do an offline render using Three.JS
+* TODO: the FPS stats console does not show anymore 
+* Maybe limit (or redo) the color controls in the dat.Gui
+* I would love if sourceMaps were generated .... of course I'm doing something weird.
 
 //==
 
 * The relationship between the canvas, the parent-div, and the page is tricky to set-up correctly 
-* The shadow-map size seems to be messed up
-* Getting good settings in the parameters is hard 
-* I shouldn't have to provide a canvas or canvasId (I would like one added automatically if need be)
 * Why are styles not set correctly on my div
 * More examples would be necessary 
-* showStats doesn't work 
-* I would love if sourceMaps were generated .... of course I'm doing something weird.
 * autoRotate doesn't update if changed. 
 * Make stuff look this good: https://css-tricks.com/creating-photorealistic-3d-graphics-web/
 
-
 //==
-
-Creating a S
-
 
 https://medium.com/@ketrixz/intro-to-programming-3d-graphics-and-virtual-reality-in-your-web-applications-f925885ce9cf
 
