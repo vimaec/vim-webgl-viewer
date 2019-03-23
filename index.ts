@@ -8,35 +8,17 @@ This is based on a combination of examples from the Three.JS web-site.
 
 Example usage: 
 
-<html>
-<head>
-<title>Simple Ara Viewer Example</title>
-</head>
-<script src="../dist/ara-viewer.js"></script>
-<body>
-</body>
-<script>
-    ara.view({ url: './dragon.ply' });
-</script>
-</html>
-*/
-
-/*
-import * as dat from './node_modules/dat.gui/build/dat.gui.js';
-import * as three from './node_modules/three/build/three.js';
-import * as stats from  './node_modules/three/examples/js/libs/stats.min.js';
-import * as Detector from './node_modules/three/examples/js/Detector.js';
-import * as orbit from './node_modules/three/examples/js/controls/OrbitControls.js';
-import * as FBXLoader from './node_modules/three/examples/js/loaders/FBXLoader.js';
-import * as ColladaLoader from './node_modules/three/examples/js/loaders/ColladaLoader.js';
-import * as GCodeLoader from './node_modules/three/examples/js/loaders/GCodeLoader.js';
-import * as GLTFLoader from './node_modules/three/examples/js/loaders/GLTFLoader.js';
-import * as OBJLoader from './node_modules/three/examples/js/loaders/OBJLoader.js';
-import * as PCDLoader from './node_modules/three/examples/js/loaders/PCDLoader.js';
-import * as PDBLoader from './node_modules/three/examples/js/loaders/PDBLoader.js';
-import * as PLYLoader from './node_modules/three/examples/js/loaders/PLYLoader.js';
-import * as STLLoader from './node_modules/three/examples/js/loaders/STLLoader.js';
-import * as TDSLoader from './node_modules/three/examples/js/loaders/TDSLoader.js';
+    <html>
+    <head>
+    <title>Simple Ara Viewer Example</title>
+    </head>
+    <script src="../dist/ara-viewer.js"></script>
+    <body>
+    </body>
+    <script>
+        ara.view({ url: './dragon.ply' });
+    </script>
+    </html>
 */
 
 declare const THREE: any;
@@ -322,6 +304,7 @@ class DeepMerge
 }
 // END: Deepmerge
 
+// Main ARA code
 const ara = 
 {
     view: function(options) 
@@ -333,7 +316,7 @@ const ara =
         }
 
         // Variables 
-        let container, stats, gui, controls;
+        let stats, gui, controls;
         let camera, cameraTarget, scene, renderer, material, plane, sunlight, light1, light2, settings;
         let materialsLoaded = false;
         let objects = [];
@@ -343,13 +326,15 @@ const ara =
 
         // Default options object (merged with passed options)
         const defaultOptions = {
+            showGui: false,
             camera: {
-                //near: 0.1,
-                //far: 1500,
+                near: 0.1,
+                far: 15000,
                 fov: 50,
                 zoom: 1,
+                rotate: 1.0,
                 position: { x: 0, y: 5, z: -5 },
-                target: { x: 0, y: -1, z: 0, }
+                target: { x: 0, y: -1, z: 0, },
             },
             background: {
                 color: { r: 0x72, g: 0x64, b: 0x5b, }
@@ -361,7 +346,7 @@ const ara =
                     specular: { r: 0x10, g: 0x10, b: 0x10, }
                 },
                 position: {
-                    x:0, y:-0.5, z:0
+                    x:0, y :0, z:0
                 }
             },
             sunlight: { 
@@ -503,23 +488,21 @@ const ara =
             settings = (new DeepMerge()).deepMerge(defaultOptions, options, undefined);
 
             // If a canvas is given, we will draw in it.
-            const canvas = document.getElementById(settings.canvasId);
-            renderer = new THREE.WebGLRenderer( { antialias: true, canvas: canvas } );
+            let canvas = document.getElementById(settings.canvasId);
             if (!canvas) {
-                container = document.createElement( 'div' );
-                document.body.appendChild( container );
-                container.appendChild(renderer.domElement)
-            }
-            else {
-                container = canvas.parentElement;
-            }
+                // Add to a div in the web page.
+                canvas = document.createElement( 'canvas' );
+                document.body.appendChild(canvas)
+            } 
+            renderer = new THREE.WebGLRenderer( { antialias: true, canvas } );
 
-            // Create scene and camera, 
-            scene = new THREE.Scene();            
+            // Create the camera and size everything appropriately  
             camera = new THREE.PerspectiveCamera();
+            updateCamera();
+            resizeCanvas(true);
 
-            // Create a new DAT.gui controller 
-            gui = new dat.GUI();    
+            // Create scene object
+            scene = new THREE.Scene();            
             
             // Create a property descriptor 
             const propDesc = getOptionsDescriptor();
@@ -530,11 +513,16 @@ const ara =
             // Iniitlaize the property list values             
             props.fromJson(options);            
 
-            // Bind the properties to the DAT.gui controller, returning the scene when it updates
-            bindControls(props, gui, () => {
-                settings = props.toJson;
-                updateScene();
-            });
+            if (settings.showGui) {
+                // Create a new DAT.gui controller 
+                gui = new dat.GUI();    
+                
+                // Bind the properties to the DAT.gui controller, returning the scene when it updates
+                bindControls(props, gui, () => {
+                    settings = props.toJson;
+                    updateScene();
+                });
+            } 
 
             // Ground            
             plane = new THREE.Mesh(
@@ -556,7 +544,6 @@ const ara =
 
             // THREE JS renderer
             renderer.setPixelRatio( window.devicePixelRatio );            
-            renderer.setSize( canvas.clientWidth, canvas.clientHeight );
             renderer.gammaInput = true;
             renderer.gammaOutput = true;
             renderer.shadowMap.enabled = true;
@@ -565,38 +552,88 @@ const ara =
             updateScene();
 
             // Create orbit controls
-            controls = new THREE.OrbitControls( camera, container );
+            controls = new THREE.OrbitControls( camera, renderer.domElement );
             controls.enableDamping = true; // an animation loop is required when either damping or auto-rotation are enabled
             controls.dampingFactor = 0.25;
+            controls.autoRotate = settings.camera.rotate > 0.0001 || settings.camera.rotate < -0.0001;
+            controls.autoRotateSpeed = settings.camera.rotate;            
 
             // Initial update of the camera
             updateCamera(); 
 
             // Stats display 
-            stats = new Stats();
-            container.appendChild( stats.dom );
-            
-            // Resize listener 
-            // TODO: listen for container resize events 
-            window.addEventListener( 'resize', onWindowResize, false );
+            if (settings.showStats) {
+                stats = new Stats();
+                renderer.domElement.appendChild( stats.dom );
+            }            
         }
 
-        function onWindowResize() {
-            camera.aspect = container.clientWidth / container.clientHeight;
+        function resizeCanvas(force: boolean = false) {            
+            if (!settings.autoResize && !force)
+                return;
+
+            const canvas = renderer.domElement;
+            const parent = canvas.parentElement as Element;
+
+            //canvas.width  = parent.clientWidth;
+            //canvas.height = parent.clientHeight;
+
+            // https://stackoverflow.com/questions/41814539/html-div-height-keeps-growing-on-window-resize-event
+            // you must pass false here or three.js sadly fights the browser
+            //<canvas id="canvas3d" style="position: absolute"></canvas>
+            
+            const rect = parent.getBoundingClientRect();
+            const w = rect.width / window.devicePixelRatio 
+            const h  = rect.height / window.devicePixelRatio;
+            renderer.setSize(w, h, false);
+
+            // Set aspect ratio
+            camera.aspect = canvas.width / canvas.height;
             camera.updateProjectionMatrix();
-            renderer.setSize( container.clientWidth, container.clientHeight );
-        }       
+        }
+
+        function outputStats(obj) {
+            console.log("Object id = " + obj.uuid + " name = " + obj.name)
+            if (obj.isBufferGeometry) {
+                console.log("Is a BufferGeometry");
+                const position = obj.getAttribute('position');
+                if (!position)
+                    throw new Error("Could not find a position attribute");
+                const nVerts = position.count;
+                const nFaces = obj.index ? obj.index.count / 3 : nVerts / 3;
+                console.log("# vertices = " + nVerts);
+                console.log("# faces = " + nFaces);
+                for (let attrName in obj.attributes) {
+                    const attr = obj.getAttribute(attrName);
+                    console.log("has attribute " + attrName + " with a count of " + attr.count);
+                }
+            }
+            else if (obj.isGeometry)
+            {
+                console.log("Is a Geometry");
+                console.log("# vertices = " + obj.vertices.length);
+                console.log("# faces = " + obj.faces.length);
+            }
+            else 
+            {
+                console.log("Is neither a Geometry nor a BufferGeometry");
+            }
+        }
 
         function loadObject(obj) {
             objects.push(obj);
             scene.add(obj);
+            console.timeEnd("Loading object")
+
+            // Output some stats 
+            outputStats(obj.geometry);
         }
         
         function loadIntoScene(fileName, mtlurl) {        
+            console.log("Loading object from " + fileName);
+            console.time("Loading object")
             const extPos = fileName.lastIndexOf(".");
             const ext = fileName.slice(extPos + 1).toLowerCase();
-            
-            // Used with PLY example
 
             switch (ext) {
                 case "3ds": {
@@ -666,6 +703,15 @@ const ara =
                     });
                     return;
                 }
+                case "g3d": {
+                    const loader = new THREE.G3DLoader();
+                    loader.load(fileName, ( geometry ) => {
+                        // TODO: decide whether this is really necessary
+                        geometry.computeVertexNormals();
+                        loadObject(new THREE.Mesh( geometry ));
+                    });
+                    return;
+                }
                 default:
                     throw new Error("Unrecognized file type extension '" + ext + "' for file " + fileName);
             }
@@ -679,16 +725,16 @@ const ara =
             return new THREE.Vector3(x, x, x);
         }
         function addShadowedLight(scene) {
-            var directionalLight = new THREE.DirectionalLight();
+            const directionalLight = new THREE.DirectionalLight();
             scene.add( directionalLight );
             directionalLight.castShadow = true;
-            var d = 1;
+            const d = 1;
             directionalLight.shadow.camera.left = -d;
             directionalLight.shadow.camera.right = d;
             directionalLight.shadow.camera.top = d;
             directionalLight.shadow.camera.bottom = -d;
-            directionalLight.shadow.camera.near = 1;
-            directionalLight.shadow.camera.far = 4;
+            directionalLight.shadow.camera.near = 0.01;
+            directionalLight.shadow.camera.far = 1000;
             directionalLight.shadow.mapSize.width = 1024;
             directionalLight.shadow.mapSize.height = 1024;
             directionalLight.shadow.bias = -0.001;
@@ -750,16 +796,14 @@ const ara =
         function animate() {
             requestAnimationFrame( animate );
             render();
-            stats.update();
+            if (stats)
+                stats.update();
         }
 
-        // Updates scene objects, moves the camera, and draws the scene 
-        function render() {            
+        // Updates scene objects, and draws the scene 
+        function render() { 
+            resizeCanvas(); 
             updateObjects();
-            //updateScene();
-            var timer = Date.now() * 0.0005;
-            //camera.position.x = Math.sin( timer ) * 2.5;
-            //camera.position.z = Math.cos( timer ) * 2.5;
             controls.update();
             renderer.render( scene, camera );
         }

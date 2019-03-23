@@ -1,25 +1,27 @@
 <html>
 <head>
-<title>Simple Ara Viewer Example</title>
+<title>Simple Ara3D Web Viewer Example</title>
 </head>
+<script src="../dist/ara-viewer.js"></script>
 <style>
-    .canvas3d {
-        min-width: 300px;
-        width: 300px;
-        min-height: 200px;
-        height: 200px;
+    .body {
+        height: 100%;
+        width: 100%;
     }
 </style>
-<script src="../dist/ara-viewer.js"></script>
 <body>
-    <canvas id="canvas3d" width="300" height="200"></canvas>
+    <div id="canvasContainer" style="position: absolute; width: 100%; height: 100%;">
+        <canvas id="canvas3d"></canvas>
+    </div>
 </body>
 <script>
     //ara.view({ url: '../models/ludovic_models/Fibrinogen_1.obj' });
     //ara.view({ url: '../models/dolphins.ply' });
     //ara.view({ url: './angel.obj' });
-    //ara.view({ url: './dragon.ply', object: { scale: 0.2 } });
+    //ara.view({ showGui: true, canvasId: 'canvas3d', url: './dragon.ply', object: { scale: 20.0 }, plane: { show: true } });
     //ara.view({ url: './texturedknot.obj' });
-    ara.view({ canvasId: 'canvas3d', url: './_scene.obj', mtlurl: './_scene.mtl', object: { rotation: { x: -90 }, scale: 0.05 }, plane: { show: false }});
+    //ara.view({ canvasId: 'canvas3d', url: './_scene.obj', mtlurl: './_scene.mtl', object: { rotation: { x: -90 }, scale: 0.05 }, plane: { show: false }});
+    //ara.view({ showGui: true, showStats: true, canvasId: 'canvas3d', url: './STEP_T1.stl', object: { rotation: { x: -90 } }, camera: { rotate: 0 } });
+    ara.view({ showGui: true, showStats: true, canvasId: 'canvas3d', url: './angel.obj.ara.g3d', object: { rotation: { x: -90 }, scale: 0.1 }, camera: { rotate: 0 } });
 </script>
 </html>

@@ -28,11 +28,12 @@ const srcFiles = [
     'node_modules/three/examples/js/loaders/STLLoader.js',
     'node_modules/three/examples/js/loaders/TDSLoader.js',
     'node_modules/three/examples/js/loaders/MTLLoader.js',
+    'G3DLoader.js',
 ];
 
 gulp.task('build', function(){
     return gulp.src(srcFiles)
-        .pipe(gp_concat('ara-viewer.js', {
+        .pipe(gp_concat('ara3d-viewer.js', {
             newLine:'\n;' // the newline is needed in case the file ends with a line comment, the semi-colon is needed if the last statement wasn't terminated
         }))       
         .pipe(gulp.dest('dist'));
@@ -40,11 +41,11 @@ gulp.task('build', function(){
 
 gulp.task('dist', function(){
     return gulp.src(srcFiles)
-        .pipe(gp_concat('ara-viewer.js', {
+        .pipe(gp_concat('ara3d-viewer.js', {
             newLine:'\n;' // the newline is needed in case the file ends with a line comment, the semi-colon is needed if the last statement wasn't terminated
         }))
         .pipe(gulp.dest('dist'))
-        .pipe(gp_rename('ara-viewer.min.js'))
+        .pipe(gp_rename('ara3d-viewer.min.js'))
         .pipe(gp_uglify())
         .pipe(gulp.dest('dist'));
 });

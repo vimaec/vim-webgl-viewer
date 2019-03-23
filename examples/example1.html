@@ -1,0 +1,37 @@
+
+<html>
+<head>
+    <title>Minimal Ara 3D Viewer Example</title>
+</head>
+<script src="../dist/ara3d-viewer.js"></script>
+<body>
+        <a style="position: absolute; bottom: 0; right: 0;" href="https://www.ara3d.com">
+            <svg class="navbar-logo" width="60" height="60" xmlns="http://www.w3.org/2000/svg" viewBox="-10 -10 110 110">
+                <defs>
+                    <linearGradient id="fadeGray" y2="100%" x2="0%">
+                        <stop stop-color="gray" stop-opacity="0" offset="0"></stop>
+                        <stop stop-color="gray" stop-opacity="1" offset="1"></stop>
+                    </linearGradient>
+                    <filter id="f4" x="0" y="0">
+                            <feOffset result="offOut" in="SourceGraphic" dx="-3" dy="3"></feOffset>
+                            <feColorMatrix result="matrixOut" in="offOut" type="matrix" values="0.4 0 0 0 0 0 0.4 0 0 0 0 0 0.4 0 0 0 0 0 0.8 0"></feColorMatrix>
+                            <feGaussianBlur result="blurOut" in="matrixOut" stdDeviation="2"></feGaussianBlur>
+                            <feBlend in="SourceGraphic" in2="blurOut" mode="normal"></feBlend>
+                          </filter>
+                </defs>
+                <g id="circle-logo">            
+                <circle cx="48" cy="44" r="48" stroke-width="3" fill="White"></circle>
+                  <g id="a" filter="url(#f4)" transform="scale(1 0.8)">
+                    <path fill="#01012d" stroke-width="1" d="M 50 0 L 53 12 L 27 100 L 24 87 L 50 0"></path>
+                    <path fill="#9370DB" stroke-width="1" d="M 80 85 Q 60 50 10 25 Q 50 60 65 100 L 80 85"></path>
+                    <path fill="hsla(256, 90%, 39%, 1)" stroke-width="1" d="M 50 0 L 65 100 L 80 85 L 50 0"></path>
+                </g>
+            </g>
+        </svg>
+    </a>
+    </body>
+<script>
+    ara.view({ url: './dragon.ply', object: { scale: 20.0 }, showGui: true, });
+</script>
+</html>
+    
