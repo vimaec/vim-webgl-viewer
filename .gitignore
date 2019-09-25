@@ -71,3 +71,6 @@ typings/
 
 # Serverless directories
 .serverless
+
+# This locks in development chain dependencies which is not appropriate. 
+package-lock.json
