@@ -597,7 +597,10 @@ var ara = {
             scene.add(obj);
             console.timeEnd("Loading object");
             // Output some stats 
-            outputStats(obj.geometry);
+            if (obj.geometry)
+                outputStats(obj.geometry);
+            else
+                outputStats(obj);
         }
         function loadIntoScene(fileName, mtlurl) {
             console.log("Loading object from " + fileName);

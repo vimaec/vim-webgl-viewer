@@ -653,7 +653,10 @@ const ara =
             console.timeEnd("Loading object")
 
             // Output some stats 
-            outputStats(obj.geometry);
+            if (obj.geometry)
+                outputStats(obj.geometry);
+            else
+                console.log("No geometry found");
         }
         
         function loadIntoScene(fileName, mtlurl) {        
