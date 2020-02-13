@@ -1,8 +1,22 @@
-# Ara3D Online Model Viewer 
+# VIM Three.JS 3D Viewer 
 
-The Ara 3D Viewer is an open-source and easy to configure and use 3D model viewer built as a thin wrapper on top of the popular [Three.JS](https://threejs.org) library. 
+The VIM Three.JS 3D Viewer is an open-source and easy to configure and use 3D model viewer built as a thin wrapper on top of the popular 
+[Three.JS](https://threejs.org) WebGL framework. 
 
-The Ara 3D viewer combines the Three.JS library with several common loaders and utilities, and a boilerplate helper, into a single file (`ara3d-viewer.js`) making it easy to integrate a custom 3D viewer into your website with just a couple of lines of code. 
+The VIM Three.JS 3D viewer combines the Three.JS library with several common loaders and utilities, to reduce boilerplate code, into a single file 
+(`ara3d-viewer.js`) making it easy to integrate a custom 3D viewer into your website with just a couple of lines of code.
+
+The other purpose of the VIM Three.JS viewer was to demonstrate and validate the performance of a loader for the G3D file format.
+
+G3D is a high-perofrmance and simple generic binary file format for geoemetric mesh data. See 
+
+## Running Locally:
+
+NOTE: currently the type-script build chain has a small bug. We are using just  
+
+* Run in a command-lin termain `npm run watch`
+* `npm run serve`
+* http://127.0.0.1:8080/examples/example.html
 
 ## Features 
 
@@ -19,6 +33,7 @@ The Ara 3D viewer combines the Three.JS library with several common loaders and 
 
 ## Supported File Formats 
 
+* .g3d
 * .obj
 * .ply
 * .stl 

@@ -9,6 +9,13 @@
  *    scene.add( new THREE.Mesh( geometry ) );
  *  });
  *
+ * Note:
+ * 
+ *  // A G3D geometry might contain colors for vertices. To set vertex colors in the material:
+ *  if (geometry.hasColors) {
+ *    material = new THREE.MeshPhongMaterial({ opacity: geometry.alpha, vertexColors: THREE.VertexColors });
+ *  } else { .... }
+ *  var mesh = new THREE.Mesh( geometry, material );
  */
 
 THREE.G3DLoader = function ( manager ) {
@@ -90,7 +97,7 @@ THREE.G3DLoader.prototype =
             throw new Error("Expected at least one buffer containing the names");
 
         // break the first one up into names          
-        const joinedNames = new TextDecoder("utf-8").decode(buffers[0]);
+        var joinedNames = new TextDecoder("utf-8").decode(buffers[0]);
         names = joinedNames.split('\0');
 
         if (names.length != buffers.length - 1)
@@ -104,51 +111,53 @@ THREE.G3DLoader.prototype =
         }
     },
 
-    // Given a BFAST container (header/buffers) constructs a G3D data structure
+    // Given a BFAST container (header/names/buffers) constructs a G3D data structure
     constructG3d: function ( bfast )
     {
         if (bfast.buffers.length < 2)
             throw new Error("G3D requires at least two BFast buffers");
 
         // This will just contain some JSON
-        const metaBuffer = bfast.buffers[0];
+        var metaBuffer = bfast.buffers[0];
         if (bfast.names[0] != 'meta')
             throw new Error("First G3D buffer must be named 'meta', but was named: " + bfast.names[0]);
         
         // Extract each descriptor 
-        const attributes = [];
-        const nDescriptors = bfast.buffers.length - 1;
+        var attributes = [];
+        var nDescriptors = bfast.buffers.length - 1;
         for (var i=0; i < nDescriptors; ++i) {
-            const desc = bfast.names[i+1].split(':');
+            var desc = bfast.names[i+1].split(':');
             if (desc[0] != 'g3d' || desc.length != '6')
                 throw new Error("Not a valid attribute descriptor, must have 6 components delimited by ':' and starting with 'g3d': " + desc);
             var attribute = {
-                Name:               desc,
-                Association:        desc[1], // Indicates the part of the geometry that this attribute is associated with 
-                Semantic:           desc[2], // the role of the attribute 
-                AttributeTypeIndex: desc[3], // each attribute type should have it's own index ( you can have uv0, uv1, etc. )
-                DataType:           desc[4], // the type of individual values (e.g. int32, float64)
-                DataArity:          desc[5], // how many values associated with each element (e.g. UVs might be 2, geometry might be 3, quaternions 4, matrices 9 or 16)
-                RawData:            bfast.buffers[i+1], // the raw data (a UInt8Array)                
+                name:               desc,
+                association:        desc[1], // Indicates the part of the geometry that this attribute is associated with 
+                semantic:           desc[2], // the role of the attribute 
+                attributeTypeIndex: desc[3], // each attribute type should have it's own index ( you can have uv0, uv1, etc. )
+                dataType:           desc[4], // the type of individual values (e.g. int32, float64)
+                dataArity:          desc[5], // how many values associated with each element (e.g. UVs might be 2, geometry might be 3, quaternions 4, matrices 9 or 16)
+                rawData:            bfast.buffers[i+1], // the raw data (a UInt8Array)                
             }
-            attribute.Data = this.attributeToTypedArray(attribute);
+            attribute.data = this.attributeToTypedArray(attribute);
             attributes.push(attribute);
         }      
-        return attributes;  
+        return {
+            attributes: attributes,
+            meta:  new TextDecoder("utf-8").decode(metaBuffer)            
+        }
     },    
 
-    // Finds the first attribute that has the matching association, semantic, index, data-type, or arity. 
-    // pass null, to match all 
+    // Finds the first attribute that has the matching fields passing null matches a field to all
     findAttribute: function( g3d, assoc, semantic, index, dataType, arity ) {
         var r = [];
-        for (var i=0; i < g3d.length; ++i)
+        for (var i=0; i < g3d.attributes.length; ++i)
         {
-            var attr = g3d[i];
-            if ((attr.Association == assoc || assoc == null)
-                && (attr.Semantic == semantic || semantic == null)
-                && (attr.AttributeTypeIndex == index || index == null)
-                && (attr.DataArity == arity || arity == null)
-                && (attr.DataType == dataType || dataType == null))
+            var attr = g3d.attributes[i];
+            if ((attr.association == assoc || assoc == null)
+                && (attr.semantic == semantic || semantic == null)
+                && (attr.attributeTypeIndex == index || index == null)
+                && (attr.dataArity == arity || arity == null)
+                && (attr.dataType == dataType || dataType == null))
             {
                 r.push(attr)
             }
@@ -162,9 +171,9 @@ THREE.G3DLoader.prototype =
             return null;
         
         // This is a UInt8 array
-        var data = attr.RawData;
+        var data = attr.rawData;
 
-        switch (attr.DataType)
+        switch (attr.dataType)
         {
             case "float32": return new Float32Array(data.buffer, data.byteOffset, data.byteLength / 4);
             case "float64": throw new Float64Array(data.buffer, data.byteOffset, data.byteLength / 8);
@@ -172,14 +181,14 @@ THREE.G3DLoader.prototype =
             case "int16": return new Int16Array(data.buffer, data.byteOffset, data.byteLength / 2);
             case "int32": return new Int32Array(data.buffer, data.byteOffset, data.byteLength / 4);
             case "int64": return new Int64Array(data.buffer, data.byteOffset, data.byteLength / 8);
-            default: throw new Error("Unrecognized attribute data type " + attr.DataType);
+            default: throw new Error("Unrecognized attribute data type " + attr.dataType);
         }
     },
 
     // Adds an attribute to a BufferGeometry, if not null
     addAttributeToGeometry : function ( geometry, name, attr ) {
         if (attr)
-            geometry.addAttribute( name, new THREE.BufferAttribute( attr.Data, attr.DataArity ) );
+            geometry.addAttribute( name, new THREE.BufferAttribute( attr.data, attr.dataArity ) );
     },
 
     // Constructs a BufferGeometry from an ArrayBuffer arranged as a G3D
@@ -198,7 +207,7 @@ THREE.G3DLoader.prototype =
         var indices = this.findAttribute( g3d, null, "index", "0", "int32", "1" );
 
         if (!position) throw new Error("Cannot create geometry without a valid vertex attribute");
-        if (!index) throw new Error("Cannot create geometry without a valid index attribute");
+        if (!indices) throw new Error("Cannot create geometry without a valid index attribute");
 
         // Construtor the buffer geometry that is returned from the function 
         var geometry = new THREE.BufferGeometry();

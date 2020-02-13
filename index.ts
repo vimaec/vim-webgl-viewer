@@ -1,6 +1,6 @@
 /*
-Ara 3D Web Viewer 
-Copyright Ara 3D, 2018
+Ara Viewer 
+Copyright VIMaec LLC, 2020
 Licensed under the terms of the MIT License
 
 A simple and easy to use 3D Model Web-Viewer built with Three.JS that eliminates a lot of boilerplate. 
@@ -10,7 +10,7 @@ Example usage:
 
     <html>
     <head>
-    <title>Simple Ara Viewer Example</title>
+    <title>Three Viewer Example</title>
     </head>
     <script src="../dist/ara-viewer.js"></script>
     <body>
@@ -324,6 +324,7 @@ const ara =
         // Used with STL example 
         //const material = new THREE.MeshPhongMaterial( { color: 0xff5533, specular: 0x111111, shininess: 200 } );
 
+        // TODO animation
         // Default options object (merged with passed options)
         const defaultOptions = {
             showGui: false,
@@ -409,6 +410,7 @@ const ara =
         }
 
         function updateCamera() {
+            // TODO: camera updates aren't working
             camera.fov = settings.camera.fov;
             camera.zoom = settings.camera.zoom;
             camera.near = settings.camera.near;
@@ -582,8 +584,8 @@ const ara =
             controls = new THREE.OrbitControls( camera, renderer.domElement );
             controls.enableDamping = true; // an animation loop is required when either damping or auto-rotation are enabled
             controls.dampingFactor = 0.25;
-            controls.autoRotate = settings.camera.rotate > 0.0001 || settings.camera.rotate < -0.0001;
-            controls.autoRotateSpeed = settings.camera.rotate;            
+            controls.autoRotate = settings.camera.autoRotate;
+            controls.autoRotateSpeed = settings.camera.rotateSpeed;            
 
             // Initial update of the camera
             updateCamera(); 
@@ -781,9 +783,9 @@ const ara =
         }
 
         function droppedFile(file) {
-            // TODO: deal with other data ... 
+            // TODO: this is going to be 
             const fileName = file.name;
-            loadIntoScene("../data/" + fileName, null);    
+            loadIntoScene(fileName, null);    
         }
 
         function dropHandler(ev) {
@@ -834,6 +836,7 @@ const ara =
         // TODO: update the camera 
         function render() { 
             resizeCanvas(); 
+            updateCamera();
             updateObjects();
             controls.update();
             renderer.render( scene, camera );

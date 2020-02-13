@@ -28,7 +28,8 @@
     "gulp-uglify": "^3.0.1",
     "gulp-uglify-es": "^1.0.4",
     "http-server": "^0.11.1",
-    "mocha": "^6.0.2"
+    "mocha": "^6.0.2",
+    "typescript": "^3.7.5"
   },
   "dependencies": {
     "dat.gui": "^0.7.2",
