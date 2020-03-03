@@ -10,7 +10,7 @@
  *  });
  *
  * Note:
- * 
+ *  
  *  // A G3D geometry might contain colors for vertices. To set vertex colors in the material:
  *  if (geometry.hasColors) {
  *    material = new THREE.MeshPhongMaterial({ opacity: geometry.alpha, vertexColors: THREE.VertexColors });
@@ -194,17 +194,35 @@ THREE.G3DLoader.prototype =
     // Constructs a BufferGeometry from an ArrayBuffer arranged as a G3D
     parse: function ( data ) 
     {	      
+        console.log("Parsing data buffer into G3D");
+        console.log("data size " + data.length);
+
+        console.log("Parsing BFAST structure");
+
         // A G3D follows the BFAST data arrangement, which is a collection of named byte arrays  
         var bfast = this.parseBFast( data );
 
-        // Construct the g3D, which is effectively a collection of attributes
-        var g3d = this.constructG3d( bfast );
+        console.log("found: " + bfast.buffers.length + " buffers");
+        for (var i=0; i < bfast.names.length; ++i)
+            console.log(bfast.names[i]);
         
+        console.log("Constructing G3D");
+        var g3d = this.constructG3d( bfast );
+
+        console.log("found: " + g3d.attributes.length + " attributes");
+        console.log("meta data: " + g3d.meta);
+
         // Find the vertex position data attribute
         var position = this.findAttribute( g3d, null, "position", "0", "float32", "3" );
+        console.log(position ? "Found position data" : "No position data found");
 
         // Find the index buffer data attribute 
         var indices = this.findAttribute( g3d, null, "index", "0", "int32", "1" );
+        console.log(position ? "Found index data" : "No index data found");
+
+        // Find the color attribute
+        var colors = this.findAttribute( g3d, null, "color", "0", "float32", "4" );
+        console.log(position ? "Found color data" : "No color data found");
 
         if (!position) throw new Error("Cannot create geometry without a valid vertex attribute");
         if (!indices) throw new Error("Cannot create geometry without a valid index attribute");
@@ -214,12 +232,16 @@ THREE.G3DLoader.prototype =
 
         // A vertex position data buffer 
         this.addAttributeToGeometry( geometry, 'position', position );
+
+        // Optionally add a vertex color data buffer if present
+        if (colors)
+            this.addAttributeToGeometry( geometry, 'color', colors );
         
         // Add the index buffer (which has to be cast to a Uint32BufferAttribute)
         var typedArray = this.attributeToTypedArray( indices );
         var indexBuffer = new THREE.Uint32BufferAttribute(typedArray, 1 );
         geometry.setIndex( indexBuffer );
-        
+                
         return geometry;
 	}
 };
