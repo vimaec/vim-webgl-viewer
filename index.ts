@@ -744,6 +744,17 @@ const ara =
                     });
                     return;
                 }
+                case "vim": {
+                    const loader = new THREE.VIMLoader();
+                    loader.load(fileName, (obj) => {
+                        loadObject(new THREE.Mesh( obj ));
+
+                        // TODO: add an entire scene 
+                        //objects.push(obj.scene);
+                        //scene.add(obj);
+                    });
+                    return;
+                }
                 default:
                     throw new Error("Unrecognized file type extension '" + ext + "' for file " + fileName);
             }

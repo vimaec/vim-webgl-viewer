@@ -29,6 +29,7 @@ const srcFiles = [
     'node_modules/three/examples/js/loaders/TDSLoader.js',
     'node_modules/three/examples/js/loaders/MTLLoader.js',
     'G3DLoader.js',
+    'VIMLoader.js',
 ];
 
 gulp.task('build', function(){
