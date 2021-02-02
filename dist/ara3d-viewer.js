@@ -688,8 +688,9 @@ var ara = {
                 }
                 case "vim": {
                     var loader = new THREE.VIMLoader();
-                    loader.load(fileName, function (obj) {
-                        loadObject(new THREE.Mesh(obj));
+                    loader.load(fileName, function (objs) {
+                        for (var i = 0; i < objs.length; ++i)
+                            loadObject(new THREE.Mesh(objs[i]));
                         // TODO: add an entire scene 
                         //objects.push(obj.scene);
                         //scene.add(obj);
@@ -66962,8 +66963,9 @@ THREE.VIMLoader.prototype =
             header: new TextDecoder("utf-8").decode(lookup.header),
             assets: this.parseBFastFromArray(lookup.assets),
             g3d: this.constructG3D(this.parseBFastFromArray(lookup.geometry)),
+            nodes: this.parseNodes(lookup.nodes),
             entities: this.parseBFastFromArray(lookup.entities),
-            strings: new TextDecoder("utf-8").decode(lookup.strings),
+            strings: new TextDecoder("utf-8").decode(lookup.strings).split('\0'),
         }
     },  
 
@@ -66997,6 +66999,7 @@ THREE.VIMLoader.prototype =
                 rawData:            bfast.buffers[i+1], // the raw data (a UInt8Array)                
             }
             attribute.data = this.attributeToTypedArray(attribute);
+            console.log("Attribute " + i + " = " + desc);
             attributes.push(attribute);
         }     
         
@@ -67050,49 +67053,115 @@ THREE.VIMLoader.prototype =
             geometry.addAttribute( name, new THREE.BufferAttribute( attr.data, attr.dataArity ) );
     },
 
-    g3dToThreeJs : function ( g3d )
+    createBufferGeometry : function ( positionTypedArray, indicesTypedArray, colorsTypedArray )
     {
-        // Find the vertex position data attribute
-        var position = this.findAttribute( g3d, null, "position", "0", "float32", "3" );
-        console.log(position ? "Found position data" : "No position data found");
-
-        // Find the index buffer data attribute 
-        var indices = this.findAttribute( g3d, null, "index", "0", "int32", "1" );
-        console.log(position ? "Found index data" : "No index data found");
-
-        // Find the color attribute
-        var colors = this.findAttribute( g3d, null, "color", "0", "float32", "4" );
-        console.log(position ? "Found color data" : "No color data found");
-
-        if (!position) throw new Error("Cannot create geometry without a valid vertex attribute");
-        if (!indices) throw new Error("Cannot create geometry without a valid index attribute");
-
-        // TODO: create intanced mesh for each node.
-        // TODO: start with one 
-        // https://threejs.org/docs/#api/en/objects/InstancedMesh
+        if (!positionTypedArray) throw new Error("Cannot create geometry without a valid vertex attribute");
+        if (!indicesTypedArray) throw new Error("Cannot create geometry without a valid index attribute");
 
         // Construtor the buffer geometry that is returned from the function 
         var geometry = new THREE.BufferGeometry();
 
         // A vertex position data buffer 
-        this.addAttributeToGeometry( geometry, 'position', position );
+        geometry.addAttribute( 'position', new THREE.BufferAttribute( positionTypedArray, 3 ) );
 
         // Optionally add a vertex color data buffer if present
-        if (colors)
-            this.addAttributeToGeometry( geometry, 'color', colors );
-        
-        // Add the index buffer (which has to be cast to a Uint32BufferAttribute)
-        var typedArray = this.attributeToTypedArray( indices );
-        var indexBuffer = new THREE.Uint32BufferAttribute(typedArray, 1 );
-        geometry.setIndex( indexBuffer );
-                
-        return geometry;
+        if (colorsTypedArray)
+        {
+            colorArity = colorArity == 4 ? colorArity : 3;
+            this.addAttributeToGeometry( geometry, 'color', colorsTypedArray, 4 );
+        }
+
+        // Add the index buffer (which has to be cast to a Uint32BufferAttribute)        
+        indexBuffer = new THREE.Uint32BufferAttribute(indicesTypedArray, 1 );
+        geometry.setIndex( indexBuffer ); 
+        return geometry;   
+    },
+
+    g3dToThreeJs : function ( g3d )
+    {
+        // Find the vertex position data attribute
+        var position = this.findAttribute( g3d, null, "position", "0", "float32", "3" );
+        var indices = this.findAttribute( g3d, null, "index", "0", "int32", "1" );
+        var colors = this.findAttribute( g3d, null, "color", "0", "float32", "4" );
+
+        if (!position) throw new Error("Cannot create geometry without a valid vertex attribute");
+        if (!indices) throw new Error("Cannot create geometry without a valid index attribute");
+
+        return this.createBufferGeometry(position.data, indices.data, colors != null ? colors.data : null);
+    },
+
+    parseNodes: function ( data )
+    {
+        console.log("Parsing nodes");
+
+        var nodeSize = (3 * 4) + (16 * 4); 
+        if (data.byteLength % nodeSize != 0) throw new Error("Expected node databuffer size " + data.byteLength + " to be divisble by " + nodeSize);
+        var numNodes = data.byteLength / nodeSize;
+        var ints = new Int32Array(data.buffer, data.byteOffset, data.byteLength / 4);
+        var floats = new Float32Array(data.buffer, data.byteOffset, data.byteLength / 4);
+
+        var r = [];
+        for (var i=0; i < numNodes; ++i)
+        {
+            var offset = i * 19;
+            var node = {
+                parentIndex: ints[offset], // DEPRECATED 
+                geometryIndex: ints[offset + 1],
+                instanceIndex: ints[offset + 2], // DEPRECATED
+                worldTransform: Array.prototype.slice(offset + 3, offset + 19),
+            };
+            // We do not generate nodes with geometry 
+            if (node.geometryIndex >= 0)
+                r.push(node);
+        }
+        return r;
     },
 
     splitGeometries: function ( g3d )
     {
+        // Find the vertex position data attribute
+        var positions = this.findAttribute( g3d, null, "position", "0", "float32", "3" );
+        var indices = this.findAttribute( g3d, null, "index", "0", "int32", "1" );
+        var colors = this.findAttribute( g3d, null, "color", "0", "float32", "4" );
 
-    },
+        var indexOffsets = this.findAttribute( g3d, null,"indexoffset", "0", "int32", "1");
+        var vertexOffsets = this.findAttribute( g3d, null,"vertexoffset", "0", "int32", "1");
+
+        if (!indexOffsets) throw new Error("Missing index offsets");
+        if (!vertexOffsets) throw new Error("Missing vertex offsets");
+        if (indexOffsets.data.length != vertexOffsets.data.length) throw new Error("# index offsets " + indexOffsets.data.length + " is not the same as # vertex offsets " + vertexOffsets.data.length);
+
+        var numIndices = indices.data.length;
+        var numVertices = positions.data.length;
+
+        var geometries = [];
+
+        for (var i=0; i < indexOffsets.data.length; ++i)
+        {
+            var indexBegin = indexOffsets.data[i];
+            if (indexBegin < 0 || indexBegin >= numIndices) throw new Error("Out of range index begin " + indexBegin);
+
+            var vertexBegin = vertexOffsets.data[i];            
+            if (vertexBegin < 0 || vertexBegin >= numVertices) throw new Error("Out of range vertex begin " + vertexBegin);
+
+            var indexEnd = i >= indexOffsets.data.Length ? numIndices : indexOffsets.data[i+1];
+            if (indexEnd < indexBegin || indexEnd > numIndices) throw new Error("Out of range index end " + indexEnd);
+
+            var vertexEnd = i >= vertexOffsets.data.Length ? numVertices : vertexOffsets.data[i+1];
+            if (vertexEnd < vertexEnd || vertexEnd > numVertices) throw new Error("Out of range vertex end " + vertexEnd);
+
+            var localPositions = positions.data.subarray(vertexBegin * 3, vertexEnd * 3);
+            var localIndices = indices.data.subarray(indexBegin, indexEnd);
+            var localColors = colors != null && colors.data != null ? colors.data.subarray(vertexBegin * 4, vertexEnd * 4) : null;
+            
+            if (localIndices.length == 0)
+                continue;
+            var geometry = this.createBufferGeometry(localPositions, localIndices, localColors);
+            geometries.push(geometry);
+        }        
+
+        return geometries;        
+    },    
 
     // Constructs a BufferGeometry from an ArrayBuffer arranged as a VIM
     parse: function ( data ) 
@@ -67100,9 +67169,8 @@ THREE.VIMLoader.prototype =
         console.log("Parsing data buffer into VIM");
         console.log("data size " + data.byteLength);
 
-        console.log("Parsing BFAST structure");
-
         // A VIM follows the BFAST data arrangement, which is a collection of named byte arrays  
+        console.log("Parsing BFAST structure");
         var bfast = this.parseBFast( data, 0, data.byteLength );
 
         console.log("found: " + bfast.buffers.length + " buffers");
@@ -67112,7 +67180,29 @@ THREE.VIMLoader.prototype =
         console.log("Constructing VIM");
         var VIM = this.constructVIM( bfast );
         
-        var threeJsGeometry = this.g3dToThreeJs(VIM.g3d);
-        return threeJsGeometry;
+        console.log("Splitting geometries");
+        var geometries = this.splitGeometries(VIM.g3d);
+        console.log("Found # geometries " + geometries.length);
+
+        console.log("Counting # instance of each geometry");
+        var geometryCounts = [];
+        for (var i=0; i < geometries.length; ++i)
+            geometryCounts.push(0);
+        for (var i=0; i < VIM.nodes.length; ++i)
+            geometryCounts[VIM.nodes[i].geometryIndex] += 1;
+
+        console.log("createing instanced meshes");
+        var r = [];
+        var material = new THREE.MeshNormalMaterial();
+        for (var i=0; i < geometries.length; ++i)
+        {
+            var count = geometryCounts[i];
+            if (count == 0)
+                continue;
+            var mesh = new THREE.InstancedMesh( geometries[i], material, count );
+            r.push(mesh);
+        }
+
+        return r;
 	},
 };

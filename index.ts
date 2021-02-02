@@ -746,8 +746,9 @@ const ara =
                 }
                 case "vim": {
                     const loader = new THREE.VIMLoader();
-                    loader.load(fileName, (obj) => {
-                        loadObject(new THREE.Mesh( obj ));
+                    loader.load(fileName, (objs) => {
+                        for (var i=0; i < objs.length; ++i)                        
+                            loadObject(new THREE.Mesh( objs[i] ));
 
                         // TODO: add an entire scene 
                         //objects.push(obj.scene);
