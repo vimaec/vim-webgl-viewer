@@ -2,23 +2,6 @@
 Ara Viewer
 Copyright VIMaec LLC, 2020
 Licensed under the terms of the MIT License
-
-A simple and easy to use 3D Model Web-Viewer built with Three.JS that eliminates a lot of boilerplate.
-This is based on a combination of examples from the Three.JS web-site.
-
-Example usage:
-
-    <html>
-    <head>
-    <title>Three Viewer Example</title>
-    </head>
-    <script src="../dist/ara-viewer.js"></script>
-    <body>
-    </body>
-    <script>
-        ara.view({ url: './dragon.ply' });
-    </script>
-    </html>
 */
 // Used to provide new IDs for each new property descriptor that is created.
 var gid = 0;
@@ -293,20 +276,14 @@ var DeepMerge = /** @class */ (function () {
     return DeepMerge;
 }());
 // END: Deepmerge
-var vertexShader = "\n    precision highp float;\n    \n    uniform mat4 modelViewMatrix; // optional\n    uniform mat4 projectionMatrix; // optional\n    uniform mat3 normalMatrix;\n    //uniform mat4 viewProjectionMatrix;\n    uniform vec3 lightDirection;\n    uniform float lightIntensity;\n    attribute vec3 position;\n    attribute vec3 normal;\n    attribute vec3 color;\n    varying vec4 vColor;\n    void main()\t{\n        gl_Position = projectionMatrix * modelViewMatrix * vec4( position, 1.0 );\n        // This could be baked back into the mesh\n        // vec3 transformedNormal = normalMatrix * normal;\n        float dotNL = dot ( normal, lightDirection );\n        float colorMult = clamp(lightIntensity * (1.0 + dotNL) / 2.0, 0.0, 1.0) / 255.0;\n        vColor = vec4(color * colorMult, 1.0);\n    }\n";
-var fragmentShader = "\n    #ifdef GL_FRAGMENT_PRECISION_HIGH\n    precision highp float;\n    #else\n    precision mediump float;\n    #endif\n    precision mediump int;\n    varying vec4 vColor;\n    void main()\t{\n        if (vColor.w < 0.2)\n            discard;\n        gl_FragColor = vColor;\n    }\n";
 // Main ARA code
 var ara = {
     view: function (options) {
         // Variables 
         var stats, gui, controls;
-        var camera, cameraTarget, scene, renderer, composer, material, plane, sunlight, light1, light2, settings;
+        var camera, cameraTarget, scene, renderer, material, plane, sunlight, light1, light2, settings;
         var materialsLoaded = false;
         var objects = [];
-        // Used with STL example 
-        //const material = new THREE.MeshPhongMaterial( { color: 0xff5533, specular: 0x111111, shininess: 200 } );
-        // TODO animation
-        // Default options object (merged with passed options)
         var defaultOptions = {
             showGui: true,
             showStats: true,
@@ -518,8 +495,10 @@ var ara = {
                     updateScene();
                 });
                 // TODO: enable this.
-                var obj = { export: exportFile };
-                gui.add(obj, 'export').name("Export to G3D ... ");
+                /*
+                var obj = { export:exportFile };
+                gui.add(obj, 'export' ).name("Export to G3D ... ");
+                */
             }
             // Ground            
             plane = new THREE.Mesh(new THREE.PlaneBufferGeometry(1000, 1000), new THREE.MeshPhongMaterial());
@@ -529,15 +508,12 @@ var ara = {
             // Lights
             sunlight = new THREE.HemisphereLight();
             scene.add(sunlight);
-            light1 = addShadowedLight(scene);
-            light2 = addShadowedLight(scene);
+            light1 = addLight(scene);
+            light2 = addLight(scene);
             // Material 
             material = new THREE.MeshPhongMaterial();
             // THREE JS renderer
             renderer.setPixelRatio(window.devicePixelRatio);
-            //renderer.gammaInput = true;
-            //renderer.gammaOutput = true;
-            //renderer.shadowMap.enabled = true;
             // Initial scene update: happens if controls change 
             updateScene();
             // Create orbit controls
@@ -560,16 +536,10 @@ var ara = {
                 return;
             var canvas = renderer.domElement;
             var parent = canvas.parentElement;
-            //canvas.width  = parent.clientWidth;
-            //canvas.height = parent.clientHeight;
-            // https://stackoverflow.com/questions/41814539/html-div-height-keeps-growing-on-window-resize-event
-            // you must pass false here or three.js sadly fights the browser
-            //<canvas id="canvas3d" style="position: absolute"></canvas>
             var rect = parent.getBoundingClientRect();
             var w = rect.width / window.devicePixelRatio;
             var h = rect.height / window.devicePixelRatio;
             renderer.setSize(w, h, false);
-            //composer.setSize(w, h);
             // Set aspect ratio
             camera.aspect = canvas.width / canvas.height;
             camera.updateProjectionMatrix();
@@ -602,61 +572,17 @@ var ara = {
         function loadObject(obj) {
             objects.push(obj);
             scene.add(obj);
-            // Output some stats 
-            /*
-            if (obj.geometry)
-                outputStats(obj.geometry);
-            else
-                console.log("No geometry found");
-            */
-        }
-        function updateShader(shader) {
-            var colorParsChunk = [
-                'attribute float aOpacity;',
-                'varying float vOpacity;',
-                '#include <common>'
-            ].join('\n');
-            var instanceColorChunk = [
-                '#include <begin_vertex>',
-                '\tvOpacity = aOpacity;'
-            ].join('\n');
-            var fragmentParsChunk = [
-                'varying float vOpacity;',
-                '#include <common>'
-            ].join('\n');
-            var colorChunk = [
-                'if (vOpacity < 0.5) discard;',
-                'vec4 diffuseColor = vec4( diffuse, vOpacity );'
-            ].join('\n');
-            shader.vertexShader = shader.vertexShader
-                .replace('#include <common>', colorParsChunk)
-                .replace('#include <begin_vertex>', instanceColorChunk);
-            shader.fragmentShader = shader.fragmentShader
-                .replace('#include <common>', fragmentParsChunk)
-                .replace('vec4 diffuseColor = vec4( diffuse, opacity );', colorChunk);
         }
         function loadVim(fileName) {
             console.log("Loading VIM");
             console.time("loadingVim");
-            var material;
-            //material = new THREE.MeshMatcapMaterial( { color: 0xffffff, matcap: texture, vertexColors: THREE.VertexColors } );
-            // material = new THREE.MeshPhongMaterial( { color: 0xffffff, vertexColors: THREE.VertexColors });
-            // material.onBeforeCompile = updateShader;
-            /*
-            material = new THREE.RawShaderMaterial({
-                uniforms: {
-                    lightDirection: { value: new THREE.Vector3() },
-                    lightIntensity: { value: 1.0 },
-                    viewProjectionMatrix: { value: new THREE.Matrix4() }
-                },
-                vertexShader: vertexShader,
-                fragmentShader: fragmentShader,
-                //side: THREE.DoubleSide
+            var material = new THREE.MeshPhongMaterial({
+                color: 0x999999,
+                vertexColors: THREE.VertexColors,
+                flatShading: true,
+                side: THREE.DoubleSide,
+                shininess: 70
             });
-            */
-            material = new THREE.MeshPhongMaterial({ color: 0x999999, vertexColors: THREE.VertexColors, flatShading: false, side: THREE.DoubleSide, shininess: 70 });
-            //material = new THREE.MeshLambertMaterial( {  vertexColors: THREE.VertexColors, flatShading: true, side: THREE.DoubleSide });
-            material.onBeforeCompile = updateShader;
             var loader = new THREE.VIMLoader();
             loader.load(fileName, material, function (objs) {
                 console.log("Finished loading VIM: found " + objs.length + " objects");
@@ -740,15 +666,6 @@ var ara = {
                     });
                     return;
                 }
-                case "g3d": {
-                    var loader = new THREE.G3DLoader();
-                    loader.load(fileName, function (geometry) {
-                        // TODO: decide whether this is really necessary
-                        geometry.computeVertexNormals();
-                        loadObject(new THREE.Mesh(geometry));
-                    });
-                    return;
-                }
                 case "vim": {
                     loadVim(fileName);
                     return;
@@ -764,20 +681,9 @@ var ara = {
         function scalarToVec(x) {
             return new THREE.Vector3(x, x, x);
         }
-        function addShadowedLight(scene) {
+        function addLight(scene) {
             var dirLight = new THREE.DirectionalLight();
             scene.add(dirLight);
-            dirLight.castShadow = true;
-            var d = 1;
-            dirLight.shadow.camera.left = -d;
-            dirLight.shadow.camera.right = d;
-            dirLight.shadow.camera.top = d;
-            dirLight.shadow.camera.bottom = -d;
-            dirLight.shadow.camera.near = 0.01;
-            dirLight.shadow.camera.far = 1000;
-            dirLight.shadow.mapSize.width = 1024;
-            dirLight.shadow.mapSize.height = 1024;
-            dirLight.shadow.bias = -0.001;
             return dirLight;
         }
         // https://developer.mozilla.org/en-US/docs/Web/API/HTML_Drag_and_Drop_API/File_drag_and_drop
@@ -787,7 +693,6 @@ var ara = {
             ev.preventDefault();
         }
         function droppedFile(file) {
-            // TODO: this is going to be 
             var fileName = file.name;
             loadIntoScene(fileName, null);
         }
@@ -835,11 +740,9 @@ var ara = {
         // TODO: update the camera 
         function render() {
             resizeCanvas();
-            //updateCamera();
             updateObjects();
             controls.update();
             renderer.render(scene, camera);
-            //composer.render( );
         }
     }
 };
