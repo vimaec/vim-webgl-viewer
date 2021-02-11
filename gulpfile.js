@@ -28,13 +28,6 @@ const srcFiles = [
     'node_modules/three/examples/js/loaders/STLLoader.js',
     'node_modules/three/examples/js/loaders/TDSLoader.js',
     'node_modules/three/examples/js/loaders/MTLLoader.js',
-    'node_modules/three/examples/js/postprocessing/EffectComposer.js',
-    'node_modules/three/examples/js/postprocessing/ShaderPass.js',
-    'node_modules/three/examples/js/postprocessing/SSAOPass.js',
-    'node_modules/three/examples/js/math/SimplexNoise.js',
-    'node_modules/three/examples/js/shaders/CopyShader.js',
-    'node_modules/three/examples/js/shaders/SSAOShader.js',
-    'G3DLoader.js',
     'VIMLoader.js',
 ];
 
