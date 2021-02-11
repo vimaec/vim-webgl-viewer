@@ -25,8 +25,15 @@ THREE.VIMLoader.prototype =
     constructor: THREE.VIMLoader,
     
     // Loads the VIM from a URL 
-    load: function ( url, material, onLoad, onProgress, onError ) 
-    {
+    load: function ( url, onLoad, onProgress, onError ) 
+    {        
+        const material = new THREE.MeshPhongMaterial( { 
+            color: 0x999999, 
+            vertexColors: THREE.VertexColors, 
+            flatShading: true, 
+            side: THREE.DoubleSide,  
+            shininess: 70   
+        });            
 		var scope = this;
 		var loader = new THREE.FileLoader( scope.manager );
 		loader.setResponseType( 'arraybuffer' );

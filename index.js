@@ -576,15 +576,8 @@ var ara = {
         function loadVim(fileName) {
             console.log("Loading VIM");
             console.time("loadingVim");
-            var material = new THREE.MeshPhongMaterial({
-                color: 0x999999,
-                vertexColors: THREE.VertexColors,
-                flatShading: true,
-                side: THREE.DoubleSide,
-                shininess: 70
-            });
             var loader = new THREE.VIMLoader();
-            loader.load(fileName, material, function (objs) {
+            loader.load(fileName, function (objs) {
                 console.log("Finished loading VIM: found " + objs.length + " objects");
                 materialsLoaded = true;
                 for (var i = 0; i < objs.length; ++i)
