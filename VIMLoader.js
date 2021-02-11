@@ -484,6 +484,8 @@ THREE.VIMLoader.prototype =
             else 
             {
                 var geometry = this.createBufferGeometry(localPositions, localIndices, undefined, vertexColors, opacities);
+                // This has to be enabled if you set flatShading: true on the material. However, experience shows that the 
+                //geometry.computeVertexNormals();
                 geometries.push(geometry);
             }
         }        
@@ -562,12 +564,6 @@ THREE.VIMLoader.prototype =
         console.log("Splitting geometries");
         var geometries = this.splitGeometries(vim.g3d, materialLookup );
         console.log("Found # geometries " + geometries.length);
-
-        console.log("Computing vertex normals");
-        for (var i=0; i < geometries.length; ++i)
-            //geometries[i].computeVertexNormals();
-            //geometries[i].computeFlatVertexNormals();
-            /* do nothing */;
 
         console.log("Counting # instance of each geometry");
         var instanceCounts = [];

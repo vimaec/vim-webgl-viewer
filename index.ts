@@ -740,40 +740,36 @@ const ara =
         function loadVim(fileName) {
             console.log("Loading VIM");
             console.time("loadingVim");
-            new THREE.TextureLoader().load( 'matcap-porcelain-white.jpg', function ( texture ) {
 
-                texture.encoding = THREE.sRGBEncoding;
-
-                var material;
-                //material = new THREE.MeshMatcapMaterial( { color: 0xffffff, matcap: texture, vertexColors: THREE.VertexColors } );
-                // material = new THREE.MeshPhongMaterial( { color: 0xffffff, vertexColors: THREE.VertexColors });
-                // material.onBeforeCompile = updateShader;
-                /*
-                material = new THREE.RawShaderMaterial({
-                    uniforms: {
-                        lightDirection: { value: new THREE.Vector3() },
-                        lightIntensity: { value: 1.0 },
-                        viewProjectionMatrix: { value: new THREE.Matrix4() }
-                    },
-                    vertexShader: vertexShader,
-                    fragmentShader: fragmentShader,
-                    //side: THREE.DoubleSide
-                });
-                */
-                material = new THREE.MeshPhongMaterial( { color: 0x999999, vertexColors: THREE.VertexColors, flatShading: true, side: THREE.DoubleSide });
-                //material = new THREE.MeshBasicMaterial( { color: 0x999999, vertexColors: THREE.VertexColors, flatShading: true });
-                //material.onBeforeCompile = updateShader;
-                
-                const loader = new THREE.VIMLoader();
-                loader.load(fileName, material, (objs) => {                       
-                    console.log("Finished loading VIM: found " + objs.length + " objects");
-                    materialsLoaded = true;
-                    for (var i=0; i < objs.length; ++i)                        
-                        loadObject(objs[i]);
-                    console.log("Finished loading VIM geometries into scene");
-                    console.timeEnd("loadingVim");
-                });
-            } );            
+            var material;
+            //material = new THREE.MeshMatcapMaterial( { color: 0xffffff, matcap: texture, vertexColors: THREE.VertexColors } );
+            // material = new THREE.MeshPhongMaterial( { color: 0xffffff, vertexColors: THREE.VertexColors });
+            // material.onBeforeCompile = updateShader;
+            /*
+            material = new THREE.RawShaderMaterial({
+                uniforms: {
+                    lightDirection: { value: new THREE.Vector3() },
+                    lightIntensity: { value: 1.0 },
+                    viewProjectionMatrix: { value: new THREE.Matrix4() }
+                },
+                vertexShader: vertexShader,
+                fragmentShader: fragmentShader,
+                //side: THREE.DoubleSide
+            });
+            */
+            material = new THREE.MeshPhongMaterial( { color: 0x999999, vertexColors: THREE.VertexColors, flatShading: false, side: THREE.DoubleSide,  shininess: 70 });
+            //material = new THREE.MeshLambertMaterial( {  vertexColors: THREE.VertexColors, flatShading: true, side: THREE.DoubleSide });
+            material.onBeforeCompile = updateShader;
+            
+            const loader = new THREE.VIMLoader();
+            loader.load(fileName, material, (objs) => {                       
+                console.log("Finished loading VIM: found " + objs.length + " objects");
+                materialsLoaded = true;
+                for (var i=0; i < objs.length; ++i)                        
+                    loadObject(objs[i]);
+                console.log("Finished loading VIM geometries into scene");
+                console.timeEnd("loadingVim");
+            });
         }
 
         function loadIntoScene(fileName, mtlurl) {        
@@ -862,20 +858,6 @@ const ara =
                 case "vim": {
                     loadVim(fileName);
                     return;
-                    /*
-                    const loader = new THREE.VIMLoader();
-                    console.log("Loading VIM");
-                    console.time("loadingVim");
-                    loader.load(fileName, (objs) => {                        
-                        console.log("Finished loading VIM: found " + objs.length + " objects");
-                        materialsLoaded = true;
-                        for (var i=0; i < objs.length; ++i)                        
-                            loadObject(objs[i]);
-                        console.log("Finished loading VIM geometries into scene");
-                        console.timeEnd("loadingVim");
-                    });
-                    return;
-                    */
                 }
                 default:
                     throw new Error("Unrecognized file type extension '" + ext + "' for file " + fileName);
