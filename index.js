@@ -66,14 +66,14 @@ var PropValue = /** @class */ (function () {
     }
     Object.defineProperty(PropValue.prototype, "name", {
         get: function () { return this._desc.name; },
-        enumerable: true,
+        enumerable: false,
         configurable: true
     });
     ;
     Object.defineProperty(PropValue.prototype, "value", {
         get: function () { return this._value; },
         set: function (value) { this._value = value; },
-        enumerable: true,
+        enumerable: false,
         configurable: true
     });
     return PropValue;
@@ -122,7 +122,7 @@ var PropList = /** @class */ (function () {
             }
             return r;
         },
-        enumerable: true,
+        enumerable: false,
         configurable: true
     });
     PropList.prototype.find = function (name) {
@@ -293,17 +293,14 @@ var DeepMerge = /** @class */ (function () {
     return DeepMerge;
 }());
 // END: Deepmerge
+var vertexShader = "\n    precision highp float;\n    \n    uniform mat4 modelViewMatrix; // optional\n    uniform mat4 projectionMatrix; // optional\n    uniform mat3 normalMatrix;\n    //uniform mat4 viewProjectionMatrix;\n    uniform vec3 lightDirection;\n    uniform float lightIntensity;\n    attribute vec3 position;\n    attribute vec3 normal;\n    attribute vec3 color;\n    varying vec4 vColor;\n    void main()\t{\n        gl_Position = projectionMatrix * modelViewMatrix * vec4( position, 1.0 );\n        // This could be baked back into the mesh\n        // vec3 transformedNormal = normalMatrix * normal;\n        float dotNL = dot ( normal, lightDirection );\n        float colorMult = clamp(lightIntensity * (1.0 + dotNL) / 2.0, 0.0, 1.0) / 255.0;\n        vColor = vec4(color * colorMult, 1.0);\n    }\n";
+var fragmentShader = "\n    #ifdef GL_FRAGMENT_PRECISION_HIGH\n    precision highp float;\n    #else\n    precision mediump float;\n    #endif\n    precision mediump int;\n    varying vec4 vColor;\n    void main()\t{\n        if (vColor.w < 0.2)\n            discard;\n        gl_FragColor = vColor;\n    }\n";
 // Main ARA code
 var ara = {
     view: function (options) {
-        // Check WebGL presence
-        if (!Detector.webgl) {
-            Detector.addGetWebGLMessage();
-            return;
-        }
         // Variables 
         var stats, gui, controls;
-        var camera, cameraTarget, scene, renderer, material, plane, sunlight, light1, light2, settings;
+        var camera, cameraTarget, scene, renderer, composer, material, plane, sunlight, light1, light2, settings;
         var materialsLoaded = false;
         var objects = [];
         // Used with STL example 
@@ -311,7 +308,8 @@ var ara = {
         // TODO animation
         // Default options object (merged with passed options)
         var defaultOptions = {
-            showGui: false,
+            showGui: true,
+            showStats: true,
             camera: {
                 near: 0.1,
                 far: 15000,
@@ -424,8 +422,8 @@ var ara = {
         function updateObjects() {
             scene.traverse(function (child) {
                 if (child.isMesh && child !== plane) {
-                    child.castShadow = true;
-                    child.receiveShadow = true;
+                    //child.castShadow = true;
+                    //child.receiveShadow = true;
                     var scale = scalarToVec(settings.object.scale);
                     child.scale.copy(scale);
                     if (!materialsLoaded) {
@@ -493,12 +491,18 @@ var ara = {
                 document.body.appendChild(canvas);
             }
             renderer = new THREE.WebGLRenderer({ antialias: true, canvas: canvas });
+            // TEMP: SSAO
+            //composer = new THREE.EffectComposer( renderer );
             // Create the camera and size everything appropriately  
             camera = new THREE.PerspectiveCamera();
             updateCamera();
             resizeCanvas(true);
             // Create scene object
             scene = new THREE.Scene();
+            // SSAO Pass
+            //const ssaoPass = new THREE.SSAOPass( scene, camera );
+            //ssaoPass.kernelRadius = 16;
+            //composer.addPass( ssaoPass );
             // Create a property descriptor 
             var propDesc = getOptionsDescriptor();
             // Create a property list from the descriptor 
@@ -520,7 +524,7 @@ var ara = {
             // Ground            
             plane = new THREE.Mesh(new THREE.PlaneBufferGeometry(1000, 1000), new THREE.MeshPhongMaterial());
             plane.rotation.x = -Math.PI / 2;
-            plane.receiveShadow = true;
+            //plane.receiveShadow = true;
             scene.add(plane);
             // Lights
             sunlight = new THREE.HemisphereLight();
@@ -531,9 +535,9 @@ var ara = {
             material = new THREE.MeshPhongMaterial();
             // THREE JS renderer
             renderer.setPixelRatio(window.devicePixelRatio);
-            renderer.gammaInput = true;
-            renderer.gammaOutput = true;
-            renderer.shadowMap.enabled = true;
+            //renderer.gammaInput = true;
+            //renderer.gammaOutput = true;
+            //renderer.shadowMap.enabled = true;
             // Initial scene update: happens if controls change 
             updateScene();
             // Create orbit controls
@@ -547,7 +551,7 @@ var ara = {
             // Stats display 
             if (settings.showStats) {
                 stats = new Stats();
-                renderer.domElement.appendChild(stats.dom);
+                document.body.appendChild(stats.dom);
             }
         }
         function resizeCanvas(force) {
@@ -565,6 +569,7 @@ var ara = {
             var w = rect.width / window.devicePixelRatio;
             var h = rect.height / window.devicePixelRatio;
             renderer.setSize(w, h, false);
+            //composer.setSize(w, h);
             // Set aspect ratio
             camera.aspect = canvas.width / canvas.height;
             camera.updateProjectionMatrix();
@@ -597,12 +602,70 @@ var ara = {
         function loadObject(obj) {
             objects.push(obj);
             scene.add(obj);
-            console.timeEnd("Loading object");
             // Output some stats 
+            /*
             if (obj.geometry)
                 outputStats(obj.geometry);
             else
                 console.log("No geometry found");
+            */
+        }
+        function updateShader(shader) {
+            var colorParsChunk = [
+                'attribute float aOpacity;',
+                'varying float vOpacity;',
+                '#include <common>'
+            ].join('\n');
+            var instanceColorChunk = [
+                '#include <begin_vertex>',
+                '\tvOpacity = aOpacity;'
+            ].join('\n');
+            var fragmentParsChunk = [
+                'varying float vOpacity;',
+                '#include <common>'
+            ].join('\n');
+            var colorChunk = [
+                'if (vOpacity < 0.5) discard;',
+                'vec4 diffuseColor = vec4( diffuse, vOpacity );'
+            ].join('\n');
+            shader.vertexShader = shader.vertexShader
+                .replace('#include <common>', colorParsChunk)
+                .replace('#include <begin_vertex>', instanceColorChunk);
+            shader.fragmentShader = shader.fragmentShader
+                .replace('#include <common>', fragmentParsChunk)
+                .replace('vec4 diffuseColor = vec4( diffuse, opacity );', colorChunk);
+        }
+        function loadVim(fileName) {
+            console.log("Loading VIM");
+            console.time("loadingVim");
+            var material;
+            //material = new THREE.MeshMatcapMaterial( { color: 0xffffff, matcap: texture, vertexColors: THREE.VertexColors } );
+            // material = new THREE.MeshPhongMaterial( { color: 0xffffff, vertexColors: THREE.VertexColors });
+            // material.onBeforeCompile = updateShader;
+            /*
+            material = new THREE.RawShaderMaterial({
+                uniforms: {
+                    lightDirection: { value: new THREE.Vector3() },
+                    lightIntensity: { value: 1.0 },
+                    viewProjectionMatrix: { value: new THREE.Matrix4() }
+                },
+                vertexShader: vertexShader,
+                fragmentShader: fragmentShader,
+                //side: THREE.DoubleSide
+            });
+            */
+            material = new THREE.MeshPhongMaterial({ color: 0x999999, vertexColors: THREE.VertexColors, flatShading: false, side: THREE.DoubleSide, shininess: 70 });
+            //material = new THREE.MeshLambertMaterial( {  vertexColors: THREE.VertexColors, flatShading: true, side: THREE.DoubleSide });
+            material.onBeforeCompile = updateShader;
+            var loader = new THREE.VIMLoader();
+            loader.load(fileName, material, function (objs) {
+                console.log("Finished loading VIM: found " + objs.length + " objects");
+                materialsLoaded = true;
+                for (var i = 0; i < objs.length; ++i)
+                    loadObject(objs[i]);
+                console.log("Finished loading VIM geometries into scene");
+                console.timeEnd("loadingVim");
+            });
         }
         function loadIntoScene(fileName, mtlurl) {
             console.log("Loading object from " + fileName);
@@ -687,14 +750,7 @@ var ara = {
                     return;
                 }
                 case "vim": {
-                    var loader = new THREE.VIMLoader();
-                    loader.load(fileName, function (objs) {
-                        for (var i = 0; i < objs.length; ++i)
-                            loadObject(new THREE.Mesh(objs[i]));
-                        // TODO: add an entire scene 
-                        //objects.push(obj.scene);
-                        //scene.add(obj);
-                    });
+                    loadVim(fileName);
                     return;
                 }
                 default:
@@ -779,10 +835,11 @@ var ara = {
         // TODO: update the camera 
         function render() {
             resizeCanvas();
-            updateCamera();
+            //updateCamera();
             updateObjects();
             controls.update();
             renderer.render(scene, camera);
+            //composer.render( );
         }
     }
 };
