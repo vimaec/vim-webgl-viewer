@@ -1,6 +1,6 @@
 {
   "name": "ara3d-viewer",
-  "version": "0.3.4",
+  "version": "0.4.0",
   "description": "A 3D model viewer in JavaScript.",
   "main": "./dist/ara3d-viewer.js",
   "homepage": "https://github.com/ara3d/ara3d-viewer",
@@ -17,6 +17,7 @@
   "scripts": {
     "build": "./node_modules/.bin/gulp -- build",
     "dist": "./node_modules/.bin/gulp -- dist",
+    "tswatch": "./node_modules/.bin/tsc.cmd -p tsconfig.json --watch",
     "watch": "./node_modules/.bin/gulp -- watch",
     "serve": "http-server"
   },
