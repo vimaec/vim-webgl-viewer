@@ -36,7 +36,7 @@ gulp.task('build', function(){
         .pipe(gp_concat('ara3d-viewer.js', {
             newLine:'\n;' // the newline is needed in case the file ends with a line comment, the semi-colon is needed if the last statement wasn't terminated
         }))       
-        .pipe(gulp.dest('dist'));
+        .pipe(gulp.dest('public'));
 });
 
 gulp.task('dist', function(){
@@ -44,10 +44,10 @@ gulp.task('dist', function(){
         .pipe(gp_concat('ara3d-viewer.js', {
             newLine:'\n;' // the newline is needed in case the file ends with a line comment, the semi-colon is needed if the last statement wasn't terminated
         }))
-        .pipe(gulp.dest('dist'))
+        .pipe(gulp.dest('public'))
         .pipe(gp_rename('ara3d-viewer.min.js'))
         .pipe(gp_uglify())
-        .pipe(gulp.dest('dist'));
+        .pipe(gulp.dest('public'));
 });
 
 gulp.task('watch', function() {

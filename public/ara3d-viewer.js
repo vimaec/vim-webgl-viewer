@@ -537,8 +537,8 @@ var ara = {
             var canvas = renderer.domElement;
             var parent = canvas.parentElement;
             var rect = parent.getBoundingClientRect();
-            var w = rect.width / window.devicePixelRatio;
-            var h = rect.height / window.devicePixelRatio;
+            var w = parent.clientWidth / window.devicePixelRatio;
+            var h = parent.clientHeight / window.devicePixelRatio;
             renderer.setSize(w, h, false);
             // Set aspect ratio
             camera.aspect = canvas.width / canvas.height;
@@ -576,15 +576,8 @@ var ara = {
         function loadVim(fileName) {
             console.log("Loading VIM");
             console.time("loadingVim");
-            var material = new THREE.MeshPhongMaterial({
-                color: 0x999999,
-                vertexColors: THREE.VertexColors,
-                flatShading: true,
-                side: THREE.DoubleSide,
-                shininess: 70
-            });
             var loader = new THREE.VIMLoader();
-            loader.load(fileName, material, function (objs) {
+            loader.load(fileName, function (objs) {
                 console.log("Finished loading VIM: found " + objs.length + " objects");
                 materialsLoaded = true;
                 for (var i = 0; i < objs.length; ++i)
@@ -666,6 +659,7 @@ var ara = {
                     });
                     return;
                 }
+                case "gzip":
                 case "vim": {
                     loadVim(fileName);
                     return;
@@ -59249,11 +59243,20 @@ THREE.VIMLoader.prototype =
     constructor: THREE.VIMLoader,
     
     // Loads the VIM from a URL 
-    load: function ( url, material, onLoad, onProgress, onError ) 
-    {
+    load: function ( url, onLoad, onProgress, onError ) 
+    {        
+        const material = new THREE.MeshPhongMaterial( { 
+            color: 0x999999, 
+            vertexColors: THREE.VertexColors, 
+            flatShading: true, 
+            side: THREE.DoubleSide,  
+            shininess: 70   
+        });            
 		var scope = this;
 		var loader = new THREE.FileLoader( scope.manager );
-		loader.setResponseType( 'arraybuffer' );
+        loader.setResponseType( 'arraybuffer' );
+        loader.setRequestHeader("Content-Encoding", "gzip");
+        loader.setRequestHeader("Accept-Encoding", "gzip, deflate");
         loader.load( url, function ( data ) 
         {
             try 
