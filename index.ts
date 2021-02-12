@@ -584,8 +584,8 @@ const ara =
             const canvas = renderer.domElement;
             const parent = canvas.parentElement as Element;            
             const rect = parent.getBoundingClientRect();
-            const w = rect.width / window.devicePixelRatio 
-            const h  = rect.height / window.devicePixelRatio;
+            const w = parent.clientWidth / window.devicePixelRatio 
+            const h  = parent.clientHeight / window.devicePixelRatio;
             renderer.setSize(w, h, false);
 
             // Set aspect ratio
@@ -715,6 +715,7 @@ const ara =
                     });
                     return;
                 }
+                case "gzip":
                 case "vim": {
                     loadVim(fileName);
                     return;

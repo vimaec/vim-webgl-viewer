@@ -537,8 +537,8 @@ var ara = {
             var canvas = renderer.domElement;
             var parent = canvas.parentElement;
             var rect = parent.getBoundingClientRect();
-            var w = rect.width / window.devicePixelRatio;
-            var h = rect.height / window.devicePixelRatio;
+            var w = parent.clientWidth / window.devicePixelRatio;
+            var h = parent.clientHeight / window.devicePixelRatio;
             renderer.setSize(w, h, false);
             // Set aspect ratio
             camera.aspect = canvas.width / canvas.height;
@@ -659,6 +659,7 @@ var ara = {
                     });
                     return;
                 }
+                case "gzip":
                 case "vim": {
                     loadVim(fileName);
                     return;

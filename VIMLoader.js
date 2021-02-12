@@ -36,7 +36,9 @@ THREE.VIMLoader.prototype =
         });            
 		var scope = this;
 		var loader = new THREE.FileLoader( scope.manager );
-		loader.setResponseType( 'arraybuffer' );
+        loader.setResponseType( 'arraybuffer' );
+        loader.setRequestHeader("Content-Encoding", "gzip");
+        loader.setRequestHeader("Accept-Encoding", "gzip, deflate");
         loader.load( url, function ( data ) 
         {
             try 
