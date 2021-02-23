@@ -27,10 +27,10 @@ const srcFiles = [
     'node_modules/three/examples/js/loaders/STLLoader.js',
     'node_modules/three/examples/js/loaders/TDSLoader.js',
     'node_modules/three/examples/js/loaders/MTLLoader.js',
-    'node_modules/three/examples/js/controls/FirstPersonControls.js',
-    'node_modules/three/examples/js/controls/PointerLockControls.js',
-    'CustomOrbitControls.js', 
-    'CameraControls.js',
+    //'node_modules/three/examples/js/controls/FirstPersonControls.js',
+    //'node_modules/three/examples/js/controls/PointerLockControls.js',
+    //'CustomOrbitControls.js', 
+    //'CameraControls.js',
     'VimLoader.js',
 ];
 
