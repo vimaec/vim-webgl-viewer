@@ -281,7 +281,8 @@ var ara = {
     view: function (options) {
         // Variables 
         var stats, gui, cameraControls;
-        var camera, cameraTarget, scene, renderer, material, plane, sunlight, light1, light2, settings;
+        var camera, cameraTarget, scene, renderer, canvas, material, plane, sunlight, light1, light2, settings;
+        var homePos, homeRot;
         var materialsLoaded = false;
         var objects = [];
         var defaultOptions = {
@@ -403,8 +404,8 @@ var ara = {
             camera.near = settings.camera.near;
             camera.far = settings.camera.far;
             camera.position.copy(toVec(settings.camera.position));
-            //cameraTarget = toVec(settings.camera.target);
-            //camera.lookAt( cameraTarget );
+            cameraTarget = toVec(settings.camera.target);
+            camera.lookAt(cameraTarget);
         }
         // Called every frame in case settings are updated 
         function updateScene() {
@@ -489,7 +490,7 @@ var ara = {
             // Initialize the settings 
             settings = (new DeepMerge()).deepMerge(defaultOptions, options, undefined);
             // If a canvas is given, we will draw in it.
-            var canvas = document.getElementById(settings.canvasId);
+            canvas = document.getElementById(settings.canvasId);
             // If no canvas is given, we create a new one
             if (!canvas) {
                 canvas = document.createElement('canvas');
@@ -539,7 +540,8 @@ var ara = {
             // Initial scene update: happens if controls change 
             updateScene();
             // Create orbit controls
-            cameraControls = new THREE.OrbitControls(camera, renderer.domElement);
+            /*
+            cameraControls = new THREE.OrbitControls( camera, renderer.domElement );
             cameraControls.enableDamping = settings.camera.controls.enableDamping; // an animation loop is required when either damping or auto-rotation are enabled
             cameraControls.dampingFactor = settings.camera.controls.dampingFactor;
             cameraControls.autoRotate = settings.camera.controls.autoRotateSpeed > 0.0001 || settings.camera.controls.autoRotateSpeed < -0.0001;
@@ -550,6 +552,7 @@ var ara = {
             cameraControls.keySpanSpeed = settings.camera.controls.pixelPerKeyPress;
             cameraControls.zoomSpeed = settings.camera.controls.zoomSpeed;
             cameraControls.screenSpacePanning = settings.camera.controls.screenSpacePanning;
+            */
             /*
             CameraControls.install( { THREE: THREE } );
             const EPS = 1e-5;
@@ -562,6 +565,13 @@ var ara = {
             */
             // Initial update of the camera
             updateCamera();
+            // Get the initial position 
+            homePos = new THREE.Vector3();
+            homePos.copy(camera.position);
+            homeRot = new THREE.Quaternion();
+            homeRot.copy(camera.quaternion);
+            // Add all of the appropriate mouse, touch-pad, and keyboard listeners
+            addListeners();
             // Stats display 
             if (settings.showStats) {
                 stats = new Stats();
@@ -763,10 +773,149 @@ var ara = {
             requestAnimationFrame(animate);
             resizeCanvas();
             updateObjects();
-            cameraControls.update();
+            //cameraControls.update();
             renderer.render(scene, camera);
             if (stats)
                 stats.update();
+        }
+        // Listeners 
+        function addListeners() {
+            canvas.addEventListener('contextmenu', onContextMenu, false);
+            canvas.addEventListener('mousedown', onMouseDown, false);
+            canvas.addEventListener('wheel', onMouseWheel, false);
+            canvas.addEventListener('touchstart', onTouchStart, false);
+            canvas.addEventListener('touchend', onTouchEnd, false);
+            canvas.addEventListener('touchmove', onTouchMove, false);
+            document.addEventListener('keydown', onKeyDown, false);
+        }
+        function onMouseDown(event) {
+            console.log("Mouse down");
+            event.preventDefault();
+            document.addEventListener('mousemove', onMouseMove, false);
+            document.addEventListener('mouseup', onMouseUp, false);
+            // Manually set the focus since calling preventDefault above
+            // prevents the browser from setting it automatically.    
+            canvas.focus ? canvas.focus() : window.focus();
+        }
+        function onContextMenu(event) {
+            console.log("Context menu");
+        }
+        function onMouseUp(event) {
+            console.log("Mouse up");
+            document.removeEventListener('mousemove', onMouseMove, false);
+            document.removeEventListener('mouseup', onMouseUp, false);
+        }
+        function onMouseMove(event) {
+            console.log("Mouse move");
+            event.preventDefault();
+            // https://github.com/mrdoob/three.js/blob/master/examples/jsm/controls/PointerLockControls.js
+            var deltaX = event.movementX || event.mozMovementX || event.webkitMovementX || 0;
+            var deltaY = event.movementY || event.mozMovementY || event.webkitMovementY || 0;
+            var euler = new THREE.Euler(0, 0, 0, 'YXZ');
+            euler.setFromQuaternion(camera.quaternion);
+            euler.y += deltaX * 0.002;
+            euler.x += deltaY * 0.002;
+            euler.z = 0;
+            var PI_2 = Math.PI / 2;
+            var minPolarAngle = -2 * Math.PI;
+            var maxPolarAngle = 2 * Math.PI;
+            euler.x = Math.max(PI_2 - maxPolarAngle, Math.min(PI_2 - minPolarAngle, euler.x));
+            camera.quaternion.setFromEuler(euler);
+        }
+        function onMouseWheel(event) {
+            console.log("Mouse wheel");
+            event.preventDefault();
+            event.stopPropagation();
+            var speed = 0.2;
+            var dir = event.deltaY > 0 ? direction.back : direction.forward;
+            moveCameraBy(dir, speed);
+        }
+        var keys = {
+            A: 65,
+            D: 68,
+            Q: 81,
+            E: 69,
+            S: 83,
+            W: 87,
+            LEFTARROW: 37,
+            UPARROW: 38,
+            RIGHTARROW: 39,
+            DOWNARROW: 40,
+            HOME: 36,
+            END: 37,
+            PAGEUP: 33,
+            PAGEDOWN: 34,
+        };
+        var direction = {
+            forward: new THREE.Vector3(0, 0, -1),
+            back: new THREE.Vector3(0, 0, 1),
+            left: new THREE.Vector3(-1, 0, 0),
+            right: new THREE.Vector3(1, 0, 0),
+            up: new THREE.Vector3(0, 1, 0),
+            down: new THREE.Vector3(0, -1, 0),
+        };
+        function onKeyDown(event) {
+            console.log("Key down");
+            var speed = 0.05;
+            if (event.shiftKey)
+                speed *= 3;
+            if (event.altKey)
+                speed *= 5;
+            switch (event.keyCode) {
+                case keys.A:
+                case keys.LEFTARROW:
+                    moveCameraBy(direction.left, speed);
+                    break;
+                case keys.D:
+                case keys.RIGHTARROW:
+                    moveCameraBy(direction.right, speed);
+                    break;
+                case keys.W:
+                case keys.UPARROW:
+                    moveCameraBy(direction.forward, speed);
+                    break;
+                case keys.S:
+                case keys.DOWNARROW:
+                    moveCameraBy(direction.back, speed);
+                    break;
+                case keys.E:
+                case keys.PAGEUP:
+                    moveCameraBy(direction.up, speed);
+                    break;
+                case keys.Q:
+                case keys.PAGEDOWN:
+                    moveCameraBy(direction.down, speed);
+                    break;
+                case keys.HOME:
+                    resetCamera();
+                    break;
+                default:
+                    return;
+            }
+            event.preventDefault();
+        }
+        function onTouchStart(event) {
+            console.log("Touch start");
+            event.preventDefault(); // prevent scrolling
+        }
+        function onTouchMove(event) {
+            console.log("Touch move");
+        }
+        function onTouchEnd(event) {
+            console.log("Touch end");
+        }
+        // Function camera controls 
+        function moveCameraBy(dir, speed) {
+            var vector = new THREE.Vector3();
+            vector.copy(dir);
+            if (speed)
+                vector.multiplyScalar(speed);
+            vector.applyQuaternion(camera.quaternion);
+            camera.position.add(vector);
+        }
+        function resetCamera() {
+            camera.position.copy(homePos);
+            camera.quaternion.copy(homeRot);
         }
     }
 };
