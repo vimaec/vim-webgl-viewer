@@ -15,7 +15,6 @@ const srcFiles = [
     'node_modules/dat.gui/build/dat.gui.js',
     'node_modules/three/build/three.js',
     'node_modules/three/examples/js/libs/stats.min.js',
-    'node_modules/three/examples/js/controls/OrbitControls.js', 
     'node_modules/three/examples/js/utils/BufferGeometryUtils.js',
     'node_modules/three/examples/js/loaders/FBXLoader.js',
     'node_modules/three/examples/js/loaders/ColladaLoader.js',
@@ -28,7 +27,11 @@ const srcFiles = [
     'node_modules/three/examples/js/loaders/STLLoader.js',
     'node_modules/three/examples/js/loaders/TDSLoader.js',
     'node_modules/three/examples/js/loaders/MTLLoader.js',
-    'VIMLoader.js',
+    'node_modules/three/examples/js/controls/FirstPersonControls.js',
+    'node_modules/three/examples/js/controls/PointerLockControls.js',
+    'CustomOrbitControls.js', 
+    'CameraControls.js',
+    'VimLoader.js',
 ];
 
 gulp.task('build', function(){
