@@ -7,6 +7,7 @@ Licensed under the terms of the MIT License
 declare const THREE: any;
 declare const Stats: any;
 declare const dat: any;
+declare const CameraControls: any;
 
 /**
  * js-prop-list.ts
@@ -292,7 +293,7 @@ const ara =
     view: function(options) 
     {
         // Variables 
-        let stats, gui, controls;
+        let stats, gui, cameraControls;
         let camera, cameraTarget, scene, renderer, material, plane, sunlight, light1, light2, settings;
         let materialsLoaded = false;
         let objects = [];
@@ -308,6 +309,18 @@ const ara =
                 rotate: 1.0,
                 position: { x: 0, y: 5, z: -5 },
                 target: { x: 0, y: -1, z: 0, },
+                controls: {
+                    trackball: false,
+                    enableDamping: false,
+                    dampingFactor: 0.05,
+                    autoRotateSpeed: 0,
+                    rotateSpeed: 1.0,
+                    enablePan: true,
+                    panSpeed: 1.0,
+                    screenSpacePanning: true,
+                    pixelPerKeyPress: 7.0,
+                    zoomSpeed: 1.0,
+                }                
             },
             background: {
                 color: { r: 0x72, g: 0x64, b: 0x5b, }
@@ -368,8 +381,28 @@ const ara =
             return new THREE.Color(c.r / 255, c.g / 255, c.b  / 255);
         }
 
+        function toVec(obj) {
+            return new THREE.Vector3(obj.x, obj.y, obj.z)
+        }        
+        
+        function scalarToVec(x) {
+            return new THREE.Vector3(x, x, x);
+        }
+                
         function toEuler(rot) {
             return new THREE.Euler(rot.x * Math.PI / 180, rot.y * Math.PI / 180, rot.z * Math.PI / 180)
+        }
+
+        function toQuaternion(rot) {
+            const q = new THREE.Quaternion();
+            q.setFromEuler(toEuler(rot));
+            return q;
+        }
+
+        function toMatrix(pos, rot, scl) {
+            const m = new THREE.Matrix4();
+            m.compose(toVec(pos), toQuaternion(rot), scalarToVec(scl));
+            return m;
         }
 
         function updateMaterial(targetMaterial, settings) {
@@ -388,8 +421,8 @@ const ara =
             camera.near = settings.camera.near;
             camera.far = settings.camera.far;
             camera.position.copy(toVec(settings.camera.position));
-            cameraTarget = toVec(settings.camera.target);
-            camera.lookAt( cameraTarget );
+            //cameraTarget = toVec(settings.camera.target);
+            //camera.lookAt( cameraTarget );
         }
 
         // Called every frame in case settings are updated 
@@ -411,7 +444,7 @@ const ara =
             sunlight.groundColor = toColor(settings.sunlight.groundColor);
             sunlight.intensity = settings.sunlight.intensity;
         } 
-
+        
         function updateObjects() {
             scene.traverse( function ( child ) {
                 if ( child.isMesh && child !== plane) {
@@ -419,12 +452,12 @@ const ara =
                     //child.receiveShadow = true;
                     const scale = scalarToVec(settings.object.scale);
                     child.scale.copy( scale ); 
+                    child.position.copy(settings.object.position);
+                    child.rotation.copy(toEuler(settings.object.rotation));
                     if (!materialsLoaded) {
                         updateMaterial(material, settings.object.material);
                         child.material = material;
                     }
-                    child.position.copy(settings.object.position);
-                    child.rotation.copy(toEuler(settings.object.rotation));
                 }
             } );
         }
@@ -486,17 +519,15 @@ const ara =
 
             // If a canvas is given, we will draw in it.
             let canvas = document.getElementById(settings.canvasId);
+
+            // If no canvas is given, we create a new one
             if (!canvas) {
-                // Add to a div in the web page.
                 canvas = document.createElement( 'canvas' );
                 document.body.appendChild(canvas)
             } 
 
             renderer = new THREE.WebGLRenderer( { antialias: true, canvas } );
-            
-            // TEMP: SSAO
-            //composer = new THREE.EffectComposer( renderer );
-                
+                            
             // Create the camera and size everything appropriately  
             camera = new THREE.PerspectiveCamera();
             updateCamera();
@@ -505,11 +536,6 @@ const ara =
             // Create scene object
             scene = new THREE.Scene();            
 
-            // SSAO Pass
-            //const ssaoPass = new THREE.SSAOPass( scene, camera );
-            //ssaoPass.kernelRadius = 16;
-            //composer.addPass( ssaoPass );
-            
             // Create a property descriptor 
             const propDesc = getOptionsDescriptor();
 
@@ -561,12 +587,27 @@ const ara =
             updateScene();
 
             // Create orbit controls
-            controls = new THREE.OrbitControls( camera, renderer.domElement );
-            controls.enableDamping = true; // an animation loop is required when either damping or auto-rotation are enabled
-            controls.dampingFactor = 0.25;
-            controls.autoRotate = settings.camera.autoRotate;
-            controls.autoRotateSpeed = settings.camera.rotateSpeed;            
-
+            cameraControls = new THREE.OrbitControls( camera, renderer.domElement );            
+            cameraControls.enableDamping = settings.camera.controls.enableDamping; // an animation loop is required when either damping or auto-rotation are enabled
+            cameraControls.dampingFactor = settings.camera.controls.dampingFactor;
+            cameraControls.autoRotate = settings.camera.controls.autoRotateSpeed > 0.0001 || settings.camera.controls.autoRotateSpeed < -0.0001;
+            cameraControls.autoRotateSpeed = settings.camera.autoRotateSpeed;
+            cameraControls.rotateSpeed = settings.camera.controls.rotateSpeed;
+            cameraControls.enablePan = settings.camera.controls.enablePan;
+            cameraControls.panSpeed = settings.camera.controls.panSpeed;
+            cameraControls.keySpanSpeed = settings.camera.controls.pixelPerKeyPress;
+            cameraControls.zoomSpeed = settings.camera.controls.zoomSpeed;
+            cameraControls.screenSpacePanning = settings.camera.controls.screenSpacePanning;
+            /*
+            CameraControls.install( { THREE: THREE } );
+            const EPS = 1e-5;
+            cameraControls = new CameraControls( camera, renderer.domElement );            
+            cameraControls.azimuthRotateSpeed = - 0.3; // negative value to invert rotation direction
+            cameraControls.polarRotateSpeed   = - 0.3; // negative value to invert rotation direction
+            cameraControls.truckSpeed = 1 / EPS * 3;
+            cameraControls.mouseButtons.wheel = CameraControls.ACTION.ZOOM;
+            cameraControls.touches.two = CameraControls.ACTION.TOUCH_ZOOM_TRUCK;
+            */
             // Initial update of the camera
             updateCamera(); 
 
@@ -583,7 +624,6 @@ const ara =
 
             const canvas = renderer.domElement;
             const parent = canvas.parentElement as Element;            
-            const rect = parent.getBoundingClientRect();
             const w = parent.clientWidth / window.devicePixelRatio 
             const h  = parent.clientHeight / window.devicePixelRatio;
             renderer.setSize(w, h, false);
@@ -593,60 +633,62 @@ const ara =
             camera.updateProjectionMatrix();
         }
 
-        function outputStats(obj) {
-            console.log("Object id = " + obj.uuid + " name = " + obj.name)
-            if (obj.isBufferGeometry) {
-                console.log("Is a BufferGeometry");
-                const position = obj.getAttribute('position');
-                if (!position)
-                    throw new Error("Could not find a position attribute");
-                const nVerts = position.count;
-                const nFaces = obj.index ? obj.index.count / 3 : nVerts / 3;
-                console.log("# vertices = " + nVerts);
-                console.log("# faces = " + nFaces);
-                for (let attrName in obj.attributes) {
-                    const attr = obj.getAttribute(attrName);
-                    console.log("has attribute " + attrName + " with a count of " + attr.count);
-                }
-            }
-            else if (obj.isGeometry)
-            {
-                console.log("Is a Geometry");
-                console.log("# vertices = " + obj.vertices.length);
-                console.log("# faces = " + obj.faces.length);
-            }
-            else 
-            {
-                console.log("Is neither a Geometry nor a BufferGeometry");
-            }
-        }
-
         function loadObject(obj) {
             objects.push(obj);
             scene.add(obj);
         }
+
+        function getSettingsMatrix() {
+            return toMatrix(settings.object.position, settings.object.rotation, settings.object.scale);
+        }
         
+        function addViews(views) {
+            const folder = gui.addFolder('views');                
+            const obj = {};
+            const matrix = getSettingsMatrix();
+            for (let i=0; i < views.length; ++i) {
+                const view = views[i];
+                const name = view.name;
+                if (view.x == 0 && view.y == 0 && view.z == 0)
+                    continue;
+                obj[name] = function() { 
+                    console.log("Navigating to " + name); 
+                    let pos = new THREE.Vector3(view.x, view.y, view.z + 5.5);
+                    pos.applyMatrix4(matrix);
+                    camera.position.copy(pos);
+                };
+                folder.add(obj, name);
+            }
+        }
+
         function loadVim(fileName) {
             console.log("Loading VIM");
             console.time("loadingVim");
 
             const loader = new THREE.VIMLoader();
-            loader.load(fileName, (objs) => {                       
-                console.log("Finished loading VIM: found " + objs.length + " objects");
+            loader.load(fileName, (vim) => {                       
+                console.log("Finished loading VIM: found " + vim.meshes.length + " objects");
                 materialsLoaded = true;
-                for (var i=0; i < objs.length; ++i)                        
-                    loadObject(objs[i]);
+                for (let i=0; i < vim.meshes.length; ++i)                        
+                    loadObject(vim.meshes[i]);
+                addViews(vim.rooms);
                 console.log("Finished loading VIM geometries into scene");
                 console.timeEnd("loadingVim");
             });
         }
 
-        function loadIntoScene(fileName, mtlurl) {        
+        function loadIntoScene(fileName, mtlUrl) {     
             console.log("Loading object from " + fileName);
-            console.time("Loading object")
+            console.time("Loading object");
+            const indexOfQueryParams = fileName.lastIndexOf("?");
+            if (indexOfQueryParams >= 0)
+                fileName = fileName.substring(0, indexOfQueryParams);
             const extPos = fileName.lastIndexOf(".");
             const ext = fileName.slice(extPos + 1).toLowerCase();
+            loadIntoSceneWithLoader(fileName, mtlUrl, ext);
+        }
 
+        function loadIntoSceneWithLoader(fileName, mtlUrl, ext) {     
             switch (ext) {
                 case "3ds": {
                     const loader = new THREE.TDSLoader();
@@ -679,13 +721,13 @@ const ara =
                 case "obj": {
                     const objLoader = new THREE.OBJLoader();                    
                     const mtlLoader = new THREE.MTLLoader();
-                    if (mtlurl) {                        
-                        mtlLoader.load(mtlurl, (mats) => {
+                    if (mtlUrl) {                        
+                        mtlLoader.load(mtlUrl, (mats) => {
                             mats.preload();
                             materialsLoaded = true;
                             objLoader.setMaterials(mats).load(fileName, loadObject);
                         }, null, () => {
-                            console.warn("Failed to load material " + mtlurl + " trying to load obj alone");
+                            console.warn("Failed to load material " + mtlUrl + " trying to load obj alone");
                             objLoader.load(fileName, loadObject);
                         });
                     }
@@ -715,7 +757,6 @@ const ara =
                     });
                     return;
                 }
-                case "gzip":
                 case "vim": {
                     loadVim(fileName);
                     return;
@@ -725,13 +766,6 @@ const ara =
             }
         }
 
-        // Helper functions 
-        function toVec(obj) {
-            return new THREE.Vector3(obj.x, obj.y, obj.z)
-        }        
-        function scalarToVec(x) {
-            return new THREE.Vector3(x, x, x);
-        }
         function addLight(scene) {
             const dirLight = new THREE.DirectionalLight();
             scene.add( dirLight );
@@ -791,18 +825,12 @@ const ara =
         // Calls render, and asks the framework to prepare the next frame 
         function animate() {
             requestAnimationFrame( animate );
-            render();
-            if (stats)
-                stats.update();
-        }
-
-        // Updates scene objects, and draws the scene 
-        // TODO: update the camera 
-        function render() { 
             resizeCanvas(); 
             updateObjects();
-            controls.update();
+            cameraControls.update();
             renderer.render( scene, camera );
+            if (stats)
+                stats.update();
         }
     }
 }

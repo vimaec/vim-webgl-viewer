@@ -34,8 +34,8 @@ THREE.VIMLoader.prototype =
             side: THREE.DoubleSide,  
             shininess: 70   
         });            
-		var scope = this;
-		var loader = new THREE.FileLoader( scope.manager );
+		let scope = this;
+		let loader = new THREE.FileLoader( scope.manager );
         loader.setResponseType( 'arraybuffer' );
         loader.setRequestHeader("Content-Encoding", "gzip");
         loader.setRequestHeader("Accept-Encoding", "gzip, deflate");
@@ -61,22 +61,54 @@ THREE.VIMLoader.prototype =
 
     getMaterialColorLookup : function ( vim )
     {
-        var materialData = vim.entities["Rvt.Material"];
+        let materialData = vim.entities["Rvt.Material"];
         if (materialData == null)
             throw new Error("Material data undefined");
-        var xs = new Float64Array(materialData["Color.X"], );
-        var ys = new Float64Array(materialData["Color.Y"]);
-        var zs = new Float64Array(materialData["Color.Z"]);
-        var ws = new Float64Array(materialData["Transparency"]);
-        var ids = new Float64Array(materialData["Id"]);
-        var r = {};
-        for (var i=0; i < ids.length; ++i)
+        let xs = new Float64Array(materialData["Color.X"], );
+        let ys = new Float64Array(materialData["Color.Y"]);
+        let zs = new Float64Array(materialData["Color.Z"]);
+        let ws = new Float64Array(materialData["Transparency"]);
+        let ids = new Float64Array(materialData["Id"]);
+        let r = {};
+        for (let i=0; i < ids.length; ++i)
         {
             r[ids[i]] = 
             {
                 color: new THREE.Color(xs[i],ys[i],zs[i]),
                 opacity: 1.0 - ws[i],
             };     
+        }
+        return r;
+    },
+
+    getElements : function ( vim )
+    {
+        let elementData = vim.entities["Rvt.Element"];
+        let names = new Int32Array(elementData["Name"]);
+        let xs = new Float64Array(elementData["Location.X"]);
+        let ys = new Float64Array(elementData["Location.Y"]);
+        let zs = new Float64Array(elementData["Location.Z"]);
+        let r = new Array(names.length);
+        for (let i=0; i < names.length; ++i)
+        {
+            let name = names[i] >= 0 ? vim.strings[names[i]] : "";
+            r[i] = { name: name, x: xs[i], y: ys[i], z: zs[i] };
+        }
+        return r;
+    },    
+    
+    getRooms : function ( vim )
+    {
+        if (!vim.elements)
+            return undefined;
+        let roomData = vim.entities["Rvt.Room"];
+        let ids = new Int32Array(roomData["Element"]);
+        let r = new Array(ids.length);
+        for (let i=0; i < ids.length; ++i)
+        {
+            let id = ids[i];
+            if (id > 0)
+                r[i] = vim.elements[id];
         }
         return r;
     },
@@ -89,10 +121,10 @@ THREE.VIMLoader.prototype =
         // Cast the input data to 32-bit integers 
         // Note that according to the spec they are 64 bit numbers. In JavaScript you can't have 64 bit integers, 
         // and it would bust the amount of memory we can work with in most browsers and low-power devices  
-        var data = new Int32Array( arrayBuffer, byteOffset, byteLength / 4 );
+        let data = new Int32Array( arrayBuffer, byteOffset, byteLength / 4 );
 
         // Parse the header
-        var header = {
+        let header = {
             Magic:      data[0], // Either Constants.SameEndian or Constants.SwappedEndian depending on endianess of writer compared to reader. 
             DataStart:  data[2], // <= file size and >= ArrparayRangesEnd and >= FileHeader.ByteCount
             DataEnd:    data[4], // >= DataStart and <= file size
@@ -110,16 +142,15 @@ THREE.VIMLoader.prototype =
         if (data[5] != 0) throw new Error("Expected 0 in position 16");
         if (data[7] != 0) throw new Error("Expected 0 in position 24");
         if (header.DataStart <= 32 || header.DataStart > byteLength) throw new Error("Data start is out of valid range");
-        // TEMP:
-        //if (header.DataEnd < header.DataStart || header.DataEnd > byteLength) throw new Error("Data end is out of vaid range");
+        if (header.DataEnd < header.DataStart || header.DataEnd > byteLength) throw new Error("Data end is out of vaid range");
         if (header.NumArrays < 0 || header.NumArrays > header.DataEnd) throw new Error("Number of arrays is invalid");
                 
         // Compute each buffer
-        var buffers = [];
-        var pos = 8; 
-        for (var i=0; i < header.NumArrays; ++i) {
-            var begin = data[pos+0];
-            var end = data[pos+2];            
+        let buffers = [];
+        let pos = 8; 
+        for (let i=0; i < header.NumArrays; ++i) {
+            let begin = data[pos+0];
+            let end = data[pos+2];            
 
             // Check validity of data 
             if (data[pos+1] != 0) throw new Error("Expected 0 in position " + (pos + 1) * 4);
@@ -128,7 +159,7 @@ THREE.VIMLoader.prototype =
             if (end < begin || end > header.DataEnd ) throw new Error("Buffer end is out of range");            
 
             pos += 4;      
-            var buffer = new Uint8Array(arrayBuffer, begin + byteOffset, end - begin);
+            let buffer = new Uint8Array(arrayBuffer, begin + byteOffset, end - begin);
             buffers.push(buffer);
         }        
 
@@ -136,7 +167,7 @@ THREE.VIMLoader.prototype =
             throw new Error("Expected at least one buffer containing the names");
 
         // break the first one up into names          
-        var joinedNames = new TextDecoder("utf-8").decode(buffers[0]);
+        let joinedNames = new TextDecoder("utf-8").decode(buffers[0]);
 
         // Removing the trailing '\0' before spliting the names 
         names = joinedNames.slice(0,-1).split('\0');
@@ -146,7 +177,7 @@ THREE.VIMLoader.prototype =
             throw new Error("Expected number of names to be equal to the number of buffers - 1"); 
 
         // For debug purposes output the name of each buffer 
-        //for (var i=0; i < names.length; ++i)
+        //for (let i=0; i < names.length; ++i)
         //    console.log("Buffer " + i + " (" + names[i] + ") has size " + buffers[i+1].byteLength);        
 
         // Return the bfast structure 
@@ -159,14 +190,14 @@ THREE.VIMLoader.prototype =
 
     constructEntityTable: function (bfast) 
     {
-        var r = {};
-        for (var i=0; i < bfast.buffers.length; ++i)
+        let r = {};
+        for (let i=0; i < bfast.buffers.length; ++i)
         {
-            var tmp = bfast.names[i].split(':');
-            var columnType = tmp[0];
-            var columnName = tmp[1];
-            var buffer = bfast.buffers[i];
-            var columnData;
+            let tmp = bfast.names[i].split(':');
+            let columnType = tmp[0];
+            let columnName = tmp[1];
+            let buffer = bfast.buffers[i];
+            let columnData;
             if (columnType == "numeric")
             {
                 columnData = new Float64Array(buffer.buffer, buffer.byteOffset, buffer.byteLength / 8);
@@ -192,10 +223,10 @@ THREE.VIMLoader.prototype =
 
     constructEntityTables: function (bfast) 
     {
-        var r = {};
-        for (var i=0; i < bfast.buffers.length; ++i)
+        let r = {};
+        for (let i=0; i < bfast.buffers.length; ++i)
         {
-            var tableName = bfast.names[i];
+            let tableName = bfast.names[i];
             tableName = tableName.substring(tableName.indexOf(":") + 1);
             r[tableName] = this.constructEntityTable(this.parseBFastFromArray(bfast.buffers[i]));
         }
@@ -210,8 +241,8 @@ THREE.VIMLoader.prototype =
         if (bfast.buffers.length < 6)
             throw new Error("VIM requires at least six BFast buffers");
 
-        var lookup = {};
-        for (var i=0; i < bfast.buffers.length; ++i)
+        let lookup = {};
+        for (let i=0; i < bfast.buffers.length; ++i)
             lookup[bfast.names[i]] = bfast.buffers[i];
 
         // Some files generate the wrong name for the "nodes"
@@ -238,18 +269,18 @@ THREE.VIMLoader.prototype =
             throw new Error("G3D requires at least two BFast buffers");
 
         // This will just contain some JSON
-        var metaBuffer = bfast.buffers[0];
+        let metaBuffer = bfast.buffers[0];
         if (bfast.names[0] != 'meta')
             throw new Error("First G3D buffer must be named 'meta', but was named: " + bfast.names[0]);
         
         // Extract each descriptor 
-        var attributes = [];
-        var nDescriptors = bfast.buffers.length - 1;
-        for (var i=0; i < nDescriptors; ++i) {
-            var desc = bfast.names[i+1].split(':');
+        let attributes = [];
+        let nDescriptors = bfast.buffers.length - 1;
+        for (let i=0; i < nDescriptors; ++i) {
+            let desc = bfast.names[i+1].split(':');
             if (desc[0].toLowerCase() != 'g3d' || desc.length != 6)
                 throw new Error("Not a valid attribute descriptor, must have 6 components delimited by ':' and starting with 'g3d' " + desc);
-            var attribute = {
+            let attribute = {
                 name:               desc,
                 association:        desc[1], // Indicates the part of the geometry that this attribute is associated with 
                 semantic:           desc[2], // the role of the attribute 
@@ -271,10 +302,10 @@ THREE.VIMLoader.prototype =
 
     // Finds the first attribute that has the matching fields passing null matches a field to all
     findAttribute: function( VIM, assoc, semantic, index, dataType, arity ) {
-        var r = [];
-        for (var i=0; i < VIM.attributes.length; ++i)
+        let r = [];
+        for (let i=0; i < VIM.attributes.length; ++i)
         {
-            var attr = VIM.attributes[i];
+            let attr = VIM.attributes[i];
             if ((attr.association == assoc || assoc == null)
                 && (attr.semantic == semantic || semantic == null)
                 && (attr.attributeTypeIndex == index || index == null)
@@ -293,7 +324,7 @@ THREE.VIMLoader.prototype =
             return null;
         
         // This is a UInt8 array
-        var data = attr.rawData;
+        let data = attr.rawData;
 
         switch (attr.dataType)
         {
@@ -319,7 +350,7 @@ THREE.VIMLoader.prototype =
         if (!indicesTypedArray) throw new Error("Cannot create geometry without a valid index attribute");
 
         // Construtor the buffer geometry that is returned from the function 
-        var geometry = new THREE.BufferGeometry();
+        let geometry = new THREE.BufferGeometry();
 
         // A vertex position data buffer 
         geometry.setAttribute( 'position', new THREE.BufferAttribute( positionTypedArray, 3 ) );
@@ -330,7 +361,7 @@ THREE.VIMLoader.prototype =
         // The Three JS shader model only supports 3 RGB colors (we could do more if we want.)
         geometry.setAttribute( 'color', new THREE.BufferAttribute(vertexColors, 3));
 
-        // Opacity is a new shader model
+        // Opacity would require updating the shader. This is proposed in some discussions on the Three.JS forum
         //geometry.setAttribute( 'aOpacity', new THREE.BufferAttribute(opacities, 1));
 
         // Add the index buffer (which has to be cast to a Uint32BufferAttribute)        
@@ -343,17 +374,17 @@ THREE.VIMLoader.prototype =
     {
         console.log("Parsing nodes");
 
-        var nodeSize = (3 * 4) + (16 * 4); 
+        let nodeSize = (3 * 4) + (16 * 4); 
         if (data.byteLength % nodeSize != 0) throw new Error("Expected node databuffer size " + data.byteLength + " to be divisble by " + nodeSize);
-        var numNodes = data.byteLength / nodeSize;
-        var ints = new Int32Array(data.buffer, data.byteOffset, data.byteLength / 4);
-        var floats = new Float32Array(data.buffer, data.byteOffset, data.byteLength / 4);
+        let numNodes = data.byteLength / nodeSize;
+        let ints = new Int32Array(data.buffer, data.byteOffset, data.byteLength / 4);
+        let floats = new Float32Array(data.buffer, data.byteOffset, data.byteLength / 4);
 
-        var r = [];
-        for (var i=0; i < numNodes; ++i)
+        let r = [];
+        for (let i=0; i < numNodes; ++i)
         {
-            var offset = i * 19;
-            var node = {
+            let offset = i * 19;
+            let node = {
                 parentIndex: ints[offset], // DEPRECATED 
                 geometryIndex: ints[offset + 1],
                 instanceIndex: ints[offset + 2], // DEPRECATED
@@ -368,19 +399,19 @@ THREE.VIMLoader.prototype =
 
     getMaterialIdsPerGeometry: function ( g3d )
     {
-        var materials = this.findAttribute( g3d, null, "materialid", "0", "int32", "1" );
+        let materials = this.findAttribute( g3d, null, "materialid", "0", "int32", "1" );
         if (!materials)
             throw new Error("Could not find material ids attribute");
-        var indexOffsets = this.findAttribute( g3d, null, "indexoffset", "0", "int32", "1");
+        let indexOffsets = this.findAttribute( g3d, null, "indexoffset", "0", "int32", "1");
         if (!indexOffsets)
             throw new Error("Could not find index offsets attribute");
         
-        // var indices = this.findAttribute( g3d, null, "index", "0", "int32", "1" );
-        var r = [];
-        for (var i=0; i < indexOffsets.data.length; ++i)
+        // let indices = this.findAttribute( g3d, null, "index", "0", "int32", "1" );
+        let r = [];
+        for (let i=0; i < indexOffsets.data.length; ++i)
         {
-            var offset = indexOffsets.data[i];
-            var faceIndex = offset / 3;co
+            let offset = indexOffsets.data[i];
+            let faceIndex = offset / 3;co
             if (faceIndex < 0 || faceIndex >= materials.data.length)
                 throw new Error("Material index " + faceIndex + " is out of range");            
             r.push(materials.data[faceIndex]);
@@ -401,62 +432,62 @@ THREE.VIMLoader.prototype =
         if (!matIdLookup) throw new Error("Missing material lookup");
 
         // Find the vertex position data attribute
-        var positions = this.findAttribute( g3d, null, "position", "0", "float32", "3" );
-        var indices = this.findAttribute( g3d, null, "index", "0", "int32", "1" );
-        //var colors = this.findAttribute( g3d, null, "color", "0", "float32", "4" );
-        var uvs = this.findAttribute( g3d, null, "uv", "0", "float32", "2" );
-        var materials = this.findAttribute( g3d, null, "materialid", "0", "int32", "1" );
+        let positions = this.findAttribute( g3d, null, "position", "0", "float32", "3" );
+        let indices = this.findAttribute( g3d, null, "index", "0", "int32", "1" );
+        //let colors = this.findAttribute( g3d, null, "color", "0", "float32", "4" );
+        let uvs = this.findAttribute( g3d, null, "uv", "0", "float32", "2" );
+        let materials = this.findAttribute( g3d, null, "materialid", "0", "int32", "1" );
 
         if (!positions) throw new Error("Missing position attribute");
         if (!indices) throw new Error("Missing index attribute");
         if (!uvs) throw new Error("Missing UV attribute");
         if (!materials) throw new Error("Missing materialid attribute");
 
-        var indexOffsets = this.findAttribute( g3d, null, "indexoffset", "0", "int32", "1");
-        var vertexOffsets = this.findAttribute( g3d, null, "vertexoffset", "0", "int32", "1");
+        let indexOffsets = this.findAttribute( g3d, null, "indexoffset", "0", "int32", "1");
+        let vertexOffsets = this.findAttribute( g3d, null, "vertexoffset", "0", "int32", "1");
 
         if (!indexOffsets) throw new Error("Missing index offsets");
         if (!vertexOffsets) throw new Error("Missing vertex offsets");
         if (indexOffsets.data.length != vertexOffsets.data.length) throw new Error("# index offsets " + indexOffsets.data.length + " is not the same as # vertex offsets " + vertexOffsets.data.length);
 
-        var numTotalIndices = indices.data.length;
-        var numTotalVertices = positions.data.length;
-        var geometries = [];
-        var numTotalFaces = numTotalIndices / 3;
+        let numTotalIndices = indices.data.length;
+        let numTotalVertices = positions.data.length;
+        let geometries = [];
+        let numTotalFaces = numTotalIndices / 3;
         if (numTotalFaces != materials.data.length)
             throw new Error("Number of faces is not the same as the number of materials");
 
-        for (var i=0; i < indexOffsets.data.length; ++i)
+        for (let i=0; i < indexOffsets.data.length; ++i)
         {
-            var indexBegin = this.checkRange(indexOffsets.data[i], "index begin", 0, numTotalIndices);
-            var vertexBegin = this.checkRange(vertexOffsets.data[i], "vertex begin", 0, numTotalVertices);
-            var indexEnd = this.checkRange(i >= indexOffsets.data.length - 1 ? numTotalIndices : indexOffsets.data[i+1], "index end", indexBegin, numTotalIndices + 1);
-            var vertexEnd =  this.checkRange(i >= vertexOffsets.data.length - 1 ? numTotalVertices : vertexOffsets.data[i+1], "vertex end", vertexBegin, numTotalVertices + 1);
+            let indexBegin = this.checkRange(indexOffsets.data[i], "index begin", 0, numTotalIndices);
+            let vertexBegin = this.checkRange(vertexOffsets.data[i], "vertex begin", 0, numTotalVertices);
+            let indexEnd = this.checkRange(i >= indexOffsets.data.length - 1 ? numTotalIndices : indexOffsets.data[i+1], "index end", indexBegin, numTotalIndices + 1);
+            let vertexEnd =  this.checkRange(i >= vertexOffsets.data.length - 1 ? numTotalVertices : vertexOffsets.data[i+1], "vertex end", vertexBegin, numTotalVertices + 1);
 
-            var localPositions = positions.data.subarray(vertexBegin * 3, vertexEnd * 3);
-            var localIndices = indices.data.subarray(indexBegin, indexEnd);
-            //var localColors = colors != null && colors.data != null ? colors.data.subarray(vertexBegin * 4, vertexEnd * 4) : null;
-            //var localUvs = uvs.data.subarray(vertexBegin * 2, vertexEnd * 2);
+            let localPositions = positions.data.subarray(vertexBegin * 3, vertexEnd * 3);
+            let localIndices = indices.data.subarray(indexBegin, indexEnd);
+            //let localColors = colors != null && colors.data != null ? colors.data.subarray(vertexBegin * 4, vertexEnd * 4) : null;
+            //let localUvs = uvs.data.subarray(vertexBegin * 2, vertexEnd * 2);
 
-            var faceBegin = this.checkRange(indexBegin / 3, "face begin", 0, numTotalFaces);
-            var faceEnd = this.checkRange(indexEnd / 3, "face end", faceBegin, numTotalFaces + 1);
-            var matIds = materials.data.subarray(faceBegin, faceEnd);
-            var opacities = new Float32Array(localPositions.length); 
-            for (var j=0; j < opacities.length; ++j)
+            let faceBegin = this.checkRange(indexBegin / 3, "face begin", 0, numTotalFaces);
+            let faceEnd = this.checkRange(indexEnd / 3, "face end", faceBegin, numTotalFaces + 1);
+            let matIds = materials.data.subarray(faceBegin, faceEnd);
+            let opacities = new Float32Array(localPositions.length); 
+            for (let j=0; j < opacities.length; ++j)
                 opacities[j] = 1.0;
             
             if (localPositions.length % 3 != 0)
                 throw new Error("Number of vertex floats is not divisible by 3 " + localPositions.length)
             
-            var nVertices = localPositions.length / 3;
-            var colorArity = 3;
-            var vertexColors = new Float32Array(nVertices * colorArity);
-            for (var j=0; j < vertexColors.length; ++j)
+            let nVertices = localPositions.length / 3;
+            let colorArity = 3;
+            let vertexColors = new Float32Array(nVertices * colorArity);
+            for (let j=0; j < vertexColors.length; ++j)
                 vertexColors[j] = 0.5;
 
-            var newIndices = [];
-            var numFaces = faceEnd - faceBegin;
-            for (var j=0; j < numFaces; ++j)
+            let newIndices = [];
+            let numFaces = faceEnd - faceBegin;
+            for (let j=0; j < numFaces; ++j)
             {
                 // TODO: this requirement should be removed in VIM v1.0 it slows down load times 
                 localIndices[j * 3 + 0] -= vertexBegin;
@@ -464,12 +495,12 @@ THREE.VIMLoader.prototype =
                 localIndices[j * 3 + 2] -= vertexBegin;
 
                 // Get the material ID for the current face, and find the associated color. 
-                var matId = matIds[j];
-                var mat = matIdLookup[matId];
+                let matId = matIds[j];
+                let mat = matIdLookup[matId];
                     
-                for (var k=0; k < 3; ++k)
+                for (let k=0; k < 3; ++k)
                 {
-                    var idx = this.checkRange(localIndices[j * 3 + k], "index", 0, nVertices);
+                    let idx = this.checkRange(localIndices[j * 3 + k], "index", 0, nVertices);
                     if (mat)
                     {
                         vertexColors[idx * colorArity + 0] = mat.color.r;
@@ -492,7 +523,7 @@ THREE.VIMLoader.prototype =
             }
             else 
             {
-                var geometry = this.createBufferGeometry(localPositions, localIndices, undefined, vertexColors, opacities);
+                let geometry = this.createBufferGeometry(localPositions, localIndices, undefined, vertexColors, opacities);
                 // This has to be enabled if you set flatShading: true on the material. However, experience shows that the 
                 //geometry.computeVertexNormals();
                 geometries.push(geometry);
@@ -504,8 +535,7 @@ THREE.VIMLoader.prototype =
 
     floatsToMatrix: function (m)
     {
-        var r = new THREE.Matrix4();
-        //r.set(m[0], m[4], m[8], m[12], m[1], m[5], m[9], m[13], m[2], m[6], m[10], m[14], m[3], m[7], m[11], m[15]);
+        let r = new THREE.Matrix4();
         r.elements = m;
         return r;
     },
@@ -513,12 +543,12 @@ THREE.VIMLoader.prototype =
     // Merges all meshes with only a single instance 
     mergeSingleInstances: function ( instancedMeshList, material )
     {        
-        var r = [];
+        let r = [];
 
-        var singleInstancedMeshes = [];
-        for (var i=0; i < instancedMeshList.length; ++i)
+        let singleInstancedMeshes = [];
+        for (let i=0; i < instancedMeshList.length; ++i)
         {
-            var mesh = instancedMeshList[i];
+            let mesh = instancedMeshList[i];
             if (!mesh)
                 continue;
             if (mesh.count == 1)
@@ -531,18 +561,18 @@ THREE.VIMLoader.prototype =
             }
         }
 
-        var matrix = new THREE.Matrix4();
-        var meshesToMerge = [];
-        for (var i=0; i < singleInstancedMeshes.length; ++i)
+        let matrix = new THREE.Matrix4();
+        let meshesToMerge = [];
+        for (let i=0; i < singleInstancedMeshes.length; ++i)
         {            
-            var g = singleInstancedMeshes[i].geometry;
+            let g = singleInstancedMeshes[i].geometry;
             // Remove the normal attribute? Maybe something else? 
             singleInstancedMeshes[i].getMatrixAt(0, matrix);
             g.applyMatrix4(matrix);
             meshesToMerge.push(g);
         }
-        var mergedGeometry = THREE.BufferGeometryUtils.mergeBufferGeometries( meshesToMerge );
-        var mergedMesh = new THREE.InstancedMesh( mergedGeometry, material, 1 );
+        let mergedGeometry = THREE.BufferGeometryUtils.mergeBufferGeometries( meshesToMerge );
+        let mergedMesh = new THREE.InstancedMesh( mergedGeometry, material, 1 );
         mergedMesh.setMatrixAt(0, new THREE.Matrix4());
         r.push(mergedMesh);
         return r;
@@ -558,77 +588,74 @@ THREE.VIMLoader.prototype =
 
         // A VIM follows the BFAST data arrangement, which is a collection of named byte arrays  
         console.log("Parsing BFAST structure");
-        var bfast = this.parseBFast( data, 0, data.byteLength );
+        let bfast = this.parseBFast( data, 0, data.byteLength );
 
         console.log("found: " + bfast.buffers.length + " buffers");
-        for (var i=0; i < bfast.names.length; ++i)
+        for (let i=0; i < bfast.names.length; ++i)
             console.log(bfast.names[i]);
         
         console.log("Constructing VIM");
-        var vim = this.constructVIM( bfast );
+        let vim = this.constructVIM( bfast );
         
         console.log("Computing material color lookup");
-        var materialLookup = this.getMaterialColorLookup( vim );
+        vim.materialLookup = this.getMaterialColorLookup( vim );
 
         console.log("Splitting geometries");
-        var geometries = this.splitGeometries(vim.g3d, materialLookup );
-        console.log("Found # geometries " + geometries.length);
+        vim.geometries = this.splitGeometries(vim.g3d, vim.materialLookup );
+        console.log("Found # geometries " + vim.geometries.length);
 
         console.log("Counting # instance of each geometry");
-        var instanceCounts = [];
-        for (var i=0; i < geometries.length; ++i)
+        let instanceCounts = [];
+        for (let i=0; i < vim.geometries.length; ++i)
             instanceCounts.push(0);
-        for (var i=0; i < vim.nodes.length; ++i)
+        for (let i=0; i < vim.nodes.length; ++i)
         {
-            var geometryIndex = vim.nodes[i].geometryIndex;
+            let geometryIndex = vim.nodes[i].geometryIndex;
             if (geometryIndex >= 0)
                 instanceCounts[geometryIndex] += 1;
         }            
         
         console.log("creating instanced meshes");
-        var r = new Array(geometries.length);
-        for (var i=0; i < geometries.length; ++i)
+        vim.meshes = new Array(vim.geometries.length);
+        for (let i=0; i < vim.geometries.length; ++i)
         {
-            var count = instanceCounts[i];               
-            if (geometries[i])
-            {
-                var mesh = new THREE.InstancedMesh( geometries[i], material, count );;
-                r[i] = mesh;
-            }
-            else
-            {
-                r[i] = undefined;
-            }
+            let count = instanceCounts[i];               
+            let g = vim.geometries[i];
+            if (g)
+                vim.meshes[i] = new THREE.InstancedMesh( g, material, count );
         }
 
         // We are going to reuse the geometryCounts as the current index
-        var instanceIndexes = new Array(instanceCounts.length);
-        for (var i=0; i < instanceCounts.length; ++i)
+        let instanceIndexes = new Array(instanceCounts.length);
+        for (let i=0; i < instanceCounts.length; ++i)
             instanceIndexes[i] = 0;
         
-        for (var i=0; i < vim.nodes.length; ++i)
+        for (let i=0; i < vim.nodes.length; ++i)
         {
             // TODO: set the matrix for one of the instanced meshes. 
             // NOTE: we will have to keep track of the current index of the geometry for each node
-            var node = vim.nodes[i];
+            let node = vim.nodes[i];
             if (node.geometryIndex < 0)
                 continue;
             
-            if (node.geometryIndex > r.length)
-                throw new Error("Geometry index " + node.geometryIndex + " out of range 0 .. " + r.length);            
-            var mesh = r[node.geometryIndex];
+            if (node.geometryIndex > vim.meshes.length)
+                throw new Error("Geometry index " + node.geometryIndex + " out of range 0 .. " +vim.meshes.length);            
+            let mesh = vim.meshes[node.geometryIndex];
             if (!mesh)
                 continue;
-            var matrix = this.floatsToMatrix(node.worldTransform);
-            var instanceIndex = instanceIndexes[node.geometryIndex];
+            let matrix = this.floatsToMatrix(node.worldTransform);
+            let instanceIndex = instanceIndexes[node.geometryIndex];
             if (instanceIndex < 0 || instanceIndex >= mesh.count)
                 throw new Error("Instance index " + instanceIndex + " is out of range " + mesh.count);
             mesh.setMatrixAt(instanceIndex, matrix);
             instanceIndexes[node.geometryIndex] += 1;
         }
-        r = this.mergeSingleInstances(r, material);
-
+        
+        vim.meshes = this.mergeSingleInstances(vim.meshes, material);        
+        vim.elements = this.getElements(vim);
+        vim.rooms = this.getRooms(vim);
+        
         console.timeEnd("parsingVim");
-        return r;
+        return vim;
 	},
 };
