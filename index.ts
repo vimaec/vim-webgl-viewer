@@ -654,15 +654,19 @@ const ara =
                 console.timeEnd("loadingVim");
             });
         }
-
-        function loadIntoScene(fileName, mtlUrl) {     
-            console.log("Loading object from " + fileName);
-            console.time("Loading object");
+        
+        function getExt(fileName) {
             const indexOfQueryParams = fileName.lastIndexOf("?");
             if (indexOfQueryParams >= 0)
                 fileName = fileName.substring(0, indexOfQueryParams);
             const extPos = fileName.lastIndexOf(".");
-            const ext = fileName.slice(extPos + 1).toLowerCase();
+            return fileName.slice(extPos + 1).toLowerCase();
+        }
+
+        function loadIntoScene(fileName, mtlUrl) {     
+            console.log("Loading object from " + fileName);
+            console.time("Loading object");
+            const ext = getExt(fileName);
             loadIntoSceneWithLoader(fileName, mtlUrl, ext);
         }
 
