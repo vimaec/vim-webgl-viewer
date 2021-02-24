@@ -622,7 +622,7 @@ THREE.OrbitControls = function (object, domElement) {
         dollyEnd.set(0, distance);
         dollyDelta.set(0, Math.pow(dollyEnd.y / dollyStart.y, scope.zoomSpeed));
 
-        if (Math.abs(dollyDelta.y - 1) > 0.01) // only dolly if the movement exceeds an epsilon value.
+        if (Math.abs(dollyDelta.y - 1) > 0.0001) // only dolly if the movement exceeds an epsilon value.
         {
             if (dollyDelta.y < 1) {
 
