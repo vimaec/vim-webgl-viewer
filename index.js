@@ -566,6 +566,8 @@ var ara = {
             return toMatrix(settings.object.position, settings.object.rotation, settings.object.scale);
         }
         function addViews(views) {
+            if (!views || !views.length)
+                return;
             var folder = gui.addFolder('views');
             var obj = {};
             var matrix = getSettingsMatrix();
@@ -596,6 +598,7 @@ var ara = {
                 for (var i = 0; i < vim.meshes.length; ++i)
                     loadObject(vim.meshes[i]);
                 addViews(vim.rooms);
+                camera.lookAt(vim.box.getCenter(new THREE.Vector3()));
                 console.log("Finished loading VIM geometries into scene");
                 console.timeEnd("loadingVim");
             });

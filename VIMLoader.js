@@ -5,14 +5,21 @@
  
   Usage:
 
-    const loader = new THREE.VIMLoader();
-        loader.load(fileName, (obj) => {
-            objects.push(obj.scene);
-            scene.add(obj);
-    });
+      function loadVim(fileName) {
+            console.log("Loading VIM");
+            console.time("loadingVim");
 
- https://threejs.org/docs/#api/en/objects/InstancedMesh
- 
+            const loader = new THREE.VIMLoader();
+            loader.load(fileName, (vim) => {                       
+                console.log("Finished loading VIM: found " + vim.meshes.length + " objects");
+                materialsLoaded = true;
+                for (let i=0; i < vim.meshes.length; ++i)                        
+                    loadObject(vim.meshes[i]);
+                addViews(vim.rooms);
+                console.log("Finished loading VIM geometries into scene");
+                console.timeEnd("loadingVim");
+            });
+        } 
  */
 
 THREE.VIMLoader = function ( manager ) {
@@ -100,9 +107,13 @@ THREE.VIMLoader.prototype =
     getRooms : function ( vim )
     {
         if (!vim.elements)
-            return undefined;
+            return [];
         let roomData = vim.entities["Rvt.Room"];
+        if (!roomData) 
+            return [];
         let ids = new Int32Array(roomData["Element"]);
+        if (!ids)
+            return [];
         let r = new Array(ids.length);
         for (let i=0; i < ids.length; ++i)
         {
@@ -171,6 +182,8 @@ THREE.VIMLoader.prototype =
 
         // Removing the trailing '\0' before spliting the names 
         names = joinedNames.slice(0,-1).split('\0');
+        if (joinedNames.length == 0)
+            names = [];
 
         // Validate the number of names 
         if (names.length != buffers.length - 1)
@@ -526,7 +539,8 @@ THREE.VIMLoader.prototype =
                 let geometry = this.createBufferGeometry(localPositions, localIndices, undefined, vertexColors, opacities);
                 // This has to be enabled if you set flatShading: true on the material. However, experience shows that the 
                 //geometry.computeVertexNormals();
-                geometries.push(geometry);
+                geometry.computeBoundingBox();
+                geometries.push(geometry);                
             }
         }        
 
@@ -630,6 +644,7 @@ THREE.VIMLoader.prototype =
         for (let i=0; i < instanceCounts.length; ++i)
             instanceIndexes[i] = 0;
         
+        const centerPoints = [];
         for (let i=0; i < vim.nodes.length; ++i)
         {
             // TODO: set the matrix for one of the instanced meshes. 
@@ -649,8 +664,13 @@ THREE.VIMLoader.prototype =
                 throw new Error("Instance index " + instanceIndex + " is out of range " + mesh.count);
             mesh.setMatrixAt(instanceIndex, matrix);
             instanceIndexes[node.geometryIndex] += 1;
+
+            const center = mesh.geometry.boundingBox.getCenter(new THREE.Vector3());
+            center.applyMatrix4(matrix);
+            centerPoints.push(center);
         }
-        
+
+        vim.box = new THREE.Box3().setFromPoints(centerPoints);        
         vim.meshes = this.mergeSingleInstances(vim.meshes, material);        
         vim.elements = this.getElements(vim);
         vim.rooms = this.getRooms(vim);
