@@ -371,11 +371,8 @@ THREE.VIMLoader.prototype =
         if (uvsTypedArray)
             geometry.setAttribute( 'uv', new THREE.BufferAttribute( uvsTypedArray, 2 ) );
 
-        // The Three JS shader model only supports 3 RGB colors (we could do more if we want.)
+        // The Three JS shader model only supports 3 RGB colors 
         geometry.setAttribute( 'color', new THREE.BufferAttribute(vertexColors, 3));
-
-        // Opacity would require updating the shader. This is proposed in some discussions on the Three.JS forum
-        //geometry.setAttribute( 'aOpacity', new THREE.BufferAttribute(opacities, 1));
 
         // Add the index buffer (which has to be cast to a Uint32BufferAttribute)        
         indexBuffer = new THREE.Uint32BufferAttribute(indicesTypedArray, 1 );
