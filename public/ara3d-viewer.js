@@ -595,6 +595,7 @@ var ara = {
             loader.load(fileName, function (vim) {
                 console.log("Finished loading VIM: found " + vim.meshes.length + " objects");
                 materialsLoaded = true;
+                console.log("let's go");
                 for (var i = 0; i < vim.meshes.length; ++i)
                     loadObject(vim.meshes[i]);
                 //console.log("loading only one");
@@ -58620,12 +58621,12 @@ THREE.VIMLoader.prototype =
         if (!g3d) throw new Error("Missing g3d argument");
 
         // Find the vertex position data attribute
-        const positions = this.findAttribute( g3d, null, "position", "0", "float32", "3" );
-        const indices = this.findAttribute(g3d, null, "index", "0", "int32", "1");
-        const meshSubmeshes = this.findAttribute(g3d, "mesh", "submeshoffset", "0", "int32", "1");
-        const submeshIndexOffset = this.findAttribute(g3d, "submesh", "indexoffset", "0", "int32", "1");
-        const submeshMaterial = this.findAttribute(g3d, "submesh", "material", "0", "int32", "1");
-        const materialColors = this.findAttribute(g3d, "material", "color", "0", "float32", "4" );
+        let positions = this.findAttribute( g3d, null, "position", "0", "float32", "3" );
+        let indices = this.findAttribute(g3d, null, "index", "0", "int32", "1");
+        let meshSubmeshes = this.findAttribute(g3d, "mesh", "submeshoffset", "0", "int32", "1");
+        let submeshIndexOffset = this.findAttribute(g3d, "submesh", "indexoffset", "0", "int32", "1");
+        let submeshMaterial = this.findAttribute(g3d, "submesh", "material", "0", "int32", "1");
+        let materialColors = this.findAttribute(g3d, "material", "color", "0", "float32", "4" );
 
         if (!positions) throw new Error("Missing position attribute");
         if (!indices) throw new Error("Missing index attribute");
@@ -58767,7 +58768,7 @@ THREE.VIMLoader.prototype =
         console.log("data size " + data.byteLength);
 
         // A VIM follows the BFAST data arrangement, which is a collection of named byte arrays  
-        console.log("Parsing BFAST structure");
+        console.log("Parsing BFAST structure KEEWLLL~!!");
         let bfast = this.parseBFast( data, 0, data.byteLength );
 
         console.log("found: " + bfast.buffers.length + " buffers");
@@ -58775,25 +58776,68 @@ THREE.VIMLoader.prototype =
             console.log(bfast.names[i]);
         
         console.log("Constructing VIM");
-        let vim = this.constructVIM(bfast);
+        let vim = this.constructVIM( bfast );
         
         console.log("Building meshes");
         vim.geometries = this.buildMeshes(vim.g3d);
-        console.log("Found # meshes " + vim.geometries.length);
+        let meshCount = vim.geometries.length;
+        console.log("Found # meshes " + meshCount);
 
-        const instanceMeshes = this.findAttribute(vim.g3d, "instance", "mesh", "0", "int32", "1")?.data;
-        const instanceTransforms = this.findAttribute(vim.g3d, "instance", "transform", "0", "float32", "16")?.data;
+        const matrixArity = 16;
+        let instanceMeshes = this.findAttribute(vim.g3d, "instance", "mesh", "0", "int32", "1");
+        let instanceTransforms = this.findAttribute(vim.g3d, "instance", "transform", "0", "float32", "16");
         if (!instanceMeshes) throw new Error("Missing Instance Mesh Attribute.");
         if (!instanceTransforms) throw new Error("Missing Instance Tranform Attribute.");
+        if (instanceMeshes.data.length != instanceTransforms.data.length / matrixArity)
+            throw new Error("Mismatched instance attributes length.");
+        let instanceCount = instanceMeshes.data.length;
+        
 
-        console.log("Allocating Instanced Meshes");
-        const rawMeshes = this.allocateMeshes(vim.geometries, instanceMeshes, material);
+        console.log("Counting mesh references");
+        let meshReferenceCounts = new Int32Array(meshCount);
+        for (let i = 0; i < instanceCount; ++i)
+        {
+            let mesh = instanceMeshes.data[i];
+            if (mesh < 0) continue;
+            meshReferenceCounts[mesh]++;
+        }            
+
+        console.log("Creating instanced meshes");
+        const meshes = [];
+        for (let i=0; i < meshCount; ++i)
+        {
+            const count = meshReferenceCounts[i];               
+            const g = vim.geometries[i];
+            const mesh = new THREE.InstancedMesh(g, material, count);
+            meshes.push(mesh);
+        }
 
         console.log("Applying Matrices");
-        const {meshes, centers} = this.applyMatrices(rawMeshes, instanceMeshes, instanceTransforms);
+        const instanceCounters = new Int32Array(meshCount);
+        const instanceCenters = [];
+        for (let i=0; i < instanceCount; ++i)
+        {
+            const meshIndex = instanceMeshes.data[i];
+            if (meshIndex < 0)
+                continue;
+                   
+            const mesh = meshes[meshIndex];
+            if (!mesh)
+                continue;
+
+            const matrixAsArray = instanceTransforms.data.subarray(i * matrixArity, (i + 1) * matrixArity);
+            const matrix = this.floatsToMatrix(matrixAsArray);
+
+            const count = instanceCounters[meshIndex]++;
+            mesh.setMatrixAt(count, matrix);
+
+            let center = mesh.geometry.boundingBox.getCenter(new THREE.Vector3());
+            center.applyMatrix4(matrix);
+            instanceCenters.push(center);
+        }
 
         console.log("Computing center.");
-        vim.box = new THREE.Box3().setFromPoints(centers);
+        vim.box = new THREE.Box3().setFromPoints(instanceCenters);
 
         console.log("Merging lone meshes.");
         vim.meshes = this.mergeSingleInstances(meshes, material);        
@@ -58806,66 +58850,5 @@ THREE.VIMLoader.prototype =
         
         console.timeEnd("parsingVim");
         return vim;
-    },
-
-    // geometries: array of THREE.GeometryBuffer
-    // instanceMeshes: array of mesh indices
-    // material: THREE.MeshPhongMaterial to use
-    // returns array of THREE.InstancedMesh
-    allocateMeshes: function (geometries, instanceMeshes, material)
-    {
-        const meshCount = geometries.length;
-        console.log("Counting references");
-        let meshReferenceCounts = new Int32Array(meshCount);
-        for (let i = 0; i < instanceMeshes.length; ++i) {
-            let mesh = instanceMeshes[i];
-            if (mesh < 0) continue;
-            meshReferenceCounts[mesh]++;
-        }
-
-        console.log("Allocating instances.");
-        let meshes = [];
-        for (let i = 0; i < meshCount; ++i) {
-            const count = meshReferenceCounts[i];
-            const g = geometries[i];
-            const mesh = new THREE.InstancedMesh(g, material, count);
-            meshes.push(mesh);
-        }
-        return meshes;
-    },
-
-    // meshes: array of THREE.InstancedMesh
-    // instanceMeshes: array of mesh indices
-    // instanceTransform: flat array of matrix4x4 
-    // Returns array of InstancedMesh and array of instance centers with matrices applied to both.
-    applyMatrices: function (meshes, instanceMeshes, instanceTransforms)
-    {
-        const matrixArity = 16;
-        const instanceCounters = new Int32Array(meshes.length);
-        const centers = [];
-        for (let i = 0; i < instanceMeshes.length; ++i) {
-            const meshIndex = instanceMeshes[i];
-            if (meshIndex < 0)
-                continue;
-
-            const mesh = meshes[meshIndex];
-            if (!mesh)
-                continue;
-
-            const matrixAsArray = instanceTransforms.subarray(i * matrixArity, (i + 1) * matrixArity);
-            const matrix = this.floatsToMatrix(matrixAsArray);
-
-            const count = instanceCounters[meshIndex]++;
-            mesh.setMatrixAt(count, matrix);
-
-            const center = mesh.geometry.boundingBox.getCenter(new THREE.Vector3());
-            center.applyMatrix4(matrix);
-            centers.push(center);
-        }
-        return {
-            meshes: meshes,
-            centers: centers
-        };
-    },
-
+	},
 };
