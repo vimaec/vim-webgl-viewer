@@ -595,8 +595,11 @@ var ara = {
             loader.load(fileName, function (vim) {
                 console.log("Finished loading VIM: found " + vim.meshes.length + " objects");
                 materialsLoaded = true;
+                console.log("let's go");
                 for (var i = 0; i < vim.meshes.length; ++i)
                     loadObject(vim.meshes[i]);
+                //console.log("loading only one");
+                //loadObject(vim.meshes[0]);
                 addViews(vim.rooms);
                 camera.lookAt(vim.box.getCenter(new THREE.Vector3()));
                 console.log("Finished loading VIM geometries into scene");
