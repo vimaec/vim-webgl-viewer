@@ -251,8 +251,8 @@ THREE.VIMLoader.prototype =
     {
         console.log("Creating VIM");
 
-        if (bfast.buffers.length < 5)
-            throw new Error("VIM requires at least five BFast buffers");
+        if (bfast.buffers.length < 6)
+            throw new Error("VIM requires at least six BFast buffers");
 
         let lookup = {};
         for (let i=0; i < bfast.buffers.length; ++i)
@@ -267,6 +267,7 @@ THREE.VIMLoader.prototype =
             header: new TextDecoder("utf-8").decode(lookup.header),
             assets: this.parseBFastFromArray(lookup.assets),
             g3d: this.constructG3D(this.parseBFastFromArray(lookup.geometry)),
+            nodes: this.parseNodes(lookup.nodes),
             entities: this.constructEntityTables(this.parseBFastFromArray(lookup.entities)),
             strings: new TextDecoder("utf-8").decode(lookup.strings).split('\0'),
         }
@@ -356,7 +357,7 @@ THREE.VIMLoader.prototype =
             geometry.setAttribute( name, new THREE.BufferAttribute( attr.data, attr.dataArity ) );
     },
 
-    createBufferGeometry : function (positionTypedArray, indicesTypedArray, vertexColors)
+    createBufferGeometry : function ( positionTypedArray, indicesTypedArray, uvsTypedArray, vertexColors, opacities )
     {
         if (!positionTypedArray) throw new Error("Cannot create geometry without a valid vertex attribute");
         if (!indicesTypedArray) throw new Error("Cannot create geometry without a valid index attribute");
@@ -367,6 +368,9 @@ THREE.VIMLoader.prototype =
         // A vertex position data buffer 
         geometry.setAttribute( 'position', new THREE.BufferAttribute( positionTypedArray, 3 ) );
 
+        if (uvsTypedArray)
+            geometry.setAttribute( 'uv', new THREE.BufferAttribute( uvsTypedArray, 2 ) );
+
         // The Three JS shader model only supports 3 RGB colors 
         geometry.setAttribute( 'color', new THREE.BufferAttribute(vertexColors, 3));
 
@@ -376,101 +380,168 @@ THREE.VIMLoader.prototype =
         return geometry;   
     },
 
-    buildMeshes: function ( g3d)
+    parseNodes: function ( data )
+    {
+        console.log("Parsing nodes");
+
+        let nodeSize = (3 * 4) + (16 * 4); 
+        if (data.byteLength % nodeSize != 0) throw new Error("Expected node databuffer size " + data.byteLength + " to be divisble by " + nodeSize);
+        let numNodes = data.byteLength / nodeSize;
+        let ints = new Int32Array(data.buffer, data.byteOffset, data.byteLength / 4);
+        let floats = new Float32Array(data.buffer, data.byteOffset, data.byteLength / 4);
+
+        let r = [];
+        for (let i=0; i < numNodes; ++i)
+        {
+            let offset = i * 19;
+            let node = {
+                parentIndex: ints[offset], // DEPRECATED 
+                geometryIndex: ints[offset + 1],
+                instanceIndex: ints[offset + 2], // DEPRECATED
+                worldTransform: floats.slice(offset + 3, offset + 19),
+            };
+            // We do not generate nodes with geometry 
+            if (node.geometryIndex >= 0)
+                r.push(node);
+        }
+        return r;
+    },    
+
+    getMaterialIdsPerGeometry: function ( g3d )
+    {
+        let materials = this.findAttribute( g3d, null, "materialid", "0", "int32", "1" );
+        if (!materials)
+            throw new Error("Could not find material ids attribute");
+        let indexOffsets = this.findAttribute( g3d, null, "indexoffset", "0", "int32", "1");
+        if (!indexOffsets)
+            throw new Error("Could not find index offsets attribute");
+        
+        // let indices = this.findAttribute( g3d, null, "index", "0", "int32", "1" );
+        let r = [];
+        for (let i=0; i < indexOffsets.data.length; ++i)
+        {
+            let offset = indexOffsets.data[i];
+            let faceIndex = offset / 3;co
+            if (faceIndex < 0 || faceIndex >= materials.data.length)
+                throw new Error("Material index " + faceIndex + " is out of range");            
+            r.push(materials.data[faceIndex]);
+        }
+        return r;
+    },
+    
+    checkRange: function( val, name, begin, end )
+    {
+        if (val < begin || val >= end)
+            throw new Error("Value " + name + " has value " + val + " and is out of valid range from " + begin + " to " + end);
+        return val;
+    },
+
+    splitGeometries: function ( g3d, matIdLookup )
     {
         if (!g3d) throw new Error("Missing g3d argument");
+        if (!matIdLookup) throw new Error("Missing material lookup");
 
         // Find the vertex position data attribute
         let positions = this.findAttribute( g3d, null, "position", "0", "float32", "3" );
-        let indices = this.findAttribute(g3d, null, "index", "0", "int32", "1");
-        let meshSubmeshes = this.findAttribute(g3d, "mesh", "submeshoffset", "0", "int32", "1");
-        let submeshIndexOffset = this.findAttribute(g3d, "submesh", "indexoffset", "0", "int32", "1");
-        let submeshMaterial = this.findAttribute(g3d, "submesh", "material", "0", "int32", "1");
-        let materialColors = this.findAttribute(g3d, "material", "color", "0", "float32", "4" );
+        let indices = this.findAttribute( g3d, null, "index", "0", "int32", "1" );
+        //let colors = this.findAttribute( g3d, null, "color", "0", "float32", "4" );
+        let uvs = this.findAttribute( g3d, null, "uv", "0", "float32", "2" );
+        let materials = this.findAttribute( g3d, null, "materialid", "0", "int32", "1" );
 
         if (!positions) throw new Error("Missing position attribute");
         if (!indices) throw new Error("Missing index attribute");
-        if (!meshSubmeshes) throw new Error("Missing mesh submesh attribute");
-        if (!submeshIndexOffset) throw new Error("Missing submesh index offset  attribute");
-        if (!submeshMaterial) throw new Error("Missing submesh material attribute");
-        if (!materialColors) throw new Error("Missing material color attribute");
+        if (!uvs) throw new Error("Missing UV attribute");
+        if (!materials) throw new Error("Missing materialid attribute");
 
-        let meshCount = meshSubmeshes.data.length;
-        let submeshCount = submeshIndexOffset.data.length;
-        let indexCount = indices.data.length;
-        let materialCount = materialColors.data.length;
-        const colorArity = 4;
-        const positionArity = 3;
+        let indexOffsets = this.findAttribute( g3d, null, "indexoffset", "0", "int32", "1");
+        let vertexOffsets = this.findAttribute( g3d, null, "vertexoffset", "0", "int32", "1");
 
-        let resultMeshes = [];
-        for (let mesh = 0; mesh < meshCount; mesh++)
+        if (!indexOffsets) throw new Error("Missing index offsets");
+        if (!vertexOffsets) throw new Error("Missing vertex offsets");
+        if (indexOffsets.data.length != vertexOffsets.data.length) throw new Error("# index offsets " + indexOffsets.data.length + " is not the same as # vertex offsets " + vertexOffsets.data.length);
+
+        let numTotalIndices = indices.data.length;
+        let numTotalVertices = positions.data.length;
+        let geometries = [];
+        let numTotalFaces = numTotalIndices / 3;
+        if (numTotalFaces != materials.data.length)
+            throw new Error("Number of faces is not the same as the number of materials");
+
+        for (let i=0; i < indexOffsets.data.length; ++i)
         {
-            let meshIndices = []
-            let meshVertexPositions = [];
-            let meshVertexColors = [];
+            let indexBegin = this.checkRange(indexOffsets.data[i], "index begin", 0, numTotalIndices);
+            let vertexBegin = this.checkRange(vertexOffsets.data[i], "vertex begin", 0, numTotalVertices);
+            let indexEnd = this.checkRange(i >= indexOffsets.data.length - 1 ? numTotalIndices : indexOffsets.data[i+1], "index end", indexBegin, numTotalIndices + 1);
+            let vertexEnd =  this.checkRange(i >= vertexOffsets.data.length - 1 ? numTotalVertices : vertexOffsets.data[i+1], "vertex end", vertexBegin, numTotalVertices + 1);
 
-            let meshStart = meshSubmeshes.data[mesh];
-            let meshEnd = mesh < meshCount - 1
-                ? meshSubmeshes.data[mesh + 1]
-                : submeshCount;
+            let localPositions = positions.data.subarray(vertexBegin * 3, vertexEnd * 3);
+            let localIndices = indices.data.subarray(indexBegin, indexEnd);
+            //let localColors = colors != null && colors.data != null ? colors.data.subarray(vertexBegin * 4, vertexEnd * 4) : null;
+            //let localUvs = uvs.data.subarray(vertexBegin * 2, vertexEnd * 2);
 
-            for (let submesh = meshStart; submesh < meshEnd; submesh++)
+            let faceBegin = this.checkRange(indexBegin / 3, "face begin", 0, numTotalFaces);
+            let faceEnd = this.checkRange(indexEnd / 3, "face end", faceBegin, numTotalFaces + 1);
+            let matIds = materials.data.subarray(faceBegin, faceEnd);
+            let opacities = new Float32Array(localPositions.length); 
+            for (let j=0; j < opacities.length; ++j)
+                opacities[j] = 1.0;
+            
+            if (localPositions.length % 3 != 0)
+                throw new Error("Number of vertex floats is not divisible by 3 " + localPositions.length)
+            
+            let nVertices = localPositions.length / 3;
+            let colorArity = 3;
+            let vertexColors = new Float32Array(nVertices * colorArity);
+            for (let j=0; j < vertexColors.length; ++j)
+                vertexColors[j] = 0.5;
+
+            let newIndices = [];
+            let numFaces = faceEnd - faceBegin;
+            for (let j=0; j < numFaces; ++j)
             {
-                let r, g, b, a;
-                let material = submeshMaterial.data[submesh];
-                if (material >= materialCount)
-                    throw new Error("Material count invalid");
-                if (material < 0) {
-                    r = 0.5;
-                    g = 0.5;
-                    b = 0.5;
-                    a = 1;
-                }
-                else
+                // TODO: this requirement should be removed in VIM v1.0 it slows down load times 
+                localIndices[j * 3 + 0] -= vertexBegin;
+                localIndices[j * 3 + 1] -= vertexBegin;
+                localIndices[j * 3 + 2] -= vertexBegin;
+
+                // Get the material ID for the current face, and find the associated color. 
+                let matId = matIds[j];
+                let mat = matIdLookup[matId];
+                    
+                for (let k=0; k < 3; ++k)
                 {
-                    r = materialColors.data[material * colorArity];
-                    g = materialColors.data[material * colorArity + 1];
-                    b = materialColors.data[material * colorArity + 2];
-                    a = materialColors.data[material * colorArity + 3];
-                }
-
-                if (a < 0.9)
-                    continue;
-
-                let submeshStart = submeshIndexOffset.data[submesh];
-                let submeshEnd = submesh < submeshCount - 1
-                    ? submeshIndexOffset.data[submesh + 1]
-                    : indexCount;
-
-                for (let index = submeshStart; index < submeshEnd; index++)
-                {
-                    meshIndices.push(meshIndices.length);
-                    let vertex = indices.data[index];
-                    let x = positions.data[vertex * positionArity];
-                    let y = positions.data[vertex * positionArity + 1];
-                    let z = positions.data[vertex * positionArity + 2]
-
-                    meshVertexPositions.push(x); 
-                    meshVertexPositions.push(y);
-                    meshVertexPositions.push(z);
-
-                    meshVertexColors.push(r);
-                    meshVertexColors.push(g);
-                    meshVertexColors.push(b);
+                    let idx = this.checkRange(localIndices[j * 3 + k], "index", 0, nVertices);
+                    if (mat)
+                    {
+                        vertexColors[idx * colorArity + 0] = mat.color.r;
+                        vertexColors[idx * colorArity + 1] = mat.color.g;
+                        vertexColors[idx * colorArity + 2] = mat.color.b;
+                        opacities[idx] = mat.opacity;
+                    }
+    
+                    // Don't put transparent triangles in 
+                    if (!mat || mat.opacity > 0.9)
+                        newIndices.push(idx);
                 }
             }
 
-            let resultMesh = this.createBufferGeometry(
-                new Float32Array(meshVertexPositions),
-                new Int32Array(meshIndices),
-                new Float32Array(meshVertexColors),
-            );
-            resultMesh.computeBoundingBox();
-            resultMeshes.push(resultMesh);
-        }
+            localIndices = new Int32Array(newIndices);
+            
+            if (localIndices.length == 0)
+            {
+                geometries.push(undefined);
+            }
+            else 
+            {
+                let geometry = this.createBufferGeometry(localPositions, localIndices, undefined, vertexColors, opacities);
+                // This has to be enabled if you set flatShading: true on the material. However, experience shows that the 
+                //geometry.computeVertexNormals();
+                geometry.computeBoundingBox();
+                geometries.push(geometry);                
+            }
+        }        
 
-        console.log("Meshes created succesfully");
-        return resultMeshes;
+        return geometries;        
     },    
 
     floatsToMatrix: function (m)
@@ -515,7 +586,6 @@ THREE.VIMLoader.prototype =
         let mergedMesh = new THREE.InstancedMesh( mergedGeometry, material, 1 );
         mergedMesh.setMatrixAt(0, new THREE.Matrix4());
         r.push(mergedMesh);
-
         return r;
     },
 
@@ -528,7 +598,7 @@ THREE.VIMLoader.prototype =
         console.log("data size " + data.byteLength);
 
         // A VIM follows the BFAST data arrangement, which is a collection of named byte arrays  
-        console.log("Parsing BFAST structure KEEWLLL~!!");
+        console.log("Parsing BFAST structure");
         let bfast = this.parseBFast( data, 0, data.byteLength );
 
         console.log("found: " + bfast.buffers.length + " buffers");
@@ -538,74 +608,68 @@ THREE.VIMLoader.prototype =
         console.log("Constructing VIM");
         let vim = this.constructVIM( bfast );
         
-        console.log("Building meshes");
-        vim.geometries = this.buildMeshes(vim.g3d);
-        let meshCount = vim.geometries.length;
-        console.log("Found # meshes " + meshCount);
+        console.log("Computing material color lookup");
+        vim.materialLookup = this.getMaterialColorLookup( vim );
 
-        const matrixArity = 16;
-        let instanceMeshes = this.findAttribute(vim.g3d, "instance", "mesh", "0", "int32", "1");
-        let instanceTransforms = this.findAttribute(vim.g3d, "instance", "transform", "0", "float32", "16");
-        if (!instanceMeshes) throw new Error("Missing Instance Mesh Attribute.");
-        if (!instanceTransforms) throw new Error("Missing Instance Tranform Attribute.");
-        if (instanceMeshes.data.length != instanceTransforms.data.length / matrixArity)
-            throw new Error("Mismatched instance attributes length.");
-        let instanceCount = instanceMeshes.data.length;
-        
+        console.log("Splitting geometries");
+        vim.geometries = this.splitGeometries(vim.g3d, vim.materialLookup );
+        console.log("Found # geometries " + vim.geometries.length);
 
-        console.log("Counting mesh references");
-        let meshReferenceCounts = new Int32Array(meshCount);
-        for (let i = 0; i < instanceCount; ++i)
+        console.log("Counting # instance of each geometry");
+        let instanceCounts = [];
+        for (let i=0; i < vim.geometries.length; ++i)
+            instanceCounts.push(0);
+        for (let i=0; i < vim.nodes.length; ++i)
         {
-            let mesh = instanceMeshes.data[i];
-            if (mesh < 0) continue;
-            meshReferenceCounts[mesh]++;
+            let geometryIndex = vim.nodes[i].geometryIndex;
+            if (geometryIndex >= 0)
+                instanceCounts[geometryIndex] += 1;
         }            
-
-        console.log("Creating instanced meshes");
-        const meshes = [];
-        for (let i=0; i < meshCount; ++i)
+        
+        console.log("creating instanced meshes");
+        vim.meshes = new Array(vim.geometries.length);
+        for (let i=0; i < vim.geometries.length; ++i)
         {
-            const count = meshReferenceCounts[i];               
-            const g = vim.geometries[i];
-            const mesh = new THREE.InstancedMesh(g, material, count);
-            meshes.push(mesh);
+            let count = instanceCounts[i];               
+            let g = vim.geometries[i];
+            if (g)
+                vim.meshes[i] = new THREE.InstancedMesh( g, material, count );
         }
 
-        console.log("Applying Matrices");
-        const instanceCounters = new Int32Array(meshCount);
-        const instanceCenters = [];
-        for (let i=0; i < instanceCount; ++i)
+        // We are going to reuse the geometryCounts as the current index
+        let instanceIndexes = new Array(instanceCounts.length);
+        for (let i=0; i < instanceCounts.length; ++i)
+            instanceIndexes[i] = 0;
+        
+        const centerPoints = [];
+        for (let i=0; i < vim.nodes.length; ++i)
         {
-            const meshIndex = instanceMeshes.data[i];
-            if (meshIndex < 0)
+            // TODO: set the matrix for one of the instanced meshes. 
+            // NOTE: we will have to keep track of the current index of the geometry for each node
+            let node = vim.nodes[i];
+            if (node.geometryIndex < 0)
                 continue;
-                   
-            const mesh = meshes[meshIndex];
+            
+            if (node.geometryIndex > vim.meshes.length)
+                throw new Error("Geometry index " + node.geometryIndex + " out of range 0 .. " +vim.meshes.length);            
+            let mesh = vim.meshes[node.geometryIndex];
             if (!mesh)
                 continue;
+            let matrix = this.floatsToMatrix(node.worldTransform);
+            let instanceIndex = instanceIndexes[node.geometryIndex];
+            if (instanceIndex < 0 || instanceIndex >= mesh.count)
+                throw new Error("Instance index " + instanceIndex + " is out of range " + mesh.count);
+            mesh.setMatrixAt(instanceIndex, matrix);
+            instanceIndexes[node.geometryIndex] += 1;
 
-            const matrixAsArray = instanceTransforms.data.subarray(i * matrixArity, (i + 1) * matrixArity);
-            const matrix = this.floatsToMatrix(matrixAsArray);
-
-            const count = instanceCounters[meshIndex]++;
-            mesh.setMatrixAt(count, matrix);
-
-            let center = mesh.geometry.boundingBox.getCenter(new THREE.Vector3());
+            const center = mesh.geometry.boundingBox.getCenter(new THREE.Vector3());
             center.applyMatrix4(matrix);
-            instanceCenters.push(center);
+            centerPoints.push(center);
         }
 
-        console.log("Computing center.");
-        vim.box = new THREE.Box3().setFromPoints(instanceCenters);
-
-        console.log("Merging lone meshes.");
-        vim.meshes = this.mergeSingleInstances(meshes, material);        
-
-        console.log("Extracting BIM Elements.");
+        vim.box = new THREE.Box3().setFromPoints(centerPoints);        
+        vim.meshes = this.mergeSingleInstances(vim.meshes, material);        
         vim.elements = this.getElements(vim);
-
-        console.log("Extracting BIM Rooms.");
         vim.rooms = this.getRooms(vim);
         
         console.timeEnd("parsingVim");
