@@ -376,17 +376,17 @@ THREE.VIMLoader.prototype =
         return geometry;   
     },
 
-    buildMeshes: function (g3d)
+    buildMeshes: function ( g3d)
     {
         if (!g3d) throw new Error("Missing g3d argument");
 
-        // Unpack
-        const positions = this.findAttribute( g3d, null, "position", "0", "float32", "3" )?.data;
-        const indices = this.findAttribute(g3d, null, "index", "0", "int32", "1")?.data;
-        const meshSubmeshes = this.findAttribute(g3d, "mesh", "submeshoffset", "0", "int32", "1")?.data;
-        const submeshIndexOffset = this.findAttribute(g3d, "submesh", "indexoffset", "0", "int32", "1")?.data;
-        const submeshMaterial = this.findAttribute(g3d, "submesh", "material", "0", "int32", "1")?.data;
-        const materialColors = this.findAttribute(g3d, "material", "color", "0", "float32", "4")?.data;
+        // Find the vertex position data attribute
+        const positions = this.findAttribute( g3d, null, "position", "0", "float32", "3" );
+        const indices = this.findAttribute(g3d, null, "index", "0", "int32", "1");
+        const meshSubmeshes = this.findAttribute(g3d, "mesh", "submeshoffset", "0", "int32", "1");
+        const submeshIndexOffset = this.findAttribute(g3d, "submesh", "indexoffset", "0", "int32", "1");
+        const submeshMaterial = this.findAttribute(g3d, "submesh", "material", "0", "int32", "1");
+        const materialColors = this.findAttribute(g3d, "material", "color", "0", "float32", "4" );
 
         if (!positions) throw new Error("Missing position attribute");
         if (!indices) throw new Error("Missing index attribute");
@@ -395,71 +395,31 @@ THREE.VIMLoader.prototype =
         if (!submeshMaterial) throw new Error("Missing submesh material attribute");
         if (!materialColors) throw new Error("Missing material color attribute");
 
+        let meshCount = meshSubmeshes.data.length;
+        let submeshCount = submeshIndexOffset.data.length;
+        let indexCount = indices.data.length;
+        let materialCount = materialColors.data.length;
         const colorArity = 4;
         const positionArity = 3;
 
-        // Validate
-        if (indices.length % 3 != 0) throw new Error("Invalid Index Count, must be divisible by 3");
-
-        for (let i = 0; i < indices.length; i++)
-            if (indices[i] < 0 || indices[i] >= positions.length)
-                throw new Error("Vertex index out of bound");
-
-        if (positions.length % positionArity != 0)
-            throw new Error("Invalid position buffer, must be divisible by " + positionArity);
-
-        for (let i = 0; i < meshSubmeshes.length; i++)
-            if (meshSubmeshes[i] < 0 || meshSubmeshes[i] >= submeshIndexOffset.length)
-                throw new Error("MeshSubmeshOffset out of bound at");
-
-        for (let i = 0; i < meshSubmeshes.length - 1; i++)
-            if (meshSubmeshes[i] >= meshSubmeshes[i + 1])
-                throw new Error("MeshSubmesh out of sequence.");
-
-        if (submeshIndexOffset.length != submeshMaterial.length)
-            throw new Error("Mismatched submesh buffers");
-
-        for (let i = 0; i < submeshIndexOffset.length; i++)
-            if (submeshIndexOffset[i] < 0 || submeshIndexOffset[i] >= indices.length)
-                throw new Error("SubmeshIndexOffset out of bound");
-
-        for (let i = 0; i < submeshIndexOffset.length; i++)
-            if (submeshIndexOffset[i] % 3 != 0)
-                throw new Error("Invalid SubmeshIndexOffset, must be divisible by 3");
-
-        for (let i = 0; i < submeshIndexOffset.length - 1; i++)
-            if (submeshIndexOffset[i] >= submeshIndexOffset[i + 1])
-                throw new Error("SubmeshIndexOffset out of sequence.");
-
-        for (let i = 0; i < submeshMaterial.length; i++)
-            if (submeshMaterial[i] >= materialColors.length)
-                throw new Error("submeshMaterial out of bound");
-
-        if (materialColors.length % colorArity != 0)
-            throw new Error("Invalid material color buffer, must be divisible by " + colorArity);
-
-
-        // Do the work
-        const meshCount = meshSubmeshes.length;
-        const submeshCount = submeshIndexOffset.length;
-        const indexCount = indices.length;
-
-        const resultMeshes = [];
+        let resultMeshes = [];
         for (let mesh = 0; mesh < meshCount; mesh++)
         {
-            const meshIndices = []
-            const meshVertexPositions = [];
-            const meshVertexColors = [];
+            let meshIndices = []
+            let meshVertexPositions = [];
+            let meshVertexColors = [];
 
-            const meshStart = meshSubmeshes[mesh];
-            const meshEnd = mesh < meshCount - 1
-                ? meshSubmeshes[mesh + 1]
+            let meshStart = meshSubmeshes.data[mesh];
+            let meshEnd = mesh < meshCount - 1
+                ? meshSubmeshes.data[mesh + 1]
                 : submeshCount;
 
             for (let submesh = meshStart; submesh < meshEnd; submesh++)
             {
                 let r, g, b, a;
-                const material = submeshMaterial[submesh];
+                let material = submeshMaterial.data[submesh];
+                if (material >= materialCount)
+                    throw new Error("Material count invalid");
                 if (material < 0) {
                     r = 0.5;
                     g = 0.5;
@@ -468,28 +428,27 @@ THREE.VIMLoader.prototype =
                 }
                 else
                 {
-                    r = materialColors[material * colorArity];
-                    g = materialColors[material * colorArity + 1];
-                    b = materialColors[material * colorArity + 2];
-                    a = materialColors[material * colorArity + 3];
+                    r = materialColors.data[material * colorArity];
+                    g = materialColors.data[material * colorArity + 1];
+                    b = materialColors.data[material * colorArity + 2];
+                    a = materialColors.data[material * colorArity + 3];
                 }
 
                 if (a < 0.9)
                     continue;
 
-                let submeshStart = submeshIndexOffset[submesh];
+                let submeshStart = submeshIndexOffset.data[submesh];
                 let submeshEnd = submesh < submeshCount - 1
-                    ? submeshIndexOffset[submesh + 1]
+                    ? submeshIndexOffset.data[submesh + 1]
                     : indexCount;
-                
+
                 for (let index = submeshStart; index < submeshEnd; index++)
                 {
                     meshIndices.push(meshIndices.length);
-
-                    const vertex = indices[index];
-                    const x = positions[vertex * positionArity];
-                    const y = positions[vertex * positionArity + 1];
-                    const z = positions[vertex * positionArity + 2];
+                    let vertex = indices.data[index];
+                    let x = positions.data[vertex * positionArity];
+                    let y = positions.data[vertex * positionArity + 1];
+                    let z = positions.data[vertex * positionArity + 2]
 
                     meshVertexPositions.push(x); 
                     meshVertexPositions.push(y);
@@ -510,6 +469,7 @@ THREE.VIMLoader.prototype =
             resultMeshes.push(resultMesh);
         }
 
+        console.log("Meshes created succesfully");
         return resultMeshes;
     },    
 
@@ -582,20 +542,10 @@ THREE.VIMLoader.prototype =
         vim.geometries = this.buildMeshes(vim.g3d);
         console.log("Found # meshes " + vim.geometries.length);
 
-        const matrixArity = 16;
         const instanceMeshes = this.findAttribute(vim.g3d, "instance", "mesh", "0", "int32", "1")?.data;
         const instanceTransforms = this.findAttribute(vim.g3d, "instance", "transform", "0", "float32", "16")?.data;
-        
-        // Validate
         if (!instanceMeshes) throw new Error("Missing Instance Mesh Attribute.");
         if (!instanceTransforms) throw new Error("Missing Instance Tranform Attribute.");
-        if (instanceMeshes.length != instanceTransforms.length / matrixArity) throw new Error("Instance buffers mismatched");
-        if (instanceTransforms.length % matrixArity != 0) throw new Error("Invalid InstanceTransform buffer, must respect arity " + matrixArity); 
-
-        for (let i = 0; i < instanceMeshes.length; i++)
-            if (instanceMeshes[i] >= vim.geometries.length)
-                throw new Error("Instance Mesh Out of range.");
-
 
         console.log("Allocating Instanced Meshes");
         const rawMeshes = this.allocateMeshes(vim.geometries, instanceMeshes, material);
