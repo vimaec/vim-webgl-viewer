@@ -286,7 +286,7 @@ var viewer = {
         var materialsLoaded = false;
         var objects = [];
         var defaultOptions = {
-            showGui: true,
+            showGui: false,
             showStats: true,
             camera: {
                 near: 0.1,
