@@ -291,7 +291,7 @@ const viewer =
         let objects = [];
 
         const defaultOptions = {
-            showGui: true,
+            showGui: false,
             showStats: true,
             camera: {
                 near: 0.1,
