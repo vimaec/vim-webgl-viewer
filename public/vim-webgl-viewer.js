@@ -542,8 +542,19 @@ var viewer = {
             // Stats display 
             if (settings.showStats) {
                 stats = new Stats();
+                stats.dom.style.top = "84px";
+                stats.dom.style.left = "16px";
                 document.body.appendChild(stats.dom);
             }
+            // Add Vim logo
+            var img = document.createElement("img");
+            img.src = "logo.png";
+            img.style.position = "fixed";
+            img.style.top = "16px";
+            img.style.left = "16px";
+            img.height = 48;
+            img.width = 128;
+            document.body.prepend(img);
         }
         function resizeCanvas(force) {
             if (force === void 0) { force = false; }
