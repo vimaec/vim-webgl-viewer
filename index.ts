@@ -580,7 +580,7 @@ const viewer =
             // Add all of the appropriate mouse, touch-pad, and keyboard listeners
             addListeners();
 
-            // Stats display 
+            // Add Stats display 
             if (settings.showStats) {
                 stats = new Stats();
                 stats.dom.style.top = "84px";
@@ -589,14 +589,19 @@ const viewer =
             }
 
             // Add Vim logo
-            var img = document.createElement("img");
-            img.src = "logo.png";
-            img.style.position = "fixed";
-            img.style.top = "16px";
-            img.style.left = "16px";
-            img.height = 48;
-            img.width = 128;
-            document.body.prepend(img);
+            const logo = document.createElement("img");
+            logo.src = "logo.png";
+            logo.style.position = "fixed";
+            logo.style.top = "16px";
+            logo.style.left = "16px";
+            logo.height = 48;
+            logo.width = 128;
+            document.body.prepend(logo);
+
+            // Set Favicon
+            const favicon = document.createElement('img');
+            favicon.setAttribute('href', "favicon.ico");
+            document.head.appendChild(favicon);
         }
 
         function resizeCanvas(force: boolean = false) {            
