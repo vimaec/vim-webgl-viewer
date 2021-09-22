@@ -1,5 +1,5 @@
 /*
-Ara Viewer 
+Vim Viewer 
 Copyright VIMaec LLC, 2020
 Licensed under the terms of the MIT License
 */
@@ -8,15 +8,6 @@ declare const THREE: any;
 declare const Stats: any;
 declare const dat: any;
 declare const CameraControls: any;
-
-/**
- * js-prop-list.ts
- *  
- * A small library for serializing and describing nested property lists.
- *  
- * Copyright (c) 2018 Ara 3D
- * Subject to MIT License
- */
 
 /** 
  * An object that maps names to property descriptors or other maps. Allows property descriptors to be easily
@@ -287,10 +278,10 @@ class DeepMerge
 }
 // END: Deepmerge
 
-// Main ARA code
-const ara = 
+// Main Vim Viewer code
+const viewer = 
 {
-    view: function(options) 
+    view: function(options)
     {
         // Variables 
         let stats, gui, cameraControls;

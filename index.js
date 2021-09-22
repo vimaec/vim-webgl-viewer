@@ -1,5 +1,5 @@
 /*
-Ara Viewer
+Vim Viewer
 Copyright VIMaec LLC, 2020
 Licensed under the terms of the MIT License
 */
@@ -276,8 +276,8 @@ var DeepMerge = /** @class */ (function () {
     return DeepMerge;
 }());
 // END: Deepmerge
-// Main ARA code
-var ara = {
+// Main Vim Viewer code
+var viewer = {
     view: function (options) {
         // Variables 
         var stats, gui, cameraControls;
@@ -597,8 +597,6 @@ var ara = {
                 materialsLoaded = true;
                 for (var i = 0; i < vim.meshes.length; ++i)
                     loadObject(vim.meshes[i]);
-                //console.log("loading only one");
-                //loadObject(vim.meshes[0]);
                 addViews(vim.rooms);
                 camera.lookAt(vim.box.getCenter(new THREE.Vector3()));
                 console.log("Finished loading VIM geometries into scene");

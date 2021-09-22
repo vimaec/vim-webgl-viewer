@@ -36,7 +36,7 @@ const srcFiles = [
 
 gulp.task('build', function(){
     return gulp.src(srcFiles)
-        .pipe(gp_concat('ara3d-viewer.js', {
+        .pipe(gp_concat('vim-webgl-viewer.js', {
             newLine:'\n;' // the newline is needed in case the file ends with a line comment, the semi-colon is needed if the last statement wasn't terminated
         }))       
         .pipe(gulp.dest('public'));
@@ -44,11 +44,11 @@ gulp.task('build', function(){
 
 gulp.task('dist', function(){
     return gulp.src(srcFiles)
-        .pipe(gp_concat('ara3d-viewer.js', {
+        .pipe(gp_concat('vim-webgl-viewer.js', {
             newLine:'\n;' // the newline is needed in case the file ends with a line comment, the semi-colon is needed if the last statement wasn't terminated
         }))
         .pipe(gulp.dest('public'))
-        .pipe(gp_rename('ara3d-viewer.min.js'))
+        .pipe(gp_rename('vim-webgl-viewer.min.js'))
         .pipe(gp_uglify())
         .pipe(gulp.dest('public'));
 });
