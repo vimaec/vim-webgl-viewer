@@ -5,7 +5,7 @@ The VIM Three.JS 3D Viewer is an open-source and easy to configure and use 3D mo
 the transfer of large AEC data. 
 
 The VIM Three.JS 3D viewer combines the Three.JS library with several common loaders and utilities, to reduce boilerplate code, into a single file 
-(`ara3d-viewer.js`) making it easy to integrate a custom 3D viewer into your website with just a couple of lines of code.
+(`vim-webgl-viewer.js`) making it easy to integrate a custom 3D viewer into your website with just a couple of lines of code.
 
 ## Running Locally:
 
@@ -46,14 +46,14 @@ The VIM Three.JS 3D viewer combines the Three.JS library with several common loa
 
 ## Using the Model Viewer 
 
-Virtually the simplest usage of the Ara viewer is the following example: 
+Virtually the simplest usage of the VIM viewer is the following example: 
 
 ```
     <html>
     <head>
-        <title>Simple Ara Viewer Example</title>
+        <title>Simple VIM Viewer Example</title>
     </head>
-    <script src="araviewer.js"></script>
+    <script src="vim-webgl-viewer.js"></script>
     <script>
         ara.view({ url: 'testmodel.ply' });
     </script>
@@ -80,7 +80,7 @@ The main viewer code is writtein in TypeScript, and has to be built separately b
 
 ## The Sources and Dependencies
 
-The distributable file `ara-viewer.js` is a concatenation of: 
+The distributable file `vim-webgl-viewer.js` is a concatenation of: 
 
 * [Three.JS](https://threejs.org)
     * The main Three.JS distributable
@@ -90,5 +90,5 @@ The distributable file `ara-viewer.js` is a concatenation of:
     * Three.JS Orbit controls from the `examples/controls` folder    
     * The custom `VIMLoader.js` file
 * [Dat.GUI](https://github.com/dataarts/dat.gui) 
-* The `ara-viewer-main.js` source file which encapsulates common Three JS boiler plate 
+* The `vim-webgl-viewer.js` source file which encapsulates common Three JS boiler plate 
 
