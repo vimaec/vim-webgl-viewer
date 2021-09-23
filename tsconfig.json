@@ -58,6 +58,9 @@
     "outFile": "index.js",
   },
   "include": [
-    "./index.ts",
+    "./node_modules/dat.gui/build/dat.gui.js",
+    "./deep_merge.ts",
+    "./gui_binder.ts",
+    "./index.ts"
   ]
 }

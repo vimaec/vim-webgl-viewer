@@ -11,17 +11,15 @@ const gulp = require('gulp'),
     gp_uglify = require('gulp-uglify-es').default;
 
 const srcFiles = [
-    'index.js',
+    // dependenciees
     'node_modules/dat.gui/build/dat.gui.js',
     'node_modules/three/build/three.js',
     'node_modules/three/examples/js/libs/stats.min.js',
     'node_modules/three/examples/js/utils/BufferGeometryUtils.js',
-    //'node_modules/three/examples/js/controls/FirstPersonControls.js',
-    //'node_modules/three/examples/js/controls/PointerLockControls.js',
-    //'CustomOrbitControls.js', 
-    //'CameraControls.js',
-    'VimLoader.js',
-	'DeepMerge.js'
+    
+    //vim code
+    'index.js',
+    'vim_loader.js',
 ];
 
 gulp.task('build', function(){
