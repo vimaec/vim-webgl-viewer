@@ -610,56 +610,6 @@ const viewer =
             return dirLight;
         }        
 
-        // https://developer.mozilla.org/en-US/docs/Web/API/HTML_Drag_and_Drop_API/File_drag_and_drop
-
-        function dragOverHandler(ev) {
-            console.log('File(s) in drop zone'); 
-
-            // Prevent default behavior (Prevent file from being opened)
-            ev.preventDefault();
-        }
-
-        function droppedFile(file) {
-            const fileName = file.name;
-            loadFile(fileName);    
-        }
-
-        function dropHandler(ev) {
-            console.log('File(s) dropped');
-            
-            // Prevent default behavior (Prevent file from being opened)
-            ev.preventDefault();
-            
-            if (ev.dataTransfer.items) {
-                // Use DataTransferItemList interface to access the file(s)
-                for (var i = 0; i < ev.dataTransfer.items.length; i++) {
-                    // If dropped items aren't files, reject them
-                    if (ev.dataTransfer.items[i].kind === 'file') {
-                        var file = ev.dataTransfer.items[i].getAsFile();
-                        droppedFile(file);
-                    }
-                }
-            } else {
-                // Use DataTransfer interface to access the file(s)
-                for (var i = 0; i < ev.dataTransfer.files.length; i++) {
-                    droppedFile(ev.dataTransfer.files[i]);
-                }
-            } 
-            
-            // Pass event to removeDragData for cleanup
-            removeDragData(ev)
-        }   
-
-        function removeDragData(ev) {            
-            if (ev.dataTransfer.items) {
-                // Use DataTransferItemList interface to remove the drag data
-                ev.dataTransfer.items.clear();
-            } else {
-                // Use DataTransfer interface to remove the drag data
-                ev.dataTransfer.clearData();
-            }
-        }
-
         // Calls render, and asks the framework to prepare the next frame 
         function animate() {
             requestAnimationFrame( animate );
