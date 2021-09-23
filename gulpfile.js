@@ -32,6 +32,7 @@ const srcFiles = [
     //'CustomOrbitControls.js', 
     //'CameraControls.js',
     'VimLoader.js',
+	'DeepMerge.js'
 ];
 
 gulp.task('build', function(){
