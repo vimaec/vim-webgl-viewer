@@ -299,7 +299,7 @@ const viewer =
 
         // Initialization of scene, loading of objects, and launch animation loop
         init();       
-        loadIntoScene(settings.url, settings.mtlurl);
+        loadFile(settings.url);
         animate();
 
         function isColor(obj) {
@@ -595,89 +595,13 @@ const viewer =
             return fileName.slice(extPos + 1).toLowerCase();
         }
 
-        function loadIntoScene(fileName, mtlUrl) {     
-            console.log("Loading object from " + fileName);
-            console.time("Loading object");
+        function loadFile(fileName) {     
+            console.log("Loading file: " + fileName);
             const ext = getExt(fileName);
-            loadIntoSceneWithLoader(fileName, mtlUrl, ext);
-        }
-
-        function loadIntoSceneWithLoader(fileName, mtlUrl, ext) {     
-            switch (ext) {
-                case "3ds": {
-                    const loader = new THREE.TDSLoader();
-                    loader.load(fileName, loadObject);
-                    return;
-                }
-                case "fbx": {
-                    const loader = new THREE.FBXLoader();
-                    loader.load(fileName, loadObject);
-                    return;
-                }
-                case "dae":  {
-                    const loader = new THREE.ColladaLoader();
-                    loader.load(fileName, loadObject);
-                    return;
-                }
-                case "gltf": {
-                    const loader = new THREE.GLTFLoader();
-                    loader.load(fileName, (obj) => {
-                        objects.push(obj.scene);
-                        scene.add(obj);
-                    });
-                    return;
-                }
-                case "gcode": {
-                    const loader = new THREE.GCodeLoader();
-                    loader.load(fileName, loadObject);
-                    return;
-                }
-                case "obj": {
-                    const objLoader = new THREE.OBJLoader();                    
-                    const mtlLoader = new THREE.MTLLoader();
-                    if (mtlUrl) {                        
-                        mtlLoader.load(mtlUrl, (mats) => {
-                            mats.preload();
-                            materialsLoaded = true;
-                            objLoader.setMaterials(mats).load(fileName, loadObject);
-                        }, null, () => {
-                            console.warn("Failed to load material " + mtlUrl + " trying to load obj alone");
-                            objLoader.load(fileName, loadObject);
-                        });
-                    }
-                    else {
-                        objLoader.load(fileName, loadObject);
-                    }
-                    return;
-                }
-                case "pcd": {
-                    const loader = new THREE.PCDLoader();
-                    loader.load(fileName, loadObject);
-                    return;
-                }
-                case "ply": {
-                    const loader = new THREE.PLYLoader();
-                    loader.load(fileName, ( geometry ) => {
-                        geometry.computeVertexNormals();
-                        loadObject(new THREE.Mesh( geometry ));
-                    });
-                    return;
-                }
-                case "stl": {
-                    const loader =  new THREE.STLLoader();
-                    loader.load(fileName, ( geometry ) => {
-                        geometry.computeVertexNormals();
-                        loadObject(new THREE.Mesh( geometry ));
-                    });
-                    return;
-                }
-                case "vim": {
-                    loadVim(fileName);
-                    return;
-                }
-                default:
-                    throw new Error("Unrecognized file type extension '" + ext + "' for file " + fileName);
-            }
+            if (ext == "vim")
+                loadVim(fileName);
+            else
+                console.error("unhandled file format");
         }
 
         function addLight(scene) {
@@ -697,7 +621,7 @@ const viewer =
 
         function droppedFile(file) {
             const fileName = file.name;
-            loadIntoScene(fileName, null);    
+            loadFile(fileName);    
         }
 
         function dropHandler(ev) {
