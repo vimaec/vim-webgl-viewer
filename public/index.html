@@ -6,7 +6,9 @@
 </body>
 <script src="./vim-webgl-viewer.js"></script>
 <script>
-    viewer.view({ url: './residence.vim', 
+    let v = new Viewer();
+    v.view({
+        url: './residence.vim', 
         object: { 
             scale: 0.1, 
             rotation: { x: 270 }, 

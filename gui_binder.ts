@@ -122,6 +122,7 @@ type PropsValueChanged = (pv: PropListJson) => void;
 
 const GuiBinder =
 {
+    gui: new dat.GUI(),
     bind: function (settings, callback: PropsValueChanged) {
         // Create a property descriptor 
         const propDesc = objectToPropDesc(settings, {});
@@ -131,10 +132,8 @@ const GuiBinder =
         // Iniitlaize the property list values             
         props.fromJson(settings);
 
-        const gui = new dat.GUI();
-
         // Bind the properties to the DAT.gui controller, returning the scene when it updates
-        bindControls(props, gui, () => callback(props.toJson));
+        bindControls(props, this.gui, () => callback(props.toJson));
 
         function objectToPropDesc(obj, pdm: IPropDescMap): IPropDescMap {
             // TODO: look for common patterns (colors, positions, angles) and process these specially.
