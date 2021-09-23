@@ -296,7 +296,7 @@ var viewer = {
         };
         // Initialization of scene, loading of objects, and launch animation loop
         init();
-        loadIntoScene(settings.url, settings.mtlurl);
+        loadFile(settings.url);
         animate();
         function isColor(obj) {
             return typeof (obj) === 'object' && 'r' in obj && 'g' in obj && 'b' in obj;
@@ -551,88 +551,13 @@ var viewer = {
             var extPos = fileName.lastIndexOf(".");
             return fileName.slice(extPos + 1).toLowerCase();
         }
-        function loadIntoScene(fileName, mtlUrl) {
-            console.log("Loading object from " + fileName);
-            console.time("Loading object");
+        function loadFile(fileName) {
+            console.log("Loading file: " + fileName);
             var ext = getExt(fileName);
-            loadIntoSceneWithLoader(fileName, mtlUrl, ext);
-        }
-        function loadIntoSceneWithLoader(fileName, mtlUrl, ext) {
-            switch (ext) {
-                case "3ds": {
-                    var loader = new THREE.TDSLoader();
-                    loader.load(fileName, loadObject);
-                    return;
-                }
-                case "fbx": {
-                    var loader = new THREE.FBXLoader();
-                    loader.load(fileName, loadObject);
-                    return;
-                }
-                case "dae": {
-                    var loader = new THREE.ColladaLoader();
-                    loader.load(fileName, loadObject);
-                    return;
-                }
-                case "gltf": {
-                    var loader = new THREE.GLTFLoader();
-                    loader.load(fileName, function (obj) {
-                        objects.push(obj.scene);
-                        scene.add(obj);
-                    });
-                    return;
-                }
-                case "gcode": {
-                    var loader = new THREE.GCodeLoader();
-                    loader.load(fileName, loadObject);
-                    return;
-                }
-                case "obj": {
-                    var objLoader_1 = new THREE.OBJLoader();
-                    var mtlLoader = new THREE.MTLLoader();
-                    if (mtlUrl) {
-                        mtlLoader.load(mtlUrl, function (mats) {
-                            mats.preload();
-                            materialsLoaded = true;
-                            objLoader_1.setMaterials(mats).load(fileName, loadObject);
-                        }, null, function () {
-                            console.warn("Failed to load material " + mtlUrl + " trying to load obj alone");
-                            objLoader_1.load(fileName, loadObject);
-                        });
-                    }
-                    else {
-                        objLoader_1.load(fileName, loadObject);
-                    }
-                    return;
-                }
-                case "pcd": {
-                    var loader = new THREE.PCDLoader();
-                    loader.load(fileName, loadObject);
-                    return;
-                }
-                case "ply": {
-                    var loader = new THREE.PLYLoader();
-                    loader.load(fileName, function (geometry) {
-                        geometry.computeVertexNormals();
-                        loadObject(new THREE.Mesh(geometry));
-                    });
-                    return;
-                }
-                case "stl": {
-                    var loader = new THREE.STLLoader();
-                    loader.load(fileName, function (geometry) {
-                        geometry.computeVertexNormals();
-                        loadObject(new THREE.Mesh(geometry));
-                    });
-                    return;
-                }
-                case "vim": {
-                    loadVim(fileName);
-                    return;
-                }
-                default:
-                    throw new Error("Unrecognized file type extension '" + ext + "' for file " + fileName);
-            }
+            if (ext == "vim")
+                loadVim(fileName);
+            else
+                console.error("unhandled file format");
         }
         function addLight(scene) {
             var dirLight = new THREE.DirectionalLight();
@@ -647,7 +572,7 @@ var viewer = {
         }
         function droppedFile(file) {
             var fileName = file.name;
-            loadIntoScene(fileName, null);
+            loadFile(fileName);
         }
         function dropHandler(ev) {
             console.log('File(s) dropped');
