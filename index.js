@@ -2954,7 +2954,7 @@ var Viewer = /** @class */ (function () {
         this.homePos.copy(this.camera.position);
         this.homeRot.copy(this.camera.quaternion);
         // Add all of the appropriate mouse, touch-pad, and keyboard listeners
-        this.addListeners();
+        this.removeListeners = this.addListeners();
         // Add Stats display 
         if (this.settings.showStats) {
             this.stats = new Stats();
@@ -2979,6 +2979,10 @@ var Viewer = /** @class */ (function () {
         this.loadFile(this.settings.url);
         // Start Loop
         this.animate();
+    };
+    Viewer.prototype.disconnect = function () {
+        this.removeListeners();
+        this.removeListeners = null;
     };
     Viewer.prototype.loadFile = function (fileName) {
         function getExt(fileName) {
@@ -3155,9 +3159,6 @@ var Viewer = /** @class */ (function () {
     };
     Viewer.prototype.addListeners = function () {
         var _this = this;
-        var onContextMenu = function (event) {
-            console.log("Context menu");
-        };
         var keys = {
             A: 65,
             D: 68,
@@ -3221,18 +3222,6 @@ var Viewer = /** @class */ (function () {
             }
             event.preventDefault();
         };
-        var onMouseDown = function (event) {
-            event.preventDefault();
-            document.addEventListener('mousemove', onMouseMove, false);
-            document.addEventListener('mouseup', onMouseUp, false);
-            // Manually set the focus since calling preventDefault above
-            // prevents the browser from setting it automatically.    
-            _this.canvas.focus ? _this.canvas.focus() : window.focus();
-        };
-        var onMouseUp = function (event) {
-            document.removeEventListener('mousemove', onMouseMove, false);
-            document.removeEventListener('mouseup', onMouseUp, false);
-        };
         var onMouseMove = function (event) {
             event.preventDefault();
             // https://github.com/mrdoob/three.js/blob/master/examples/jsm/controls/PointerLockControls.js
@@ -3251,13 +3240,18 @@ var Viewer = /** @class */ (function () {
             var dir = event.deltaY > 0 ? direction.back : direction.forward;
             _this.moveCameraBy(dir, speed);
         };
-        this.canvas.addEventListener('contextmenu', onContextMenu, false);
-        this.canvas.addEventListener('mousedown', onMouseDown, false);
-        this.canvas.addEventListener('wheel', onMouseWheel, false);
-        //this.canvas.addEventListener('touchstart', onTouchStart, false);
-        //this.canvas.addEventListener('touchend', onTouchEnd, false);
-        //this.canvas.addEventListener('touchmove', onTouchMove, false);
-        document.addEventListener('keydown', onKeyDown, false);
+        var onMouseDown = function (event) {
+            event.preventDefault();
+            _this.canvas.addEventListener('mousemove', onMouseMove, false);
+            _this.canvas.addEventListener('mouseup', onMouseUp, false);
+            // Manually set the focus since calling preventDefault above
+            // prevents the browser from setting it automatically.    
+            _this.canvas.focus ? _this.canvas.focus() : window.focus();
+        };
+        var onMouseUp = function (event) {
+            _this.canvas.removeEventListener('mousemove', onMouseMove, false);
+            _this.canvas.removeEventListener('mouseup', onMouseUp, false);
+        };
         /*
         let touchStart = undefined; // When one touch occurs this is the value, when two or more touches occur it is the average of the first two.
         let touchStart1 = undefined; // The first touch when multiple touches occur, otherwise left undefined
@@ -3335,7 +3329,22 @@ var Viewer = /** @class */ (function () {
             return p1.clone().lerp(p2, 0.5);
         }
         */
-        return this;
+        this.canvas.addEventListener('mousedown', onMouseDown);
+        this.canvas.addEventListener('wheel', onMouseWheel);
+        document.addEventListener('keydown', onKeyDown);
+        //this.canvas.addEventListener('touchstart', onTouchStart, false);
+        //this.canvas.addEventListener('touchend', onTouchEnd, false);
+        //this.canvas.addEventListener('touchmove', onTouchMove, false);
+        return function () {
+            _this.canvas.removeEventListener('mousedown', onMouseDown);
+            _this.canvas.removeEventListener('wheel', onMouseWheel);
+            document.removeEventListener('keydown', onKeyDown);
+            _this.canvas.removeEventListener('mousemove', onMouseMove, false);
+            _this.canvas.removeEventListener('mouseup', onMouseUp, false);
+            //this.canvas.addEventListener('touchstart', onTouchStart, false);
+            //this.canvas.addEventListener('touchend', onTouchEnd, false);
+            //this.canvas.addEventListener('touchmove', onTouchMove, false);
+        };
     };
     return Viewer;
 }());

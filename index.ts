@@ -101,6 +101,7 @@ class Viewer
     material: any; // THREE.MeshPhongMaterial
     homePos: any; // THREE.Vector3
     homeRot: any; // THREE.Quaternion
+    removeListeners: Function;
 
     constructor()
     {
@@ -180,7 +181,7 @@ class Viewer
         this.homeRot.copy(this.camera.quaternion);
 
         // Add all of the appropriate mouse, touch-pad, and keyboard listeners
-        this.addListeners();
+        this.removeListeners = this.addListeners();
 
         // Add Stats display 
         if (this.settings.showStats) {
@@ -210,6 +211,11 @@ class Viewer
 
         // Start Loop
         this.animate();
+    }
+
+    disconnect() {
+        this.removeListeners();
+        this.removeListeners = null;
     }
 
     loadFile(fileName) {
@@ -406,9 +412,6 @@ class Viewer
     }
 
     addListeners() {
-        const onContextMenu = (event) => {
-            console.log("Context menu");
-        }
 
         const keys = {
             A: 65,
@@ -475,19 +478,9 @@ class Viewer
             event.preventDefault();
         }
 
-        const onMouseDown = (event) => {
-            event.preventDefault();
-            document.addEventListener('mousemove', onMouseMove, false);
-            document.addEventListener('mouseup', onMouseUp, false);
-            // Manually set the focus since calling preventDefault above
-            // prevents the browser from setting it automatically.    
-            this.canvas.focus ? this.canvas.focus() : window.focus();
-        }
 
-        const onMouseUp = (event) => {
-            document.removeEventListener('mousemove', onMouseMove, false);
-            document.removeEventListener('mouseup', onMouseUp, false);
-        }
+
+
 
         const onMouseMove = (event) => {
             event.preventDefault();
@@ -503,7 +496,8 @@ class Viewer
                 this.rotateCameraBy(delta);
         }
 
-        const onMouseWheel = (event) => {
+        const onMouseWheel = (event) =>
+        {
             event.preventDefault();
             event.stopPropagation();
             const speed = this.settings.camera.controls.zoomSpeed;
@@ -511,13 +505,24 @@ class Viewer
             this.moveCameraBy(dir, speed);
         }
 
-        this.canvas.addEventListener('contextmenu', onContextMenu, false);
-        this.canvas.addEventListener('mousedown', onMouseDown, false);
-        this.canvas.addEventListener('wheel', onMouseWheel, false);
-        //this.canvas.addEventListener('touchstart', onTouchStart, false);
-        //this.canvas.addEventListener('touchend', onTouchEnd, false);
-        //this.canvas.addEventListener('touchmove', onTouchMove, false);
-        document.addEventListener('keydown', onKeyDown, false);
+        const onMouseDown = (event) =>
+        {
+            event.preventDefault();
+            this.canvas.addEventListener('mousemove', onMouseMove, false);
+            this.canvas.addEventListener('mouseup', onMouseUp, false);
+            // Manually set the focus since calling preventDefault above
+            // prevents the browser from setting it automatically.    
+            this.canvas.focus ? this.canvas.focus() : window.focus();
+        }
+
+        const onMouseUp = (event) => {
+            this.canvas.removeEventListener('mousemove', onMouseMove, false);
+            this.canvas.removeEventListener('mouseup', onMouseUp, false);
+        }
+
+
+
+
 
         /*
         let touchStart = undefined; // When one touch occurs this is the value, when two or more touches occur it is the average of the first two. 
@@ -597,7 +602,30 @@ class Viewer
         }
         */
 
-        return this;
+        this.canvas.addEventListener('mousedown', onMouseDown);
+        this.canvas.addEventListener('wheel', onMouseWheel);
+        document.addEventListener('keydown', onKeyDown);
+
+        //this.canvas.addEventListener('touchstart', onTouchStart, false);
+        //this.canvas.addEventListener('touchend', onTouchEnd, false);
+        //this.canvas.addEventListener('touchmove', onTouchMove, false);
+
+
+
+        return () =>
+        {
+            this.canvas.removeEventListener('mousedown', onMouseDown);
+            this.canvas.removeEventListener('wheel', onMouseWheel);
+            document.removeEventListener('keydown', onKeyDown);
+            this.canvas.removeEventListener('mousemove', onMouseMove, false);
+            this.canvas.removeEventListener('mouseup', onMouseUp, false);
+
+            //this.canvas.addEventListener('touchstart', onTouchStart, false);
+            //this.canvas.addEventListener('touchend', onTouchEnd, false);
+            //this.canvas.addEventListener('touchmove', onTouchMove, false);
+
+        }
+            
     }
 }
 
