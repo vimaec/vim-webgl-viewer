@@ -43403,6 +43403,64 @@ var DeepMerge = /** @class */ (function () {
     };
     return DeepMerge;
 }());
+var CameraController = /** @class */ (function () {
+    function CameraController(camera, settings) {
+        this.camera = camera;
+        this.applySettings(settings);
+        // Save initial position
+        this.initialPosition = new THREE.Vector3();
+        this.initialRotation = new THREE.Quaternion();
+        this.initialPosition.copy(this.camera.position);
+        this.initialRotation.copy(this.camera.quaternion);
+    }
+    CameraController.prototype.lookAt = function (position) { this.camera.lookAt(position); };
+    CameraController.prototype.applySettings = function (newSettings) {
+        // TODO: camera updates aren't working
+        this.camera.fov = newSettings.camera.fov;
+        this.camera.zoom = newSettings.camera.zoom;
+        this.camera.near = newSettings.camera.near;
+        this.camera.far = newSettings.camera.far;
+        this.camera.position.copy(toVec(newSettings.camera.position));
+        this.cameraTarget = toVec(newSettings.camera.target);
+        this.camera.lookAt(this.cameraTarget);
+        this.settings = newSettings;
+    };
+    CameraController.prototype.moveCameraBy = function (dir, speed, onlyHoriz) {
+        if (dir === void 0) { dir = direction.forward; }
+        if (speed === void 0) { speed = 1; }
+        if (onlyHoriz === void 0) { onlyHoriz = false; }
+        var vector = new THREE.Vector3();
+        vector.copy(dir);
+        if (speed)
+            vector.multiplyScalar(speed);
+        vector.applyQuaternion(this.camera.quaternion);
+        var y = this.camera.position.y;
+        this.camera.position.add(vector);
+        if (onlyHoriz)
+            this.camera.position.y = y;
+    };
+    CameraController.prototype.panCameraBy = function (pt) {
+        var speed = this.settings.camera.controls.panSpeed;
+        this.moveCameraBy(new THREE.Vector3(-pt.x, pt.y, 0), speed);
+    };
+    CameraController.prototype.rotateCameraBy = function (pt) {
+        var euler = new THREE.Euler(0, 0, 0, 'YXZ');
+        euler.setFromQuaternion(this.camera.quaternion);
+        euler.y += -pt.x * this.settings.camera.controls.rotateSpeed;
+        euler.x += -pt.y * this.settings.camera.controls.rotateSpeed;
+        euler.z = 0;
+        var PI_2 = Math.PI / 2;
+        var minPolarAngle = -2 * Math.PI;
+        var maxPolarAngle = 2 * Math.PI;
+        euler.x = Math.max(PI_2 - maxPolarAngle, Math.min(PI_2 - minPolarAngle, euler.x));
+        this.camera.quaternion.setFromEuler(euler);
+    };
+    CameraController.prototype.resetCamera = function () {
+        this.camera.position.copy(this.initialPosition);
+        this.camera.quaternion.copy(this.initialRotation);
+    };
+    return CameraController;
+}());
 // Used to provide new IDs for each new property descriptor that is created.
 var gid = 0;
 /**
@@ -43727,8 +43785,6 @@ var Viewer = /** @class */ (function () {
     function Viewer() {
         this.objects = [];
         this.objects = [];
-        this.homePos = new THREE.Vector3();
-        this.homeRot = new THREE.Quaternion();
     }
     Viewer.prototype.view = function (options) {
         var _this = this;
@@ -43747,16 +43803,16 @@ var Viewer = /** @class */ (function () {
         //Renderer
         this.renderer = new THREE.WebGLRenderer({ antialias: true, canvas: this.canvas });
         this.renderer.setPixelRatio(window.devicePixelRatio);
-        // Create the camera and size everything appropriately  
+        // Create the camera and size everything appropriately 
         this.camera = new THREE.PerspectiveCamera();
-        this.updateCamera();
+        this.cameraController = new CameraController(this.camera, this.settings);
         this.resizeCanvas(true);
         // Create scene object
         this.scene = new THREE.Scene();
         if (this.settings.showGui) {
             // Create a new DAT.gui controller 
-            GuiBinder.bind(this.settings, function (props) {
-                _this.settings = props.toJson;
+            GuiBinder.bind(this.settings, function (settings) {
+                _this.settings = settings;
                 _this.updateScene();
             });
         }
@@ -43775,11 +43831,6 @@ var Viewer = /** @class */ (function () {
         this.material = new THREE.MeshPhongMaterial();
         // Initial scene update: happens if controls change 
         this.updateScene();
-        // Initial update of the camera
-        this.updateCamera();
-        // Get the initial position 
-        this.homePos.copy(this.camera.position);
-        this.homeRot.copy(this.camera.quaternion);
         // Add all of the appropriate mouse, touch-pad, and keyboard listeners
         this.removeListeners = this.addListeners();
         // Add Stats display 
@@ -43838,7 +43889,7 @@ var Viewer = /** @class */ (function () {
                 _this.scene.add(vim.meshes[i]);
             }
             _this.addViews(vim.rooms);
-            _this.camera.lookAt(vim.box.getCenter(new THREE.Vector3()));
+            _this.cameraController.lookAt(vim.box.getCenter(new THREE.Vector3()));
             console.log("Finished loading VIM geometries into scene");
             console.timeEnd("loadingVim");
         });
@@ -43894,16 +43945,6 @@ var Viewer = /** @class */ (function () {
             _loop_1(i);
         }
     };
-    Viewer.prototype.updateCamera = function () {
-        // TODO: camera updates aren't working
-        this.camera.fov = this.settings.camera.fov;
-        this.camera.zoom = this.settings.camera.zoom;
-        this.camera.near = this.settings.camera.near;
-        this.camera.far = this.settings.camera.far;
-        this.camera.position.copy(toVec(this.settings.camera.position));
-        this.cameraTarget = toVec(this.settings.camera.target);
-        this.camera.lookAt(this.cameraTarget);
-    };
     Viewer.prototype.resizeCanvas = function (force) {
         if (force === void 0) { force = false; }
         if (!this.settings.autoResize && !force)
@@ -43932,43 +43973,7 @@ var Viewer = /** @class */ (function () {
         this.sunlight.skyColor = toColor(this.settings.sunlight.skyColor);
         this.sunlight.groundColor = toColor(this.settings.sunlight.groundColor);
         this.sunlight.intensity = this.settings.sunlight.intensity;
-    };
-    //==
-    // Camera control functions
-    //==
-    Viewer.prototype.moveCameraBy = function (dir, speed, onlyHoriz) {
-        if (dir === void 0) { dir = direction.forward; }
-        if (speed === void 0) { speed = 1; }
-        if (onlyHoriz === void 0) { onlyHoriz = false; }
-        var vector = new THREE.Vector3();
-        vector.copy(dir);
-        if (speed)
-            vector.multiplyScalar(speed);
-        vector.applyQuaternion(this.camera.quaternion);
-        var y = this.camera.position.y;
-        this.camera.position.add(vector);
-        if (onlyHoriz)
-            this.camera.position.y = y;
-    };
-    Viewer.prototype.panCameraBy = function (pt) {
-        var speed = this.settings.camera.controls.panSpeed;
-        this.moveCameraBy(new THREE.Vector3(-pt.x, pt.y, 0), speed);
-    };
-    Viewer.prototype.rotateCameraBy = function (pt) {
-        var euler = new THREE.Euler(0, 0, 0, 'YXZ');
-        euler.setFromQuaternion(this.camera.quaternion);
-        euler.y += -pt.x * this.settings.camera.controls.rotateSpeed;
-        euler.x += -pt.y * this.settings.camera.controls.rotateSpeed;
-        euler.z = 0;
-        var PI_2 = Math.PI / 2;
-        var minPolarAngle = -2 * Math.PI;
-        var maxPolarAngle = 2 * Math.PI;
-        euler.x = Math.max(PI_2 - maxPolarAngle, Math.min(PI_2 - minPolarAngle, euler.x));
-        this.camera.quaternion.setFromEuler(euler);
-    };
-    Viewer.prototype.resetCamera = function () {
-        this.camera.position.copy(this.homePos);
-        this.camera.quaternion.copy(this.homeRot);
+        this.cameraController.applySettings(this.settings);
     };
     Viewer.prototype.updateMaterial = function (targetMaterial, settings) {
         if ('color' in settings)
@@ -44010,39 +44015,39 @@ var Viewer = /** @class */ (function () {
                 speed *= _this.settings.camera.controls.altMultiplier;
             switch (event.keyCode) {
                 case keys.A:
-                    _this.moveCameraBy(direction.left, speed);
+                    _this.cameraController.moveCameraBy(direction.left, speed);
                     break;
                 case keys.LEFTARROW:
-                    _this.moveCameraBy(direction.left, speed, true);
+                    _this.cameraController.moveCameraBy(direction.left, speed, true);
                     break;
                 case keys.D:
-                    _this.moveCameraBy(direction.right, speed);
+                    _this.cameraController.moveCameraBy(direction.right, speed);
                     break;
                 case keys.RIGHTARROW:
-                    _this.moveCameraBy(direction.right, speed, true);
+                    _this.cameraController.moveCameraBy(direction.right, speed, true);
                     break;
                 case keys.W:
-                    _this.moveCameraBy(direction.forward, speed);
+                    _this.cameraController.moveCameraBy(direction.forward, speed);
                     break;
                 case keys.UPARROW:
-                    _this.moveCameraBy(direction.forward, speed, true);
+                    _this.cameraController.moveCameraBy(direction.forward, speed, true);
                     break;
                 case keys.S:
-                    _this.moveCameraBy(direction.back, speed);
+                    _this.cameraController.moveCameraBy(direction.back, speed);
                     break;
                 case keys.DOWNARROW:
-                    _this.moveCameraBy(direction.back, speed, true);
+                    _this.cameraController.moveCameraBy(direction.back, speed, true);
                     break;
                 case keys.E:
                 case keys.PAGEUP:
-                    _this.moveCameraBy(direction.up, speed);
+                    _this.cameraController.moveCameraBy(direction.up, speed);
                     break;
                 case keys.Q:
                 case keys.PAGEDOWN:
-                    _this.moveCameraBy(direction.down, speed);
+                    _this.cameraController.moveCameraBy(direction.down, speed);
                     break;
                 case keys.HOME:
-                    _this.resetCamera();
+                    _this.cameraController.resetCamera();
                     break;
                 default:
                     return;
@@ -44056,16 +44061,16 @@ var Viewer = /** @class */ (function () {
             var deltaY = event.movementY || event.mozMovementY || event.webkitMovementY || 0;
             var delta = new THREE.Vector2(deltaX, deltaY);
             if (event.buttons & 2)
-                _this.panCameraBy(delta);
+                _this.cameraController.panCameraBy(delta);
             else
-                _this.rotateCameraBy(delta);
+                _this.cameraController.rotateCameraBy(delta);
         };
         var onMouseWheel = function (event) {
             event.preventDefault();
             event.stopPropagation();
             var speed = _this.settings.camera.controls.zoomSpeed;
             var dir = event.deltaY > 0 ? direction.back : direction.forward;
-            _this.moveCameraBy(dir, speed);
+            _this.cameraController.moveCameraBy(dir, speed);
         };
         var onMouseDown = function (event) {
             event.preventDefault();

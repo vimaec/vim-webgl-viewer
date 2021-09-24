@@ -1,3 +1,4 @@
+
 /*
 Vim Viewer 
 Copyright VIMaec LLC, 2020
@@ -87,11 +88,10 @@ class Viewer
     favicon: HTMLElement;
 
     stats: any;
-    settings: any; 
+    settings: any;
+    camera: any; //PerspectiveCamera;
     renderer: any; // THREE.WebGLRenderer
     scene: any; // THREE.Scene
-    camera: any; // THREE.PerspectiveCamera
-    cameraTarget: any;
     objects = [];
 
     plane: any; // THREE.Mesh
@@ -99,15 +99,14 @@ class Viewer
     light1: any; // THREE.DirectionalLight
     light2: any; // THREE.DirectionalLight
     material: any; // THREE.MeshPhongMaterial
-    homePos: any; // THREE.Vector3
-    homeRot: any; // THREE.Quaternion
     removeListeners: Function;
+
+    cameraController: CameraController;
 
     constructor()
     {
         this.objects = [];
-        this.homePos = new THREE.Vector3();
-        this.homeRot = new THREE.Quaternion();
+
     }
 
     view(options)
@@ -131,9 +130,12 @@ class Viewer
         this.renderer = new THREE.WebGLRenderer({ antialias: true, canvas: this.canvas });
         this.renderer.setPixelRatio(window.devicePixelRatio);
 
-        // Create the camera and size everything appropriately  
+        // Create the camera and size everything appropriately 
         this.camera = new THREE.PerspectiveCamera();
-        this.updateCamera();
+        this.cameraController = new CameraController(
+            this.camera,
+            this.settings
+        );
         this.resizeCanvas(true);
 
         // Create scene object
@@ -143,8 +145,8 @@ class Viewer
             // Create a new DAT.gui controller 
             GuiBinder.bind(
                 this.settings,
-                props => {
-                    this.settings = props.toJson;
+                settings => {
+                    this.settings = settings;
                     this.updateScene();
                 }
             );
@@ -172,13 +174,6 @@ class Viewer
 
         // Initial scene update: happens if controls change 
         this.updateScene();
-
-        // Initial update of the camera
-        this.updateCamera();
-
-        // Get the initial position 
-        this.homePos.copy(this.camera.position);
-        this.homeRot.copy(this.camera.quaternion);
 
         // Add all of the appropriate mouse, touch-pad, and keyboard listeners
         this.removeListeners = this.addListeners();
@@ -251,7 +246,7 @@ class Viewer
                     this.scene.add(vim.meshes[i]);
                 }
                 this.addViews(vim.rooms);
-                this.camera.lookAt(vim.box.getCenter(new THREE.Vector3()));
+                this.cameraController.lookAt(vim.box.getCenter(new THREE.Vector3()));
                 console.log("Finished loading VIM geometries into scene");
                 console.timeEnd("loadingVim");
             }
@@ -316,17 +311,6 @@ class Viewer
         }
     }
 
-    updateCamera()
-    {
-        // TODO: camera updates aren't working
-        this.camera.fov = this.settings.camera.fov;
-        this.camera.zoom = this.settings.camera.zoom;
-        this.camera.near = this.settings.camera.near;
-        this.camera.far = this.settings.camera.far;
-        this.camera.position.copy(toVec(this.settings.camera.position));
-        this.cameraTarget = toVec(this.settings.camera.target);
-        this.camera.lookAt(this.cameraTarget);
-    }
 
     
     resizeCanvas(force: boolean = false) {
@@ -360,46 +344,7 @@ class Viewer
         this.sunlight.skyColor = toColor(this.settings.sunlight.skyColor);
         this.sunlight.groundColor = toColor(this.settings.sunlight.groundColor);
         this.sunlight.intensity = this.settings.sunlight.intensity;
-    }
-
-
-    //==
-    // Camera control functions
-    //==
-
-    moveCameraBy(dir = direction.forward, speed = 1, onlyHoriz = false) {
-        let vector = new THREE.Vector3();
-        vector.copy(dir);
-        if (speed)
-            vector.multiplyScalar(speed);
-        vector.applyQuaternion(this.camera.quaternion);
-        const y = this.camera.position.y;
-        this.camera.position.add(vector);
-        if (onlyHoriz)
-            this.camera.position.y = y;
-    }
-
-     panCameraBy(pt) {
-        const speed = this.settings.camera.controls.panSpeed;
-        this.moveCameraBy(new THREE.Vector3(-pt.x, pt.y, 0), speed);
-    }
-
-    rotateCameraBy(pt) {
-        let euler = new THREE.Euler(0, 0, 0, 'YXZ');
-        euler.setFromQuaternion(this.camera.quaternion);
-        euler.y += -pt.x * this.settings.camera.controls.rotateSpeed;
-        euler.x += -pt.y * this.settings.camera.controls.rotateSpeed;
-        euler.z = 0;
-        const PI_2 = Math.PI / 2;
-        const minPolarAngle = -2 * Math.PI;
-        const maxPolarAngle = 2 * Math.PI;
-        euler.x = Math.max(PI_2 - maxPolarAngle, Math.min(PI_2 - minPolarAngle, euler.x));
-        this.camera.quaternion.setFromEuler(euler);
-    }
-
-     resetCamera() {
-        this.camera.position.copy(this.homePos);
-        this.camera.quaternion.copy(this.homeRot);
+        this.cameraController.applySettings(this.settings);
     }
 
     updateMaterial(targetMaterial, settings) {
@@ -438,49 +383,45 @@ class Viewer
                 speed *= this.settings.camera.controls.altMultiplier;
             switch (event.keyCode) {
                 case keys.A:
-                    this.moveCameraBy(direction.left, speed);
+                    this.cameraController.moveCameraBy(direction.left, speed);
                     break;
                 case keys.LEFTARROW:
-                    this.moveCameraBy(direction.left, speed, true);
+                    this.cameraController.moveCameraBy(direction.left, speed, true);
                     break;
                 case keys.D:
-                    this.moveCameraBy(direction.right, speed);
+                    this.cameraController.moveCameraBy(direction.right, speed);
                     break;
                 case keys.RIGHTARROW:
-                    this.moveCameraBy(direction.right, speed, true);
+                    this.cameraController.moveCameraBy(direction.right, speed, true);
                     break;
                 case keys.W:
-                    this.moveCameraBy(direction.forward, speed);
+                    this.cameraController.moveCameraBy(direction.forward, speed);
                     break;
                 case keys.UPARROW:
-                    this.moveCameraBy(direction.forward, speed, true);
+                    this.cameraController.moveCameraBy(direction.forward, speed, true);
                     break;
                 case keys.S:
-                    this.moveCameraBy(direction.back, speed);
+                    this.cameraController.moveCameraBy(direction.back, speed);
                     break;
                 case keys.DOWNARROW:
-                    this.moveCameraBy(direction.back, speed, true);
+                    this.cameraController.moveCameraBy(direction.back, speed, true);
                     break;
                 case keys.E:
                 case keys.PAGEUP:
-                    this.moveCameraBy(direction.up, speed);
+                    this.cameraController.moveCameraBy(direction.up, speed);
                     break;
                 case keys.Q:
                 case keys.PAGEDOWN:
-                    this.moveCameraBy(direction.down, speed);
+                    this.cameraController.moveCameraBy(direction.down, speed);
                     break;
                 case keys.HOME:
-                    this.resetCamera();
+                    this.cameraController.resetCamera();
                     break;
                 default:
                     return;
             }
             event.preventDefault();
         }
-
-
-
-
 
         const onMouseMove = (event) => {
             event.preventDefault();
@@ -491,9 +432,9 @@ class Viewer
             const delta = new THREE.Vector2(deltaX, deltaY);
 
             if (event.buttons & 2)
-                this.panCameraBy(delta);
+                this.cameraController.panCameraBy(delta);
             else
-                this.rotateCameraBy(delta);
+                this.cameraController.rotateCameraBy(delta);
         }
 
         const onMouseWheel = (event) =>
@@ -502,7 +443,7 @@ class Viewer
             event.stopPropagation();
             const speed = this.settings.camera.controls.zoomSpeed;
             const dir = event.deltaY > 0 ? direction.back : direction.forward;
-            this.moveCameraBy(dir, speed);
+            this.cameraController.moveCameraBy(dir, speed);
         }
 
         const onMouseDown = (event) =>
@@ -519,10 +460,6 @@ class Viewer
             this.canvas.removeEventListener('mousemove', onMouseMove, false);
             this.canvas.removeEventListener('mouseup', onMouseUp, false);
         }
-
-
-
-
 
         /*
         let touchStart = undefined; // When one touch occurs this is the value, when two or more touches occur it is the average of the first two. 
@@ -627,6 +564,10 @@ class Viewer
         }
             
     }
+}
+
+class Controls {
+
 }
 
 
