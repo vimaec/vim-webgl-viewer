@@ -60,8 +60,10 @@
   "include": [
     "./node_modules/dat.gui/build/dat.gui.js",
     "./deep_merge.ts",
-    "./camera_controller.ts",
-    "./gui_binder.ts",
-    "./index.ts"
+    "./viewer_camera.ts",
+    "./viewer_input.ts",
+    "./viewer_gui.ts",
+    "./viewer_settings.ts",
+    "./viewer.ts"
   ]
 }

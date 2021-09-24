@@ -2576,8 +2576,16 @@ var DeepMerge = /** @class */ (function () {
     };
     return DeepMerge;
 }());
-var CameraController = /** @class */ (function () {
-    function CameraController(camera, settings) {
+var direction = {
+    forward: new THREE.Vector3(0, 0, -1),
+    back: new THREE.Vector3(0, 0, 1),
+    left: new THREE.Vector3(-1, 0, 0),
+    right: new THREE.Vector3(1, 0, 0),
+    up: new THREE.Vector3(0, 1, 0),
+    down: new THREE.Vector3(0, -1, 0),
+};
+var ViewerCamera = /** @class */ (function () {
+    function ViewerCamera(camera, settings) {
         this.camera = camera;
         this.applySettings(settings);
         // Save initial position
@@ -2586,8 +2594,8 @@ var CameraController = /** @class */ (function () {
         this.initialPosition.copy(this.camera.position);
         this.initialRotation.copy(this.camera.quaternion);
     }
-    CameraController.prototype.lookAt = function (position) { this.camera.lookAt(position); };
-    CameraController.prototype.applySettings = function (newSettings) {
+    ViewerCamera.prototype.lookAt = function (position) { this.camera.lookAt(position); };
+    ViewerCamera.prototype.applySettings = function (newSettings) {
         // TODO: camera updates aren't working
         this.camera.fov = newSettings.camera.fov;
         this.camera.zoom = newSettings.camera.zoom;
@@ -2598,7 +2606,7 @@ var CameraController = /** @class */ (function () {
         this.camera.lookAt(this.cameraTarget);
         this.settings = newSettings;
     };
-    CameraController.prototype.moveCameraBy = function (dir, speed, onlyHoriz) {
+    ViewerCamera.prototype.moveCameraBy = function (dir, speed, onlyHoriz) {
         if (dir === void 0) { dir = direction.forward; }
         if (speed === void 0) { speed = 1; }
         if (onlyHoriz === void 0) { onlyHoriz = false; }
@@ -2612,11 +2620,11 @@ var CameraController = /** @class */ (function () {
         if (onlyHoriz)
             this.camera.position.y = y;
     };
-    CameraController.prototype.panCameraBy = function (pt) {
+    ViewerCamera.prototype.panCameraBy = function (pt) {
         var speed = this.settings.camera.controls.panSpeed;
         this.moveCameraBy(new THREE.Vector3(-pt.x, pt.y, 0), speed);
     };
-    CameraController.prototype.rotateCameraBy = function (pt) {
+    ViewerCamera.prototype.rotateCameraBy = function (pt) {
         var euler = new THREE.Euler(0, 0, 0, 'YXZ');
         euler.setFromQuaternion(this.camera.quaternion);
         euler.y += -pt.x * this.settings.camera.controls.rotateSpeed;
@@ -2628,11 +2636,131 @@ var CameraController = /** @class */ (function () {
         euler.x = Math.max(PI_2 - maxPolarAngle, Math.min(PI_2 - minPolarAngle, euler.x));
         this.camera.quaternion.setFromEuler(euler);
     };
-    CameraController.prototype.resetCamera = function () {
+    ViewerCamera.prototype.resetCamera = function () {
         this.camera.position.copy(this.initialPosition);
         this.camera.quaternion.copy(this.initialRotation);
     };
-    return CameraController;
+    return ViewerCamera;
+}());
+var KEYS = {
+    A: 65,
+    D: 68,
+    Q: 81,
+    E: 69,
+    S: 83,
+    W: 87,
+    LEFTARROW: 37,
+    UPARROW: 38,
+    RIGHTARROW: 39,
+    DOWNARROW: 40,
+    HOME: 36,
+    END: 37,
+    PAGEUP: 33,
+    PAGEDOWN: 34,
+};
+var ViewerInput = /** @class */ (function () {
+    function ViewerInput(canvas, settings, cameraController) {
+        var _this = this;
+        this.onKeyDown = function (event) {
+            var speed = _this.settings.camera.controls.speed;
+            if (event.shiftKey)
+                speed *= _this.settings.camera.controls.shiftMultiplier;
+            if (event.altKey)
+                speed *= _this.settings.camera.controls.altMultiplier;
+            switch (event.keyCode) {
+                case KEYS.A:
+                    _this.cameraController.moveCameraBy(direction.left, speed);
+                    break;
+                case KEYS.LEFTARROW:
+                    _this.cameraController.moveCameraBy(direction.left, speed, true);
+                    break;
+                case KEYS.D:
+                    _this.cameraController.moveCameraBy(direction.right, speed);
+                    break;
+                case KEYS.RIGHTARROW:
+                    _this.cameraController.moveCameraBy(direction.right, speed, true);
+                    break;
+                case KEYS.W:
+                    _this.cameraController.moveCameraBy(direction.forward, speed);
+                    break;
+                case KEYS.UPARROW:
+                    _this.cameraController.moveCameraBy(direction.forward, speed, true);
+                    break;
+                case KEYS.S:
+                    _this.cameraController.moveCameraBy(direction.back, speed);
+                    break;
+                case KEYS.DOWNARROW:
+                    _this.cameraController.moveCameraBy(direction.back, speed, true);
+                    break;
+                case KEYS.E:
+                case KEYS.PAGEUP:
+                    _this.cameraController.moveCameraBy(direction.up, speed);
+                    break;
+                case KEYS.Q:
+                case KEYS.PAGEDOWN:
+                    _this.cameraController.moveCameraBy(direction.down, speed);
+                    break;
+                case KEYS.HOME:
+                    _this.cameraController.resetCamera();
+                    break;
+                default:
+                    return;
+            }
+            event.preventDefault();
+        };
+        this.onMouseMove = function (event) {
+            if (!_this.isMouseDown)
+                return;
+            event.preventDefault();
+            // https://github.com/mrdoob/three.js/blob/master/examples/jsm/controls/PointerLockControls.js
+            var deltaX = event.movementX || event.mozMovementX || event.webkitMovementX || 0;
+            var deltaY = event.movementY || event.mozMovementY || event.webkitMovementY || 0;
+            var delta = new THREE.Vector2(deltaX, deltaY);
+            if (event.buttons & 2)
+                _this.cameraController.panCameraBy(delta);
+            else
+                _this.cameraController.rotateCameraBy(delta);
+        };
+        this.onMouseWheel = function (event) {
+            event.preventDefault();
+            event.stopPropagation();
+            var speed = _this.settings.camera.controls.zoomSpeed;
+            var dir = event.deltaY > 0 ? direction.back : direction.forward;
+            _this.cameraController.moveCameraBy(dir, speed);
+        };
+        this.onMouseDown = function (event) {
+            event.preventDefault();
+            _this.isMouseDown = true;
+            // Manually set the focus since calling preventDefault above
+            // prevents the browser from setting it automatically.    
+            _this.canvas.focus ? _this.canvas.focus() : window.focus();
+        };
+        this.onMouseUp = function (_) {
+            _this.isMouseDown = false;
+        };
+        this.canvas = canvas;
+        this.settings = settings;
+        this.cameraController = cameraController;
+        this.unregister = function () { };
+        this.isMouseDown = false;
+    }
+    ViewerInput.prototype.register = function () {
+        this.canvas.addEventListener('mousedown', this.onMouseDown);
+        this.canvas.addEventListener('wheel', this.onMouseWheel);
+        this.canvas.addEventListener('mousemove', this.onMouseMove);
+        this.canvas.addEventListener('mouseup', this.onMouseUp);
+        document.addEventListener('keydown', this.onKeyDown);
+        this.unregister = function () {
+            this.canvas.removeEventListener('mousedown', this.onMouseDown);
+            this.canvas.removeEventListener('wheel', this.onMouseWheel);
+            this.canvas.removeEventListener('mousemove', this.onMouseMove);
+            this.canvas.removeEventListener('mouseup', this.onMouseUp);
+            document.removeEventListener('keydown', this.onKeyDown);
+            this.isMouseDown = false;
+            this.unregister = function () { };
+        };
+    };
+    return ViewerInput;
 }());
 // Used to provide new IDs for each new property descriptor that is created.
 var gid = 0;
@@ -2744,7 +2872,7 @@ var PropList = /** @class */ (function () {
     };
     return PropList;
 }());
-var GuiBinder = {
+var ViewerGui = {
     gui: new dat.GUI(),
     bind: function (settings, callback) {
         // Create a property descriptor 
@@ -2883,76 +3011,70 @@ var GuiBinder = {
         }
     }
 };
-var defaultOptions = {
-    showGui: true,
-    showStats: true,
-    camera: {
-        near: 0.1,
-        far: 15000,
-        fov: 50,
-        zoom: 1,
-        rotate: 1.0,
-        position: { x: 0, y: 5, z: -5 },
-        target: { x: 0, y: -1, z: 0, },
-        controls: {
-            speed: 0.1,
-            altMultiplier: 3.0,
-            shiftMultiplier: 5.0,
-            zoomSpeed: 0.2,
-            rotateSpeed: 0.01,
-            panSpeed: 0.1,
-        }
-    },
-    background: {
-        color: { r: 0x72, g: 0x64, b: 0x5b, }
-    },
-    plane: {
-        show: true,
-        material: {
-            color: { r: 0x99, g: 0x99, b: 0x99, },
-            specular: { r: 0x10, g: 0x10, b: 0x10, }
+var ViewerSettings = {
+    default: {
+        showGui: true,
+        showStats: true,
+        camera: {
+            near: 0.1,
+            far: 15000,
+            fov: 50,
+            zoom: 1,
+            rotate: 1.0,
+            position: { x: 0, y: 5, z: -5 },
+            target: { x: 0, y: -1, z: 0, },
+            controls: {
+                speed: 0.1,
+                altMultiplier: 3.0,
+                shiftMultiplier: 5.0,
+                zoomSpeed: 0.2,
+                rotateSpeed: 0.01,
+                panSpeed: 0.1,
+            }
         },
-        position: {
-            x: 0, y: 0, z: 0
-        }
-    },
-    sunlight: {
-        skyColor: { r: 0x44, g: 0x33, b: 0x33 },
-        groundColor: { r: 0x11, g: 0x11, b: 0x22 },
-        intensity: 1,
-    },
-    light1: {
-        // TODO: the positions of the lights are all wrong. 
-        position: { x: 1, y: 1, z: 1 },
-        color: { r: 0xFF, g: 0xFF, b: 0xFF },
-        intensity: 1.35,
-    },
-    light2: {
-        position: { x: 0.5, y: 1, z: -1 },
-        color: { r: 0xFF, g: 0xAA, b: 0x00 },
-        intensity: 1,
-    },
-    object: {
-        scale: 0.01,
-        position: { x: 0, y: 0, z: 0 },
-        rotation: { x: 0, y: 0, z: 0 },
-        material: {
-            color: { r: 0x00, g: 0x55, b: 0xFF },
-            emissive: { r: 0x00, g: 0x00, b: 0x00 },
-            specular: { r: 0x11, g: 0x11, b: 0x11 },
-            flatShading: true,
-            shininess: 30,
-            wireframe: false,
+        background: {
+            color: { r: 0x72, g: 0x64, b: 0x5b, }
+        },
+        plane: {
+            show: true,
+            material: {
+                color: { r: 0x99, g: 0x99, b: 0x99, },
+                specular: { r: 0x10, g: 0x10, b: 0x10, }
+            },
+            position: {
+                x: 0, y: 0, z: 0
+            }
+        },
+        sunlight: {
+            skyColor: { r: 0x44, g: 0x33, b: 0x33 },
+            groundColor: { r: 0x11, g: 0x11, b: 0x22 },
+            intensity: 1,
+        },
+        light1: {
+            // TODO: the positions of the lights are all wrong. 
+            position: { x: 1, y: 1, z: 1 },
+            color: { r: 0xFF, g: 0xFF, b: 0xFF },
+            intensity: 1.35,
+        },
+        light2: {
+            position: { x: 0.5, y: 1, z: -1 },
+            color: { r: 0xFF, g: 0xAA, b: 0x00 },
+            intensity: 1,
+        },
+        object: {
+            scale: 0.01,
+            position: { x: 0, y: 0, z: 0 },
+            rotation: { x: 0, y: 0, z: 0 },
+            material: {
+                color: { r: 0x00, g: 0x55, b: 0xFF },
+                emissive: { r: 0x00, g: 0x00, b: 0x00 },
+                specular: { r: 0x11, g: 0x11, b: 0x11 },
+                flatShading: true,
+                shininess: 30,
+                wireframe: false,
+            }
         }
     }
-};
-var direction = {
-    forward: new THREE.Vector3(0, 0, -1),
-    back: new THREE.Vector3(0, 0, 1),
-    left: new THREE.Vector3(-1, 0, 0),
-    right: new THREE.Vector3(1, 0, 0),
-    up: new THREE.Vector3(0, 1, 0),
-    down: new THREE.Vector3(0, -1, 0),
 };
 var Viewer = /** @class */ (function () {
     function Viewer() {
@@ -2961,7 +3083,7 @@ var Viewer = /** @class */ (function () {
     }
     Viewer.prototype.view = function (options) {
         var _this = this;
-        this.settings = (new DeepMerge()).deepMerge(defaultOptions, options, undefined);
+        this.settings = (new DeepMerge()).deepMerge(ViewerSettings.default, options, undefined);
         //Init Canvas
         {
             // If a canvas is given, we will draw in it.
@@ -2978,13 +3100,13 @@ var Viewer = /** @class */ (function () {
         this.renderer.setPixelRatio(window.devicePixelRatio);
         // Create the camera and size everything appropriately 
         this.camera = new THREE.PerspectiveCamera();
-        this.cameraController = new CameraController(this.camera, this.settings);
+        this.cameraController = new ViewerCamera(this.camera, this.settings);
         this.resizeCanvas(true);
         // Create scene object
         this.scene = new THREE.Scene();
         if (this.settings.showGui) {
             // Create a new DAT.gui controller 
-            GuiBinder.bind(this.settings, function (settings) {
+            ViewerGui.bind(this.settings, function (settings) {
                 _this.settings = settings;
                 _this.updateScene();
             });
@@ -3005,7 +3127,9 @@ var Viewer = /** @class */ (function () {
         // Initial scene update: happens if controls change 
         this.updateScene();
         // Add all of the appropriate mouse, touch-pad, and keyboard listeners
-        this.removeListeners = this.addListeners();
+        //this.removeListeners = this.addListeners();
+        this.controls = new ViewerInput(this.canvas, this.settings, this.cameraController);
+        this.controls.register();
         // Add Stats display 
         if (this.settings.showStats) {
             this.stats = new Stats();
@@ -3032,8 +3156,9 @@ var Viewer = /** @class */ (function () {
         this.animate();
     };
     Viewer.prototype.disconnect = function () {
-        this.removeListeners();
-        this.removeListeners = null;
+        this.controls.unregister();
+        //this.removeListeners();
+        //this.removeListeners = null;
     };
     Viewer.prototype.loadFile = function (fileName) {
         function getExt(fileName) {
@@ -3098,7 +3223,7 @@ var Viewer = /** @class */ (function () {
         };
         if (!views || !views.length)
             return;
-        var folder = GuiBinder.gui.addFolder('views');
+        var folder = ViewerGui.gui.addFolder('views');
         var obj = {};
         var matrix = getSettingsMatrix();
         var _loop_1 = function (i) {
@@ -3162,201 +3287,7 @@ var Viewer = /** @class */ (function () {
         if ('shininess' in settings)
             targetMaterial.shininess = settings.shininess;
     };
-    Viewer.prototype.addListeners = function () {
-        var _this = this;
-        var keys = {
-            A: 65,
-            D: 68,
-            Q: 81,
-            E: 69,
-            S: 83,
-            W: 87,
-            LEFTARROW: 37,
-            UPARROW: 38,
-            RIGHTARROW: 39,
-            DOWNARROW: 40,
-            HOME: 36,
-            END: 37,
-            PAGEUP: 33,
-            PAGEDOWN: 34,
-        };
-        var onKeyDown = function (event) {
-            var speed = _this.settings.camera.controls.speed;
-            if (event.shiftKey)
-                speed *= _this.settings.camera.controls.shiftMultiplier;
-            if (event.altKey)
-                speed *= _this.settings.camera.controls.altMultiplier;
-            switch (event.keyCode) {
-                case keys.A:
-                    _this.cameraController.moveCameraBy(direction.left, speed);
-                    break;
-                case keys.LEFTARROW:
-                    _this.cameraController.moveCameraBy(direction.left, speed, true);
-                    break;
-                case keys.D:
-                    _this.cameraController.moveCameraBy(direction.right, speed);
-                    break;
-                case keys.RIGHTARROW:
-                    _this.cameraController.moveCameraBy(direction.right, speed, true);
-                    break;
-                case keys.W:
-                    _this.cameraController.moveCameraBy(direction.forward, speed);
-                    break;
-                case keys.UPARROW:
-                    _this.cameraController.moveCameraBy(direction.forward, speed, true);
-                    break;
-                case keys.S:
-                    _this.cameraController.moveCameraBy(direction.back, speed);
-                    break;
-                case keys.DOWNARROW:
-                    _this.cameraController.moveCameraBy(direction.back, speed, true);
-                    break;
-                case keys.E:
-                case keys.PAGEUP:
-                    _this.cameraController.moveCameraBy(direction.up, speed);
-                    break;
-                case keys.Q:
-                case keys.PAGEDOWN:
-                    _this.cameraController.moveCameraBy(direction.down, speed);
-                    break;
-                case keys.HOME:
-                    _this.cameraController.resetCamera();
-                    break;
-                default:
-                    return;
-            }
-            event.preventDefault();
-        };
-        var onMouseMove = function (event) {
-            event.preventDefault();
-            // https://github.com/mrdoob/three.js/blob/master/examples/jsm/controls/PointerLockControls.js
-            var deltaX = event.movementX || event.mozMovementX || event.webkitMovementX || 0;
-            var deltaY = event.movementY || event.mozMovementY || event.webkitMovementY || 0;
-            var delta = new THREE.Vector2(deltaX, deltaY);
-            if (event.buttons & 2)
-                _this.cameraController.panCameraBy(delta);
-            else
-                _this.cameraController.rotateCameraBy(delta);
-        };
-        var onMouseWheel = function (event) {
-            event.preventDefault();
-            event.stopPropagation();
-            var speed = _this.settings.camera.controls.zoomSpeed;
-            var dir = event.deltaY > 0 ? direction.back : direction.forward;
-            _this.cameraController.moveCameraBy(dir, speed);
-        };
-        var onMouseDown = function (event) {
-            event.preventDefault();
-            _this.canvas.addEventListener('mousemove', onMouseMove, false);
-            _this.canvas.addEventListener('mouseup', onMouseUp, false);
-            // Manually set the focus since calling preventDefault above
-            // prevents the browser from setting it automatically.    
-            _this.canvas.focus ? _this.canvas.focus() : window.focus();
-        };
-        var onMouseUp = function (event) {
-            _this.canvas.removeEventListener('mousemove', onMouseMove, false);
-            _this.canvas.removeEventListener('mouseup', onMouseUp, false);
-        };
-        /*
-        let touchStart = undefined; // When one touch occurs this is the value, when two or more touches occur it is the average of the first two.
-        let touchStart1 = undefined; // The first touch when multiple touches occur, otherwise left undefined
-        let touchStart2 = undefined; // The second touch when multiple touches occur, otherwise left undefined
-
-        function onTouchStart(event) {
-            event.preventDefault(); // prevent scrolling
-            if (!event || !event.touches || !event.touches.length) {
-                return;
-            }
-            if (event.touches.length === 1) {
-                touchStart = touchToVector(event.touches[0]);
-                touchStart1 = touchStart2 = undefined;
-            }
-            else if (event.touches.length == 2) {
-                touchStart1 = touchToVector(event.touches[0]);
-                touchStart2 = touchToVector(event.touches[1]);
-                touchStart = average(touchStart1, touchStart2);
-            }
-        }
-
-        function onTouchMove(event) {
-            if (!event || !event.touches || !event.touches.length) {
-                return;
-            }
-            if (event.touches.length === 1) {
-                const p = touchToVector(event.touches[0]);
-                if (touchStart)
-                    rotateCameraBy(p.clone().sub(touchStart));
-                touchStart = p;
-            }
-            else
-                if (event.touches.length > 1) {
-                    const p1 = touchToVector(event.touches[0]);
-                    const p2 = touchToVector(event.touches[1]);
-                    const p = average(p1, p2)
-                    //rotateBy(p.clone().sub(touchStart));
-                    touchDolly(p1, p2);
-                    touchPan(p);
-                    touchStart = p;
-                    touchStart1 = p1;
-                    touchStart2 = p2;
-                }
-        }
-
-        function onTouchEnd(event) {
-            touchStart = touchStart1 = touchStart2 = undefined;
-        }
-
-        function touchDolly(p1, p2) {
-            if (!p1 || !p2 || !touchStart1 || !touchStart2)
-                return;
-            const prevDist = touchStart2.distanceTo(touchStart1);
-            const dist = p1.distanceTo(p2);
-            const amount = Math.pow(prevDist / dist, this.settings.camera.controls.zoomSpeed);
-            if (Math.abs(amount - 1) > 0.0001) // only dolly if the movement exceeds an epsilon value.
-            {
-                const speed = this.settings.camera.controls.zoomSpeed;
-                const dir = amount > 1 ? direction.back : direction.forward;
-                moveCameraBy(dir, speed);
-            }
-        }
-
-        function touchPan(p) {
-            if (!p || !touchStart)
-                return;
-            panCameraBy(p.clone().sub(touchStart));
-        }
-
-        function touchToVector(touch) {
-            return new THREE.Vector2(touch.pageX, touch.pageY);
-        }
-
-        function average(p1, p2) {
-            return p1.clone().lerp(p2, 0.5);
-        }
-        */
-        this.canvas.addEventListener('mousedown', onMouseDown);
-        this.canvas.addEventListener('wheel', onMouseWheel);
-        document.addEventListener('keydown', onKeyDown);
-        //this.canvas.addEventListener('touchstart', onTouchStart, false);
-        //this.canvas.addEventListener('touchend', onTouchEnd, false);
-        //this.canvas.addEventListener('touchmove', onTouchMove, false);
-        return function () {
-            _this.canvas.removeEventListener('mousedown', onMouseDown);
-            _this.canvas.removeEventListener('wheel', onMouseWheel);
-            document.removeEventListener('keydown', onKeyDown);
-            _this.canvas.removeEventListener('mousemove', onMouseMove, false);
-            _this.canvas.removeEventListener('mouseup', onMouseUp, false);
-            //this.canvas.addEventListener('touchstart', onTouchStart, false);
-            //this.canvas.addEventListener('touchend', onTouchEnd, false);
-            //this.canvas.addEventListener('touchmove', onTouchMove, false);
-        };
-    };
     return Viewer;
-}());
-var Controls = /** @class */ (function () {
-    function Controls() {
-    }
-    return Controls;
 }());
 // Helpers
 function isColor(obj) {
