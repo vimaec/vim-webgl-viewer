@@ -1,4 +1,13 @@
-﻿class CameraController {
+﻿const direction = {
+    forward: new THREE.Vector3(0, 0, -1),
+    back: new THREE.Vector3(0, 0, 1),
+    left: new THREE.Vector3(-1, 0, 0),
+    right: new THREE.Vector3(1, 0, 0),
+    up: new THREE.Vector3(0, 1, 0),
+    down: new THREE.Vector3(0, -1, 0),
+}
+
+class ViewerCamera {
     camera: any; //THREE.PerspectiveCamera()
     settings: any;
     initialPosition: any; //THREE.Vector3;
