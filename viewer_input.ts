@@ -23,6 +23,11 @@ class ViewerInput {
     unregister: Function;
     isMouseDown: Boolean;
 
+    // TODO reorganize  
+    mesh: any;
+    scene: any;
+    vim: any;
+
     constructor(canvas: HTMLCanvasElement, settings: any, cameraController: ViewerCamera) {
         this.canvas = canvas;
         this.settings = settings;
@@ -127,6 +132,39 @@ class ViewerInput {
     onMouseDown = (event) => {
         event.preventDefault();
         this.isMouseDown = true;
+        
+        let x = (event.clientX / window.innerWidth) * 2 - 1;
+        let y = - (event.clientY / window.innerHeight) * 2 + 1;
+        let mouse = new THREE.Vector2(x, y);
+        const raycaster = new THREE.Raycaster();
+        raycaster.setFromCamera(mouse, this.cameraController.camera);
+
+        raycaster.firstHitOnly = true;
+        let hit = raycaster.intersectObjects(this.mesh);
+        if (hit.length > 0) {
+            console.log("Hit at " + hit[0].point.x + "," + hit[0].point.y + "," + hit[0].point.z);
+
+            /*
+            let target = hit[0].object;
+            let index = hit[0].instanceId;
+            let nodeIndex = target.userData.instanceIndices[index];
+
+            let elementIndex = this.vim.entities["Vim.Node"]["Rvt.Element"][nodeIndex];
+            let stringIndex = this.vim.entities["Rvt.Element"]["Name"][elementIndex];
+            let name = this.vim.strings[stringIndex];
+            console.log("Element: " + name);
+            */
+
+            let material = new THREE.MeshBasicMaterial();
+            let s = new THREE.IcosahedronBufferGeometry(0.1, 100);
+            let mesh = new THREE.Mesh(s, material);
+            mesh.position.copy(hit[0].point);
+            this.scene.add(mesh);
+        }
+        else {
+            console.log("nohit");
+        }
+
 
         // Manually set the focus since calling preventDefault above
         // prevents the browser from setting it automatically.    

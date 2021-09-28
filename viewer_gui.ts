@@ -1,3 +1,4 @@
+declare const dat: any;
 
 /** 
  * An object that maps names to property descriptors or other maps. Allows property descriptors to be easily

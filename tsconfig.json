@@ -58,7 +58,7 @@
     "outFile": "index.js",
   },
   "include": [
-    "./node_modules/dat.gui/build/dat.gui.js",
+    "bvh.js",
     "./deep_merge.ts",
     "./viewer_camera.ts",
     "./viewer_input.ts",

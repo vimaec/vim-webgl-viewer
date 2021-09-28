@@ -258,11 +258,7 @@ THREE.VIMLoader.prototype =
         for (let i=0; i < bfast.buffers.length; ++i)
             lookup[bfast.names[i]] = bfast.buffers[i];
 
-        // Some files generate the wrong name for the "nodes"
-        if (!lookup.nodes)
-            lookup.nodes = lookup.node;
-
-        // Parse geometry
+        // Parse BFAST
         return { 
             header: new TextDecoder("utf-8").decode(lookup.header),
             assets: this.parseBFastFromArray(lookup.assets),
@@ -560,6 +556,7 @@ THREE.VIMLoader.prototype =
     },
 
     // Constructs a BufferGeometry from an ArrayBuffer arranged as a VIM
+    // Main
     parse: function ( data, material ) 
     {	   
         console.time("parsingVim");
@@ -606,8 +603,9 @@ THREE.VIMLoader.prototype =
         console.log("Computing center.");
         vim.box = new THREE.Box3().setFromPoints(centers);
 
-        console.log("Merging lone meshes.");
-        vim.meshes = this.mergeSingleInstances(meshes, material);        
+        //console.log("Merging lone meshes.");
+        //vim.meshes = this.mergeSingleInstances(meshes, material);  
+        vim.meshes = meshes.filter(m => m !== undefined);
 
         console.log("Extracting BIM Elements.");
         vim.elements = this.getElements(vim);
@@ -638,9 +636,14 @@ THREE.VIMLoader.prototype =
         let meshes = [];
         for (let i = 0; i < meshCount; ++i) {
             const count = meshReferenceCounts[i];
-            const g = geometries[i];
-            const mesh = new THREE.InstancedMesh(g, material, count);
-            meshes.push(mesh);
+            if (count == 0) {
+                meshes.push(undefined);
+            }
+            else {
+                const g = geometries[i];
+                const mesh = new THREE.InstancedMesh(g, material, count);
+                meshes.push(mesh);
+            }
         }
         return meshes;
     },
@@ -668,6 +671,10 @@ THREE.VIMLoader.prototype =
 
             const count = instanceCounters[meshIndex]++;
             mesh.setMatrixAt(count, matrix);
+
+            if (!mesh.userData.instanceIndices)
+                mesh.userData.instanceIndices = [];
+            mesh.userData.instanceIndices.push(i);
 
             const center = mesh.geometry.boundingBox.getCenter(new THREE.Vector3());
             center.applyMatrix4(matrix);
