@@ -18,7 +18,7 @@ class Viewer
     camera: any; //PerspectiveCamera;
     renderer: any; // THREE.WebGLRenderer
     scene: any; // THREE.Scene
-    objects = [];
+    meshes = [];
 
     plane: any; // THREE.Mesh
     sunlight: any; // THREE.HemisphereLight
@@ -29,10 +29,11 @@ class Viewer
 
     cameraController: ViewerCamera;
     controls: ViewerInput;
+    vim: any;
 
     constructor()
     {
-        this.objects = [];
+        this.meshes = [];
 
     }
 
@@ -78,7 +79,7 @@ class Viewer
                 }
             );
         }
-
+        
         // Ground
         this.plane = new THREE.Mesh(
             new THREE.PlaneBufferGeometry(1000, 1000),
@@ -101,11 +102,6 @@ class Viewer
 
         // Initial scene update: happens if controls change 
         this.updateScene();
-
-        // Add all of the appropriate mouse, touch-pad, and keyboard listeners
-        //this.removeListeners = this.addListeners();
-        this.controls = new ViewerInput(this.canvas, this.settings, this.cameraController);
-        this.controls.register();
 
         // Add Stats display 
         if (this.settings.showStats) {
@@ -130,6 +126,11 @@ class Viewer
         favicon.setAttribute('href', "favicon.ico");
         document.head.appendChild(favicon);
 
+        // Add all of the appropriate mouse, touch-pad, and keyboard listeners
+        this.controls = new ViewerInput(this.canvas, this.settings, this.cameraController);
+        this.controls.register();
+        this.controls.scene = this.scene;
+
         //Load Vim
         this.loadFile(this.settings.url);
 
@@ -137,11 +138,6 @@ class Viewer
         this.animate();
     }
 
-    disconnect() {
-        this.controls.unregister();
-        //this.removeListeners();
-        //this.removeListeners = null;
-    }
 
     loadFile(fileName) {
 
@@ -162,23 +158,87 @@ class Viewer
     }
 
     loadVim(fileName) {
-        console.log("Loading VIM");
+        console.log("Loading VIM.");
         console.time("loadingVim");
+
+        THREE.BufferGeometry.prototype.computeBoundsTree = computeBoundsTree;
+        THREE.BufferGeometry.prototype.disposeBoundsTree = disposeBoundsTree;
+        THREE.Mesh.prototype.raycast = acceleratedRaycast;
+
         var loader = new THREE.VIMLoader();
         loader.load(
             fileName,
             (vim) =>
             {
+                const material = new THREE.MeshPhongMaterial({
+                    color: 0x999999,
+                    vertexColors: THREE.VertexColors,
+                    flatShading: true,
+                    side: THREE.DoubleSide,
+                    shininess: 70
+                });     
+
                 console.log("Finished loading VIM: found " + vim.meshes.length + " objects");
+
                 for (var i = 0; i < vim.meshes.length; ++i)
                 {
-                    this.objects.push(vim.meshes[i]);
+                    vim.meshes[i].geometry.computeBoundsTree();
+                    this.meshes.push(vim.meshes[i]);
                     this.scene.add(vim.meshes[i]);
                 }
-                this.addViews(vim.rooms);
+                
+                this.controls.mesh = this.meshes;
+                this.controls.vim = vim;
+
+
+                //this.addViews(vim.rooms);
+
+                /*
+
                 this.cameraController.lookAt(vim.box.getCenter(new THREE.Vector3()));
                 console.log("Finished loading VIM geometries into scene");
                 console.timeEnd("loadingVim");
+
+                console.log("merge all test");
+                const geometries = [];
+                for (var i = 0; i < vim.meshes.length; ++i) {
+                    const m = vim.meshes[i];
+
+                    //strip meshes
+                    //for (const key in g.attributes)
+                      //  if (key !== 'position')
+                         //   g.deleteAttribute(key);
+
+                    if (m.count == 0)
+                        continue;
+
+                    for (let j = 0; j < m.count; j++) {
+
+                        //aply matrix
+                        const g = m.geometry.clone();
+                        let matrix = new THREE.Matrix4();
+                        m.getMatrixAt(j, matrix);
+                        g.applyMatrix4(matrix);
+                        geometries.push(g);
+                    }
+                }
+                //add mesh to scene
+                const merged = THREE.BufferGeometryUtils.mergeBufferGeometries(geometries, false);
+                const mesh = new THREE.Mesh(merged, material);
+                
+                //const mesh = new THREE.InstancedMesh(merged, material, 2)
+                //mesh.setMatrixAt(0, new THREE.Matrix4());
+                //mesh.setMatrixAt(1, new THREE.Matrix4().makeTranslation(100, 0, 0));
+                //mesh.geometry.computeBoundsTree();
+                
+
+                this.scene.add(mesh);
+                this.meshes.push(mesh);
+                this.controls.mesh = [mesh];
+                this.controls.vim = vim;
+
+                */
+
             }
         );
     }
@@ -197,19 +257,13 @@ class Viewer
 
     
     updateObjects() {
-        this.scene.traverse(
-            (child) =>
-            {
-                if (child.isMesh && child !== this.plane) {
-                    //child.castShadow = true;
-                    //child.receiveShadow = true;
-                    const scale = scalarToVec(this.settings.object.scale);
-                    child.scale.copy(scale);
-                    child.position.copy(this.settings.object.position);
-                    child.rotation.copy(toEuler(this.settings.object.rotation));
-                }
-            }
-        );
+        for (let i = 0; i < this.meshes.length; i++) {
+            const mesh = this.meshes[i];
+            const scale = scalarToVec(this.settings.object.scale);
+            mesh.scale.copy(scale);
+            mesh.position.copy(this.settings.object.position);
+            mesh.rotation.copy(toEuler(this.settings.object.rotation));
+        }
     }
 
     addViews(views) {
