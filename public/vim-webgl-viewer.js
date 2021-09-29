@@ -43484,33 +43484,15 @@ var ViewerInput = /** @class */ (function () {
         this.onMouseDown = function (event) {
             event.preventDefault();
             _this.isMouseDown = true;
-            var x = (event.clientX / window.innerWidth) * 2 - 1;
-            var y = -(event.clientY / window.innerHeight) * 2 + 1;
-            var mouse = new THREE.Vector2(x, y);
-            var raycaster = new THREE.Raycaster();
-            raycaster.setFromCamera(mouse, _this.cameraController.camera);
-            raycaster.firstHitOnly = true;
-            var hit = raycaster.intersectObjects(_this.mesh);
-            if (hit.length > 0) {
-                console.log("Hit at " + hit[0].point.x + "," + hit[0].point.y + "," + hit[0].point.z);
-                /*
-                let target = hit[0].object;
-                let index = hit[0].instanceId;
-                let nodeIndex = target.userData.instanceIndices[index];
-    
-                let elementIndex = this.vim.entities["Vim.Node"]["Rvt.Element"][nodeIndex];
-                let stringIndex = this.vim.entities["Rvt.Element"]["Name"][elementIndex];
-                let name = this.vim.strings[stringIndex];
-                console.log("Element: " + name);
-                */
-                var material = new THREE.MeshBasicMaterial();
-                var s = new THREE.IcosahedronBufferGeometry(0.1, 100);
-                var mesh = new THREE.Mesh(s, material);
-                mesh.position.copy(hit[0].point);
-                _this.scene.add(mesh);
-            }
-            else {
-                console.log("nohit");
+            var hits = _this.mouseRaycast(event.x, event.y);
+            if (hits.length > 0) {
+                var target = hits[0].object;
+                var index = hits[0].instanceId;
+                var nodeIndex = target.userData.instanceIndices[index];
+                var name_1 = _this.viewer.getElementNameFromNodeIndex(nodeIndex);
+                console.log("Raycast hit.");
+                console.log("Position:" + hits[0].point.x + "," + hits[0].point.y + "," + hits[0].point.z);
+                console.log("Element: " + name_1);
             }
             // Manually set the focus since calling preventDefault above
             // prevents the browser from setting it automatically.    
@@ -43540,6 +43522,15 @@ var ViewerInput = /** @class */ (function () {
             this.isMouseDown = false;
             this.unregister = function () { };
         };
+    };
+    ViewerInput.prototype.mouseRaycast = function (mouseX, mouseY) {
+        var x = (mouseX / window.innerWidth) * 2 - 1;
+        var y = -(mouseY / window.innerHeight) * 2 + 1;
+        var mouse = new THREE.Vector2(x, y);
+        var raycaster = new THREE.Raycaster();
+        raycaster.setFromCamera(mouse, this.cameraController.camera);
+        raycaster.firstHitOnly = true;
+        return raycaster.intersectObjects(this.viewer.meshes);
     };
     return ViewerInput;
 }());
@@ -43928,15 +43919,22 @@ var Viewer = /** @class */ (function () {
         favicon.setAttribute('href', "favicon.ico");
         document.head.appendChild(favicon);
         // Add all of the appropriate mouse, touch-pad, and keyboard listeners
-        this.controls = new ViewerInput(this.canvas, this.settings, this.cameraController);
-        this.controls.register();
-        this.controls.scene = this.scene;
         //Load Vim
-        this.loadFile(this.settings.url);
+        this.loadFile(this.settings.url, function (vim) { return _this.onVimLoaded(vim); });
         // Start Loop
         this.animate();
     };
-    Viewer.prototype.loadFile = function (fileName) {
+    Viewer.prototype.onVimLoaded = function (vim) {
+        for (var i = 0; i < vim.meshes.length; ++i) {
+            this.meshes.push(vim.meshes[i]);
+            this.scene.add(vim.meshes[i]);
+        }
+        this.controls = new ViewerInput(this.canvas, this.settings, this.cameraController);
+        this.controls.register();
+        this.controls.viewer = this;
+        this.vim = vim;
+    };
+    Viewer.prototype.loadFile = function (fileName, onSuccess) {
         function getExt(fileName) {
             var indexOfQueryParams = fileName.lastIndexOf("?");
             if (indexOfQueryParams >= 0)
@@ -43946,81 +43944,16 @@ var Viewer = /** @class */ (function () {
         }
         console.log("Loading file: " + fileName);
         var ext = getExt(fileName);
-        if (ext == "vim")
-            this.loadVim(fileName);
-        else
+        if (ext != "vim") {
             console.error("unhandled file format");
-    };
-    Viewer.prototype.loadVim = function (fileName) {
-        var _this = this;
-        console.log("Loading VIM.");
+            return;
+        }
         console.time("loadingVim");
-        THREE.BufferGeometry.prototype.computeBoundsTree = computeBoundsTree;
-        THREE.BufferGeometry.prototype.disposeBoundsTree = disposeBoundsTree;
-        THREE.Mesh.prototype.raycast = acceleratedRaycast;
         var loader = new THREE.VIMLoader();
         loader.load(fileName, function (vim) {
-            var material = new THREE.MeshPhongMaterial({
-                color: 0x999999,
-                vertexColors: THREE.VertexColors,
-                flatShading: true,
-                side: THREE.DoubleSide,
-                shininess: 70
-            });
             console.log("Finished loading VIM: found " + vim.meshes.length + " objects");
-            for (var i = 0; i < vim.meshes.length; ++i) {
-                vim.meshes[i].geometry.computeBoundsTree();
-                _this.meshes.push(vim.meshes[i]);
-                _this.scene.add(vim.meshes[i]);
-            }
-            _this.controls.mesh = _this.meshes;
-            _this.controls.vim = vim;
-            //this.addViews(vim.rooms);
-            /*
-
-            this.cameraController.lookAt(vim.box.getCenter(new THREE.Vector3()));
-            console.log("Finished loading VIM geometries into scene");
             console.timeEnd("loadingVim");
-
-            console.log("merge all test");
-            const geometries = [];
-            for (var i = 0; i < vim.meshes.length; ++i) {
-                const m = vim.meshes[i];
-
-                //strip meshes
-                //for (const key in g.attributes)
-                  //  if (key !== 'position')
-                     //   g.deleteAttribute(key);
-
-                if (m.count == 0)
-                    continue;
-
-                for (let j = 0; j < m.count; j++) {
-
-                    //aply matrix
-                    const g = m.geometry.clone();
-                    let matrix = new THREE.Matrix4();
-                    m.getMatrixAt(j, matrix);
-                    g.applyMatrix4(matrix);
-                    geometries.push(g);
-                }
-            }
-            //add mesh to scene
-            const merged = THREE.BufferGeometryUtils.mergeBufferGeometries(geometries, false);
-            const mesh = new THREE.Mesh(merged, material);
-            
-            //const mesh = new THREE.InstancedMesh(merged, material, 2)
-            //mesh.setMatrixAt(0, new THREE.Matrix4());
-            //mesh.setMatrixAt(1, new THREE.Matrix4().makeTranslation(100, 0, 0));
-            //mesh.geometry.computeBoundsTree();
-            
-
-            this.scene.add(mesh);
-            this.meshes.push(mesh);
-            this.controls.mesh = [mesh];
-            this.controls.vim = vim;
-
-            */
+            onSuccess(vim);
         });
     };
     // Calls render, and asks the framework to prepare the next frame 
@@ -44055,16 +43988,16 @@ var Viewer = /** @class */ (function () {
         var matrix = getSettingsMatrix();
         var _loop_1 = function (i) {
             var view = views[i];
-            var name_1 = view.name;
+            var name_2 = view.name;
             if (view.x == 0 && view.y == 0 && view.z == 0)
                 return "continue";
-            obj[name_1] = function () {
-                console.log("Navigating to " + name_1);
+            obj[name_2] = function () {
+                console.log("Navigating to " + name_2);
                 var pos = new THREE.Vector3(view.x, view.y, view.z + 5.5);
                 pos.applyMatrix4(matrix);
                 this.camera.position.copy(pos);
             };
-            folder.add(obj, name_1);
+            folder.add(obj, name_2);
         };
         for (var i = 0; i < views.length; ++i) {
             _loop_1(i);
@@ -44113,6 +44046,13 @@ var Viewer = /** @class */ (function () {
             targetMaterial.wireframe = settings.wireframe;
         if ('shininess' in settings)
             targetMaterial.shininess = settings.shininess;
+    };
+    //TODO: Add more granular ways to access the bim data.
+    Viewer.prototype.getElementNameFromNodeIndex = function (nodeIndex) {
+        var elementIndex = this.vim.entities["Vim.Node"]["Rvt.Element"][nodeIndex];
+        var stringIndex = this.vim.entities["Rvt.Element"]["Name"][elementIndex];
+        var name = this.vim.strings[stringIndex];
+        return name;
     };
     return Viewer;
 }());

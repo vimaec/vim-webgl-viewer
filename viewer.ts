@@ -127,19 +127,30 @@ class Viewer
         document.head.appendChild(favicon);
 
         // Add all of the appropriate mouse, touch-pad, and keyboard listeners
-        this.controls = new ViewerInput(this.canvas, this.settings, this.cameraController);
-        this.controls.register();
-        this.controls.scene = this.scene;
-
         //Load Vim
-        this.loadFile(this.settings.url);
+        this.loadFile(
+            this.settings.url,
+            vim => this.onVimLoaded(vim)
+        );
 
         // Start Loop
         this.animate();
     }
 
+    onVimLoaded(vim) {
 
-    loadFile(fileName) {
+        for (var i = 0; i < vim.meshes.length; ++i) {
+            this.meshes.push(vim.meshes[i]);
+            this.scene.add(vim.meshes[i]);
+        }
+
+        this.controls = new ViewerInput(this.canvas, this.settings, this.cameraController);
+        this.controls.register();
+        this.controls.viewer = this;
+        this.vim = vim;
+    }
+
+    loadFile(fileName, onSuccess : Function) {
 
         function getExt(fileName) {
             const indexOfQueryParams = fileName.lastIndexOf("?");
@@ -151,98 +162,22 @@ class Viewer
 
         console.log("Loading file: " + fileName);
         const ext = getExt(fileName);
-        if (ext == "vim")
-            this.loadVim(fileName);
-        else
+        if (ext != "vim") {
             console.error("unhandled file format");
-    }
+            return;
+        }
 
-    loadVim(fileName) {
-        console.log("Loading VIM.");
         console.time("loadingVim");
-
-        THREE.BufferGeometry.prototype.computeBoundsTree = computeBoundsTree;
-        THREE.BufferGeometry.prototype.disposeBoundsTree = disposeBoundsTree;
-        THREE.Mesh.prototype.raycast = acceleratedRaycast;
-
         var loader = new THREE.VIMLoader();
         loader.load(
             fileName,
-            (vim) =>
-            {
-                const material = new THREE.MeshPhongMaterial({
-                    color: 0x999999,
-                    vertexColors: THREE.VertexColors,
-                    flatShading: true,
-                    side: THREE.DoubleSide,
-                    shininess: 70
-                });     
-
+            (vim) => {
                 console.log("Finished loading VIM: found " + vim.meshes.length + " objects");
-
-                for (var i = 0; i < vim.meshes.length; ++i)
-                {
-                    vim.meshes[i].geometry.computeBoundsTree();
-                    this.meshes.push(vim.meshes[i]);
-                    this.scene.add(vim.meshes[i]);
-                }
-                
-                this.controls.mesh = this.meshes;
-                this.controls.vim = vim;
-
-
-                //this.addViews(vim.rooms);
-
-                /*
-
-                this.cameraController.lookAt(vim.box.getCenter(new THREE.Vector3()));
-                console.log("Finished loading VIM geometries into scene");
                 console.timeEnd("loadingVim");
-
-                console.log("merge all test");
-                const geometries = [];
-                for (var i = 0; i < vim.meshes.length; ++i) {
-                    const m = vim.meshes[i];
-
-                    //strip meshes
-                    //for (const key in g.attributes)
-                      //  if (key !== 'position')
-                         //   g.deleteAttribute(key);
-
-                    if (m.count == 0)
-                        continue;
-
-                    for (let j = 0; j < m.count; j++) {
-
-                        //aply matrix
-                        const g = m.geometry.clone();
-                        let matrix = new THREE.Matrix4();
-                        m.getMatrixAt(j, matrix);
-                        g.applyMatrix4(matrix);
-                        geometries.push(g);
-                    }
-                }
-                //add mesh to scene
-                const merged = THREE.BufferGeometryUtils.mergeBufferGeometries(geometries, false);
-                const mesh = new THREE.Mesh(merged, material);
-                
-                //const mesh = new THREE.InstancedMesh(merged, material, 2)
-                //mesh.setMatrixAt(0, new THREE.Matrix4());
-                //mesh.setMatrixAt(1, new THREE.Matrix4().makeTranslation(100, 0, 0));
-                //mesh.geometry.computeBoundsTree();
-                
-
-                this.scene.add(mesh);
-                this.meshes.push(mesh);
-                this.controls.mesh = [mesh];
-                this.controls.vim = vim;
-
-                */
-
+                onSuccess(vim);
             }
         );
     }
-
 
     // Calls render, and asks the framework to prepare the next frame 
     animate() {
@@ -336,6 +271,15 @@ class Viewer
         if ('specular' in settings) targetMaterial.specular = toColor(settings.specular);
         if ('wireframe' in settings) targetMaterial.wireframe = settings.wireframe;
         if ('shininess' in settings) targetMaterial.shininess = settings.shininess;
+    }
+
+    //TODO: Add more granular ways to access the bim data.
+    getElementNameFromNodeIndex(nodeIndex: number) {
+
+        let elementIndex = this.vim.entities["Vim.Node"]["Rvt.Element"][nodeIndex];
+        let stringIndex = this.vim.entities["Rvt.Element"]["Name"][elementIndex];
+        let name = this.vim.strings[stringIndex];
+        return name;
     }
 }
 
