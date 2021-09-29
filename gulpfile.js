@@ -19,7 +19,7 @@ const srcFiles = [
     
     //vim code
     'index.js',
-    'vim_loader.js',
+    'VIMLoader.js',
 ];
 
 gulp.task('build', function(){
