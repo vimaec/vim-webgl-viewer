@@ -149,6 +149,9 @@ class Viewer
         this.controls.register();
         this.controls.viewer = this;
         this.vim = vim;
+
+        vim.sphere.applyMatrix4(this.getViewMatrix());
+        this.lookAtSphere(vim.sphere, true);
     }
 
     loadFile(fileName, onSuccess : Function) {
@@ -228,6 +231,11 @@ class Viewer
         line.material.transparent = true;
 
         this.scene.add(line);
+
+        return () => {
+            this.scene.remove(line);
+            wireframe.dispose();
+        }
     }
 
     createWorldGeometry(mesh, index) {
@@ -241,7 +249,10 @@ class Viewer
         return geometry;
     }
 
-    lookAt(sphere) {
+    lookAtSphere(sphere, setY: boolean = false) {
+        if(setY)
+            this.camera.position.setY(sphere.center.y); 
+
         const axis = this.camera.position.clone().sub(sphere.center).normalize();
         const fovRadian = this.camera.fov * Math.PI / 180;
         const dist = 1.33 * sphere.radius * (1 + 2 / Math.tan(fovRadian));
@@ -251,18 +262,29 @@ class Viewer
         this.camera.position.copy(pos);
     }
 
+    lookAtBox(box, setY : boolean = false) {
+        this.lookAtSphere(box.getBoundingSphere(new THREE.Sphere()), setY);
+    }
+
     getNodeIndex(mesh, instance) {
         return mesh.userData.instanceIndices[instance];
     }
 
     focus(mesh, index) {
         const geometry = this.createWorldGeometry(mesh, index);
-        this.highlight(geometry);
+        const disposer = this.highlight(geometry);
 
         geometry.computeBoundingSphere();
         const sphere = geometry.boundingSphere.clone();
-        this.lookAt(sphere);
+        this.lookAtSphere(sphere);
+
+        return () => {
+            disposer();
+            geometry.dispose();
+        }
     }
+
+
 
     addViews(views) {
         const getSettingsMatrix = () => {

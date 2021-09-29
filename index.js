@@ -2655,6 +2655,7 @@ var ViewerInput = /** @class */ (function () {
             _this.cameraController.moveCameraBy(dir, speed);
         };
         this.onMouseDown = function (event) {
+            var _a;
             event.preventDefault();
             _this.isMouseDown = true;
             var hits = _this.mouseRaycast(event.x, event.y);
@@ -2663,7 +2664,8 @@ var ViewerInput = /** @class */ (function () {
                 var index = hits[0].instanceId;
                 var nodeIndex = _this.viewer.getNodeIndex(mesh, index);
                 var name_1 = _this.viewer.getElementNameFromNodeIndex(nodeIndex);
-                _this.viewer.focus(mesh, index);
+                (_a = _this.focusDisposer) === null || _a === void 0 ? void 0 : _a.call(_this);
+                _this.focusDisposer = _this.viewer.focus(mesh, index);
                 console.log("Raycast hit.");
                 console.log("Position:" + hits[0].point.x + "," + hits[0].point.y + "," + hits[0].point.z);
                 console.log("Element: " + name_1);
@@ -3107,6 +3109,8 @@ var Viewer = /** @class */ (function () {
         this.controls.register();
         this.controls.viewer = this;
         this.vim = vim;
+        vim.sphere.applyMatrix4(this.getViewMatrix());
+        this.lookAtSphere(vim.sphere, true);
     };
     Viewer.prototype.loadFile = function (fileName, onSuccess) {
         function getExt(fileName) {
@@ -3165,6 +3169,7 @@ var Viewer = /** @class */ (function () {
         return matrix;
     };
     Viewer.prototype.highlight = function (geometry) {
+        var _this = this;
         var wireframe = new THREE.WireframeGeometry(geometry);
         var line = new THREE.LineSegments(wireframe);
         line.material.depthTest = false;
@@ -3172,6 +3177,10 @@ var Viewer = /** @class */ (function () {
         line.material.color = new THREE.Color(0x0000ff);
         line.material.transparent = true;
         this.scene.add(line);
+        return function () {
+            _this.scene.remove(line);
+            wireframe.dispose();
+        };
     };
     Viewer.prototype.createWorldGeometry = function (mesh, index) {
         var geometry = mesh.geometry.clone();
@@ -3181,7 +3190,10 @@ var Viewer = /** @class */ (function () {
         geometry.applyMatrix4(matrix);
         return geometry;
     };
-    Viewer.prototype.lookAt = function (sphere) {
+    Viewer.prototype.lookAtSphere = function (sphere, setY) {
+        if (setY === void 0) { setY = false; }
+        if (setY)
+            this.camera.position.setY(sphere.center.y);
         var axis = this.camera.position.clone().sub(sphere.center).normalize();
         var fovRadian = this.camera.fov * Math.PI / 180;
         var dist = 1.33 * sphere.radius * (1 + 2 / Math.tan(fovRadian));
@@ -3189,15 +3201,23 @@ var Viewer = /** @class */ (function () {
         this.camera.lookAt(sphere.center);
         this.camera.position.copy(pos);
     };
+    Viewer.prototype.lookAtBox = function (box, setY) {
+        if (setY === void 0) { setY = false; }
+        this.lookAtSphere(box.getBoundingSphere(new THREE.Sphere()), setY);
+    };
     Viewer.prototype.getNodeIndex = function (mesh, instance) {
         return mesh.userData.instanceIndices[instance];
     };
     Viewer.prototype.focus = function (mesh, index) {
         var geometry = this.createWorldGeometry(mesh, index);
-        this.highlight(geometry);
+        var disposer = this.highlight(geometry);
         geometry.computeBoundingSphere();
         var sphere = geometry.boundingSphere.clone();
-        this.lookAt(sphere);
+        this.lookAtSphere(sphere);
+        return function () {
+            disposer();
+            geometry.dispose();
+        };
     };
     Viewer.prototype.addViews = function (views) {
         var _this = this;
