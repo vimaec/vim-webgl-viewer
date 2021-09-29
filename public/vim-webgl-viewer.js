@@ -43486,10 +43486,11 @@ var ViewerInput = /** @class */ (function () {
             _this.isMouseDown = true;
             var hits = _this.mouseRaycast(event.x, event.y);
             if (hits.length > 0) {
-                var target = hits[0].object;
+                var mesh = hits[0].object;
                 var index = hits[0].instanceId;
-                var nodeIndex = target.userData.instanceIndices[index];
+                var nodeIndex = _this.viewer.getNodeIndex(mesh, index);
                 var name_1 = _this.viewer.getElementNameFromNodeIndex(nodeIndex);
+                _this.viewer.focus(mesh, index);
                 console.log("Raycast hit.");
                 console.log("Position:" + hits[0].point.x + "," + hits[0].point.y + "," + hits[0].point.z);
                 console.log("Element: " + name_1);
@@ -43969,12 +43970,61 @@ var Viewer = /** @class */ (function () {
     };
     Viewer.prototype.updateObjects = function () {
         for (var i = 0; i < this.meshes.length; i++) {
-            var mesh = this.meshes[i];
-            var scale = scalarToVec(this.settings.object.scale);
-            mesh.scale.copy(scale);
-            mesh.position.copy(this.settings.object.position);
-            mesh.rotation.copy(toEuler(this.settings.object.rotation));
+            this.applyViewMatrix(this.meshes[i]);
         }
+    };
+    Viewer.prototype.applyViewMatrix = function (mesh) {
+        /*
+        const scale = scalarToVec(this.settings.object.scale);
+        mesh.scale.copy(scale);
+        mesh.position.copy(this.settings.object.position);
+        mesh.rotation.copy();
+        */
+        var matrix = this.getViewMatrix();
+        mesh.matrixAutoUpdate = false;
+        mesh.matrix.copy(matrix);
+    };
+    Viewer.prototype.getViewMatrix = function () {
+        var pos = this.settings.object.position;
+        var rot = toQuaternion(this.settings.object.rotation);
+        var scl = scalarToVec(0.1);
+        var matrix = new THREE.Matrix4().compose(pos, rot, scl);
+        return matrix;
+    };
+    Viewer.prototype.highlight = function (geometry) {
+        var wireframe = new THREE.WireframeGeometry(geometry);
+        var line = new THREE.LineSegments(wireframe);
+        line.material.depthTest = false;
+        line.material.opacity = 0.5;
+        line.material.color = new THREE.Color(0x0000ff);
+        line.material.transparent = true;
+        this.scene.add(line);
+    };
+    Viewer.prototype.createWorldGeometry = function (mesh, index) {
+        var geometry = mesh.geometry.clone();
+        var matrix = new THREE.Matrix4();
+        mesh.getMatrixAt(index, matrix);
+        matrix = this.getViewMatrix().multiply(matrix);
+        geometry.applyMatrix4(matrix);
+        return geometry;
+    };
+    Viewer.prototype.lookAt = function (sphere) {
+        var axis = this.camera.position.clone().sub(sphere.center).normalize();
+        var fovRadian = this.camera.fov * Math.PI / 180;
+        var dist = 1.33 * sphere.radius * (1 + 2 / Math.tan(fovRadian));
+        var pos = axis.clone().multiplyScalar(dist).add(sphere.center);
+        this.camera.lookAt(sphere.center);
+        this.camera.position.copy(pos);
+    };
+    Viewer.prototype.getNodeIndex = function (mesh, instance) {
+        return mesh.userData.instanceIndices[instance];
+    };
+    Viewer.prototype.focus = function (mesh, index) {
+        var geometry = this.createWorldGeometry(mesh, index);
+        this.highlight(geometry);
+        geometry.computeBoundingSphere();
+        var sphere = geometry.boundingSphere.clone();
+        this.lookAt(sphere);
     };
     Viewer.prototype.addViews = function (views) {
         var _this = this;
