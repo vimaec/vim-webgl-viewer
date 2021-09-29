@@ -25,6 +25,7 @@ class ViewerInput {
 
     // TODO figure out the right pattern for inputs
     viewer: Viewer;
+    focusDisposer: Function;
 
     constructor(canvas: HTMLCanvasElement, settings: any, cameraController: ViewerCamera) {
         this.canvas = canvas;
@@ -139,7 +140,10 @@ class ViewerInput {
 
             const nodeIndex = this.viewer.getNodeIndex(mesh, index);
             const name = this.viewer.getElementNameFromNodeIndex(nodeIndex);
-            this.viewer.focus(mesh, index);
+
+            this.focusDisposer?.call(this);
+            this.focusDisposer = this.viewer.focus(mesh, index);
+
             console.log("Raycast hit.")
             console.log("Position:" + hits[0].point.x + "," + hits[0].point.y + "," + hits[0].point.z);
             console.log("Element: " + name);

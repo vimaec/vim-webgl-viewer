@@ -601,7 +601,7 @@ THREE.VIMLoader.prototype =
         const {meshes, centers} = this.applyMatrices(rawMeshes, instanceMeshes, instanceTransforms);
 
         console.log("Computing center.");
-        vim.box = new THREE.Box3().setFromPoints(centers);
+        vim.sphere = new THREE.Sphere().setFromPoints(centers);
 
         //console.log("Merging lone meshes.");
         //vim.meshes = this.mergeSingleInstances(meshes, material);  
