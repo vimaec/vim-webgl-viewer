@@ -127,18 +127,19 @@ class ViewerInput {
         this.cameraController.moveCameraBy(dir, speed);
     };
 
+
     onMouseDown = (event) => {
         event.preventDefault();
         this.isMouseDown = true;
         
         const hits = this.mouseRaycast(event.x, event.y);
         if (hits.length > 0) {
-            const target = hits[0].object;
+            const mesh = hits[0].object;
             const index = hits[0].instanceId;
 
-            const nodeIndex = target.userData.instanceIndices[index];
+            const nodeIndex = this.viewer.getNodeIndex(mesh, index);
             const name = this.viewer.getElementNameFromNodeIndex(nodeIndex);
-
+            this.viewer.focus(mesh, index);
             console.log("Raycast hit.")
             console.log("Position:" + hits[0].point.x + "," + hits[0].point.y + "," + hits[0].point.z);
             console.log("Element: " + name);

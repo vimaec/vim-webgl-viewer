@@ -140,6 +140,7 @@ class Viewer
     onVimLoaded(vim) {
 
         for (var i = 0; i < vim.meshes.length; ++i) {
+
             this.meshes.push(vim.meshes[i]);
             this.scene.add(vim.meshes[i]);
         }
@@ -190,15 +191,77 @@ class Viewer
             this.stats.update();
     }
 
-    
     updateObjects() {
         for (let i = 0; i < this.meshes.length; i++) {
-            const mesh = this.meshes[i];
-            const scale = scalarToVec(this.settings.object.scale);
-            mesh.scale.copy(scale);
-            mesh.position.copy(this.settings.object.position);
-            mesh.rotation.copy(toEuler(this.settings.object.rotation));
+            this.applyViewMatrix(this.meshes[i])
         }
+    }
+
+    applyViewMatrix(mesh) {
+        /*
+        const scale = scalarToVec(this.settings.object.scale);
+        mesh.scale.copy(scale);
+        mesh.position.copy(this.settings.object.position);
+        mesh.rotation.copy();
+        */
+        const matrix = this.getViewMatrix();
+        mesh.matrixAutoUpdate = false;
+        mesh.matrix.copy(matrix);
+    }
+
+    getViewMatrix() {
+        const pos = this.settings.object.position;
+        const rot = toQuaternion(this.settings.object.rotation);
+        const scl = scalarToVec(0.1);
+        const matrix = new THREE.Matrix4().compose(pos, rot, scl);
+        return matrix;
+    }
+
+
+    highlight(geometry) {
+        const wireframe = new THREE.WireframeGeometry(geometry);
+        const line = new THREE.LineSegments(wireframe);
+
+        line.material.depthTest = false;
+        line.material.opacity = 0.5;
+        line.material.color = new THREE.Color(0x0000ff);
+        line.material.transparent = true;
+
+        this.scene.add(line);
+    }
+
+    createWorldGeometry(mesh, index) {
+        let geometry = mesh.geometry.clone();
+
+        let matrix = new THREE.Matrix4();
+        mesh.getMatrixAt(index, matrix);
+        matrix = this.getViewMatrix().multiply(matrix);
+        geometry.applyMatrix4(matrix);
+
+        return geometry;
+    }
+
+    lookAt(sphere) {
+        const axis = this.camera.position.clone().sub(sphere.center).normalize();
+        const fovRadian = this.camera.fov * Math.PI / 180;
+        const dist = 1.33 * sphere.radius * (1 + 2 / Math.tan(fovRadian));
+        const pos = axis.clone().multiplyScalar(dist).add(sphere.center);
+
+        this.camera.lookAt(sphere.center);
+        this.camera.position.copy(pos);
+    }
+
+    getNodeIndex(mesh, instance) {
+        return mesh.userData.instanceIndices[instance];
+    }
+
+    focus(mesh, index) {
+        const geometry = this.createWorldGeometry(mesh, index);
+        this.highlight(geometry);
+
+        geometry.computeBoundingSphere();
+        const sphere = geometry.boundingSphere.clone();
+        this.lookAt(sphere);
     }
 
     addViews(views) {
