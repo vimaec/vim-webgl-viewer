@@ -2,7 +2,7 @@
   "compilerOptions": {
     /* Basic Options */
     "target": "es5",                          /* Specify ECMAScript target version: 'ES3' (default), 'ES5', 'ES2015', 'ES2016', 'ES2017','ES2018' or 'ESNEXT'. */
-    "module": "none",                       /* Specify module code generation: 'none', 'commonjs', 'amd', 'system', 'umd', 'es2015', or 'ESNext'. */
+    "module": "None",                       /* Specify module code generation: 'none', 'commonjs', 'amd', 'system', 'umd', 'es2015', or 'ESNext'. */
     "lib": ["es6","dom"],                             /* Specify library files to be included in the compilation. */
     "allowJs": true,                          /* Allow javascript files to be compiled. */
     "checkJs": false,                         /* Report errors in .js files. */
@@ -58,6 +58,12 @@
     "outFile": "index.js",
   },
   "include": [
-    "./index.ts",
+    "bvh.js",
+    "./deep_merge.ts",
+    "./viewer_camera.ts",
+    "./viewer_input.ts",
+    "./viewer_gui.ts",
+    "./viewer_settings.ts",
+    "./viewer.ts"
   ]
 }

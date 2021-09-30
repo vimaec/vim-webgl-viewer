@@ -1,19 +1,20 @@
 <html>
 <head>
-    <title>Minimal VIM WebGL Viewer Example</title>
+    <title>VIM Viewer</title>
 </head>
 <body>    
 </body>
-<script src="./ara3d-viewer.js"></script>
+<script src="./vim-webgl-viewer.js"></script>
 <script>
-    ara.view({ url: './residence.vim', 
+    let v = new Viewer();
+    v.view({
+        url: './skanska.vim', 
         object: { 
             scale: 0.1, 
             rotation: { x: 270 }, 
             position: { y: 0 } }, 
         plane: 
             { show: false }, 
-        showGui: true, 
         showStats: true 
     });    
 </script>
