@@ -2,7 +2,8 @@
 
 const path = require('path');
 
-const config = {
+module.exports = {
+
     mode: 'development',
     entry: './viewer.ts',
     output: {
@@ -29,6 +30,3 @@ const config = {
     devtool: 'source-map',  
 };
 
-module.exports = () => {
-    return config;
-}
