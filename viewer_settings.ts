@@ -1,4 +1,4 @@
-const ViewerSettings = {
+export const ViewerSettings = {
     default: {
         showGui: true,
         showStats: true,

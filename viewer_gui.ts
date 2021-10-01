@@ -121,7 +121,7 @@ class PropList {
 type PropValueChanged = (pv: PropValue) => void;
 type PropsValueChanged = (pv: PropListJson) => void;
 
-const ViewerGui =
+export const ViewerGui =
 {
     gui: new dat.GUI(),
     bind: function (settings, callback: PropsValueChanged) {

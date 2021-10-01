@@ -1,7 +1,7 @@
 // The MIT License (MIT)
 // Copyright (c) 2012 Nicholas Fisher
 // https://github.com/KyleAMathews/deepmerge/blob/master/license.txt
-class DeepMerge {
+export class DeepMerge {
     isMergeableObject(val) {
         return val && typeof val === 'object';
     }

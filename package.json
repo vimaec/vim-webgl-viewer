@@ -1,7 +1,7 @@
 {
-  "name": "vim-webgl-viewer",
-  "version": "0.5.0",
-  "description": "A 3D model viewer in JavaScript.",
+  "name": "my-webpack-project",
+  "version": "1.0.0",
+  "description": "My webpack project",
   "main": "./dist/vim-webgl-viewer.js",
   "homepage": "https://github.com/vimaec/vim-webgl-viewer.git",
   "bugs": "https://github.com/vimaec/vim-webgl-viewer/issues",
@@ -15,20 +15,30 @@
     "url": "https://github.com/vimaec/vim-webgl-viewer.git"
   },
   "scripts": {
-    "build": "./node_modules/.bin/gulp -- build",
+    "webpack": "webpack ./test.js ./public/packed.js",
+    "build": "webpack --mode=production --node-env=production",
     "dist": "./node_modules/.bin/gulp -- dist",
     "tswatch": "./node_modules/.bin/tsc.cmd -p tsconfig.json --watch",
-    "watch": "./node_modules/.bin/gulp -- watch",
-    "serve": "http-server"
+    "watch": "webpack --watch",
+    "serve": "http-server",
+    "build:dev": "webpack --mode=development",
+    "build:prod": "webpack --mode=production --node-env=production"
   },
   "devDependencies": {
+    "@babel/core": "^7.15.5",
+    "@babel/preset-env": "^7.15.6",
+    "@webpack-cli/generators": "^2.3.0",
+    "babel-loader": "^8.2.2",
     "gulp": "^4.0.0",
     "gulp-concat": "^2.6.1",
     "gulp-rename": "^1.4.0",
     "gulp-uglify": "^3.0.1",
     "gulp-uglify-es": "^1.0.4",
+    "html-webpack-plugin": "^5.3.2",
     "http-server": "^0.11.1",
-    "typescript": "^3.9.7"
+    "typescript": "^3.9.7",
+    "webpack": "^5.55.1",
+    "webpack-cli": "^4.8.0"
   },
   "dependencies": {
     "dat.gui": "^0.7.7",

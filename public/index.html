@@ -1,22 +1,24 @@
+<!DOCTYPE html>
 <html>
 <head>
     <title>VIM Viewer</title>
 </head>
-<body>    
-</body>
-<script src="./vim-webgl-viewer.js"></script>
-<script>
-    let v = new Viewer();
-    v.view({
-        url: './skanska.vim', 
-        object: { 
-            scale: 0.1, 
-            rotation: { x: 270 }, 
-            position: { y: 0 } }, 
-        plane: 
-            { show: false }, 
-        showStats: true 
-    });    
-</script>
-
-</html>    
+    <body>
+        <script src="./vim-webgl-viewer.js"></script>
+        <script> 
+            var viewer = new vim.Viewer();
+            viewer.view({
+                url: './residence.vim',
+                object: {
+                    scale: 0.1,
+                    rotation: { x: 270 },
+                    position: { y: 0 }
+                },
+                plane:
+                    { show: false },
+                showStats: true
+            });
+            console.log(vim.AAAA);
+            </script> 
+    </body>
+</html>
