@@ -11,6 +11,7 @@ Copyright VIMaec LLC, 2020
 Licensed under the terms of the MIT License
 */
 //declare const Stats: any;
+export var _1_45 = 145;
 var Viewer = /** @class */ (function () {
     function Viewer() {
         this.meshes = [];
