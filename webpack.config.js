@@ -11,9 +11,11 @@ const config = {
         library: 'vim',
     },
     resolve: {
+        // look for ts and js files
         extensions: ['.ts', '.js'],
     },
     module: {
+        // load and compile ts files using ts-loader
         rules: [
             {
                 test: /\.tsx?$/,
@@ -22,7 +24,9 @@ const config = {
             },
         ],
     },
-    devtool: 'source-map',  // generate source map
+
+    // generate source map for debug
+    devtool: 'source-map',  
 };
 
 module.exports = () => {
