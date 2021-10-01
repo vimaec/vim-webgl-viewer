@@ -1,8 +1,8 @@
 import * as THREE from "./node_modules/three/src/Three";
-import { DeepMerge } from "./deep_merge.js";
-import { VIMLoader } from "./VIMLoader.js";
-import { ViewerSettings } from "./viewer_settings.js";
-import { ViewerCamera, direction } from "./viewer_camera.js";
+import { DeepMerge } from "./deep_merge";
+import { VIMLoader } from "./VIMLoader";
+import { ViewerSettings } from "./viewer_settings";
+import { ViewerCamera, direction } from "./viewer_camera";
 //import { ViewerGui } from "./viewer_gui.js";
 
 //import { Mesh } from "./node_modules/three/src/Three";
