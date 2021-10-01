@@ -1,13 +1,20 @@
+import * as THREE from "./node_modules/three/src/Three";
+import { DeepMerge } from "./deep_merge.js";
+import { VIMLoader } from "./VIMLoader.js";
+import { ViewerSettings } from "./viewer_settings.js";
+import { ViewerCamera, direction } from "./viewer_camera.js";
+//import { ViewerGui } from "./viewer_gui.js";
+
+//import { Mesh } from "./node_modules/three/src/Three";
 
 /*
 Vim Viewer 
 Copyright VIMaec LLC, 2020
 Licensed under the terms of the MIT License
 */
-declare const THREE: any;
-declare const Stats: any;
 
-class Viewer
+//declare const Stats: any;
+export class Viewer
 {
     canvas: HTMLCanvasElement;
     logo: HTMLElement;
@@ -15,27 +22,21 @@ class Viewer
 
     stats: any;
     settings: any;
-    camera: any; //PerspectiveCamera;
-    renderer: any; // THREE.WebGLRenderer
-    scene: any; // THREE.Scene
+    camera: THREE.PerspectiveCamera; //PerspectiveCamera;
+    renderer: THREE.WebGLRenderer; // THREE.WebGLRenderer
+    scene: THREE.Scene; // THREE.Scene
     meshes = [];
 
-    plane: any; // THREE.Mesh
-    sunlight: any; // THREE.HemisphereLight
-    light1: any; // THREE.DirectionalLight
-    light2: any; // THREE.DirectionalLight
-    material: any; // THREE.MeshPhongMaterial
+    plane: THREE.Mesh; // THREE.Mesh
+    sunlight: THREE.HemisphereLight ; // THREE.HemisphereLight
+    light1: THREE.DirectionalLight; // THREE.DirectionalLight
+    light2: THREE.DirectionalLight; // THREE.DirectionalLight
+    material: THREE.MeshPhongMaterial; // THREE.MeshPhongMaterial
     removeListeners: Function;
 
     cameraController: ViewerCamera;
     controls: ViewerInput;
     vim: any;
-
-    constructor()
-    {
-        this.meshes = [];
-
-    }
 
     view(options)
     {
@@ -69,6 +70,7 @@ class Viewer
         // Create scene object
         this.scene = new THREE.Scene();
 
+        /*
         if (this.settings.showGui) {
             // Create a new DAT.gui controller 
             ViewerGui.bind(
@@ -79,6 +81,7 @@ class Viewer
                 }
             );
         }
+        */
         
         // Ground
         this.plane = new THREE.Mesh(
@@ -103,6 +106,7 @@ class Viewer
         // Initial scene update: happens if controls change 
         this.updateScene();
 
+        /*
         // Add Stats display 
         if (this.settings.showStats) {
             this.stats = new Stats();
@@ -110,6 +114,7 @@ class Viewer
             this.stats.dom.style.left = "16px";
             document.body.appendChild(this.stats.dom);
         }
+        */
 
         // Add Vim logo
         const logo = document.createElement("img");
@@ -172,14 +177,16 @@ class Viewer
         }
 
         console.time("loadingVim");
-        var loader = new THREE.VIMLoader();
+        var loader = new VIMLoader();
         loader.load(
             fileName,
             (vim) => {
                 console.log("Finished loading VIM: found " + vim.meshes.length + " objects");
                 console.timeEnd("loadingVim");
                 onSuccess(vim);
-            }
+            },
+            undefined,
+            undefined
         );
     }
 
@@ -220,21 +227,24 @@ class Viewer
         return matrix;
     }
 
-
-    highlight(geometry) {
+    
+    highlight(geometry) : Function {
         const wireframe = new THREE.WireframeGeometry(geometry);
-        const line = new THREE.LineSegments(wireframe);
-
-        line.material.depthTest = false;
-        line.material.opacity = 0.5;
-        line.material.color = new THREE.Color(0x0000ff);
-        line.material.transparent = true;
+        const material = new THREE.LineBasicMaterial({
+            depthTest : false,
+            opacity : 0.5,
+            color : new THREE.Color(0x0000ff),
+            transparent : true,
+        });
+        const line = new THREE.LineSegments(wireframe, material);
 
         this.scene.add(line);
 
+        //returns disposer
         return () => {
             this.scene.remove(line);
             wireframe.dispose();
+            material.dispose();
         }
     }
 
@@ -284,7 +294,7 @@ class Viewer
         }
     }
 
-
+    /*
 
     addViews(views) {
         const getSettingsMatrix = () => {
@@ -314,15 +324,16 @@ class Viewer
             folder.add(obj, name);
         }
     }
-    
+    */
+
     resizeCanvas(force: boolean = false) {
         if (!this.settings.autoResize && !force)
             return;
 
         const canvas = this.renderer.domElement;
         const parent = canvas.parentElement as Element;
-        const w = parent.clientWidth / window.devicePixelRatio
-        const h = parent.clientHeight / window.devicePixelRatio;
+        const w = window.innerWidth/ window.devicePixelRatio
+        const h = window.innerHeight / window.devicePixelRatio;
         this.renderer.setSize(w, h, false);
 
         // Set aspect ratio
@@ -343,7 +354,7 @@ class Viewer
         this.light2.position.copy(toVec(this.settings.light2.position));
         this.light2.color = toColor(this.settings.light2.color);
         this.light2.intensity = this.settings.light2.intensity;
-        this.sunlight.skyColor = toColor(this.settings.sunlight.skyColor);
+        //this.sunlight.skyColor = toColor(this.settings.sunlight.skyColor);
         this.sunlight.groundColor = toColor(this.settings.sunlight.groundColor);
         this.sunlight.intensity = this.settings.sunlight.intensity;
         this.cameraController.applySettings(this.settings);
@@ -366,6 +377,177 @@ class Viewer
         let name = this.vim.strings[stringIndex];
         return name;
     }
+}
+
+const KEYS = {
+    A: 65,
+    D: 68,
+    Q: 81,
+    E: 69,
+    S: 83,
+    W: 87,
+    LEFTARROW: 37,
+    UPARROW: 38,
+    RIGHTARROW: 39,
+    DOWNARROW: 40,
+    HOME: 36,
+    END: 37,
+    PAGEUP: 33,
+    PAGEDOWN: 34,
+};
+
+class ViewerInput {
+
+    canvas: HTMLCanvasElement;
+    settings: any;
+    cameraController: ViewerCamera;
+    unregister: Function;
+    isMouseDown: Boolean;
+
+    // TODO figure out the right pattern for inputs
+    viewer: Viewer;
+    focusDisposer: Function;
+
+    constructor(canvas: HTMLCanvasElement, settings: any, cameraController: ViewerCamera) {
+        this.canvas = canvas;
+        this.settings = settings;
+        this.cameraController = cameraController;
+        this.unregister = function () { };
+        this.isMouseDown = false;
+    }
+
+    register() {
+        this.canvas.addEventListener('mousedown', this.onMouseDown);
+        this.canvas.addEventListener('wheel', this.onMouseWheel);
+        this.canvas.addEventListener('mousemove', this.onMouseMove);
+        this.canvas.addEventListener('mouseup', this.onMouseUp);
+        document.addEventListener('keydown', this.onKeyDown);
+
+        this.unregister = function () {
+            this.canvas.removeEventListener('mousedown', this.onMouseDown);
+            this.canvas.removeEventListener('wheel', this.onMouseWheel);
+            this.canvas.removeEventListener('mousemove', this.onMouseMove);
+            this.canvas.removeEventListener('mouseup', this.onMouseUp);
+            document.removeEventListener('keydown', this.onKeyDown);
+
+            this.isMouseDown = false;
+            this.unregister = function () { };
+        };
+    }
+
+    onKeyDown = (event) => {
+        let speed = this.settings.camera.controls.speed;
+        if (event.shiftKey)
+            speed *= this.settings.camera.controls.shiftMultiplier;
+        if (event.altKey)
+            speed *= this.settings.camera.controls.altMultiplier;
+        switch (event.keyCode) {
+            case KEYS.A:
+                this.cameraController.moveCameraBy(direction.left, speed);
+                break;
+            case KEYS.LEFTARROW:
+                this.cameraController.moveCameraBy(direction.left, speed, true);
+                break;
+            case KEYS.D:
+                this.cameraController.moveCameraBy(direction.right, speed);
+                break;
+            case KEYS.RIGHTARROW:
+                this.cameraController.moveCameraBy(direction.right, speed, true);
+                break;
+            case KEYS.W:
+                this.cameraController.moveCameraBy(direction.forward, speed);
+                break;
+            case KEYS.UPARROW:
+                this.cameraController.moveCameraBy(direction.forward, speed, true);
+                break;
+            case KEYS.S:
+                this.cameraController.moveCameraBy(direction.back, speed);
+                break;
+            case KEYS.DOWNARROW:
+                this.cameraController.moveCameraBy(direction.back, speed, true);
+                break;
+            case KEYS.E:
+            case KEYS.PAGEUP:
+                this.cameraController.moveCameraBy(direction.up, speed);
+                break;
+            case KEYS.Q:
+            case KEYS.PAGEDOWN:
+                this.cameraController.moveCameraBy(direction.down, speed);
+                break;
+            case KEYS.HOME:
+                this.cameraController.resetCamera();
+                break;
+            default:
+                return;
+        }
+        event.preventDefault();
+    };
+
+    onMouseMove = (event) => {
+        if (!this.isMouseDown)
+            return;
+
+        event.preventDefault();
+
+        // https://github.com/mrdoob/three.js/blob/master/examples/jsm/controls/PointerLockControls.js
+        const deltaX = event.movementX || event.mozMovementX || event.webkitMovementX || 0;
+        const deltaY = event.movementY || event.mozMovementY || event.webkitMovementY || 0;
+        const delta = new THREE.Vector2(deltaX, deltaY);
+
+        if (event.buttons & 2)
+            this.cameraController.panCameraBy(delta);
+
+        else
+            this.cameraController.rotateCameraBy(delta);
+    };
+
+    onMouseWheel = (event) => {
+        event.preventDefault();
+        event.stopPropagation();
+        const speed = this.settings.camera.controls.zoomSpeed;
+        const dir = event.deltaY > 0 ? direction.back : direction.forward;
+        this.cameraController.moveCameraBy(dir, speed);
+    };
+
+
+    onMouseDown = (event) => {
+        event.preventDefault();
+        this.isMouseDown = true;
+
+        const hits = this.mouseRaycast(event.x, event.y);
+        if (hits.length > 0) {
+            const mesh = hits[0].object;
+            const index = hits[0].instanceId;
+
+            const nodeIndex = this.viewer.getNodeIndex(mesh, index);
+            const name = this.viewer.getElementNameFromNodeIndex(nodeIndex);
+
+            this.focusDisposer?.call(this);
+            this.focusDisposer = this.viewer.focus(mesh, index);
+
+            console.log("Raycast hit.")
+            console.log("Position:" + hits[0].point.x + "," + hits[0].point.y + "," + hits[0].point.z);
+            console.log("Element: " + name);
+        }
+
+        // Manually set the focus since calling preventDefault above
+        // prevents the browser from setting it automatically.    
+        this.canvas.focus ? this.canvas.focus() : window.focus();
+    };
+
+    mouseRaycast(mouseX, mouseY) {
+        let x = (mouseX / window.innerWidth) * 2 - 1;
+        let y = - (mouseY / window.innerHeight) * 2 + 1;
+        let mouse = new THREE.Vector2(x, y);
+        const raycaster = new THREE.Raycaster();
+        raycaster.setFromCamera(mouse, this.cameraController.camera);
+        //raycaster.firstHitOnly = true;
+        return raycaster.intersectObjects(this.viewer.meshes);
+    }
+
+    onMouseUp = (_) => {
+        this.isMouseDown = false;
+    };
 }
 
 // Helpers

@@ -18,7 +18,12 @@ const srcFiles = [
     'node_modules/three/examples/js/utils/BufferGeometryUtils.js',
     
     //vim code
-    'index.js',
+    'deep_merge.js',
+    'viewer.js',
+    'viewer_camera.js',
+    'viewer_gui.js',
+    'viewer_input.js',
+    'viewer_settings.js',
     'VIMLoader.js',
 ];
 

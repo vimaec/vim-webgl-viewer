@@ -15,7 +15,7 @@
     PAGEDOWN: 34,
 };
 
-class ViewerInput {
+export class ViewerInput {
 
     canvas: HTMLCanvasElement;
     settings: any;

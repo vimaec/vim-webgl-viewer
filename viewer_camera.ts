@@ -1,4 +1,6 @@
-﻿const direction = {
+﻿import * as THREE from "./node_modules/three/src/Three";
+
+export const direction = {
     forward: new THREE.Vector3(0, 0, -1),
     back: new THREE.Vector3(0, 0, 1),
     left: new THREE.Vector3(-1, 0, 0),
@@ -7,7 +9,7 @@
     down: new THREE.Vector3(0, -1, 0),
 }
 
-class ViewerCamera {
+export class ViewerCamera {
     camera: any; //THREE.PerspectiveCamera()
     settings: any;
     initialPosition: any; //THREE.Vector3;
@@ -33,8 +35,8 @@ class ViewerCamera {
         this.camera.zoom = newSettings.camera.zoom;
         this.camera.near = newSettings.camera.near;
         this.camera.far = newSettings.camera.far;
-        this.camera.position.copy(toVec(newSettings.camera.position));
-        this.cameraTarget = toVec(newSettings.camera.target);
+        this.camera.position.copy(toVec3(newSettings.camera.position));
+        this.cameraTarget = toVec3(newSettings.camera.target);
         this.camera.lookAt(this.cameraTarget);
         this.settings = newSettings;
     }
@@ -73,4 +75,10 @@ class ViewerCamera {
         this.camera.position.copy(this.initialPosition);
         this.camera.quaternion.copy(this.initialRotation);
     }
+}
+
+//Helpers
+//TODO Remove this
+function toVec3(obj) {
+    return new THREE.Vector3(obj.x, obj.y, obj.z)
 }
