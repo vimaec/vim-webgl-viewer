@@ -14,7 +14,6 @@ Licensed under the terms of the MIT License
 */
 
 //declare const Stats: any;
-export let _2_48 = 223;    
 export class Viewer
 {
     canvas: HTMLCanvasElement;
