@@ -74,3 +74,6 @@ typings/
 
 # This locks in development chain dependencies which is not appropriate. 
 package-lock.json
+
+vim-webgl-viewer.js
+vim-webgl-viewer.js.map
