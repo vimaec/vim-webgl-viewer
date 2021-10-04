@@ -3,6 +3,7 @@ import { DeepMerge } from "./deep_merge";
 import { VIMLoader } from "./VIMLoader";
 import { ViewerSettings } from "./viewer_settings";
 import { ViewerCamera, direction } from "./viewer_camera";
+var Stats = require("./node_modules/three/examples/js/libs/stats.min");
 //import { ViewerGui } from "./viewer_gui.js";
 
 //import { Mesh } from "./node_modules/three/src/Three";
@@ -106,7 +107,6 @@ export class Viewer
         // Initial scene update: happens if controls change 
         this.updateScene();
 
-        /*
         // Add Stats display 
         if (this.settings.showStats) {
             this.stats = new Stats();
@@ -114,7 +114,6 @@ export class Viewer
             this.stats.dom.style.left = "16px";
             document.body.appendChild(this.stats.dom);
         }
-        */
 
         // Add Vim logo
         const logo = document.createElement("img");
