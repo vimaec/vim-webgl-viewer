@@ -5,14 +5,19 @@ import * as THREE from "./node_modules/three/src/Three";
 
 export class VIMLoader 
 {    
+    material : THREE.Material;
+
+    constructor(material: THREE.Material) {
+        this.material = material;
+    }
+
     // Loads the VIM from a URL 
-    load(url, onLoad, onProgress, onError) {
-        const material = new THREE.MeshPhongMaterial({
-            color: 0x999999,
-            flatShading: true,
-            side: THREE.DoubleSide,
-            shininess: 70
-        });
+    load(
+        url: string,
+        onLoad?: (response: any) => void,
+        onProgress?: (request: ProgressEvent) => void,
+        onError?: (event: ErrorEvent) => void)
+    {
         let scope = this;
         let loader = new THREE.FileLoader();
         loader.setResponseType('arraybuffer');
@@ -21,13 +26,13 @@ export class VIMLoader
             "Accept-Encoding": "gzip, deflate"
         });
 
-        loader.load( url, function ( data ) 
+        loader.load(url, (data : string | ArrayBuffer) =>
         {
             try 
             {
-				onLoad( scope.parse( data, material ) );
+				onLoad(scope.parse(data));
             } 
-            catch ( exception ) 
+            catch (exception) 
             {
                 console.log("Error occured when loading VIM from " + url + ", message = " + exception);
 				if ( onError ) onError( exception );				
@@ -453,7 +458,8 @@ export class VIMLoader
                 let submeshEnd = submesh < submeshCount - 1
                     ? submeshIndexOffset[submesh + 1]
                     : indexCount;
-                
+
+                //TODO try not unpacking all vertices
                 for (let index = submeshStart; index < submeshEnd; index++)
                 {
                     meshIndices.push(meshIndices.length);
@@ -535,7 +541,7 @@ export class VIMLoader
 
     // Constructs a BufferGeometry from an ArrayBuffer arranged as a VIM
     // Main
-    parse ( data, material ) 
+    parse ( data: any) 
     {	   
         console.time("parsingVim");
 
@@ -573,7 +579,7 @@ export class VIMLoader
 
 
         console.log("Allocating Instanced Meshes");
-        const rawMeshes = this.allocateMeshes(geometry, instanceMeshes, material);
+        const rawMeshes = this.allocateMeshes(geometry, instanceMeshes);
 
         console.log("Applying Matrices");
         let {meshes, centers} = this.applyMatrices(rawMeshes, instanceMeshes, instanceTransforms);
@@ -611,7 +617,7 @@ export class VIMLoader
     // instanceMeshes: array of mesh indices
     // material: THREE.MeshPhongMaterial to use
     // returns array of THREE.InstancedMesh
-    allocateMeshes (geometries, instanceMeshes, material)
+    allocateMeshes (geometries, instanceMeshes)
     {
         const meshCount = geometries.length;
         console.log("Counting references");
@@ -631,7 +637,7 @@ export class VIMLoader
             }
             else {
                 const g = geometries[i];
-                const mesh = new THREE.InstancedMesh(g, material, count);
+                const mesh = new THREE.InstancedMesh(g, this.material, count);
                 meshes.push(mesh);
             }
         }

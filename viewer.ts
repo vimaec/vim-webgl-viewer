@@ -98,7 +98,13 @@ export class Viewer
         this.scene.add(this.light2);
 
         // Material 
-        this.material = new THREE.MeshPhongMaterial();
+        this.material = new THREE.MeshPhongMaterial({
+            color: 0x999999,
+            vertexColors: true,
+            flatShading: true,
+            side: THREE.DoubleSide,
+            shininess: 70
+        });            
 
         // Initial scene update: happens if controls change 
         this.updateScene();
@@ -172,7 +178,7 @@ export class Viewer
         }
 
         console.time("loadingVim");
-        var loader = new VIMLoader();
+        var loader = new VIMLoader(this.material);
         loader.load(
             fileName,
             (vim) => {
