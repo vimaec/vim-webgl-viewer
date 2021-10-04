@@ -6,19 +6,21 @@ import * as THREE from "./node_modules/three/src/Three";
 export class VIMLoader 
 {    
     // Loads the VIM from a URL 
-    load( url, onLoad, onProgress, onError ) 
-    {        
-        const material = new THREE.MeshPhongMaterial( { 
-            color: 0x999999, 
-            flatShading: true, 
-            side: THREE.DoubleSide,  
-            shininess: 70   
-        });            
-		let scope = this;
-		let loader = new THREE.FileLoader();
-        loader.setResponseType( 'arraybuffer' );
-        //loader.setRequestHeader("Content-Encoding", "gzip");
-        //loader.setRequestHeader("Accept-Encoding", "gzip, deflate");
+    load(url, onLoad, onProgress, onError) {
+        const material = new THREE.MeshPhongMaterial({
+            color: 0x999999,
+            flatShading: true,
+            side: THREE.DoubleSide,
+            shininess: 70
+        });
+        let scope = this;
+        let loader = new THREE.FileLoader();
+        loader.setResponseType('arraybuffer');
+        loader.setRequestHeader({
+            "Content-Encoding": "gzip",
+            "Accept-Encoding": "gzip, deflate"
+        });
+
         loader.load( url, function ( data ) 
         {
             try 
