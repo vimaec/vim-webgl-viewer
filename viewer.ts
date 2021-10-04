@@ -6,15 +6,12 @@ import { ViewerCamera, direction } from "./viewer_camera";
 var Stats = require("./node_modules/three/examples/js/libs/stats.min");
 import { ViewerGui } from "./viewer_gui";
 
-//import { Mesh } from "./node_modules/three/src/Three";
-
 /*
 Vim Viewer 
 Copyright VIMaec LLC, 2020
 Licensed under the terms of the MIT License
 */
 
-//declare const Stats: any;
 export class Viewer
 {
     canvas: HTMLCanvasElement;
@@ -82,7 +79,6 @@ export class Viewer
                 }
             );
         }
-        
         
         // Ground
         this.plane = new THREE.Mesh(
@@ -194,7 +190,6 @@ export class Viewer
         requestAnimationFrame(() => this.animate());
         this.resizeCanvas();
         this.updateObjects();
-        //cameraControls.update();
         this.renderer.render(this.scene, this.camera);
         if (this.stats)
             this.stats.update();
@@ -207,17 +202,12 @@ export class Viewer
     }
 
     applyViewMatrix(mesh) {
-        /*
-        const scale = scalarToVec(this.settings.object.scale);
-        mesh.scale.copy(scale);
-        mesh.position.copy(this.settings.object.position);
-        mesh.rotation.copy();
-        */
         const matrix = this.getViewMatrix();
         mesh.matrixAutoUpdate = false;
         mesh.matrix.copy(matrix);
     }
 
+    //TODO Not create this everytime, Not apply this every time either.
     getViewMatrix() {
         const pos = this.settings.object.position;
         const rot = toQuaternion(this.settings.object.rotation);
