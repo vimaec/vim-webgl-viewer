@@ -1,4 +1,4 @@
-declare const dat: any;
+import * as dat from "./node_modules/dat.gui/build/dat.gui";
 
 /** 
  * An object that maps names to property descriptors or other maps. Allows property descriptors to be easily

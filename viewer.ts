@@ -4,7 +4,7 @@ import { VIMLoader } from "./VIMLoader";
 import { ViewerSettings } from "./viewer_settings";
 import { ViewerCamera, direction } from "./viewer_camera";
 var Stats = require("./node_modules/three/examples/js/libs/stats.min");
-//import { ViewerGui } from "./viewer_gui.js";
+import { ViewerGui } from "./viewer_gui";
 
 //import { Mesh } from "./node_modules/three/src/Three";
 
@@ -71,7 +71,7 @@ export class Viewer
         // Create scene object
         this.scene = new THREE.Scene();
 
-        /*
+        
         if (this.settings.showGui) {
             // Create a new DAT.gui controller 
             ViewerGui.bind(
@@ -82,7 +82,7 @@ export class Viewer
                 }
             );
         }
-        */
+        
         
         // Ground
         this.plane = new THREE.Mesh(
