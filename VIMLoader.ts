@@ -1,7 +1,7 @@
 /**
  @author VIM / https://vimaec.com
 */
-import * as THREE from './node_modules/three/src/Three'
+import * as THREE from './node_modules/@types/three/src/three'
 
 export class VIMLoader {
   material: THREE.Material
