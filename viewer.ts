@@ -19,6 +19,7 @@ Licensed under the terms of the MIT License
 export class Viewer {
   canvas: HTMLCanvasElement | undefined = undefined
   logo: HTMLImageElement | undefined = undefined
+  link: HTMLAnchorElement | undefined = undefined
   favicon: HTMLImageElement | undefined = undefined
 
   stats: any
@@ -139,7 +140,12 @@ export class Viewer {
     this.logo.style.left = '16px'
     this.logo.height = 48
     this.logo.width = 128
-    document.body.prepend(this.logo)
+
+    // Add logo as link
+    this.link = document.createElement('a')
+    this.link.href = 'https://vimaec.com'
+    this.link.appendChild(this.logo)
+    document.body.prepend(this.link)
 
     // Set Favicon
     this.favicon = document.createElement('img')
