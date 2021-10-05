@@ -28,18 +28,22 @@ export class VIMLoader {
     loader.load(
       url,
       (data: string | ArrayBuffer) => {
+        if (typeof data === 'string') {
+          onError?.(new ErrorEvent('Unsupported string loader response'))
+          return
+        }
+        let vim: any
         try {
-          const vim = this.parse(data)
-          onLoad?.(vim)
+          vim = this.parse(data)
         } catch (exception) {
           console.log(
-            'Error occured when loading VIM from ' +
-              url +
-              ', message = ' +
-              exception
+            `Error occured when loading VIM from ${url}, message = ${exception}`
           )
           onError?.(new ErrorEvent('Loading Error', { error: exception }))
+          return
         }
+        // Don't catch exceptions in code provided by caller.
+        onLoad?.(vim)
       },
       onProgress,
       onError
@@ -617,7 +621,7 @@ export class VIMLoader {
 
   // Constructs a BufferGeometry from an ArrayBuffer arranged as a VIM
   // Main
-  parse (data: any) {
+  parse (data: ArrayBuffer) {
     console.time('parsingVim')
 
     console.log('Parsing data buffer into VIM')
