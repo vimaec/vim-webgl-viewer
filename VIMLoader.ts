@@ -555,47 +555,6 @@ export class VIMLoader {
     return r
   }
 
-  /*
-    // Merges all meshes with only a single instance
-    mergeSingleInstances ( instancedMeshList, material )
-    {
-        let r = [];
-
-        let singleInstancedMeshes = [];
-        for (let i=0; i < instancedMeshList.length; ++i)
-        {
-            let mesh = instancedMeshList[i];
-            if (!mesh)
-                continue;
-            if (mesh.count == 1)
-            {
-                singleInstancedMeshes.push(mesh);
-            }
-            else
-            {
-                r.push(mesh);
-            }
-        }
-
-        let matrix = new THREE.Matrix4();
-        let meshesToMerge : THREE.BufferGeometry[] = [];
-        for (let i=0; i < singleInstancedMeshes.length; ++i)
-        {
-            let g = singleInstancedMeshes[i].geometry;
-            // Remove the normal attribute? Maybe something else?
-            singleInstancedMeshes[i].getMatrixAt(0, matrix);
-            g.applyMatrix4(matrix);
-            meshesToMerge.push(g);
-        }
-        let mergedGeometry = THREE.BufferGeometryUtils.mergeBufferGeometries( meshesToMerge, false );
-        let mergedMesh = new THREE.InstancedMesh( mergedGeometry, material, 1 );
-        mergedMesh.setMatrixAt(0, new THREE.Matrix4());
-        r.push(mergedMesh);
-
-        return r;
-    }
-    */
-
   // Constructs a BufferGeometry from an ArrayBuffer arranged as a VIM
   // Main
   parse (data: any) {
