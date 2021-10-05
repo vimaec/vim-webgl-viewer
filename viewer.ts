@@ -15,7 +15,6 @@ Licensed under the terms of the MIT License
 export class Viewer
 {
     canvas: HTMLCanvasElement;
-    logo: HTMLElement;
     favicon: HTMLElement;
 
     stats: any;
@@ -118,6 +117,8 @@ export class Viewer
         }
 
         // Add Vim logo
+        const link = document.createElement("a");
+        link.href = "https://vimaec.com";
         const logo = document.createElement("img");
         logo.src = "logo.png";
         logo.style.position = "fixed";
@@ -125,7 +126,8 @@ export class Viewer
         logo.style.left = "16px";
         logo.height = 48;
         logo.width = 128;
-        document.body.prepend(logo);
+        link.appendChild(logo);
+        document.body.prepend(link);
 
         // Set Favicon
         const favicon = document.createElement('img');
