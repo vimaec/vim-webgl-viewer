@@ -4,6 +4,51 @@
 
 import * as THREE from 'three'
 
+class BFastHeader {
+  magic: number
+  dataStart: number
+  dataEnd: number
+  numArrays: number
+
+  constructor (
+    magic: number,
+    dataStart: number,
+    dataEnd: number,
+    numArrays: number,
+    byteLength: number
+  ) {
+    if (magic !== 0xbfa5) {
+      throw new Error('Not a BFAST file, or endianness is swapped')
+    }
+    if (dataStart <= 32 || dataStart > byteLength) {
+      throw new Error('Data start is out of valid range')
+    }
+    if (dataEnd < dataStart || dataEnd > byteLength) {
+      throw new Error('Data end is out of vaid range')
+    }
+    if (numArrays < 0 || numArrays > dataEnd) {
+      throw new Error('Number of arrays is invalid')
+    }
+
+    this.magic = magic
+    this.dataStart = dataStart
+    this.dataEnd = dataEnd
+    this.numArrays = numArrays
+  }
+
+  static fromArray (array: Int32Array, byteLength: number): BFastHeader {
+    // Check validity of data
+    // TODO: check endianness
+
+    if (array[1] !== 0) throw new Error('Expected 0 in byte position 0')
+    if (array[3] !== 0) throw new Error('Expected 0 in byte position 8')
+    if (array[5] !== 0) throw new Error('Expected 0 in position 16')
+    if (array[7] !== 0) throw new Error('Expected 0 in position 24')
+
+    return new this(array[0], array[2], array[4], array[6], byteLength)
+  }
+}
+
 export class VIMLoader {
   material: THREE.Material
 
@@ -101,7 +146,11 @@ export class VIMLoader {
   }
 
   // BFAST is the container format for an array of binary arrays
-  parseBFast (arrayBuffer, byteOffset, byteLength) {
+  parseBFast (
+    arrayBuffer: ArrayBuffer,
+    byteOffset: number = 0,
+    byteLength: number = arrayBuffer.byteLength - byteOffset
+  ): any {
     console.log('Parsing BFAST')
 
     // Cast the input data to 32-bit integers
@@ -110,39 +159,14 @@ export class VIMLoader {
     const data = new Int32Array(arrayBuffer, byteOffset, byteLength / 4)
 
     // Parse the header
-    const header = {
-      Magic: data[0], // Either Constants.SameEndian or Constants.SwappedEndian depending on endianess of writer compared to reader.
-      DataStart: data[2], // <= file size and >= ArrparayRangesEnd and >= FileHeader.ByteCount
-      DataEnd: data[4], // >= DataStart and <= file size
-      NumArrays: data[6] // number of arrays
-    }
-
+    const header = BFastHeader.fromArray(data, byteLength)
     console.log('BFAST header')
     console.log(JSON.stringify(header))
-
-    // Check validity of data
-    // TODO: check endianness
-    if (header.Magic !== 0xbfa5) {
-      throw new Error('Not a BFAST file, or endianness is swapped')
-    }
-    if (data[1] !== 0) throw new Error('Expected 0 in byte position 0')
-    if (data[3] !== 0) throw new Error('Expected 0 in byte position 8')
-    if (data[5] !== 0) throw new Error('Expected 0 in position 16')
-    if (data[7] !== 0) throw new Error('Expected 0 in position 24')
-    if (header.DataStart <= 32 || header.DataStart > byteLength) {
-      throw new Error('Data start is out of valid range')
-    }
-    if (header.DataEnd < header.DataStart || header.DataEnd > byteLength) {
-      throw new Error('Data end is out of vaid range')
-    }
-    if (header.NumArrays < 0 || header.NumArrays > header.DataEnd) {
-      throw new Error('Number of arrays is invalid')
-    }
 
     // Compute each buffer
     const buffers = []
     let pos = 8
-    for (let i = 0; i < header.NumArrays; ++i) {
+    for (let i = 0; i < header.numArrays; ++i) {
       const begin = data[pos + 0]
       const end = data[pos + 2]
 
@@ -153,10 +177,10 @@ export class VIMLoader {
       if (data[pos + 3] !== 0) {
         throw new Error('Expected 0 in position ' + (pos + 3) * 4)
       }
-      if (begin < header.DataStart || begin > header.DataEnd) {
+      if (begin < header.dataStart || begin > header.dataEnd) {
         throw new Error('Buffer start is out of range')
       }
-      if (end < begin || end > header.DataEnd) {
+      if (end < begin || end > header.dataEnd) {
         throw new Error('Buffer end is out of range')
       }
 
@@ -249,7 +273,7 @@ export class VIMLoader {
   }
 
   // Given a BFAST container (header/names/buffers) constructs a VIM data structure
-  constructVIM (bfast) {
+  constructVIM (bfast: any) {
     console.log('Creating VIM')
 
     if (bfast.buffers.length < 5) {
@@ -629,9 +653,9 @@ export class VIMLoader {
 
     // A VIM follows the BFAST data arrangement, which is a collection of named byte arrays
     console.log('Parsing BFAST structure')
-    const bfast = this.parseBFast(data, 0, data.byteLength)
+    const bfast = this.parseBFast(data)
 
-    console.log('found: ' + bfast.buffers.length + ' buffers')
+    console.log(`found: ${bfast.buffers.length} buffers`)
     for (let i = 0; i < bfast.names.length; ++i) console.log(bfast.names[i])
 
     console.log('Constructing VIM')
