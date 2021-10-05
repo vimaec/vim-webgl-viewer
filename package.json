@@ -1,6 +1,7 @@
 {
   "name": "vim-webgl-viewer",
-  "version": "1.0.0",
+  "version": "0.6.0",
+  "description": "A 3D model viewer in JavaScript.",
   "main": "./dist/vim-webgl-viewer.js",
   "homepage": "https://github.com/vimaec/vim-webgl-viewer.git",
   "bugs": "https://github.com/vimaec/vim-webgl-viewer/issues",
