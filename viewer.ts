@@ -1,4 +1,4 @@
-import * as THREE from './node_modules/three/src/Three'
+import * as THREE from './node_modules/@types/three/src/three'
 import { DeepMerge } from './deep_merge'
 import { VIMLoader } from './VIMLoader'
 import { ViewerSettings } from './viewer_settings'
