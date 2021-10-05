@@ -18,7 +18,6 @@ export class VIMLoader {
     onProgress?: (request: ProgressEvent) => void,
     onError?: (event: ErrorEvent) => void
   ) {
-    const scope = this
     const loader = new THREE.FileLoader()
     loader.setResponseType('arraybuffer')
     loader.setRequestHeader({
@@ -30,7 +29,8 @@ export class VIMLoader {
       url,
       (data: string | ArrayBuffer) => {
         try {
-          onLoad(scope.parse(data))
+          const vim = this.parse(data)
+          onLoad?.(vim)
         } catch (exception) {
           console.log(
             'Error occured when loading VIM from ' +
@@ -38,7 +38,7 @@ export class VIMLoader {
               ', message = ' +
               exception
           )
-          if (onError) onError(exception)
+          onError?.(new ErrorEvent('Loading Error', { error: exception }))
         }
       },
       onProgress,
@@ -118,14 +118,22 @@ export class VIMLoader {
 
     // Check validity of data
     // TODO: check endianness
-    if (header.Magic !== 0xbfa5) { throw new Error('Not a BFAST file, or endianness is swapped') }
+    if (header.Magic !== 0xbfa5) {
+      throw new Error('Not a BFAST file, or endianness is swapped')
+    }
     if (data[1] !== 0) throw new Error('Expected 0 in byte position 0')
     if (data[3] !== 0) throw new Error('Expected 0 in byte position 8')
     if (data[5] !== 0) throw new Error('Expected 0 in position 16')
     if (data[7] !== 0) throw new Error('Expected 0 in position 24')
-    if (header.DataStart <= 32 || header.DataStart > byteLength) { throw new Error('Data start is out of valid range') }
-    if (header.DataEnd < header.DataStart || header.DataEnd > byteLength) { throw new Error('Data end is out of vaid range') }
-    if (header.NumArrays < 0 || header.NumArrays > header.DataEnd) { throw new Error('Number of arrays is invalid') }
+    if (header.DataStart <= 32 || header.DataStart > byteLength) {
+      throw new Error('Data start is out of valid range')
+    }
+    if (header.DataEnd < header.DataStart || header.DataEnd > byteLength) {
+      throw new Error('Data end is out of vaid range')
+    }
+    if (header.NumArrays < 0 || header.NumArrays > header.DataEnd) {
+      throw new Error('Number of arrays is invalid')
+    }
 
     // Compute each buffer
     const buffers = []
@@ -135,17 +143,31 @@ export class VIMLoader {
       const end = data[pos + 2]
 
       // Check validity of data
-      if (data[pos + 1] !== 0) { throw new Error('Expected 0 in position ' + (pos + 1) * 4) }
-      if (data[pos + 3] !== 0) { throw new Error('Expected 0 in position ' + (pos + 3) * 4) }
-      if (begin < header.DataStart || begin > header.DataEnd) { throw new Error('Buffer start is out of range') }
-      if (end < begin || end > header.DataEnd) { throw new Error('Buffer end is out of range') }
+      if (data[pos + 1] !== 0) {
+        throw new Error('Expected 0 in position ' + (pos + 1) * 4)
+      }
+      if (data[pos + 3] !== 0) {
+        throw new Error('Expected 0 in position ' + (pos + 3) * 4)
+      }
+      if (begin < header.DataStart || begin > header.DataEnd) {
+        throw new Error('Buffer start is out of range')
+      }
+      if (end < begin || end > header.DataEnd) {
+        throw new Error('Buffer end is out of range')
+      }
 
       pos += 4
-      const buffer = new Uint8Array(arrayBuffer, begin + byteOffset, end - begin)
+      const buffer = new Uint8Array(
+        arrayBuffer,
+        begin + byteOffset,
+        end - begin
+      )
       buffers.push(buffer)
     }
 
-    if (buffers.length < 0) { throw new Error('Expected at least one buffer containing the names') }
+    if (buffers.length < 0) {
+      throw new Error('Expected at least one buffer containing the names')
+    }
 
     // break the first one up into names
     const joinedNames = new TextDecoder('utf-8').decode(buffers[0])
@@ -226,10 +248,14 @@ export class VIMLoader {
   constructVIM (bfast) {
     console.log('Creating VIM')
 
-    if (bfast.buffers.length < 5) { throw new Error('VIM requires at least five BFast buffers') }
+    if (bfast.buffers.length < 5) {
+      throw new Error('VIM requires at least five BFast buffers')
+    }
 
     const lookup = new Map<string, any>()
-    for (let i = 0; i < bfast.buffers.length; ++i) { lookup.set(bfast.names[i], bfast.buffers[i]) }
+    for (let i = 0; i < bfast.buffers.length; ++i) {
+      lookup.set(bfast.names[i], bfast.buffers[i])
+    }
 
     // Parse BFAST
     return {
@@ -239,7 +265,9 @@ export class VIMLoader {
       entities: this.constructEntityTables(
         this.parseBFastFromArray(lookup.get('entities'))
       ),
-      strings: new TextDecoder('utf-8').decode(lookup.get('strings')).split('\0')
+      strings: new TextDecoder('utf-8')
+        .decode(lookup.get('strings'))
+        .split('\0')
     }
   }
 
@@ -247,7 +275,9 @@ export class VIMLoader {
   constructG3D (bfast) {
     console.log('Constructing G3D')
 
-    if (bfast.buffers.length < 2) { throw new Error('G3D requires at least two BFast buffers') }
+    if (bfast.buffers.length < 2) {
+      throw new Error('G3D requires at least two BFast buffers')
+    }
 
     // This will just contain some JSON
     const metaBuffer = bfast.buffers[0]
@@ -351,8 +381,12 @@ export class VIMLoader {
   }
 
   createBufferGeometry (positionTypedArray, indicesTypedArray, vertexColors) {
-    if (!positionTypedArray) { throw new Error('Cannot create geometry without a valid vertex attribute') }
-    if (!indicesTypedArray) { throw new Error('Cannot create geometry without a valid index attribute') }
+    if (!positionTypedArray) {
+      throw new Error('Cannot create geometry without a valid vertex attribute')
+    }
+    if (!indicesTypedArray) {
+      throw new Error('Cannot create geometry without a valid index attribute')
+    }
 
     // Construtor the buffer geometry that is returned from the function
     const geometry = new THREE.BufferGeometry()
@@ -428,7 +462,9 @@ export class VIMLoader {
     if (!positions) throw new Error('Missing position attribute')
     if (!indices) throw new Error('Missing index attribute')
     if (!meshSubmeshes) throw new Error('Missing mesh submesh attribute')
-    if (!submeshIndexOffset) { throw new Error('Missing submesh index offset  attribute') }
+    if (!submeshIndexOffset) {
+      throw new Error('Missing submesh index offset  attribute')
+    }
     if (!submeshMaterial) throw new Error('Missing submesh material attribute')
     if (!materialColors) throw new Error('Missing material color attribute')
 
@@ -436,10 +472,14 @@ export class VIMLoader {
     const positionArity = 3
 
     // Validate
-    if (indices.length % 3 !== 0) { throw new Error('Invalid Index Count, must be divisible by 3') }
+    if (indices.length % 3 !== 0) {
+      throw new Error('Invalid Index Count, must be divisible by 3')
+    }
 
     for (let i = 0; i < indices.length; i++) {
-      if (indices[i] < 0 || indices[i] >= positions.length) { throw new Error('Vertex index out of bound') }
+      if (indices[i] < 0 || indices[i] >= positions.length) {
+        throw new Error('Vertex index out of bound')
+      }
     }
 
     if (positions.length % positionArity !== 0) {
@@ -449,29 +489,49 @@ export class VIMLoader {
     }
 
     for (let i = 0; i < meshSubmeshes.length; i++) {
-      if (meshSubmeshes[i] < 0 || meshSubmeshes[i] >= submeshIndexOffset.length) { throw new Error('MeshSubmeshOffset out of bound at') }
+      if (
+        meshSubmeshes[i] < 0 ||
+        meshSubmeshes[i] >= submeshIndexOffset.length
+      ) {
+        throw new Error('MeshSubmeshOffset out of bound at')
+      }
     }
 
     for (let i = 0; i < meshSubmeshes.length - 1; i++) {
-      if (meshSubmeshes[i] >= meshSubmeshes[i + 1]) { throw new Error('MeshSubmesh out of sequence.') }
+      if (meshSubmeshes[i] >= meshSubmeshes[i + 1]) {
+        throw new Error('MeshSubmesh out of sequence.')
+      }
     }
 
-    if (submeshIndexOffset.length !== submeshMaterial.length) { throw new Error('Mismatched submesh buffers') }
-
-    for (let i = 0; i < submeshIndexOffset.length; i++) {
-      if (submeshIndexOffset[i] < 0 || submeshIndexOffset[i] >= indices.length) { throw new Error('SubmeshIndexOffset out of bound') }
+    if (submeshIndexOffset.length !== submeshMaterial.length) {
+      throw new Error('Mismatched submesh buffers')
     }
 
     for (let i = 0; i < submeshIndexOffset.length; i++) {
-      if (submeshIndexOffset[i] % 3 !== 0) { throw new Error('Invalid SubmeshIndexOffset, must be divisible by 3') }
+      if (
+        submeshIndexOffset[i] < 0 ||
+        submeshIndexOffset[i] >= indices.length
+      ) {
+        throw new Error('SubmeshIndexOffset out of bound')
+      }
+    }
+
+    for (let i = 0; i < submeshIndexOffset.length; i++) {
+      if (submeshIndexOffset[i] % 3 !== 0) {
+        throw new Error('Invalid SubmeshIndexOffset, must be divisible by 3')
+      }
     }
 
     for (let i = 0; i < submeshIndexOffset.length - 1; i++) {
-      if (submeshIndexOffset[i] >= submeshIndexOffset[i + 1]) { throw new Error('SubmeshIndexOffset out of sequence.') }
+      if (submeshIndexOffset[i] >= submeshIndexOffset[i + 1]) {
+        throw new Error('SubmeshIndexOffset out of sequence.')
+      }
     }
 
     for (let i = 0; i < submeshMaterial.length; i++) {
-      if (submeshMaterial[i] >= materialColors.length) { throw new Error('submeshMaterial out of bound') }
+      if (submeshMaterial[i] >= materialColors.length) {
+        throw new Error('submeshMaterial out of bound')
+      }
     }
 
     if (materialColors.length % colorArity !== 0) {
@@ -597,8 +657,12 @@ export class VIMLoader {
 
     // Validate
     if (!instanceMeshes) throw new Error('Missing Instance Mesh Attribute.')
-    if (!instanceTransforms) { throw new Error('Missing Instance Tranform Attribute.') }
-    if (instanceMeshes.length !== instanceTransforms.length / matrixArity) { throw new Error('Instance buffers mismatched') }
+    if (!instanceTransforms) {
+      throw new Error('Missing Instance Tranform Attribute.')
+    }
+    if (instanceMeshes.length !== instanceTransforms.length / matrixArity) {
+      throw new Error('Instance buffers mismatched')
+    }
     if (instanceTransforms.length % matrixArity !== 0) {
       throw new Error(
         'Invalid InstanceTransform buffer, must respect arity ' + matrixArity
@@ -606,7 +670,9 @@ export class VIMLoader {
     }
 
     for (let i = 0; i < instanceMeshes.length; i++) {
-      if (instanceMeshes[i] >= geometry.length) { throw new Error('Instance Mesh Out of range.') }
+      if (instanceMeshes[i] >= geometry.length) {
+        throw new Error('Instance Mesh Out of range.')
+      }
     }
 
     console.log('Allocating Instanced Meshes')
