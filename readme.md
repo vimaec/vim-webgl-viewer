@@ -11,10 +11,11 @@ The VIM Three.JS 3D viewer combines the Three.JS library with several common loa
 
 * Checkout repo
 * Run `npm install` to install all dependencies
-* Run `npm run watch` to set up a file change watcher 
-* Run `npm run tswatch` to set up a typescript compiler and watcher 
 * Run `npm run serve` to launch a web-server
-* Navigate to [http://127.0.0.1:8080/examples/example.html](http://127.0.0.1:8080/examples/example.html) in your browser
+* Run `npm run build` to compile and bundle typescript scripts
+* (Optional) Run `npm run watch` to compile and bundle every time you make changes to a script
+
+* Navigate to [http://127.0.0.1:8080/index.html in your browser
 
 ## Features 
 
@@ -23,11 +24,9 @@ The VIM Three.JS 3D viewer combines the Three.JS library with several common loa
     * Ground plane 
     * Two shadowed lights 
     * Slow model rotation 
-* Drag and drop of models 
 * Automatic phong material 
 * UI controls for changing various settings 
 * Frame rate and memory statistics 
-* WebGL detector 
 
 ## Supported File Formats 
 
@@ -49,43 +48,43 @@ The VIM Three.JS 3D viewer combines the Three.JS library with several common loa
 Virtually the simplest usage of the VIM viewer is the following example: 
 
 ```
-    <html>
-    <head>
-        <title>Simple VIM Viewer Example</title>
-    </head>
-    <script src="vim-webgl-viewer.js"></script>
-    <script>
-        ara.view({ url: 'testmodel.ply' });
-    </script>
+<html>
+<head>
+    <title>VIM Viewer</title>
+</head>
     <body>
+        <script src="./vim-webgl-viewer.js"></script>
+        <script> 
+            var viewer = new vim.Viewer();
+            viewer.view({
+                url: './residence.vim',
+                object: {
+                    scale: 0.1,
+                    rotation: { x: 270 },
+                    position: { y: 0 }
+                },
+                plane:
+                    { show: false },
+                showStats: true
+            });
+        </script> 
     </body>
-    </html>
+</html>
+
 ```
 
 ## API
 
-* .run
-* .setOptions
-* .defaultOptions
-* .addModel
-* .removeModel
-* .scene
-* .pause
+TBD
 
-## Build Process
-
-Call `npm run build`. This will call a gulp script (`gulpfile.js`) that minifies and concatenates the sources. 
-
-The main viewer code is writtein in TypeScript, and has to be built separately before running gulp.
 
 ## The Sources and Dependencies
 
-The distributable file `vim-webgl-viewer.js` is a concatenation of: 
+The distributable file `vim-webgl-viewer.js` is a webpack bundle of: 
 
 * [Three.JS](https://threejs.org)
     * The main Three.JS distributable
     * WebGL statistics utility
-    * WebGL detector utility
     * Several file loaders for Three.JS from the `examples/loaders` folder
     * Three.JS Orbit controls from the `examples/controls` folder    
     * The custom `VIMLoader.js` file
