@@ -1,4 +1,8 @@
-﻿import * as THREE from './node_modules/@types/three/src/three'
+﻿/**
+ @author VIM / https://vimaec.com
+*/
+
+import * as THREE from 'three'
 
 export const direction = {
   forward: new THREE.Vector3(0, 0, -1),

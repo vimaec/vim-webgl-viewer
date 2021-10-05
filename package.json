@@ -19,6 +19,7 @@
     "build": "webpack"
   },
   "devDependencies": {
+    "@types/three": "^0.132.2",
     "@typescript-eslint/eslint-plugin": "^4.33.0",
     "@typescript-eslint/parser": "^4.33.0",
     "eslint": "^7.32.0",
@@ -37,7 +38,6 @@
     "webpack-cli": "^4.8.0"
   },
   "dependencies": {
-    "@types/three": "^0.132.2",
     "dat.gui": "^0.7.7",
     "three": "^0.133.1"
   }

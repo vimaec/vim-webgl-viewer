@@ -1,3 +1,7 @@
+/**
+ @author VIM / https://vimaec.com
+*/
+
 /* eslint-disable no-unused-vars */
 import * as dat from './node_modules/dat.gui/build/dat.gui'
 
