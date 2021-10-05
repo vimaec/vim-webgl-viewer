@@ -17,6 +17,10 @@ The VIM Three.JS 3D viewer combines the Three.JS library with several common loa
 
 * Navigate to [http://127.0.0.1:8080/index.html in your browser
 
+## Contributing:
+* Source code is formatted using prettier-eslint using the standardjs format.
+* On VSCode it is recommended to install ESLint and Prettier ESLint extensions.
+
 ## Features 
 
 * Orbit controls - movement with the mouse
