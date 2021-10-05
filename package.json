@@ -1,6 +1,6 @@
 {
   "name": "vim-webgl-viewer",
-  "version": "0.5.0",
+  "version": "0.6.0",
   "description": "A 3D model viewer in JavaScript.",
   "main": "./dist/vim-webgl-viewer.js",
   "homepage": "https://github.com/vimaec/vim-webgl-viewer.git",
@@ -15,23 +15,31 @@
     "url": "https://github.com/vimaec/vim-webgl-viewer.git"
   },
   "scripts": {
-    "build": "./node_modules/.bin/gulp -- build",
-    "dist": "./node_modules/.bin/gulp -- dist",
-    "tswatch": "./node_modules/.bin/tsc.cmd -p tsconfig.json --watch",
-    "watch": "./node_modules/.bin/gulp -- watch",
-    "serve": "http-server"
+    "watch": "webpack --watch",
+    "serve": "http-server",
+    "build": "webpack"
   },
   "devDependencies": {
-    "gulp": "^4.0.0",
-    "gulp-concat": "^2.6.1",
-    "gulp-rename": "^1.4.0",
-    "gulp-uglify": "^3.0.1",
-    "gulp-uglify-es": "^1.0.4",
+    "@types/three": "^0.132.2",
+    "@typescript-eslint/eslint-plugin": "^4.33.0",
+    "@typescript-eslint/parser": "^4.33.0",
+    "eslint": "^7.32.0",
+    "eslint-config-prettier": "^8.3.0",
+    "eslint-config-standard": "^16.0.3",
+    "eslint-plugin-import": "^2.24.2",
+    "eslint-plugin-node": "^11.1.0",
+    "eslint-plugin-prettier": "^4.0.0",
+    "eslint-plugin-promise": "^5.1.0",
+    "html-webpack-plugin": "^5.3.2",
     "http-server": "^0.11.1",
-    "typescript": "^3.9.7"
+    "prettier": "^2.4.1",
+    "ts-loader": "^9.2.6",
+    "typescript": "^3.9.10",
+    "webpack": "^5.55.1",
+    "webpack-cli": "^4.8.0"
   },
   "dependencies": {
     "dat.gui": "^0.7.7",
-    "three": "^0.125.2"
+    "three": "^0.133.1"
   }
 }
