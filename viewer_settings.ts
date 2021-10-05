@@ -1,3 +1,7 @@
+/**
+ @author VIM / https://vimaec.com
+*/
+
 export const ViewerSettings = {
   default: {
     showGui: true,
