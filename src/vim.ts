@@ -2,9 +2,6 @@ import { BufferGeometry, InstancedMesh, Material, Sphere } from 'three'
 import { BFast } from './bfast'
 import { VimG3d } from './g3d'
 
-// eslint-disable-next-line no-use-before-define
-export { Vim, VimScene }
-
 class Vim {
   header: string
   assets: BFast
@@ -42,3 +39,5 @@ class VimScene {
     this.boundingSphere = sphere
   }
 }
+
+export { Vim, VimScene }
