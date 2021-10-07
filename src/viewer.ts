@@ -3,13 +3,13 @@
 */
 
 import * as THREE from 'three'
-import { DeepMerge } from './deep_merge'
+import deepmerge from 'deepmerge'
 import { VIMLoader } from './VIMLoader'
 import { VimScene } from './vim'
 import { ViewerSettings } from './viewer_settings'
 import { ViewerCamera, direction } from './viewer_camera'
 import { ViewerGui } from './viewer_gui'
-const Stats = require('./node_modules/three/examples/js/libs/stats.min')
+import Stats from 'stats.js'
 
 /*
 Vim Viewer
@@ -49,12 +49,8 @@ export class Viewer {
     this.canvas = undefined
   }
 
-  view (options) {
-    this.settings = new DeepMerge().deepMerge(
-      ViewerSettings.default,
-      options,
-      undefined
-    )
+  view (options: Record<string, unknown>) {
+    this.settings = deepmerge(ViewerSettings.default, options, undefined)
 
     this.prepareDocument()
 

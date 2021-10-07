@@ -1,5 +1,5 @@
-import { BFast } from './bfast'
 import { BufferGeometry, InstancedMesh, Material, Sphere } from 'three'
+import { BFast } from './bfast'
 import { VimG3d } from './g3d'
 
 // eslint-disable-next-line no-use-before-define

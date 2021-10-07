@@ -3,7 +3,7 @@
 */
 
 /* eslint-disable no-unused-vars */
-import * as dat from './node_modules/dat.gui/build/dat.gui'
+import { GUI } from 'dat.gui'
 
 // Used to provide new IDs for each new property descriptor that is created.
 let gid = 0
@@ -18,7 +18,7 @@ class PropDesc {
   min?: number
   max?: number
   step?: number
-  choices: string[]
+  choices!: string[]
   options: any
   def: any
   type: string
@@ -120,7 +120,7 @@ class PropList {
   }
 
   get toJson (): PropListJson {
-    const r = {}
+    const r = {} as Record<string, unknown>
     for (const pv of this.items) {
       if (pv instanceof PropValue) {
         r[pv.name] = pv.value
@@ -141,8 +141,8 @@ type PropValueChanged = (pv: PropValue) => void
 type PropsValueChanged = (pv: PropListJson) => void
 
 export const ViewerGui = {
-  gui: new dat.GUI(),
-  bind: function (settings, callback: PropsValueChanged) {
+  gui: new GUI(),
+  bind: function (settings: Record<string, unknown>, callback: PropsValueChanged) {
     // Create a property descriptor
     const propDesc = objectToPropDesc(settings, {})
 
@@ -154,7 +154,7 @@ export const ViewerGui = {
     // Bind the properties to the DAT.gui controller, returning the scene when it updates
     bindControls(props, this.gui, () => callback(props.toJson))
 
-    function objectToPropDesc (obj, pdm: IPropDescMap): IPropDescMap {
+    function objectToPropDesc (obj: Record<string, unknown>, pdm: IPropDescMap): IPropDescMap {
       // TODO: look for common patterns (colors, positions, angles) and process these specially.
       for (const k in obj) {
         const v = obj[k]
@@ -169,7 +169,7 @@ export const ViewerGui = {
             pdm[k] = boolProp(v).setName(k)
             break
           case 'object':
-            pdm[k] = objectToPropDesc(v, {})
+            pdm[k] = objectToPropDesc(v as Record<string, unknown>, {})
             break
         }
       }
