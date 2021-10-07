@@ -18,7 +18,7 @@ export class ViewerCamera {
   settings: any
   initialPosition: THREE.Vector3
   initialRotation: THREE.Quaternion
-  cameraTarget: THREE.Vector3
+  cameraTarget!: THREE.Vector3
 
   constructor (camera: THREE.PerspectiveCamera, settings: any) {
     this.camera = camera
@@ -90,6 +90,6 @@ export class ViewerCamera {
 
 // Helpers
 // TODO Remove this
-function toVec3 (obj) {
+function toVec3 (obj: { x: number; y: number; z: number }) {
   return new THREE.Vector3(obj.x, obj.y, obj.z)
 }
