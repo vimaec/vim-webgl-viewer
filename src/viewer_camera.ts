@@ -4,7 +4,7 @@
 
 import * as THREE from 'three'
 
-export const direction = {
+const direction = {
   forward: new THREE.Vector3(0, 0, -1),
   back: new THREE.Vector3(0, 0, 1),
   left: new THREE.Vector3(-1, 0, 0),
@@ -13,7 +13,7 @@ export const direction = {
   down: new THREE.Vector3(0, -1, 0)
 }
 
-export class ViewerCamera {
+class ViewerCamera {
   camera: THREE.PerspectiveCamera
   settings: any
   initialPosition: THREE.Vector3
@@ -61,7 +61,7 @@ export class ViewerCamera {
     if (onlyHoriz) this.camera.position.y = y
   }
 
-  panCameraBy (pt : THREE.Vector2) {
+  panCameraBy (pt: THREE.Vector2) {
     const speed = this.settings.camera.controls.panSpeed
     this.moveCameraBy(new THREE.Vector3(-pt.x, pt.y, 0), speed)
   }
@@ -93,3 +93,5 @@ export class ViewerCamera {
 function toVec3 (obj: { x: number; y: number; z: number }) {
   return new THREE.Vector3(obj.x, obj.y, obj.z)
 }
+
+export { direction, ViewerCamera }
