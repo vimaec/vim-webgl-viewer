@@ -4,18 +4,17 @@ The VIM Three.JS 3D Viewer is an open-source and easy to configure and use 3D mo
 [Three.JS](https://threejs.org) WebGL framework. It is enhanced with a loader for the VIM format which is specialized in 
 the transfer of large AEC data. 
 
-The VIM Three.JS 3D viewer combines the Three.JS library with several common loaders and utilities, to reduce boilerplate code, into a single file 
-(`vim-webgl-viewer.js`) making it easy to integrate a custom 3D viewer into your website with just a couple of lines of code.
+The VIM Three.JS 3D viewer combines the Three.JS library with several common loaders and utilities, to reduce boilerplate code. It can be simply included via script tags or consumed using esm imports.
+
 
 ## Running Locally:
 
 * Checkout repo
 * Run `npm install` to install all dependencies
-* Run `npm run serve` to launch a web-server
-* Run `npm run build` to compile and bundle typescript scripts
-* (Optional) Run `npm run watch` to compile and bundle every time you make changes to a script
+* Run `npm run dev` to launch a dev-server and watching for changes
+* Run `npm run build` to compile and bundle everything for publishing. Resulting files end up in ./dist
 
-* Navigate to [http://127.0.0.1:8080/index.html in your browser
+* Navigate to [http://localhost:3000 in your browser
 
 ## Contributing:
 * Source code is formatted using prettier-eslint using the standardjs format.
@@ -51,30 +50,55 @@ The VIM Three.JS 3D viewer combines the Three.JS library with several common loa
 
 Virtually the simplest usage of the VIM viewer is the following example: 
 
-```
+```html
 <html>
 <head>
     <title>VIM Viewer</title>
 </head>
-    <body>
-        <script src="./vim-webgl-viewer.js"></script>
-        <script> 
-            var viewer = new vim.Viewer();
-            viewer.view({
-                url: './residence.vim',
-                object: {
-                    scale: 0.1,
-                    rotation: { x: 270 },
-                    position: { y: 0 }
-                },
-                plane:
-                    { show: false },
-                showStats: true
-            });
-        </script> 
-    </body>
+<body>
+    <script src="./dist/vim-webgl-viewer.iife.js"></script>
+    <script>
+        var viewer = new vim.Viewer();
+        viewer.view({
+            url: './residence.vim',
+            object: {
+                scale: 0.1,
+                rotation: { x: 270 },
+                position: { y: 0 }
+            },
+            plane: {
+                show: false
+            },
+            showStats: true
+        });
+    </script> 
+</body>
 </html>
 
+```
+
+If you want to use esm imports, you do it as follows:
+
+```js
+// This will work if you use a bundler and installed the viewer via npm
+import { Viewer } from 'vim-webgl-viewer'
+
+// That will work if you use the bundled file directly
+import { Viewer } from './dist/vim-webgl-viewer.es.js'
+
+const viewer = new Viewer();
+viewer.view({
+    url: './residence.vim',
+    object: {
+        scale: 0.1,
+        rotation: { x: 270 },
+        position: { y: 0 }
+    },
+    plane: {
+        show: false
+    },
+    showStats: true
+});
 ```
 
 ## API
