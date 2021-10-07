@@ -3,12 +3,12 @@
 */
 
 import * as THREE from 'three'
-import { DeepMerge } from './deep_merge'
+import deepmerge from 'deepmerge'
 import { VIMLoader } from './VIMLoader'
 import { ViewerSettings } from './viewer_settings'
 import { ViewerCamera, direction } from './viewer_camera'
 import { ViewerGui } from './viewer_gui'
-const Stats = require('./node_modules/three/examples/js/libs/stats.min')
+import Stats from 'stats.js'
 
 /*
 Vim Viewer
@@ -24,32 +24,31 @@ export class Viewer {
 
   stats: any
   settings: any
-  camera: THREE.PerspectiveCamera // PerspectiveCamera;
-  renderer: THREE.WebGLRenderer // THREE.WebGLRenderer
-  scene: THREE.Scene // THREE.Scene
-  meshes = []
+  camera!: THREE.PerspectiveCamera // PerspectiveCamera;
+  renderer!: THREE.WebGLRenderer // THREE.WebGLRenderer
+  scene!: THREE.Scene // THREE.Scene
+  meshes:any[] = []
 
-  plane: THREE.Mesh // THREE.Mesh
-  sunlight: THREE.HemisphereLight // THREE.HemisphereLight
-  light1: THREE.DirectionalLight // THREE.DirectionalLight
-  light2: THREE.DirectionalLight // THREE.DirectionalLight
-  material: THREE.MeshPhongMaterial // THREE.MeshPhongMaterial
-  removeListeners: Function
+  plane!: THREE.Mesh // THREE.Mesh
+  sunlight!: THREE.HemisphereLight // THREE.HemisphereLight
+  light1!: THREE.DirectionalLight // THREE.DirectionalLight
+  light2!: THREE.DirectionalLight // THREE.DirectionalLight
+  material!: THREE.MeshPhongMaterial // THREE.MeshPhongMaterial
+  removeListeners!: Function
 
-  cameraController: ViewerCamera
+  cameraController!: ViewerCamera
   // eslint-disable-next-line no-use-before-define
-  controls: ViewerInput
+  controls!: ViewerInput
   vim: any
 
   constructor () {
     this.canvas = undefined
   }
 
-  view (options) {
-    this.settings = new DeepMerge().deepMerge(
+  view (options: Record<string, unknown>) {
+    this.settings = deepmerge(
       ViewerSettings.default,
-      options,
-      undefined
+      options
     )
 
     this.prepareDocument()
@@ -116,7 +115,7 @@ export class Viewer {
 
     // Add all of the appropriate mouse, touch-pad, and keyboard listeners
     // Load Vim
-    this.loadFile(this.settings.url, (vim) => this.onVimLoaded(vim))
+    this.loadFile(this.settings.url, (vim: any) => this.onVimLoaded(vim))
 
     // Start Loop
     this.animate()
@@ -153,14 +152,14 @@ export class Viewer {
     document.head.appendChild(this.favicon)
   }
 
-  onVimLoaded (vim) {
+  onVimLoaded (vim: any) {
     for (let i = 0; i < vim.meshes.length; ++i) {
       this.meshes.push(vim.meshes[i])
       this.scene.add(vim.meshes[i])
     }
 
     this.controls = new ViewerInput(
-      this.canvas,
+      this.canvas as HTMLCanvasElement,
       this.settings,
       this.cameraController
     )
@@ -172,8 +171,8 @@ export class Viewer {
     this.lookAtSphere(vim.boundingSphere, true)
   }
 
-  loadFile (fileName, onSuccess: Function) {
-    function getExt (fileName) {
+  loadFile (fileName: string, onSuccess: Function) {
+    function getExt (fileName: string) {
       const indexOfQueryParams = fileName.lastIndexOf('?')
       if (indexOfQueryParams >= 0) {
         fileName = fileName.substring(0, indexOfQueryParams)
