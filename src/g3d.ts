@@ -1,6 +1,3 @@
-// eslint-disable-next-line no-use-before-define
-export { VimG3d, G3d, Attribute, AttributeDescriptor }
-
 class AttributeDescriptor {
   // original descriptor string
   description: string
@@ -296,3 +293,5 @@ class VimG3d {
     }
   }
 }
+
+export { VimG3d, G3d, Attribute, AttributeDescriptor }

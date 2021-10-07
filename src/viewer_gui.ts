@@ -140,9 +140,12 @@ class PropList {
 type PropValueChanged = (pv: PropValue) => void
 type PropsValueChanged = (pv: PropListJson) => void
 
-export const ViewerGui = {
+const ViewerGui = {
   gui: new GUI(),
-  bind: function (settings: Record<string, unknown>, callback: PropsValueChanged) {
+  bind: function (
+    settings: Record<string, unknown>,
+    callback: PropsValueChanged
+  ) {
     // Create a property descriptor
     const propDesc = objectToPropDesc(settings, {})
 
@@ -154,7 +157,10 @@ export const ViewerGui = {
     // Bind the properties to the DAT.gui controller, returning the scene when it updates
     bindControls(props, this.gui, () => callback(props.toJson))
 
-    function objectToPropDesc (obj: Record<string, unknown>, pdm: IPropDescMap): IPropDescMap {
+    function objectToPropDesc (
+      obj: Record<string, unknown>,
+      pdm: IPropDescMap
+    ): IPropDescMap {
       // TODO: look for common patterns (colors, positions, angles) and process these specially.
       for (const k in obj) {
         const v = obj[k]
@@ -330,3 +336,5 @@ export const ViewerGui = {
     }
   }
 }
+
+export { ViewerGui }

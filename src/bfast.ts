@@ -1,6 +1,3 @@
-// eslint-disable-next-line no-use-before-define
-export { BFastHeader, BFast }
-
 class BFastHeader {
   magic: number
   dataStart: number
@@ -57,3 +54,5 @@ class BFast {
     this.buffers = buffers
   }
 }
+
+export { BFastHeader, BFast }
