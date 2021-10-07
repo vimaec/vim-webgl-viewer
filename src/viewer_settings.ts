@@ -16,7 +16,6 @@ export const ViewerSettings = {
       target: { x: 0, y: -1, z: 0 },
       controls: {
         speed: 0.1,
-        altMultiplier: 3.0,
         shiftMultiplier: 5.0,
         zoomSpeed: 0.2,
         rotateSpeed: 0.01,
@@ -37,22 +36,6 @@ export const ViewerSettings = {
         y: 0,
         z: 0
       }
-    },
-    sunlight: {
-      skyColor: { r: 0x44, g: 0x33, b: 0x33 },
-      groundColor: { r: 0x11, g: 0x11, b: 0x22 },
-      intensity: 1
-    },
-    light1: {
-      // TODO: the positions of the lights are all wrong.
-      position: { x: 1, y: 1, z: 1 },
-      color: { r: 0xff, g: 0xff, b: 0xff },
-      intensity: 1.35
-    },
-    light2: {
-      position: { x: 0.5, y: 1, z: -1 },
-      color: { r: 0xff, g: 0xaa, b: 0x00 },
-      intensity: 1
     },
     object: {
       scale: 0.01,
