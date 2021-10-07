@@ -27,7 +27,7 @@ export class Viewer {
   camera!: THREE.PerspectiveCamera // PerspectiveCamera;
   renderer!: THREE.WebGLRenderer // THREE.WebGLRenderer
   scene!: THREE.Scene // THREE.Scene
-  meshes:any[] = []
+  meshes: any[] = []
 
   plane!: THREE.Mesh // THREE.Mesh
   sunlight!: THREE.HemisphereLight // THREE.HemisphereLight
@@ -46,10 +46,7 @@ export class Viewer {
   }
 
   view (options: Record<string, unknown>) {
-    this.settings = deepmerge(
-      ViewerSettings.default,
-      options
-    )
+    this.settings = deepmerge(ViewerSettings.default, options)
 
     this.prepareDocument()
 
