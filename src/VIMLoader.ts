@@ -3,7 +3,7 @@
 */
 
 import * as THREE from 'three'
-import * as G3D from './g3d'
+import { G3d, VimG3d, Attribute } from './g3d'
 import { BFast, BFastHeader } from './bfast'
 import { Vim, VimScene } from './vim'
 
@@ -191,7 +191,7 @@ export class VIMLoader {
       lookup.set(bfast.names[i], bfast.buffers[i])
     }
 
-    const g3d = new G3D.VimG3d(
+    const g3d = new VimG3d(
       this.constructG3D(this.parseBFastFromArray(lookup.get('geometry')))
     )
     g3d.validate()
@@ -209,7 +209,7 @@ export class VIMLoader {
   }
 
   // Given a BFAST container (header/names/buffers) constructs a G3D data structure
-  constructG3D (bfast: BFast): G3D.G3d {
+  constructG3D (bfast: BFast): G3d {
     console.log('Constructing G3D')
 
     if (bfast.buffers.length < 2) {
@@ -227,10 +227,10 @@ export class VIMLoader {
     const meta = new TextDecoder('utf-8').decode(metaBuffer)
 
     // Parse remaining buffers as Attributes
-    const attributes: G3D.Attribute[] = []
+    const attributes: Attribute[] = []
     const nDescriptors = bfast.buffers.length - 1
     for (let i = 0; i < nDescriptors; ++i) {
-      const attribute = G3D.Attribute.fromString(
+      const attribute = Attribute.fromString(
         bfast.names[i + 1],
         bfast.buffers[i + 1]
       )
@@ -238,7 +238,7 @@ export class VIMLoader {
       console.log(`Attribute ${i} = ${attribute.descriptor.description}`)
     }
 
-    return new G3D.G3d(meta, attributes)
+    return new G3d(meta, attributes)
   }
 
   createBufferGeometry (
@@ -262,7 +262,7 @@ export class VIMLoader {
     return geometry
   }
 
-  allocateGeometry (g3d: G3D.VimG3d): THREE.BufferGeometry[] {
+  allocateGeometry (g3d: VimG3d): THREE.BufferGeometry[] {
     const meshCount = g3d.meshSubmeshes.length
     const submeshCount = g3d.submeshIndexOffset.length
     const indexCount = g3d.indices.length
