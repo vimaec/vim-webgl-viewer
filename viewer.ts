@@ -168,8 +168,8 @@ export class Viewer {
     this.controls.viewer = this
     this.vim = vim
 
-    vim.sphere.applyMatrix4(this.getViewMatrix())
-    this.lookAtSphere(vim.sphere, true)
+    vim.boundingSphere.applyMatrix4(this.getViewMatrix())
+    this.lookAtSphere(vim.boundingSphere, true)
   }
 
   loadFile (fileName, onSuccess: Function) {
@@ -383,9 +383,11 @@ export class Viewer {
 
   // TODO: Add more granular ways to access the bim data.
   getElementNameFromNodeIndex (nodeIndex: number) {
-    const elementIndex = this.vim.entities['Vim.Node']['Rvt.Element'][nodeIndex]
-    const stringIndex = this.vim.entities['Rvt.Element'].Name[elementIndex]
-    const name = this.vim.strings[stringIndex]
+    // TODO fix .vim.vim
+    const vim = this.vim.vim
+    const elementIndex = vim.bim.get('Vim.Node').get('Rvt.Element')[nodeIndex]
+    const stringIndex = vim.bim.get('Rvt.Element').get('Name')[elementIndex]
+    const name = vim.strings[stringIndex]
     return name
   }
 }
