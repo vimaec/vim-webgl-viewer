@@ -5,6 +5,7 @@
 import * as THREE from 'three'
 import { DeepMerge } from './deep_merge'
 import { VIMLoader } from './VIMLoader'
+import { VimScene } from './vim'
 import { ViewerSettings } from './viewer_settings'
 import { ViewerCamera, direction } from './viewer_camera'
 import { ViewerGui } from './viewer_gui'
@@ -36,10 +37,13 @@ export class Viewer {
   material: THREE.MeshPhongMaterial // THREE.MeshPhongMaterial
   removeListeners: Function
 
+  // eslint-disable-next-line no-use-before-define
+  selection: Selection
   cameraController: ViewerCamera
   // eslint-disable-next-line no-use-before-define
   controls: ViewerInput
-  vim: any
+  vimScene: VimScene
+  boundingSphere: THREE.Sphere
 
   constructor () {
     this.canvas = undefined
@@ -114,6 +118,16 @@ export class Viewer {
       document.body.appendChild(this.stats.dom)
     }
 
+    // Input and Selection
+    this.controls = new ViewerInput(
+      this.canvas,
+      this.settings,
+      this.cameraController
+    )
+    this.controls.register()
+    this.controls.viewer = this
+    this.selection = new Selection(this)
+
     // Add all of the appropriate mouse, touch-pad, and keyboard listeners
     // Load Vim
     this.loadFile(this.settings.url, (vim) => this.onVimLoaded(vim))
@@ -158,18 +172,11 @@ export class Viewer {
       this.meshes.push(vim.meshes[i])
       this.scene.add(vim.meshes[i])
     }
+    this.boundingSphere = vim.boundingSphere.clone()
+    this.boundingSphere.applyMatrix4(this.getViewMatrix())
+    this.vimScene = vim
 
-    this.controls = new ViewerInput(
-      this.canvas,
-      this.settings,
-      this.cameraController
-    )
-    this.controls.register()
-    this.controls.viewer = this
-    this.vim = vim
-
-    vim.boundingSphere.applyMatrix4(this.getViewMatrix())
-    this.lookAtSphere(vim.boundingSphere, true)
+    this.focusModel()
   }
 
   loadFile (fileName, onSuccess: Function) {
@@ -268,73 +275,31 @@ export class Viewer {
     return geometry
   }
 
-  lookAtSphere (sphere, setY: boolean = false) {
-    if (setY) {
-      this.camera.position.setY(sphere.center.y)
-    }
-
-    const axis = this.camera.position.clone().sub(sphere.center).normalize()
-    const fovRadian = (this.camera.fov * Math.PI) / 180
-    const dist = 1.33 * sphere.radius * (1 + 2 / Math.tan(fovRadian))
-    const pos = axis.clone().multiplyScalar(dist).add(sphere.center)
-
-    this.camera.lookAt(sphere.center)
-    this.camera.position.copy(pos)
-  }
-
-  lookAtBox (box, setY: boolean = false) {
-    this.lookAtSphere(box.getBoundingSphere(new THREE.Sphere()), setY)
-  }
-
   getNodeIndex (mesh, instance) {
     return mesh.userData.instanceIndices[instance]
   }
 
-  focus (mesh, index) {
-    const geometry = this.createWorldGeometry(mesh, index)
-    const disposer = this.highlight(geometry)
-
-    geometry.computeBoundingSphere()
-    const sphere = geometry.boundingSphere.clone()
-    this.lookAtSphere(sphere)
-
-    return () => {
-      disposer()
-      geometry.dispose()
-    }
+  select (mesh, index) {
+    this.selection.select(mesh, index)
+    const nodeIndex = this.getNodeIndex(mesh, index)
+    const elementName = this.getElementNameFromNodeIndex(nodeIndex)
+    console.log('Selected Element: ' + elementName)
   }
 
-  /*
+  clearSelection () {
+    this.selection.reset()
+    console.log('Cleared Selection')
+  }
 
-      addViews(views) {
-          const getSettingsMatrix = () => {
-              return toMatrix(
-                  this.settings.object.position,
-                  this.settings.object.rotation,
-                  this.settings.object.scale
-              );
-          }
+  focusSelection () {
+    if (this.selection.hasSelection()) {
+      this.cameraController.lookAtSphere(this.selection.boundingSphere)
+    } else this.focusModel()
+  }
 
-          if (!views || !views.length)
-              return;
-          const folder = ViewerGui.gui.addFolder('views');
-          const obj = {};
-          const matrix = getSettingsMatrix();
-          for (let i = 0; i < views.length; ++i) {
-              const view = views[i];
-              const name = view.name;
-              if (view.x == 0 && view.y == 0 && view.z == 0)
-                  continue;
-              obj[name] = function () {
-                  console.log("Navigating to " + name);
-                  let pos = new THREE.Vector3(view.x, view.y, view.z + 5.5);
-                  pos.applyMatrix4(matrix);
-                  this.camera.position.copy(pos);
-              };
-              folder.add(obj, name);
-          }
-      }
-      */
+  focusModel () {
+    this.cameraController.lookAtSphere(this.boundingSphere)
+  }
 
   resizeCanvas (force: boolean = false) {
     if (!this.settings.autoResize && !force) {
@@ -383,8 +348,7 @@ export class Viewer {
 
   // TODO: Add more granular ways to access the bim data.
   getElementNameFromNodeIndex (nodeIndex: number) {
-    // TODO fix .vim.vim
-    const vim = this.vim.vim
+    const vim = this.vimScene.vim
     const elementIndex = vim.bim.get('Vim.Node').get('Rvt.Element')[nodeIndex]
     const stringIndex = vim.bim.get('Rvt.Element').get('Name')[elementIndex]
     const name = vim.strings[stringIndex]
@@ -406,9 +370,14 @@ const KEYS = {
   HOME: 36,
   END: 37,
   PAGEUP: 33,
-  PAGEDOWN: 34
+  PAGEDOWN: 34,
+
+  // Selection
+  Z: 90,
+  ESCAPE: 27
 }
 
+// TODO: Fix circular dependency
 class ViewerInput {
   canvas: HTMLCanvasElement
   settings: any
@@ -416,7 +385,7 @@ class ViewerInput {
   unregister: Function
   isMouseDown: Boolean
 
-  // TODO figure out the right pattern for inputs
+  // TODO: Fix circular dependency
   viewer: Viewer
   focusDisposer: Function
 
@@ -460,6 +429,14 @@ class ViewerInput {
       speed *= this.settings.camera.controls.altMultiplier
     }
     switch (event.keyCode) {
+      // Selection
+      case KEYS.ESCAPE:
+        this.viewer.clearSelection()
+        break
+      case KEYS.Z:
+        this.viewer.focusSelection()
+        break
+      // Camera
       case KEYS.A:
         this.cameraController.moveCameraBy(direction.left, speed)
         break
@@ -539,22 +516,10 @@ class ViewerInput {
       const mesh = hits[0].object
       const index = hits[0].instanceId
 
-      const nodeIndex = this.viewer.getNodeIndex(mesh, index)
-      const name = this.viewer.getElementNameFromNodeIndex(nodeIndex)
-
-      this.focusDisposer?.(this)
-      this.focusDisposer = this.viewer.focus(mesh, index)
-
-      console.log('Raycast hit.')
       console.log(
-        'Position:' +
-          hits[0].point.x +
-          ',' +
-          hits[0].point.y +
-          ',' +
-          hits[0].point.z
+        `Raycast hit. Position (${hits[0].point.x}, ${hits[0].point.y}, ${hits[0].point.z})`
       )
-      console.log('Element: ' + name)
+      this.viewer.select(mesh, index)
     }
 
     // Manually set the focus since calling preventDefault above
@@ -574,6 +539,54 @@ class ViewerInput {
 
   onMouseUp = (_) => {
     this.isMouseDown = false
+  }
+}
+
+// TODO: Fix circular dependency
+class Selection {
+  // Dependencies
+  viewer: Viewer
+
+  // State
+  meshIndex: number | null = null
+  instanceIndex: number | null = null
+  boundingSphere: THREE.Sphere | null = null
+
+  // Disposable State
+  geometry: THREE.BufferGeometry | null = null
+  highlightDisposer: Function | null = null
+
+  constructor (viewer: Viewer) {
+    this.viewer = viewer
+  }
+
+  hasSelection () {
+    return this.meshIndex !== null
+  }
+
+  reset () {
+    this.meshIndex = null
+    this.instanceIndex = null
+    this.boundingSphere = null
+    this.disposeResources()
+  }
+
+  disposeResources () {
+    this.geometry?.dispose()
+    this.geometry = null
+
+    this.highlightDisposer?.()
+    this.highlightDisposer = null
+  }
+
+  select (mesh: number, index: number) {
+    this.disposeResources()
+    this.meshIndex = mesh
+    this.instanceIndex = index
+    this.geometry = this.viewer.createWorldGeometry(mesh, index)
+    this.geometry.computeBoundingSphere()
+    this.boundingSphere = this.geometry.boundingSphere.clone()
+    this.highlightDisposer = this.viewer.highlight(this.geometry)
   }
 }
 
