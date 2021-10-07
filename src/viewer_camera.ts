@@ -20,6 +20,18 @@ class ViewerCamera {
   initialRotation: THREE.Quaternion
   cameraTarget!: THREE.Vector3
 
+  Rotation: THREE.Vector2
+  InputVelocity: THREE.Vector3
+  Velocity: THREE.Vector3
+  Impulse: THREE.Vector3
+  SpeedMultiplier: number
+  Orbit: boolean
+  CenterOfInterest: THREE.Vector3
+  OrbitalTarget: THREE.Vector3
+  OrbitalTargetSize: number
+  CurrentOrbitalDistance: number
+  TargetOrbitalDistance: number
+
   constructor (camera: THREE.PerspectiveCamera, settings: any) {
     this.camera = camera
     this.applySettings(settings)
