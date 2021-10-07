@@ -27,7 +27,7 @@ export class Viewer {
   camera!: THREE.PerspectiveCamera // PerspectiveCamera;
   renderer!: THREE.WebGLRenderer // THREE.WebGLRenderer
   scene!: THREE.Scene // THREE.Scene
-  meshes:any[] = []
+  meshes: any[] = []
 
   plane!: THREE.Mesh // THREE.Mesh
   sunlight!: THREE.HemisphereLight // THREE.HemisphereLight
@@ -46,10 +46,7 @@ export class Viewer {
   }
 
   view (options: Record<string, unknown>) {
-    this.settings = deepmerge(
-      ViewerSettings.default,
-      options
-    )
+    this.settings = deepmerge(ViewerSettings.default, options)
 
     this.prepareDocument()
 
@@ -167,8 +164,8 @@ export class Viewer {
     this.controls.viewer = this
     this.vim = vim
 
-    vim.sphere.applyMatrix4(this.getViewMatrix())
-    this.lookAtSphere(vim.sphere, true)
+    vim.boundingSphere.applyMatrix4(this.getViewMatrix())
+    this.lookAtSphere(vim.boundingSphere, true)
   }
 
   loadFile (fileName: string, onSuccess: Function) {
@@ -382,9 +379,11 @@ export class Viewer {
 
   // TODO: Add more granular ways to access the bim data.
   getElementNameFromNodeIndex (nodeIndex: number) {
-    const elementIndex = this.vim.entities['Vim.Node']['Rvt.Element'][nodeIndex]
-    const stringIndex = this.vim.entities['Rvt.Element'].Name[elementIndex]
-    const name = this.vim.strings[stringIndex]
+    // TODO fix .vim.vim
+    const vim = this.vim.vim
+    const elementIndex = vim.bim.get('Vim.Node').get('Rvt.Element')[nodeIndex]
+    const stringIndex = vim.bim.get('Rvt.Element').get('Name')[elementIndex]
+    const name = vim.strings[stringIndex]
     return name
   }
 }
