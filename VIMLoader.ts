@@ -5,7 +5,7 @@
 import * as THREE from 'three'
 import * as G3D from './g3d'
 import { BFast, BFastHeader } from './bfast'
-import { Vim, BimDocument } from './vim'
+import { Vim, VimScene } from './vim'
 
 type NullableMesh = THREE.InstancedMesh<
   THREE.BufferGeometry,
@@ -335,7 +335,7 @@ export class VIMLoader {
   }
 
   // Main
-  parse (data: ArrayBuffer): BimDocument {
+  parse (data: ArrayBuffer): VimScene {
     console.time('parsingVim')
     console.log(`Parsing Vim. Byte count: ${data.byteLength}`)
 
@@ -373,7 +373,7 @@ export class VIMLoader {
 
     console.timeEnd('parsingVim')
 
-    return new BimDocument(vim, validMeshes, sphere)
+    return new VimScene(vim, validMeshes, sphere)
   }
 
   allocateMeshes (

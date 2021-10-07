@@ -3,7 +3,7 @@ import { BufferGeometry, InstancedMesh, Material, Sphere } from 'three'
 import { VimG3d } from './g3d'
 
 // eslint-disable-next-line no-use-before-define
-export { Vim, VimScene as BimDocument }
+export { Vim, VimScene }
 
 class Vim {
   header: string
