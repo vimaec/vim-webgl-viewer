@@ -20,6 +20,8 @@ class ViewerCamera {
   initialRotation: THREE.Quaternion
   cameraTarget!: THREE.Vector3
 
+  Position: THREE.Vector3
+  Orientation: THREE.Quaternion
   Rotation: THREE.Vector2
   InputVelocity: THREE.Vector3
   Velocity: THREE.Vector3
@@ -28,9 +30,16 @@ class ViewerCamera {
   Orbit: boolean
   CenterOfInterest: THREE.Vector3
   OrbitalTarget: THREE.Vector3
-  OrbitalTargetSize: number
+  //OrbitalTargetSize: number
   CurrentOrbitalDistance: number
   TargetOrbitalDistance: number
+  
+  MouseRotate : Boolean
+  MouseOrbit : Boolean
+  MouseMoveDolly : Boolean
+  MouseMovePan : Boolean
+
+  VelocityBlendFactor: number = 0.0001;
 
   constructor (camera: THREE.PerspectiveCamera, settings: any) {
     this.camera = camera
@@ -41,6 +50,17 @@ class ViewerCamera {
     this.initialRotation = new THREE.Quaternion()
     this.initialPosition.copy(this.camera.position)
     this.initialRotation.copy(this.camera.quaternion)
+
+    this.Rotation = new THREE.Vector2(0, 0)
+    this.InputVelocity = new THREE.Vector3(0, 0, 0)
+    this.Velocity = new THREE.Vector3(0, 0, 0)
+    this.Impulse = new THREE.Vector3(0, 0, 0)
+    this.SpeedMultiplier = 0.0
+    this.Orbit = false
+    this.CenterOfInterest = new THREE.Vector3(0, 0, 0)
+    this.OrbitalTarget = new THREE.Vector3(0, 0, 0)
+    this.CurrentOrbitalDistance = 1.0
+    this.TargetOrbitalDistance = 1.0
   }
 
   lookAt (position: THREE.Vector3) {
@@ -112,6 +132,72 @@ class ViewerCamera {
     this.camera.position.copy(this.initialPosition)
     this.camera.quaternion.copy(this.initialRotation)
   }
+
+  frameUpdate(deltaTime: number) {
+    var targetVelocity = this.GetInputVelocity();
+
+    // Multiply the speed 
+    targetVelocity.multiplyScalar(Math.pow(1.1, this.SpeedMultiplier));
+
+    // Orient the velocity vector to the camera location
+    targetVelocity.applyQuaternion(this.camera.quaternion);
+
+    // Update the camera velocity and position
+    var invBlendFactor = Math.pow(this.VelocityBlendFactor, deltaTime);
+    var blendFactor = 1.0 - invBlendFactor;
+
+//    this.Velocity = this.Velocity.multiplyScalar(invBlendFactor).add(targetVelocity.multiplyScalar(blendFactor));
+    this.Velocity.multiplyScalar(invBlendFactor)
+    targetVelocity.multiplyScalar(blendFactor)
+    this.Velocity.add(targetVelocity);
+    
+    this.CurrentOrbitalDistance = this.CurrentOrbitalDistance * invBlendFactor + this.TargetOrbitalDistance * blendFactor;
+
+//    var positionDelta = this.Velocity.multiplyScalar(deltaTime).add(this.Impulse.multiplyScalar(blendFactor));
+    var positionDelta = this.Velocity.clone()
+    positionDelta.multiplyScalar(deltaTime)
+    var impulse = this.Impulse.clone()
+    impulse.multiplyScalar(blendFactor);
+    positionDelta.add(impulse);
+
+    this.Impulse.multiplyScalar(invBlendFactor);
+    this.camera.position.add(positionDelta);
+    this.OrbitalTarget.add(positionDelta);
+
+    if (this.MouseOrbit)
+    {
+        var translation = new THREE.Vector3(0.0, -this.CurrentOrbitalDistance, 0.0);
+
+        // this.Position = translation.applyQuaternion(this.Orientation).add(this.OrbitalTarget);
+        translation.applyQuaternion(this.camera.quaternion)
+        translation.add(this.OrbitalTarget);
+     // todo: fix ->   this.Position = translation
+    }
+  }
+
+  GetInputVelocity()
+  {
+      var velocity = this.InputVelocity.clone();
+
+      // UX special case: shift, ctrl and shift+ctrl are three distinct speeds.
+/*      var shiftDown = Keyboard.IsKeyDown(Key.LeftShift) || Keyboard.IsKeyDown(Key.RightShift);
+      var ctrlDown = Keyboard.IsKeyDown(Key.LeftCtrl) || Keyboard.IsKeyDown(Key.RightCtrl);
+      if (shiftDown ^ ctrlDown)
+      {
+          if (shiftDown)
+              velocity *= ShiftMultiplier;
+          if (ctrlDown)
+              velocity *= CtrlMultiplier;
+      }
+      else if (shiftDown && ctrlDown)
+      {
+          velocity *= CtrlShiftMultiplier;
+      }*/
+
+      return velocity;
+    }
+
+
 }
 
 // Helpers
