@@ -4,12 +4,13 @@
 
 import * as THREE from 'three'
 import deepmerge from 'deepmerge'
-import { VIMLoader } from './VIMLoader'
 import { VimScene } from './vim'
 import { ViewerSettings } from './viewer_settings'
 import { ViewerCamera, direction } from './viewer_camera'
 import { ViewerGui } from './viewer_gui'
+import { loadAny } from './viewer_loader'
 import Stats from 'stats.js'
+import { BufferGeometry } from 'three'
 
 /*
 Vim Viewer
@@ -126,7 +127,7 @@ export class Viewer {
 
     // Add all of the appropriate mouse, touch-pad, and keyboard listeners
     // Load Vim
-    this.loadFile(this.settings.url, (vim) => this.onVimLoaded(vim))
+    loadAny(this.settings.url, this.loadInScene.bind(this))
 
     // Start Loop
     this.animate()
@@ -163,49 +164,76 @@ export class Viewer {
     document.head.appendChild(this.favicon)
   }
 
-  onVimLoaded (vim) {
-    for (let i = 0; i < vim.meshes.length; ++i) {
-      this.meshes.push(vim.meshes[i])
-      this.scene.add(vim.meshes[i])
-    }
-    this.boundingSphere = vim.boundingSphere.clone()
-    this.boundingSphere.applyMatrix4(this.getViewMatrix())
-    this.vimScene = vim
-
-    this.focusModel()
-  }
-
-  loadFile (fileName, onSuccess: Function) {
-    function getExt (fileName) {
-      const indexOfQueryParams = fileName.lastIndexOf('?')
-      if (indexOfQueryParams >= 0) {
-        fileName = fileName.substring(0, indexOfQueryParams)
-      }
-      const extPos = fileName.lastIndexOf('.')
-      return fileName.slice(extPos + 1).toLowerCase()
-    }
-
-    console.log('Loading file: ' + fileName)
-    const ext = getExt(fileName)
-    if (ext !== 'vim') {
-      console.error('unhandled file format')
+  loadInScene (
+    result:
+      | VimScene
+      | THREE.Scene
+      | THREE.Group
+      | THREE.Object3D
+      | THREE.BufferGeometry
+  ) {
+    if (result instanceof VimScene) {
+      this.onVimLoaded(result)
       return
     }
 
-    console.time('loadingVim')
-    const loader = new VIMLoader(this.material)
-    loader.load(
-      fileName,
-      (vim) => {
-        console.log(
-          'Finished loading VIM: found ' + vim.meshes.length + ' objects'
-        )
-        console.timeEnd('loadingVim')
-        onSuccess(vim)
-      },
-      undefined,
-      undefined
-    )
+    if (result instanceof THREE.Scene) {
+      result.traverse((obj) => {
+        if (obj instanceof THREE.Mesh) this.addToScene(obj)
+      })
+    } else if (result instanceof THREE.BufferGeometry) {
+      result.computeVertexNormals()
+      this.addToScene(new THREE.Mesh(result))
+    } else if (
+      result instanceof THREE.Group ||
+      result instanceof THREE.Object3D
+    ) {
+      this.addToScene(result)
+    }
+    this.boundingSphere = Viewer.computeBoundingSphere(this.scene)
+    this.boundingSphere.applyMatrix4(this.getViewMatrix())
+    this.focusModel()
+  }
+
+  onVimLoaded (vim: VimScene) {
+    this.vimScene = vim
+
+    for (let i = 0; i < vim.meshes.length; ++i) {
+      this.addToScene(vim.meshes[i])
+    }
+
+    this.boundingSphere = vim.boundingSphere.clone()
+    this.boundingSphere.applyMatrix4(this.getViewMatrix())
+    this.focusModel()
+  }
+
+  addToScene (object: THREE.Object3D) {
+    this.scene.add(object)
+    this.meshes.push(object)
+  }
+
+  static computeBoundingSphere (scene: THREE.Scene): THREE.Sphere {
+    let sphere = new THREE.Sphere()
+
+    const grow = (geometry: BufferGeometry, matrix: THREE.Matrix4) => {
+      const clone = geometry.clone()
+      clone.applyMatrix4(matrix)
+      clone.computeBoundingSphere()
+      sphere = sphere.union(clone.boundingSphere)
+    }
+    const matrix = new THREE.Matrix4()
+    scene.traverse((obj) => {
+      if (obj instanceof THREE.InstancedMesh) {
+        for (let i = 0; i < obj.count; i++) {
+          obj.getMatrixAt(i, matrix)
+          grow(obj.geometry, matrix)
+        }
+      } else if (obj instanceof THREE.Mesh) {
+        grow(obj.geometry, obj.matrix)
+      }
+    })
+
+    return sphere
   }
 
   // Calls render, and asks the framework to prepare the next frame
@@ -260,26 +288,41 @@ export class Viewer {
     }
   }
 
-  createWorldGeometry (mesh, index) {
+  createWorldGeometry (mesh: THREE.Mesh, index: number) {
     const geometry = mesh.geometry.clone()
 
     let matrix = new THREE.Matrix4()
-    mesh.getMatrixAt(index, matrix)
+    if (mesh instanceof THREE.InstancedMesh) mesh.getMatrixAt(index, matrix)
+    else matrix.copy(mesh.matrix)
     matrix = this.getViewMatrix().multiply(matrix)
     geometry.applyMatrix4(matrix)
 
     return geometry
   }
 
-  getNodeIndex (mesh, instance) {
-    return mesh.userData.instanceIndices[instance]
+  getNodeIndex (mesh: THREE.Mesh, instance: number): number | null {
+    const indices = mesh.userData.instanceIndices as number[]
+
+    if (!indices) {
+      console.log('Error: Attempting to get node index of a non-vim object')
+      return null
+    }
+
+    if (indices.length <= instance) {
+      console.log('Error: Attempting to get node index out of range')
+      return null
+    }
+
+    return indices[instance]
   }
 
-  select (mesh, index) {
+  select (mesh: THREE.Mesh, index: number) {
     this.selection.select(mesh, index)
     const nodeIndex = this.getNodeIndex(mesh, index)
-    const elementName = this.getElementNameFromNodeIndex(nodeIndex)
-    console.log('Selected Element: ' + elementName)
+    if (nodeIndex) {
+      const elementName = this.getElementNameFromNodeIndex(nodeIndex)
+      console.log('Selected Element: ' + elementName)
+    }
   }
 
   clearSelection () {
@@ -515,7 +558,7 @@ class ViewerInput {
       console.log(
         `Raycast hit. Position (${hits[0].point.x}, ${hits[0].point.y}, ${hits[0].point.z})`
       )
-      this.viewer.select(mesh, index)
+      if (mesh instanceof THREE.Mesh) this.viewer.select(mesh, index)
     }
 
     // Manually set the focus since calling preventDefault above
@@ -544,7 +587,7 @@ class Selection {
   viewer: Viewer
 
   // State
-  meshIndex: number | null = null
+  mesh: THREE.Mesh | null = null
   instanceIndex: number | null = null
   boundingSphere: THREE.Sphere | null = null
 
@@ -557,11 +600,11 @@ class Selection {
   }
 
   hasSelection () {
-    return this.meshIndex !== null
+    return this.mesh !== null
   }
 
   reset () {
-    this.meshIndex = null
+    this.mesh = null
     this.instanceIndex = null
     this.boundingSphere = null
     this.disposeResources()
@@ -575,13 +618,13 @@ class Selection {
     this.highlightDisposer = null
   }
 
-  select (mesh: number, index: number) {
+  select (mesh: THREE.Mesh, index: number) {
     this.disposeResources()
-    this.meshIndex = mesh
+    this.mesh = mesh
     this.instanceIndex = index
     this.geometry = this.viewer.createWorldGeometry(mesh, index)
     this.geometry.computeBoundingSphere()
-    this.boundingSphere = this.geometry.boundingSphere.clone()
+    this.boundingSphere = this.geometry.boundingSphere
     this.highlightDisposer = this.viewer.highlight(this.geometry)
   }
 }
