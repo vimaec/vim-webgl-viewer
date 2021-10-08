@@ -113,7 +113,7 @@ const KEYS = {
     unregister: Function
     isMouseDown: Boolean
     
-    // TODO figure out the right pattern for inputs
+  // TODO: Fix circular dependency
     viewer: Viewer
     focusDisposer: Function
 
@@ -188,6 +188,14 @@ const KEYS = {
       var speed = keyDown ? this.BaseKeyboardSpeed * (this.shftDown ? this.ShiftMultiplier : 1.0) : 0.0;
       switch (event.keyCode)
       {
+      // Selection
+      case KEYS.ESCAPE:
+        this.viewer.clearSelection()
+        break
+      case KEYS.Z:
+        this.viewer.focusSelection()
+        break
+      // Camera
           case KEYS.KEY_W:
           case KEYS.KEY_UP:
               this.cameraController.InputVelocity.z = -speed;
@@ -227,6 +235,9 @@ const KEYS = {
                 }
               }
               break;
+      case KEYS.HOME:
+        this.cameraController.resetCamera()
+        break
       }
 
       event.preventDefault()
@@ -272,32 +283,20 @@ const KEYS = {
         }
     }
   
-    onMouseDown = (event) => {
-      event.preventDefault()
-      this.isMouseDown = true
-  
-      const hits = this.mouseRaycast(event.x, event.y)
-      if (hits.length > 0) {
-        const mesh = hits[0].object
-        const index = hits[0].instanceId
-  
-        const nodeIndex = this.viewer.getNodeIndex(mesh, index)
-        const name = this.viewer.getElementNameFromNodeIndex(nodeIndex)
-  
-        this.focusDisposer?.(this)
-        this.focusDisposer = this.viewer.focus(mesh, index)
-  
-        console.log('Raycast hit.')
-        console.log(
-          'Position:' +
-            hits[0].point.x +
-            ',' +
-            hits[0].point.y +
-            ',' +
-            hits[0].point.z
-        )
-        console.log('Element: ' + name)
-      }
+  onMouseDown = (event) => {
+    event.preventDefault()
+    this.isMouseDown = true
+
+    const hits = this.mouseRaycast(event.x, event.y)
+    if (hits.length > 0) {
+      const mesh = hits[0].object
+      const index = hits[0].instanceId
+
+      console.log(
+        `Raycast hit. Position (${hits[0].point.x}, ${hits[0].point.y}, ${hits[0].point.z})`
+      )
+      this.viewer.select(mesh, index)
+    }
   
       // Manually set the focus since calling preventDefault above
       // prevents the browser from setting it automatically.
