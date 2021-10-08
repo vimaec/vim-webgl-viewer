@@ -112,6 +112,7 @@ const KEYS = {
     cameraController: ViewerCamera
     unregister: Function
     isMouseDown: Boolean
+    hasMouseMoved: Boolean
     
   // TODO: Fix circular dependency
     viewer: Viewer
@@ -247,6 +248,7 @@ const KEYS = {
       if (!this.isMouseDown) {
         return
       }
+      this.hasMouseMoved = true;
   
       event.preventDefault()
   
@@ -283,24 +285,14 @@ const KEYS = {
         }
     }
   
-  onMouseDown = (event) => {
-    event.preventDefault()
-    this.isMouseDown = true
+    onMouseDown = (event) => {
+        event.preventDefault()
+        this.isMouseDown = true
+        this.hasMouseMoved = false
 
-    const hits = this.mouseRaycast(event.x, event.y)
-    if (hits.length > 0) {
-      const mesh = hits[0].object
-      const index = hits[0].instanceId
-
-      console.log(
-        `Raycast hit. Position (${hits[0].point.x}, ${hits[0].point.y}, ${hits[0].point.z})`
-      )
-      this.viewer.select(mesh, index)
-    }
-  
-      // Manually set the focus since calling preventDefault above
-      // prevents the browser from setting it automatically.
-      this.canvas.focus ? this.canvas.focus() : window.focus()
+        // Manually set the focus since calling preventDefault above
+        // prevents the browser from setting it automatically.
+        this.canvas.focus ? this.canvas.focus() : window.focus()
     }
   
     mouseRaycast (mouseX, mouseY) {
@@ -313,7 +305,20 @@ const KEYS = {
       return raycaster.intersectObjects(this.viewer.meshes)
     }
   
-    onMouseUp = (_) => {
+    onMouseUp = (event) => {
+      if (this.isMouseDown && !this.hasMouseMoved)
+      {
+        const hits = this.mouseRaycast(event.x, event.y)
+        if (hits.length > 0) {
+          const mesh = hits[0].object
+          const index = hits[0].instanceId
+
+          console.log(
+            `Raycast hit. Position (${hits[0].point.x}, ${hits[0].point.y}, ${hits[0].point.z})`
+          )
+          this.viewer.select(mesh, index)
+        }
+      }
       this.isMouseDown = false
     }
   }
