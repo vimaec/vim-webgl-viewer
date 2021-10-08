@@ -124,11 +124,13 @@ const KEYS = {
     constructor (
       canvas: HTMLCanvasElement,
       settings: any,
-      cameraController: ViewerCamera
+      cameraController: ViewerCamera,
+      viewer: Viewer
     ) {
       this.canvas = canvas
       this.settings = settings
       this.cameraController = cameraController
+      this.viewer = viewer
       this.unregister = function () {}
       this.isMouseDown = false
     }
@@ -179,7 +181,7 @@ const KEYS = {
                     this.cameraController.MouseOrbit = !this.cameraController.MouseOrbit;
                     if (this.cameraController.MouseOrbit)
                     {
-                        this.cameraController.CurrentOrbitalDistance = this.cameraController.OrbitalTarget.sub(this.cameraController.Position).length();
+                        this.cameraController.CurrentOrbitalDistance = this.cameraController.OrbitalTarget.sub(this.cameraController.camera.position).length();
                         this.cameraController.TargetOrbitalDistance = this.cameraController.CurrentOrbitalDistance;
                     }
                     break;
