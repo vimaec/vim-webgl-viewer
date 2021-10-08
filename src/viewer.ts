@@ -351,15 +351,6 @@ export class Viewer {
     this.plane.visible = this.settings.plane.show
     this.updateMaterial(this.plane.material, this.settings.plane.material)
     this.plane.position.copy(toVec(this.settings.plane.position))
-/*    this.light1.position.copy(toVec(this.settings.light1.position))
-    this.light1.color = toColor(this.settings.light1.color)
-    this.light1.intensity = this.settings.light1.intensity
-    this.light2.position.copy(toVec(this.settings.light2.position))
-    this.light2.color = toColor(this.settings.light2.color)
-    this.light2.intensity = this.settings.light2.intensity
-    this.sunlight.color = toColor(this.settings.sunlight.skyColor)
-    this.sunlight.groundColor = toColor(this.settings.sunlight.groundColor)
-    this.sunlight.intensity = this.settings.sunlight.intensity*/
     this.cameraController.applySettings(this.settings)
   }
 
