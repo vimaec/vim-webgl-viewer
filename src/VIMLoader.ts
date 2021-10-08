@@ -22,7 +22,7 @@ export class VIMLoader {
   // Loads the VIM from a URL
   load (
     url: string,
-    onLoad?: (response: any) => void,
+    onLoad?: (response: VimScene) => void,
     onProgress?: (request: ProgressEvent) => void,
     onError?: (event: ErrorEvent) => void
   ) {
