@@ -150,10 +150,10 @@ export class Viewer {
     this.controls = new ViewerInput(
       this.canvas,
       this.settings,
-      this.cameraController
+      this.cameraController,
+      this
     )
     this.controls.register()
-    this.controls.viewer = this
     this.selection = new Selection(this)
 
     // Add all of the appropriate mouse, touch-pad, and keyboard listeners
