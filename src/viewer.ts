@@ -46,6 +46,8 @@ export class Viewer {
   vimScene: VimScene
   boundingSphere: THREE.Sphere
 
+  clock = new THREE.Clock();
+
   constructor () {
     this.canvas = undefined
   }
@@ -244,8 +246,10 @@ export class Viewer {
   // Calls render, and asks the framework to prepare the next frame
   animate () {
     requestAnimationFrame(() => this.animate())
+    var timeDelta = this.clock.getDelta();
     this.resizeCanvas()
     this.updateObjects()
+    this.cameraController.frameUpdate(timeDelta);
     this.renderer.render(this.scene, this.camera)
     if (this.stats) {
       this.stats.update()
