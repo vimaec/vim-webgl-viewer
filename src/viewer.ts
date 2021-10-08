@@ -26,15 +26,15 @@ export class Viewer {
 
   stats: any
   settings: any
-  camera: THREE.PerspectiveCamera // PerspectiveCamera;
-  renderer: THREE.WebGLRenderer // THREE.WebGLRenderer
-  scene: THREE.Scene // THREE.Scene
+  camera: THREE.PerspectiveCamera 
+  renderer: THREE.WebGLRenderer 
+  scene: THREE.Scene
   meshes = []
 
-  plane: THREE.Mesh // THREE.Mesh
-  sunlight: THREE.HemisphereLight // THREE.HemisphereLight
-  light1: THREE.DirectionalLight // THREE.DirectionalLight
-  material: THREE.MeshPhongMaterial // THREE.MeshPhongMaterial
+  plane: THREE.Mesh 
+  sunlight: THREE.HemisphereLight
+  light1: THREE.DirectionalLight 
+  material: THREE.MeshPhongMaterial
   removeListeners: Function
 
   // eslint-disable-next-line no-use-before-define
