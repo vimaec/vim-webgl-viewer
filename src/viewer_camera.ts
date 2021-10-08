@@ -20,8 +20,6 @@ class ViewerCamera {
   initialRotation: THREE.Quaternion
   cameraTarget!: THREE.Vector3
 
-  Position: THREE.Vector3
-  Orientation: THREE.Quaternion
   Rotation: THREE.Vector2
   InputVelocity: THREE.Vector3
   Velocity: THREE.Vector3
@@ -93,6 +91,13 @@ class ViewerCamera {
     this.settings = newSettings
   }
 
+  applyLocalImpulse(impulse : THREE.Vector3)
+  {
+      var localImpulse = impulse.clone()
+      localImpulse.applyQuaternion(this.camera.quaternion);
+      this.Impulse.add(localImpulse);
+  }
+
   moveCameraBy (
     dir: THREE.Vector3 = direction.forward,
     speed: number = 1,
@@ -133,11 +138,16 @@ class ViewerCamera {
     this.camera.quaternion.copy(this.initialRotation)
   }
 
+  getSpeedMultiplier()
+  {
+    return Math.pow(1.1, this.SpeedMultiplier);
+  }
+
   frameUpdate(deltaTime: number) {
     var targetVelocity = this.GetInputVelocity();
 
     // Multiply the speed 
-    targetVelocity.multiplyScalar(Math.pow(1.1, this.SpeedMultiplier));
+    targetVelocity.multiplyScalar(this.getSpeedMultiplier());
 
     // Orient the velocity vector to the camera location
     targetVelocity.applyQuaternion(this.camera.quaternion);
