@@ -102,9 +102,7 @@ const KEYS = {
     MouseScrollSensitivity: number = 5;
     MaximumInclination: number = 1.4
     MinOrbitalDistance: number = 1.0
-    ShiftMultiplier: number = 3
-    CtrlMultiplier: number = 2 * this.ShiftMultiplier;
-    CtrlShiftMultiplier: number = 2 * this.CtrlMultiplier;
+    ShiftMultiplier: number = 3.0
     MinimumSpeedDifference: number = 0.01;
     VelocityBlendFactor: number = 0.0001;
     BaseKeyboardSpeed: number = 15;
@@ -187,7 +185,7 @@ const KEYS = {
           }
       }
 
-      var speed = keyDown ? this.BaseKeyboardSpeed : 0.0;
+      var speed = keyDown ? this.BaseKeyboardSpeed * (this.shftDown ? this.ShiftMultiplier : 1.0) : 0.0;
       switch (event.keyCode)
       {
           case KEYS.KEY_W:
@@ -216,7 +214,18 @@ const KEYS = {
               this.ctrlDown = keyDown;
               break;
           case KEYS.KEY_SHIFT:
-              this.shftDown = keyDown;
+              if (this.shftDown != keyDown)
+              {
+                this.shftDown = keyDown;
+                if (keyDown)
+                {
+                  this.cameraController.InputVelocity.multiplyScalar(this.ShiftMultiplier);
+                }
+                else 
+                {
+                  this.cameraController.InputVelocity.multiplyScalar(1.0 / this.ShiftMultiplier);
+                }
+              }
               break;
       }
 
