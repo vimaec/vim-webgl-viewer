@@ -34,7 +34,6 @@ export class Viewer {
   plane: THREE.Mesh // THREE.Mesh
   sunlight: THREE.HemisphereLight // THREE.HemisphereLight
   light1: THREE.DirectionalLight // THREE.DirectionalLight
-  light2: THREE.DirectionalLight // THREE.DirectionalLight
   material: THREE.MeshPhongMaterial // THREE.MeshPhongMaterial
   removeListeners: Function
 
