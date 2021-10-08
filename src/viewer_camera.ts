@@ -35,6 +35,20 @@ class ViewerCamera {
     this.camera.lookAt(position)
   }
 
+  lookAtSphere (sphere: THREE.Sphere, setY: boolean = false) {
+    if (setY) {
+      this.camera.position.setY(sphere.center.y)
+    }
+
+    const axis = this.camera.position.clone().sub(sphere.center).normalize()
+    const fovRadian = (this.camera.fov * Math.PI) / 180
+    const dist = 1.33 * sphere.radius * (1 + 2 / Math.tan(fovRadian))
+    const pos = axis.clone().multiplyScalar(dist).add(sphere.center)
+
+    this.camera.lookAt(sphere.center)
+    this.camera.position.copy(pos)
+  }
+
   applySettings (newSettings: any) {
     // TODO: camera updates aren't working
     this.camera.fov = newSettings.camera.fov
