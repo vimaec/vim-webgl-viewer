@@ -99,7 +99,7 @@ const KEYS = {
     MouseRotateSensitivity: number = 0.2
     TouchMoveSensitivity: number = this.MouseMoveSensitivity * 20;
     TouchRotateSensitivity: number = this.MouseRotateSensitivity;
-    MouseScrollSensitivity: number = 5;
+    MouseScrollSensitivity: number = 0.05;
     MaximumInclination: number = 1.4
     MinOrbitalDistance: number = 1.0
     ShiftMultiplier: number = 3.0
@@ -263,9 +263,12 @@ const KEYS = {
         }
         else
         {
-            const speed = this.settings.camera.controls.zoomSpeed
+/*            const speed = this.settings.camera.controls.zoomSpeed
             const dir = event.deltaY > 0 ? direction.back : direction.forward
-            this.cameraController.moveCameraBy(dir, speed)
+            this.cameraController.moveCameraBy(dir, speed)*/
+            
+            var impulse = new THREE.Vector3(0, 0, event.deltaY * this.MouseScrollSensitivity * this.cameraController.getSpeedMultiplier());
+            this.cameraController.applyLocalImpulse(impulse);
         }
     }
   
