@@ -32,8 +32,8 @@ export class Viewer {
   meshes = []
 
   plane: THREE.Mesh 
-  sunlight: THREE.HemisphereLight
-  light1: THREE.DirectionalLight 
+  skyLight: THREE.HemisphereLight
+  sunLight: THREE.DirectionalLight 
   material: THREE.MeshPhongMaterial
   removeListeners: Function
 
@@ -89,41 +89,23 @@ export class Viewer {
     this.scene.add(this.plane)
 
     // Lights
-    this.sunlight = new THREE.HemisphereLight( 0xffffff, 0xffffff, 0.6 );
-    this.light1 = new THREE.DirectionalLight()
+    this.skyLight = new THREE.HemisphereLight( 0xffffff, 0xffffff, 0.6 );
+    this.skyLight.color.setHSL( 0.6, 1, 0.6 );
+    this.skyLight.groundColor.setHSL( 0.095, 1, 0.75 );
+    this.skyLight.position.set( 0, 50, 0 );
+    this.scene.add( this.skyLight );
 
-    this.sunlight = new THREE.HemisphereLight( 0xffffff, 0xffffff, 0.6 );
-    this.sunlight.color.setHSL( 0.6, 1, 0.6 );
-    this.sunlight.groundColor.setHSL( 0.095, 1, 0.75 );
-    this.sunlight.position.set( 0, 50, 0 );
-    this.scene.add( this.sunlight );
-
-    const hemiLightHelper = new THREE.HemisphereLightHelper( this.sunlight, 10 );
+    const hemiLightHelper = new THREE.HemisphereLightHelper( this.skyLight, 10 );
     this.scene.add( hemiLightHelper );
 
     //
-    this.light1 = new THREE.DirectionalLight( 0xffffff, 1 );
-    this.light1.color.setHSL( 0.1, 1, 0.95 );
-    this.light1.position.set( - 1, 1.75, 1 );
-    this.light1.position.multiplyScalar( 30 );
-    this.scene.add( this.light1 );
+    this.sunLight = new THREE.DirectionalLight( 0xffffff, 1 );
+    this.sunLight.color.setHSL( 0.1, 1, 0.95 );
+    this.sunLight.position.set( - 1, 1.75, 1 );
+    this.sunLight.position.multiplyScalar( 30 );
+    this.scene.add( this.sunLight );
 
-    this.light1.castShadow = true;
-
-    this.light1.shadow.mapSize.width = 2048;
-    this.light1.shadow.mapSize.height = 2048;
-
-    const d = 50;
-
-    this.light1.shadow.camera.left = - d;
-    this.light1.shadow.camera.right = d;
-    this.light1.shadow.camera.top = d;
-    this.light1.shadow.camera.bottom = - d;
-
-    this.light1.shadow.camera.far = 3500;
-    this.light1.shadow.bias = - 0.0001;
-
-    const dirLightHelper = new THREE.DirectionalLightHelper( this.light1, 10 );
+    const dirLightHelper = new THREE.DirectionalLightHelper( this.sunLight, 10 );
     this.scene.add( dirLightHelper );
 
     // Material
@@ -197,8 +179,6 @@ export class Viewer {
 
   onVimLoaded (vim) {
     for (let i = 0; i < vim.meshes.length; ++i) {
-      vim.meshes[i].castShadow = true;
-      vim.meshes[i].receiveShadow = true;
       this.meshes.push(vim.meshes[i])
       this.scene.add(vim.meshes[i])
     }
@@ -352,6 +332,13 @@ export class Viewer {
     this.updateMaterial(this.plane.material, this.settings.plane.material)
     this.plane.position.copy(toVec(this.settings.plane.position))
     this.cameraController.applySettings(this.settings)
+    
+    this.skyLight.color.setHSL( this.settings.skylight.skyColor.h, this.settings.skylight.skyColor.s, this.settings.skylight.skyColor.l );
+    this.skyLight.groundColor.setHSL( this.settings.skylight.groundColor.h, this.settings.skylight.groundColor.s, this.settings.skylight.groundColor.l );
+    this.skyLight.intensity = this.settings.skylight.intensity;
+    this.sunLight.color.setHSL( this.settings.sunLight.color.h, this.settings.sunLight.color.s, this.settings.sunLight.color.l );
+    this.sunLight.position.set( this.settings.sunLight.position.x, this.settings.sunLight.position.y, this.settings.sunLight.position.z );
+    this.sunLight.intensity = this.settings.sunLight.intensity;
   }
 
   updateMaterial (targetMaterial, settings) {

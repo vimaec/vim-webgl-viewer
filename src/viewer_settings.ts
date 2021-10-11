@@ -37,6 +37,16 @@ export const ViewerSettings = {
         z: 0
       }
     },
+    skylight: {
+      skyColor: { h: 0.6, s: 1, l: 0.6 },
+      groundColor: { h: 0.095, s: 1, l: 0.75 },
+      intensity: 0.6
+    },
+    sunLight: {
+      position: { x: -1 * 30, y: 1.75 * 30, z: 1 * 30 },
+      color: { h: 0.1, s: 1, l: 0.95 },
+      intensity: 1
+    },
     object: {
       scale: 0.01,
       position: { x: 0, y: 0, z: 0 },
@@ -48,7 +58,7 @@ export const ViewerSettings = {
         flatShading: true,
         shininess: 30,
         wireframe: false
-      }
+      },
     }
   }
 }
