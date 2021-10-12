@@ -101,7 +101,6 @@ const KEYS = {
     TouchRotateSensitivity: number = this.MouseRotateSensitivity;
     MouseScrollSensitivity: number = 0.05;
     MaximumInclination: number = 1.4
-    MinOrbitalDistance: number = 1.0
     ShiftMultiplier: number = 3.0
     MinimumSpeedDifference: number = 0.01;
     VelocityBlendFactor: number = 0.0001;
@@ -178,26 +177,29 @@ const KEYS = {
                   this.cameraController.SpeedMultiplier -= 1;
                   break;
               case KEYS.KEY_F8: 
-                    this.cameraController.MouseOrbit = !this.cameraController.MouseOrbit;
-                    if (this.cameraController.MouseOrbit)
-                    {
-                        this.cameraController.CurrentOrbitalDistance = this.cameraController.OrbitalTarget.sub(this.cameraController.camera.position).length();
-                        this.cameraController.TargetOrbitalDistance = this.cameraController.CurrentOrbitalDistance;
-                    }
-                    break;
+                  this.cameraController.MouseOrbit = !this.cameraController.MouseOrbit;
+                  if (this.cameraController.MouseOrbit)
+                  {
+                      this.cameraController.CurrentOrbitalDistance = this.cameraController.OrbitalTarget.clone().sub(this.cameraController.camera.position).length();
+                      this.cameraController.TargetOrbitalDistance = this.cameraController.CurrentOrbitalDistance;
+                  }
+                  break;
+              case KEYS.KEY_HOME:
+                  this.cameraController.resetCamera()
+                  break
+              // Selection
+              case KEYS.KEY_ESCAPE:
+                  this.viewer.clearSelection()
+                  break
+              case KEYS.KEY_Z:
+                  this.viewer.focusSelection()
+                  break
           }
       }
 
       var speed = keyDown ? this.BaseKeyboardSpeed * (this.shftDown ? this.ShiftMultiplier : 1.0) : 0.0;
       switch (event.keyCode)
       {
-          // Selection
-          case KEYS.KEY_ESCAPE:
-            this.viewer.clearSelection()
-            break
-          case KEYS.KEY_Z:
-            this.viewer.focusSelection()
-            break
       // Camera
           case KEYS.KEY_W:
           case KEYS.KEY_UP:
@@ -238,9 +240,6 @@ const KEYS = {
                 }
               }
               break;
-          case KEYS.KEY_HOME:
-            this.cameraController.resetCamera()
-            break
       }
 
       event.preventDefault()
@@ -261,9 +260,12 @@ const KEYS = {
         event.movementY || event.mozMovementY || event.webkitMovementY || 0
       const delta = new THREE.Vector2(deltaX, deltaY)
   
-      if (event.buttons & 2) {
+      if (event.buttons & 2) 
+      {
         this.cameraController.panCameraBy(delta)
-      } else {
+      }
+      else 
+      {
         delta.multiplyScalar(this.MouseRotateSensitivity)
         this.cameraController.rotateCameraBy(delta)
       }
@@ -276,12 +278,12 @@ const KEYS = {
         {
             this.cameraController.SpeedMultiplier -= event.deltaY * 0.01;
         }
+        else if (this.cameraController.MouseOrbit)
+        {
+            this.cameraController.updateOrbitalDistance(-event.deltaY * this.MouseScrollSensitivity);
+        }
         else
         {
-/*            const speed = this.settings.camera.controls.zoomSpeed
-            const dir = event.deltaY > 0 ? direction.back : direction.forward
-            this.cameraController.moveCameraBy(dir, speed)*/
-            
             var impulse = new THREE.Vector3(0, 0, event.deltaY * this.MouseScrollSensitivity * this.cameraController.getSpeedMultiplier());
             this.cameraController.applyLocalImpulse(impulse);
         }
