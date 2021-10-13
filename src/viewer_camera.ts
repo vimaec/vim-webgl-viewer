@@ -19,9 +19,6 @@ class ViewerCamera {
 
   camera: THREE.PerspectiveCamera
   settings: any
-  initialPosition: THREE.Vector3
-  initialRotation: THREE.Quaternion
-  cameraTarget!: THREE.Vector3
 
   Rotation: THREE.Vector2
   InputVelocity: THREE.Vector3
@@ -45,10 +42,6 @@ class ViewerCamera {
   constructor (camera: THREE.PerspectiveCamera, settings: any) {
     this.camera = camera
     this.applySettings(settings)
-
-    // Save initial position
-    this.initialPosition = this.camera.position.clone();
-    this.initialRotation = this.camera.quaternion.clone();
 
     this.Rotation = new THREE.Vector2(0, 0)
     this.InputVelocity = new THREE.Vector3(0, 0, 0)
@@ -83,15 +76,20 @@ class ViewerCamera {
     this.CurrentOrbitalDistance = this.TargetOrbitalDistance;
   }
 
+  frameScene (sphere: THREE.Sphere) {
+    this.camera.position.copy(sphere.center.clone().add(new THREE.Vector3(0, sphere.radius, - 2 * sphere.radius)))
+    this.camera.lookAt(sphere.center)
+    this.OrbitalTarget = sphere.center;
+    this.CurrentOrbitalDistance = this.OrbitalTarget.clone().sub(this.camera.position).length();
+    this.CurrentOrbitalDistance = this.TargetOrbitalDistance;
+  }
+
   applySettings (newSettings: any) {
     // TODO: camera updates aren't working
     this.camera.fov = newSettings.camera.fov
     this.camera.zoom = newSettings.camera.zoom
     this.camera.near = newSettings.camera.near
     this.camera.far = newSettings.camera.far
-    this.camera.position.copy(toVec3(newSettings.camera.position))
-    this.cameraTarget = toVec3(newSettings.camera.target)
-    this.camera.lookAt(this.cameraTarget)
     this.settings = newSettings
   }
 
@@ -141,18 +139,6 @@ class ViewerCamera {
     {
         this.OrbitalTarget = this.camera.position.clone().add(new THREE.Vector3(0, 0, 1).applyQuaternion(this.camera.quaternion).multiplyScalar(this.CurrentOrbitalDistance));
     }
-  }
-
-  resetCamera () {
-    this.camera.position.copy(this.initialPosition)
-    this.camera.quaternion.copy(this.initialRotation)
-    this.OrbitalTarget.set(0, 0, 0)
-    this.CurrentOrbitalDistance = this.camera.position.clone().sub(this.OrbitalTarget).length();
-    this.TargetOrbitalDistance = this.CurrentOrbitalDistance;
-
-    this.OrbitalTarget.set(0, 0, -this.CurrentOrbitalDistance);
-    this.OrbitalTarget.applyQuaternion(this.camera.quaternion);
-    this.OrbitalTarget.add(this.camera.position);
   }
 
   getSpeedMultiplier()
