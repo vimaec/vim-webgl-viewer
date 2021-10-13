@@ -96,18 +96,11 @@ export class Viewer {
     this.skyLight.position.set(0, 50, 0)
     this.scene.add(this.skyLight)
 
-    const hemiLightHelper = new THREE.HemisphereLightHelper(this.skyLight, 10)
-    this.scene.add(hemiLightHelper)
-
-    //
     this.sunLight = new THREE.DirectionalLight(0xffffff, 1)
     this.sunLight.color.setHSL(0.1, 1, 0.95)
     this.sunLight.position.set(-1, 1.75, 1)
     this.sunLight.position.multiplyScalar(30)
     this.scene.add(this.sunLight)
-
-    const dirLightHelper = new THREE.DirectionalLightHelper(this.sunLight, 10)
-    this.scene.add(dirLightHelper)
 
     // Material
     this.material = new THREE.MeshPhongMaterial({
