@@ -12,8 +12,6 @@ export const ViewerSettings = {
       fov: 50,
       zoom: 1,
       rotate: 1.0,
-      position: { x: 0, y: 5, z: -5 },
-      target: { x: 0, y: -1, z: 0 },
       controls: {
         speed: 0.1,
         shiftMultiplier: 5.0,
