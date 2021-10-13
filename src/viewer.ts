@@ -11,7 +11,6 @@ import { ViewerInput } from './viewer_input'
 import { ViewerGui } from './viewer_gui'
 import { loadAny } from './viewer_loader'
 import Stats from 'stats.js'
-import { BufferGeometry } from 'three'
 
 /*
 Vim Viewer
@@ -81,27 +80,6 @@ export class Viewer {
       })
     }
 
-    // Ground
-    this.plane = new THREE.Mesh(
-      new THREE.PlaneBufferGeometry(1000, 1000),
-      new THREE.MeshPhongMaterial()
-    )
-    this.plane.rotation.x = -Math.PI / 2
-    this.scene.add(this.plane)
-
-    // Lights
-    this.skyLight = new THREE.HemisphereLight(0xffffff, 0xffffff, 0.6)
-    this.skyLight.color.setHSL(0.6, 1, 0.6)
-    this.skyLight.groundColor.setHSL(0.095, 1, 0.75)
-    this.skyLight.position.set(0, 50, 0)
-    this.scene.add(this.skyLight)
-
-    this.sunLight = new THREE.DirectionalLight(0xffffff, 1)
-    this.sunLight.color.setHSL(0.1, 1, 0.95)
-    this.sunLight.position.set(-1, 1.75, 1)
-    this.sunLight.position.multiplyScalar(30)
-    this.scene.add(this.sunLight)
-
     // Material
     this.material = new THREE.MeshPhongMaterial({
       color: 0xffffffff,
@@ -138,6 +116,32 @@ export class Viewer {
 
     // Start Loop
     this.animate()
+  }
+
+  finishScene () {
+    // Ground
+    this.plane = new THREE.Mesh(
+      new THREE.PlaneBufferGeometry(1000, 1000),
+      new THREE.MeshPhongMaterial()
+    )
+    this.plane.rotation.x = -Math.PI / 2
+    this.scene.add(this.plane)
+
+    // Lights
+
+    this.skyLight = new THREE.HemisphereLight(0xffffff, 0xffffff, 0.6)
+    this.skyLight.color.setHSL(0.6, 1, 0.6)
+    this.skyLight.groundColor.setHSL(0.095, 1, 0.75)
+    this.skyLight.position.set(0, 50, 0)
+    this.scene.add(this.skyLight)
+
+    this.sunLight = new THREE.DirectionalLight(0xffffff, 1)
+    this.sunLight.color.setHSL(0.1, 1, 0.95)
+    this.sunLight.position.set(-1, 1.75, 1)
+    this.sunLight.position.multiplyScalar(30)
+    this.scene.add(this.sunLight)
+
+    this.updateScene()
   }
 
   prepareDocument () {
@@ -197,7 +201,7 @@ export class Viewer {
     ) {
       this.addToScene(result)
     }
-    this.boundingSphere = Viewer.computeBoundingSphere(this.scene)
+    // this.boundingSphere = this.computeBoundingSphere(this.scene)
     this.boundingSphere.applyMatrix4(this.getViewMatrix())
     this.focusModel()
   }
@@ -210,8 +214,28 @@ export class Viewer {
     }
 
     this.boundingSphere = vim.boundingSphere.clone()
-    this.boundingSphere.applyMatrix4(this.getViewMatrix())
+    this.boundingSphere = this.boundingSphere.applyMatrix4(this.getViewMatrix())
+
+    this.finishScene()
     this.focusModel()
+  }
+
+  drawSphere (sphere: THREE.Sphere) {
+    const s = new THREE.LineSegments(
+      new THREE.WireframeGeometry(
+        new THREE.SphereBufferGeometry(sphere.radius)
+      ),
+      new THREE.LineBasicMaterial({
+        depthTest: false,
+        opacity: 0.5,
+        color: new THREE.Color(0x0000ff),
+        transparent: true
+      })
+    )
+    s.position.copy(sphere.center)
+    s.updateMatrix()
+    s.applyMatrix4(this.getViewMatrix())
+    this.scene.add(s)
   }
 
   addToScene (object: THREE.Object3D) {
@@ -219,14 +243,14 @@ export class Viewer {
     this.meshes.push(object)
   }
 
-  static computeBoundingSphere (scene: THREE.Scene): THREE.Sphere {
-    let sphere = new THREE.Sphere()
+  computeBoundingSphere (scene: THREE.Scene): THREE.Sphere {
+    let sphere: THREE.Sphere = null
 
-    const grow = (geometry: BufferGeometry, matrix: THREE.Matrix4) => {
+    const grow = (geometry: THREE.BufferGeometry, matrix: THREE.Matrix4) => {
       geometry.computeBoundingSphere()
-      const currentSphere = geometry.boundingSphere.clone()
-      currentSphere.applyMatrix4(matrix)
-      sphere = sphere.union(currentSphere)
+      let currentSphere = geometry.boundingSphere.clone()
+      currentSphere = currentSphere.applyMatrix4(matrix)
+      sphere = sphere ? sphere.union(currentSphere) : currentSphere
     }
     const matrix = new THREE.Matrix4()
     scene.traverse((obj) => {
@@ -366,33 +390,41 @@ export class Viewer {
   // Called every frame in case settings are updated
   updateScene () {
     this.scene.background = toColor(this.settings.background.color)
-    this.plane.visible = this.settings.plane.show
-    this.updateMaterial(this.plane.material, this.settings.plane.material)
-    this.plane.position.copy(toVec(this.settings.plane.position))
-    this.cameraController.applySettings(this.settings)
 
-    this.skyLight.color.setHSL(
-      this.settings.skylight.skyColor.h,
-      this.settings.skylight.skyColor.s,
-      this.settings.skylight.skyColor.l
-    )
-    this.skyLight.groundColor.setHSL(
-      this.settings.skylight.groundColor.h,
-      this.settings.skylight.groundColor.s,
-      this.settings.skylight.groundColor.l
-    )
-    this.skyLight.intensity = this.settings.skylight.intensity
-    this.sunLight.color.setHSL(
-      this.settings.sunLight.color.h,
-      this.settings.sunLight.color.s,
-      this.settings.sunLight.color.l
-    )
-    this.sunLight.position.set(
-      this.settings.sunLight.position.x,
-      this.settings.sunLight.position.y,
-      this.settings.sunLight.position.z
-    )
-    this.sunLight.intensity = this.settings.sunLight.intensity
+    if (this.plane) {
+      this.plane.visible = this.settings.plane.show
+      this.updateMaterial(this.plane.material, this.settings.plane.material)
+      this.plane.position.copy(toVec(this.settings.plane.position))
+    }
+
+    if (this.skyLight) {
+      this.skyLight.color.setHSL(
+        this.settings.skylight.skyColor.h,
+        this.settings.skylight.skyColor.s,
+        this.settings.skylight.skyColor.l
+      )
+      this.skyLight.groundColor.setHSL(
+        this.settings.skylight.groundColor.h,
+        this.settings.skylight.groundColor.s,
+        this.settings.skylight.groundColor.l
+      )
+      this.skyLight.intensity = this.settings.skylight.intensity
+      this.sunLight.color.setHSL(
+        this.settings.sunLight.color.h,
+        this.settings.sunLight.color.s,
+        this.settings.sunLight.color.l
+      )
+    }
+    if (this.sunLight) {
+      this.sunLight.position.set(
+        this.settings.sunLight.position.x,
+        this.settings.sunLight.position.y,
+        this.settings.sunLight.position.z
+      )
+      this.sunLight.intensity = this.settings.sunLight.intensity
+    }
+
+    this.cameraController.applySettings(this.settings)
   }
 
   updateMaterial (targetMaterial, settings) {
