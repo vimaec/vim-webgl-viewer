@@ -327,7 +327,7 @@ export class VIMLoader {
         new Int32Array(meshIndices),
         new Float32Array(meshVertexColors)
       )
-      resultMesh.computeBoundingBox()
+      resultMesh.computeBoundingSphere()
       resultMeshes.push(resultMesh)
     }
 
@@ -356,7 +356,7 @@ export class VIMLoader {
     const rawMeshes = this.allocateMeshes(geometry, vim.g3d.instanceMeshes)
 
     console.log('Applying Matrices')
-    const [meshes, centers] = this.applyMatrices(
+    const [meshes, boundingSphere] = this.applyMatrices(
       rawMeshes,
       vim.g3d.instanceMeshes,
       vim.g3d.instanceTransforms
@@ -367,13 +367,9 @@ export class VIMLoader {
       return arg !== null
     }
     const validMeshes = meshes.filter(notNull)
-
-    console.log('Computing bounding sphere.')
-    const sphere = new THREE.Sphere().setFromPoints(centers)
-
     console.timeEnd('parsingVim')
 
-    return new VimScene(vim, validMeshes, sphere)
+    return new VimScene(vim, validMeshes, boundingSphere)
   }
 
   allocateMeshes (
@@ -413,10 +409,10 @@ export class VIMLoader {
     meshes: NullableMesh[],
     instanceMeshes: Int32Array,
     instanceTransforms: Float32Array
-  ): [NullableMesh[], THREE.Vector3[]] {
+  ): [NullableMesh[], THREE.Sphere] {
     const matrixArity = 16
     const instanceCounters = new Int32Array(meshes.length)
-    const centers = []
+    let boundingSphere: THREE.Sphere = null
     for (let i = 0; i < instanceMeshes.length; ++i) {
       const meshIndex = instanceMeshes[i]
       if (meshIndex < 0) continue
@@ -439,18 +435,10 @@ export class VIMLoader {
       if (!mesh.userData.instanceIndices) mesh.userData.instanceIndices = []
       mesh.userData.instanceIndices.push(i)
 
-      // Compute Center
-      const box = mesh.geometry.boundingBox
-      if (box) {
-        const center = box.getCenter(new THREE.Vector3())
-        center.applyMatrix4(matrix)
-        centers.push(center)
-      } else {
-        throw new Error(
-          'Bounding box should be defined when geometry is instantiated'
-        )
-      }
+      const sphere = mesh.geometry.boundingSphere.clone()
+      sphere.applyMatrix4(matrix)
+      boundingSphere = boundingSphere?.union(sphere) ?? sphere
     }
-    return [meshes, centers]
+    return [meshes, boundingSphere]
   }
 }
