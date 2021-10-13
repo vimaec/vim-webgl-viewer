@@ -216,10 +216,10 @@ export class Viewer {
     let sphere = new THREE.Sphere()
 
     const grow = (geometry: BufferGeometry, matrix: THREE.Matrix4) => {
-      const clone = geometry.clone()
-      clone.applyMatrix4(matrix)
-      clone.computeBoundingSphere()
-      sphere = sphere.union(clone.boundingSphere)
+      geometry.computeBoundingSphere()
+      const currentSphere = geometry.boundingSphere.clone()
+      currentSphere.applyMatrix4(matrix)
+      sphere = sphere.union(currentSphere)
     }
     const matrix = new THREE.Matrix4()
     scene.traverse((obj) => {
