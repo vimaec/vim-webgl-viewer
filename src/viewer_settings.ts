@@ -56,7 +56,7 @@ export const ViewerSettings = {
         flatShading: true,
         shininess: 30,
         wireframe: false
-      },
+      }
     }
   }
 }

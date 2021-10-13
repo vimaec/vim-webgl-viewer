@@ -4,13 +4,14 @@
 
 import * as THREE from 'three'
 import deepmerge from 'deepmerge'
-import { VIMLoader } from './VIMLoader'
 import { VimScene } from './vim'
 import { ViewerSettings } from './viewer_settings'
-import { ViewerCamera, direction } from './viewer_camera'
+import { ViewerCamera } from './viewer_camera'
 import { ViewerInput } from './viewer_input'
 import { ViewerGui } from './viewer_gui'
+import { loadAny } from './viewer_loader'
 import Stats from 'stats.js'
+import { BufferGeometry } from 'three'
 
 /*
 Vim Viewer
@@ -26,14 +27,14 @@ export class Viewer {
 
   stats: any
   settings: any
-  camera: THREE.PerspectiveCamera 
-  renderer: THREE.WebGLRenderer 
+  camera: THREE.PerspectiveCamera
+  renderer: THREE.WebGLRenderer
   scene: THREE.Scene
   meshes = []
 
-  plane: THREE.Mesh 
+  plane: THREE.Mesh
   skyLight: THREE.HemisphereLight
-  sunLight: THREE.DirectionalLight 
+  sunLight: THREE.DirectionalLight
   material: THREE.MeshPhongMaterial
   removeListeners: Function
 
@@ -45,7 +46,7 @@ export class Viewer {
   vimScene: VimScene
   boundingSphere: THREE.Sphere
 
-  clock = new THREE.Clock();
+  clock = new THREE.Clock()
 
   constructor () {
     this.canvas = undefined
@@ -62,7 +63,7 @@ export class Viewer {
       canvas: this.canvas
     })
     this.renderer.setPixelRatio(window.devicePixelRatio)
-    this.renderer.shadowMap.enabled = true;
+    this.renderer.shadowMap.enabled = true
 
     // Create the camera and size everything appropriately
     this.camera = new THREE.PerspectiveCamera()
@@ -89,24 +90,24 @@ export class Viewer {
     this.scene.add(this.plane)
 
     // Lights
-    this.skyLight = new THREE.HemisphereLight( 0xffffff, 0xffffff, 0.6 );
-    this.skyLight.color.setHSL( 0.6, 1, 0.6 );
-    this.skyLight.groundColor.setHSL( 0.095, 1, 0.75 );
-    this.skyLight.position.set( 0, 50, 0 );
-    this.scene.add( this.skyLight );
+    this.skyLight = new THREE.HemisphereLight(0xffffff, 0xffffff, 0.6)
+    this.skyLight.color.setHSL(0.6, 1, 0.6)
+    this.skyLight.groundColor.setHSL(0.095, 1, 0.75)
+    this.skyLight.position.set(0, 50, 0)
+    this.scene.add(this.skyLight)
 
-    const hemiLightHelper = new THREE.HemisphereLightHelper( this.skyLight, 10 );
-    this.scene.add( hemiLightHelper );
+    const hemiLightHelper = new THREE.HemisphereLightHelper(this.skyLight, 10)
+    this.scene.add(hemiLightHelper)
 
     //
-    this.sunLight = new THREE.DirectionalLight( 0xffffff, 1 );
-    this.sunLight.color.setHSL( 0.1, 1, 0.95 );
-    this.sunLight.position.set( - 1, 1.75, 1 );
-    this.sunLight.position.multiplyScalar( 30 );
-    this.scene.add( this.sunLight );
+    this.sunLight = new THREE.DirectionalLight(0xffffff, 1)
+    this.sunLight.color.setHSL(0.1, 1, 0.95)
+    this.sunLight.position.set(-1, 1.75, 1)
+    this.sunLight.position.multiplyScalar(30)
+    this.scene.add(this.sunLight)
 
-    const dirLightHelper = new THREE.DirectionalLightHelper( this.sunLight, 10 );
-    this.scene.add( dirLightHelper );
+    const dirLightHelper = new THREE.DirectionalLightHelper(this.sunLight, 10)
+    this.scene.add(dirLightHelper)
 
     // Material
     this.material = new THREE.MeshPhongMaterial({
@@ -140,7 +141,7 @@ export class Viewer {
 
     // Add all of the appropriate mouse, touch-pad, and keyboard listeners
     // Load Vim
-    this.loadFile(this.settings.url, (vim) => this.onVimLoaded(vim))
+    loadAny(this.settings.url, this.loadInScene.bind(this))
 
     // Start Loop
     this.animate()
@@ -177,58 +178,85 @@ export class Viewer {
     document.head.appendChild(this.favicon)
   }
 
-  onVimLoaded (vim) {
-    for (let i = 0; i < vim.meshes.length; ++i) {
-      this.meshes.push(vim.meshes[i])
-      this.scene.add(vim.meshes[i])
-    }
-    this.boundingSphere = vim.boundingSphere.clone()
-    this.boundingSphere.applyMatrix4(this.getViewMatrix())
-    this.vimScene = vim
-
-    this.focusModel()
-  }
-
-  loadFile (fileName, onSuccess: Function) {
-    function getExt (fileName) {
-      const indexOfQueryParams = fileName.lastIndexOf('?')
-      if (indexOfQueryParams >= 0) {
-        fileName = fileName.substring(0, indexOfQueryParams)
-      }
-      const extPos = fileName.lastIndexOf('.')
-      return fileName.slice(extPos + 1).toLowerCase()
-    }
-
-    console.log('Loading file: ' + fileName)
-    const ext = getExt(fileName)
-    if (ext !== 'vim') {
-      console.error('unhandled file format')
+  loadInScene (
+    result:
+      | VimScene
+      | THREE.Scene
+      | THREE.Group
+      | THREE.Object3D
+      | THREE.BufferGeometry
+  ) {
+    if (result instanceof VimScene) {
+      this.onVimLoaded(result)
       return
     }
 
-    console.time('loadingVim')
-    const loader = new VIMLoader(this.material)
-    loader.load(
-      fileName,
-      (vim) => {
-        console.log(
-          'Finished loading VIM: found ' + vim.meshes.length + ' objects'
-        )
-        console.timeEnd('loadingVim')
-        onSuccess(vim)
-      },
-      undefined,
-      undefined
-    )
+    if (result instanceof THREE.Scene) {
+      result.traverse((obj) => {
+        if (obj instanceof THREE.Mesh) this.addToScene(obj)
+      })
+    } else if (result instanceof THREE.BufferGeometry) {
+      result.computeVertexNormals()
+      this.addToScene(new THREE.Mesh(result))
+    } else if (
+      result instanceof THREE.Group ||
+      result instanceof THREE.Object3D
+    ) {
+      this.addToScene(result)
+    }
+    this.boundingSphere = Viewer.computeBoundingSphere(this.scene)
+    this.boundingSphere.applyMatrix4(this.getViewMatrix())
+    this.focusModel()
+  }
+
+  onVimLoaded (vim: VimScene) {
+    this.vimScene = vim
+
+    for (let i = 0; i < vim.meshes.length; ++i) {
+      this.addToScene(vim.meshes[i])
+    }
+
+    this.boundingSphere = vim.boundingSphere.clone()
+    this.boundingSphere.applyMatrix4(this.getViewMatrix())
+    this.focusModel()
+  }
+
+  addToScene (object: THREE.Object3D) {
+    this.scene.add(object)
+    this.meshes.push(object)
+  }
+
+  static computeBoundingSphere (scene: THREE.Scene): THREE.Sphere {
+    let sphere = new THREE.Sphere()
+
+    const grow = (geometry: BufferGeometry, matrix: THREE.Matrix4) => {
+      geometry.computeBoundingSphere()
+      const currentSphere = geometry.boundingSphere.clone()
+      currentSphere.applyMatrix4(matrix)
+      sphere = sphere.union(currentSphere)
+    }
+    const matrix = new THREE.Matrix4()
+    scene.traverse((obj) => {
+      if (obj instanceof THREE.InstancedMesh) {
+        for (let i = 0; i < obj.count; i++) {
+          obj.getMatrixAt(i, matrix)
+          grow(obj.geometry, matrix)
+        }
+      } else if (obj instanceof THREE.Mesh) {
+        grow(obj.geometry, obj.matrix)
+      }
+    })
+
+    return sphere
   }
 
   // Calls render, and asks the framework to prepare the next frame
   animate () {
     requestAnimationFrame(() => this.animate())
-    var timeDelta = this.clock.getDelta();
+    const timeDelta = this.clock.getDelta()
     this.resizeCanvas()
     this.updateObjects()
-    this.cameraController.frameUpdate(timeDelta);
+    this.cameraController.frameUpdate(timeDelta)
     this.renderer.render(this.scene, this.camera)
     if (this.stats) {
       this.stats.update()
@@ -276,26 +304,41 @@ export class Viewer {
     }
   }
 
-  createWorldGeometry (mesh, index) {
+  createWorldGeometry (mesh: THREE.Mesh, index: number) {
     const geometry = mesh.geometry.clone()
 
     let matrix = new THREE.Matrix4()
-    mesh.getMatrixAt(index, matrix)
+    if (mesh instanceof THREE.InstancedMesh) mesh.getMatrixAt(index, matrix)
+    else matrix.copy(mesh.matrix)
     matrix = this.getViewMatrix().multiply(matrix)
     geometry.applyMatrix4(matrix)
 
     return geometry
   }
 
-  getNodeIndex (mesh, instance) {
-    return mesh.userData.instanceIndices[instance]
+  getNodeIndex (mesh: THREE.Mesh, instance: number): number | null {
+    const indices = mesh.userData.instanceIndices as number[]
+
+    if (!indices) {
+      console.log('Error: Attempting to get node index of a non-vim object')
+      return null
+    }
+
+    if (indices.length <= instance) {
+      console.log('Error: Attempting to get node index out of range')
+      return null
+    }
+
+    return indices[instance]
   }
 
-  select (mesh, index) {
+  select (mesh: THREE.Mesh, index: number) {
     this.selection.select(mesh, index)
     const nodeIndex = this.getNodeIndex(mesh, index)
-    const elementName = this.getElementNameFromNodeIndex(nodeIndex)
-    console.log('Selected Element: ' + elementName)
+    if (nodeIndex) {
+      const elementName = this.getElementNameFromNodeIndex(nodeIndex)
+      console.log('Selected Element: ' + elementName)
+    }
   }
 
   clearSelection () {
@@ -306,15 +349,13 @@ export class Viewer {
   focusSelection () {
     if (this.selection.hasSelection()) {
       this.cameraController.lookAtSphere(this.selection.boundingSphere)
-    } 
-    else 
-    {
-      this.cameraController.lookAtSphere(this.boundingSphere)
+    } else {
+      this.cameraController.frameScene(this.boundingSphere)
     }
   }
 
   focusModel () {
-    this.cameraController.frameScene(this.boundingSphere);
+    this.cameraController.frameScene(this.boundingSphere)
   }
 
   resizeCanvas (force: boolean = false) {
@@ -336,13 +377,29 @@ export class Viewer {
     this.updateMaterial(this.plane.material, this.settings.plane.material)
     this.plane.position.copy(toVec(this.settings.plane.position))
     this.cameraController.applySettings(this.settings)
-    
-    this.skyLight.color.setHSL( this.settings.skylight.skyColor.h, this.settings.skylight.skyColor.s, this.settings.skylight.skyColor.l );
-    this.skyLight.groundColor.setHSL( this.settings.skylight.groundColor.h, this.settings.skylight.groundColor.s, this.settings.skylight.groundColor.l );
-    this.skyLight.intensity = this.settings.skylight.intensity;
-    this.sunLight.color.setHSL( this.settings.sunLight.color.h, this.settings.sunLight.color.s, this.settings.sunLight.color.l );
-    this.sunLight.position.set( this.settings.sunLight.position.x, this.settings.sunLight.position.y, this.settings.sunLight.position.z );
-    this.sunLight.intensity = this.settings.sunLight.intensity;
+
+    this.skyLight.color.setHSL(
+      this.settings.skylight.skyColor.h,
+      this.settings.skylight.skyColor.s,
+      this.settings.skylight.skyColor.l
+    )
+    this.skyLight.groundColor.setHSL(
+      this.settings.skylight.groundColor.h,
+      this.settings.skylight.groundColor.s,
+      this.settings.skylight.groundColor.l
+    )
+    this.skyLight.intensity = this.settings.skylight.intensity
+    this.sunLight.color.setHSL(
+      this.settings.sunLight.color.h,
+      this.settings.sunLight.color.s,
+      this.settings.sunLight.color.l
+    )
+    this.sunLight.position.set(
+      this.settings.sunLight.position.x,
+      this.settings.sunLight.position.y,
+      this.settings.sunLight.position.z
+    )
+    this.sunLight.intensity = this.settings.sunLight.intensity
   }
 
   updateMaterial (targetMaterial, settings) {
@@ -376,7 +433,7 @@ class Selection {
   viewer: Viewer
 
   // State
-  meshIndex: number | null = null
+  mesh: THREE.Mesh | null = null
   instanceIndex: number | null = null
   boundingSphere: THREE.Sphere | null = null
 
@@ -389,11 +446,11 @@ class Selection {
   }
 
   hasSelection () {
-    return this.meshIndex !== null
+    return this.mesh !== null
   }
 
   reset () {
-    this.meshIndex = null
+    this.mesh = null
     this.instanceIndex = null
     this.boundingSphere = null
     this.disposeResources()
@@ -407,13 +464,13 @@ class Selection {
     this.highlightDisposer = null
   }
 
-  select (mesh: number, index: number) {
+  select (mesh: THREE.Mesh, index: number) {
     this.disposeResources()
-    this.meshIndex = mesh
+    this.mesh = mesh
     this.instanceIndex = index
     this.geometry = this.viewer.createWorldGeometry(mesh, index)
     this.geometry.computeBoundingSphere()
-    this.boundingSphere = this.geometry.boundingSphere.clone()
+    this.boundingSphere = this.geometry.boundingSphere
     this.highlightDisposer = this.viewer.highlight(this.geometry)
   }
 }
