@@ -349,11 +349,13 @@ export class Viewer {
   focusSelection () {
     if (this.selection.hasSelection()) {
       this.cameraController.lookAtSphere(this.selection.boundingSphere)
-    } else this.focusModel()
+    } else {
+      this.cameraController.frameScene(this.boundingSphere)
+    }
   }
 
   focusModel () {
-    this.cameraController.lookAtSphere(this.boundingSphere)
+    this.cameraController.frameScene(this.boundingSphere)
   }
 
   resizeCanvas (force: boolean = false) {
