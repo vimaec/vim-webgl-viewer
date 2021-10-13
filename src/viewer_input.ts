@@ -185,7 +185,7 @@ export class ViewerInput {
           }
           break
         case KEYS.KEY_HOME:
-          this.cameraController.resetCamera()
+          this.cameraController.frameScene(this.viewer.boundingSphere)
           break
         // Selection
         case KEYS.KEY_ESCAPE:
