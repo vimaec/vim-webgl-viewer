@@ -2,10 +2,14 @@ import './index.css'
 import { Viewer } from './viewer'
 
 // set as global to be able to access viewer from command line
+
+const params = new URLSearchParams(window.location.search)
+const url = params.has('url') ? params.get('url') : './residence.vim'
+
 declare let viewer: Viewer
 globalThis.viewer = new Viewer()
 viewer.view({
-  url: './residence.vim',
+  url: url,
   object: {
     scale: 0.1,
     rotation: { x: 270 },
