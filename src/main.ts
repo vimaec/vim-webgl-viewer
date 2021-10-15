@@ -1,7 +1,9 @@
 import './index.css'
 import { Viewer } from './viewer'
 
-const viewer = new Viewer()
+declare let viewer: Viewer
+
+globalThis.viewer = new Viewer()
 viewer.view({
   url: './residence.vim',
   object: {
