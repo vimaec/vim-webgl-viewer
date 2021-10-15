@@ -1,7 +1,8 @@
-REM set "origin=%cd%"
-REM cd %1
-REM del /F /Q *.*
-robocopy "./dist" %1 *.* /MIR
+REM Copy build content
+robocopy "./dist" %1/vim-webgl-viewer *.* /MIR
+
+REM Push to github pages
+cd %1
 git add -A
 git commit -m "publish"
 git push
