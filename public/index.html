@@ -7,6 +7,22 @@
   <title>VIM Viewer</title>
 </head>
 <body>
-  <script type="module" src="./vim-webgl-viewer.es.js"></script>
+  <script type="module">
+	import * as vim from "./vim-webgl-viewer.es.js";
+	var viewer = new vim.Viewer();
+	viewer.view({
+	  url: './residence.vim',
+	  object: {
+		scale: 0.1,
+		rotation: { x: 270 },
+		position: { y: 0 }
+	  },
+	  plane: {
+		show: false
+	  },
+	  showStats: true
+	})
+		
+  </script>
 </body>
 </html>
