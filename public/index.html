@@ -12,7 +12,9 @@
 	import * as vim from "./vim-webgl-viewer.es.js";
 	
 	const params = new URLSearchParams(window.location.search)
-	const url = params.has('url') ? params.get('url') : './residence.vim'
+	const url = params.has('model')
+		? params.get('model')
+		: 'vim.azureedge.net/samples/residence.vim'
 	
 	var viewer = new vim.Viewer();
 	viewer.view({
