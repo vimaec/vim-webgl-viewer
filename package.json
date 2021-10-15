@@ -21,7 +21,7 @@
     "build": "vite build",
 	"preview": "vite preview --port 8080",
     "eslint": "eslint --ext .js,.ts src --fix",
-    "publish": "publish.bat \"..\\..\\vimaec.github.io\""
+    "publish": "publish.bat \"..\\..\\vimaec.github.io\\vim-webgl-viewer\""
   },
   "devDependencies": {
     "@types/dat.gui": "^0.7.7",
