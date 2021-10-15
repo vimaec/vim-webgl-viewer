@@ -19,7 +19,9 @@
   "scripts": {
     "dev": "vite",
     "build": "vite build",
-    "eslint": "eslint --ext .js,.ts src --fix"
+	"preview": "vite preview --port 8080",
+    "eslint": "eslint --ext .js,.ts src --fix",
+    "publish": "publish.bat \"..\\vimaec.github.io\""
   },
   "devDependencies": {
     "@types/dat.gui": "^0.7.7",
