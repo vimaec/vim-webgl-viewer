@@ -7,9 +7,8 @@ dist/*
 #ignore packages
 node_modules/*
 
-#ignore models excepts residence
+#ignore models
 models/*
-!/models/residence.vim
 
 # This locks in development chain dependencies which is not appropriate. 
 package-lock.json
