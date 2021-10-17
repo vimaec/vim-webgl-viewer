@@ -4,7 +4,7 @@ import { Viewer } from './viewer'
 // set as global to be able to access viewer from command line
 
 const params = new URLSearchParams(window.location.search)
-const url = params.has('model') ? params.get('model') : './models/residence.vim'
+const url = params.has('model') ? params.get('model') : 'https://vim.azureedge.net/samples/residence.vim'
 
 declare let viewer: Viewer
 globalThis.viewer = new Viewer()

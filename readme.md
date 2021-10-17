@@ -14,7 +14,7 @@ The VIM Three.JS 3D viewer combines the Three.JS library with several common loa
 * Run `npm run dev` to launch a dev-server and watching for changes
 * Run `npm run build` to compile and bundle everything for publishing. Resulting files end up in ./dist
 
-* Navigate to [http://localhost:3000 in your browser
+* Navigate to http://localhost:3000 in your browser
 
 ## Contributing:
 * Source code is formatted using prettier-eslint using the standardjs format.
