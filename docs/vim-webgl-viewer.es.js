@@ -24473,28 +24473,20 @@ const KEYS = {
   KEY_Y: 89,
   KEY_Z: 90
 };
-class ViewerInput {
-  constructor(canvas, settings, cameraController, viewer) {
-    __publicField(this, "MouseMoveSensitivity", 0.05);
-    __publicField(this, "MouseRotateSensitivity", 0.2);
-    __publicField(this, "TouchMoveSensitivity", this.MouseMoveSensitivity * 20);
-    __publicField(this, "TouchRotateSensitivity", this.MouseRotateSensitivity);
-    __publicField(this, "MouseScrollSensitivity", 0.05);
+class InputKeyboard {
+  constructor(camera, viewer, mouse) {
     __publicField(this, "MaximumInclination", 1.4);
     __publicField(this, "ShiftMultiplier", 3);
     __publicField(this, "MinimumSpeedDifference", 0.01);
     __publicField(this, "VelocityBlendFactor", 1e-4);
     __publicField(this, "BaseKeyboardSpeed", 5);
-    __publicField(this, "canvas");
-    __publicField(this, "settings");
-    __publicField(this, "cameraController");
-    __publicField(this, "unregister");
-    __publicField(this, "isMouseDown");
-    __publicField(this, "hasMouseMoved");
+    __publicField(this, "camera");
     __publicField(this, "viewer");
-    __publicField(this, "focusDisposer");
-    __publicField(this, "ctrlDown");
+    __publicField(this, "mouse");
     __publicField(this, "shftDown");
+    __publicField(this, "reset", () => {
+      this.shftDown = false;
+    });
     __publicField(this, "onKeyUp", (event) => {
       this.onKey(event, false);
     });
@@ -24506,21 +24498,21 @@ class ViewerInput {
         switch (event.keyCode) {
           case KEYS.KEY_ADD:
           case KEYS.KEY_OEM_PLUS:
-            this.cameraController.SpeedMultiplier += 1;
+            this.camera.SpeedMultiplier += 1;
             break;
           case KEYS.KEY_SUBTRACT:
           case KEYS.KEY_OEM_MINUS:
-            this.cameraController.SpeedMultiplier -= 1;
+            this.camera.SpeedMultiplier -= 1;
             break;
           case KEYS.KEY_F8:
-            this.cameraController.MouseOrbit = !this.cameraController.MouseOrbit;
-            if (this.cameraController.MouseOrbit) {
-              this.cameraController.CurrentOrbitalDistance = this.cameraController.OrbitalTarget.clone().sub(this.cameraController.camera.position).length();
-              this.cameraController.TargetOrbitalDistance = this.cameraController.CurrentOrbitalDistance;
+            this.camera.MouseOrbit = !this.camera.MouseOrbit;
+            if (this.camera.MouseOrbit) {
+              this.camera.CurrentOrbitalDistance = this.camera.OrbitalTarget.clone().sub(this.camera.camera.position).length();
+              this.camera.TargetOrbitalDistance = this.camera.CurrentOrbitalDistance;
             }
             break;
           case KEYS.KEY_HOME:
-            this.cameraController.frameScene(this.viewer.boundingSphere);
+            this.camera.frameScene(this.viewer.boundingSphere);
             break;
           case KEYS.KEY_ESCAPE:
             this.viewer.clearSelection();
@@ -24534,41 +24526,157 @@ class ViewerInput {
       switch (event.keyCode) {
         case KEYS.KEY_W:
         case KEYS.KEY_UP:
-          this.cameraController.InputVelocity.z = -speed;
+          this.camera.InputVelocity.z = -speed;
           break;
         case KEYS.KEY_S:
         case KEYS.KEY_DOWN:
-          this.cameraController.InputVelocity.z = speed;
+          this.camera.InputVelocity.z = speed;
           break;
         case KEYS.KEY_D:
         case KEYS.KEY_RIGHT:
-          this.cameraController.InputVelocity.x = speed;
+          this.camera.InputVelocity.x = speed;
           break;
         case KEYS.KEY_A:
         case KEYS.KEY_LEFT:
-          this.cameraController.InputVelocity.x = -speed;
+          this.camera.InputVelocity.x = -speed;
           break;
         case KEYS.KEY_E:
-          this.cameraController.InputVelocity.y = speed;
+          this.camera.InputVelocity.y = speed;
           break;
         case KEYS.KEY_Q:
-          this.cameraController.InputVelocity.y = -speed;
+          this.camera.InputVelocity.y = -speed;
           break;
         case KEYS.KEY_CTRL:
-          this.ctrlDown = keyDown;
+          this.mouse.setCtrl(keyDown);
           break;
         case KEYS.KEY_SHIFT:
           if (this.shftDown !== keyDown) {
             this.shftDown = keyDown;
             if (keyDown) {
-              this.cameraController.InputVelocity.multiplyScalar(this.ShiftMultiplier);
+              this.camera.InputVelocity.multiplyScalar(this.ShiftMultiplier);
             } else {
-              this.cameraController.InputVelocity.multiplyScalar(1 / this.ShiftMultiplier);
+              this.camera.InputVelocity.multiplyScalar(1 / this.ShiftMultiplier);
             }
           }
           break;
       }
       event.preventDefault();
+    });
+    this.camera = camera;
+    this.viewer = viewer;
+    this.mouse = mouse;
+  }
+}
+class InputTouch {
+  constructor(camera, viewer, mouse) {
+    __publicField(this, "TouchMoveSensitivity");
+    __publicField(this, "TouchRotateSensitivity");
+    __publicField(this, "camera");
+    __publicField(this, "viewer");
+    __publicField(this, "mouse");
+    __publicField(this, "touchStart");
+    __publicField(this, "touchStart1");
+    __publicField(this, "touchStart2");
+    __publicField(this, "touchStartTime");
+    __publicField(this, "reset", () => {
+      this.touchStart = this.touchStart1 = this.touchStart2 = this.touchStartTime = void 0;
+    });
+    __publicField(this, "onTap", (position) => {
+      this.mouse.onMouseClick(position);
+    });
+    __publicField(this, "onTouchStart", (event) => {
+      event.preventDefault();
+      if (!event || !event.touches || !event.touches.length) {
+        return;
+      }
+      this.touchStartTime = new Date().getTime();
+      if (event.touches.length === 1) {
+        this.touchStart = this.touchToVector(event.touches[0]);
+        this.touchStart1 = this.touchStart2 = void 0;
+      } else if (event.touches.length === 2) {
+        this.touchStart1 = this.touchToVector(event.touches[0]);
+        this.touchStart2 = this.touchToVector(event.touches[1]);
+        this.touchStart = this.average(this.touchStart1, this.touchStart2);
+      }
+    });
+    __publicField(this, "onDrag", (delta) => {
+      this.camera.rotateCameraBy(delta);
+    });
+    __publicField(this, "onDoubleDrag", (delta) => {
+      const matrix = this.viewer.getViewMatrix();
+      const move = new Vector3(delta.x, 0, delta.y).applyMatrix4(matrix);
+      this.camera.moveCameraBy(move, delta.length());
+    });
+    __publicField(this, "onPinchSpread", (delta) => {
+      const matrix = this.viewer.getViewMatrix();
+      const move = new Vector3(0, delta, 0).applyMatrix4(matrix);
+      this.camera.moveCameraBy(move, Math.abs(delta));
+    });
+    __publicField(this, "onTouchMove", (event) => {
+      if (!event || !event.touches || !event.touches.length)
+        return;
+      if (event.touches.length === 1) {
+        const pos = this.touchToVector(event.touches[0]);
+        const delta = pos.clone().sub(this.touchStart);
+        this.touchStart = pos;
+        this.onDrag(delta);
+        return;
+      }
+      if (event.touches.length >= 2) {
+        const p1 = this.touchToVector(event.touches[0]);
+        const p2 = this.touchToVector(event.touches[1]);
+        const p = this.average(p1, p2);
+        const moveDelta = this.touchStart.clone().sub(p);
+        const zoom = p1.distanceTo(p2);
+        const prevZoom = this.touchStart1.distanceTo(this.touchStart2);
+        const zoomDelta = zoom - prevZoom;
+        this.touchStart = p;
+        this.touchStart1 = p1;
+        this.touchStart2 = p2;
+        if (moveDelta.length() > Math.abs(zoomDelta)) {
+          this.onDoubleDrag(moveDelta);
+        } else {
+          this.onPinchSpread(zoomDelta);
+        }
+      }
+    });
+    __publicField(this, "onTouchEnd", (event) => {
+      if (this.touchStart && this.touchStartTime && !this.touchStart1 && !this.touchStart2) {
+        if (new Date().getTime() - this.touchStartTime < 500) {
+          this.onTap(this.touchStart);
+        }
+      }
+      this.reset();
+    });
+    this.camera = camera;
+    this.viewer = viewer;
+    this.mouse = mouse;
+    this.TouchMoveSensitivity = this.mouse.MouseMoveSensitivity * 20;
+    this.TouchRotateSensitivity = this.mouse.MouseRotateSensitivity;
+  }
+  touchToVector(touch) {
+    return new Vector2(touch.pageX, touch.pageY);
+  }
+  average(p1, p2) {
+    return p1.clone().lerp(p2, 0.5);
+  }
+}
+class InputMouse {
+  constructor(camera, canvas, viewer) {
+    __publicField(this, "MouseMoveSensitivity", 0.05);
+    __publicField(this, "MouseRotateSensitivity", 0.2);
+    __publicField(this, "MouseScrollSensitivity", 0.05);
+    __publicField(this, "camera");
+    __publicField(this, "canvas");
+    __publicField(this, "viewer");
+    __publicField(this, "isMouseDown");
+    __publicField(this, "hasMouseMoved");
+    __publicField(this, "ctrlDown");
+    __publicField(this, "reset", () => {
+      this.isMouseDown = this.hasMouseMoved = this.ctrlDown = false;
+    });
+    __publicField(this, "setCtrl", (value) => {
+      this.ctrlDown = value;
     });
     __publicField(this, "onMouseMove", (event) => {
       if (!this.isMouseDown) {
@@ -24580,22 +24688,22 @@ class ViewerInput {
       const deltaY = event.movementY || event.mozMovementY || event.webkitMovementY || 0;
       const delta = new Vector2(deltaX, deltaY);
       if (event.buttons & 2) {
-        this.cameraController.panCameraBy(delta);
+        this.camera.panCameraBy(delta);
       } else {
         delta.multiplyScalar(this.MouseRotateSensitivity);
-        this.cameraController.rotateCameraBy(delta);
+        this.camera.rotateCameraBy(delta);
       }
     });
     __publicField(this, "onMouseWheel", (event) => {
       event.preventDefault();
       event.stopPropagation();
       if (this.ctrlDown) {
-        this.cameraController.SpeedMultiplier -= event.deltaY * 0.01;
-      } else if (this.cameraController.MouseOrbit) {
-        this.cameraController.updateOrbitalDistance(-event.deltaY * this.MouseScrollSensitivity);
+        this.camera.SpeedMultiplier -= event.deltaY * 0.01;
+      } else if (this.camera.MouseOrbit) {
+        this.camera.updateOrbitalDistance(-event.deltaY * this.MouseScrollSensitivity);
       } else {
-        const impulse = new Vector3(0, 0, event.deltaY * this.MouseScrollSensitivity * this.cameraController.getSpeedMultiplier());
-        this.cameraController.applyLocalImpulse(impulse);
+        const impulse = new Vector3(0, 0, event.deltaY * this.MouseScrollSensitivity * this.camera.getSpeedMultiplier());
+        this.camera.applyLocalImpulse(impulse);
       }
     });
     __publicField(this, "onMouseDown", (event) => {
@@ -24606,52 +24714,70 @@ class ViewerInput {
     });
     __publicField(this, "onMouseUp", (event) => {
       if (this.isMouseDown && !this.hasMouseMoved) {
-        const hits = this.mouseRaycast(event.x, event.y);
-        if (hits.length > 0) {
-          const mesh = hits[0].object;
-          const index = hits[0].instanceId;
-          console.log(`Raycast hit. Position (${hits[0].point.x}, ${hits[0].point.y}, ${hits[0].point.z})`);
-          if (mesh instanceof Mesh) {
-            this.viewer.select(mesh, index);
-          }
-        }
+        this.onMouseClick(new Vector2(event.x, event.y));
       }
       this.isMouseDown = false;
     });
+    __publicField(this, "onMouseClick", (position) => {
+      const hits = this.mouseRaycast(position.x, position.y);
+      if (hits.length > 0) {
+        const mesh = hits[0].object;
+        const index = hits[0].instanceId;
+        console.log(`Raycast hit. Position (${hits[0].point.x}, ${hits[0].point.y}, ${hits[0].point.z})`);
+        if (mesh instanceof Mesh) {
+          this.viewer.select(mesh, index);
+        }
+      }
+    });
+    this.camera = camera;
     this.canvas = canvas;
-    this.settings = settings;
-    this.cameraController = cameraController;
     this.viewer = viewer;
-    this.unregister = function() {
-    };
-    this.isMouseDown = false;
-  }
-  register() {
-    this.canvas.addEventListener("mousedown", this.onMouseDown);
-    this.canvas.addEventListener("wheel", this.onMouseWheel);
-    this.canvas.addEventListener("mousemove", this.onMouseMove);
-    this.canvas.addEventListener("mouseup", this.onMouseUp);
-    document.addEventListener("keydown", this.onKeyDown);
-    document.addEventListener("keyup", this.onKeyUp);
-    this.unregister = function() {
-      this.canvas.removeEventListener("mousedown", this.onMouseDown);
-      this.canvas.removeEventListener("wheel", this.onMouseWheel);
-      this.canvas.removeEventListener("mousemove", this.onMouseMove);
-      this.canvas.removeEventListener("mouseup", this.onMouseUp);
-      document.removeEventListener("keydown", this.onKeyDown);
-      document.removeEventListener("keyup", this.onKeyUp);
-      this.isMouseDown = false;
-      this.unregister = function() {
-      };
-    };
   }
   mouseRaycast(mouseX, mouseY) {
     const x = mouseX / window.innerWidth * 2 - 1;
     const y = -(mouseY / window.innerHeight) * 2 + 1;
     const mouse = new Vector2(x, y);
     const raycaster = new Raycaster();
-    raycaster.setFromCamera(mouse, this.cameraController.camera);
+    raycaster.setFromCamera(mouse, this.camera.camera);
     return raycaster.intersectObjects(this.viewer.meshes);
+  }
+}
+class ViewerInput {
+  constructor(canvas, camera, viewer) {
+    __publicField(this, "canvas");
+    __publicField(this, "unregisters");
+    __publicField(this, "touch");
+    __publicField(this, "mouse");
+    __publicField(this, "keyboard");
+    __publicField(this, "reg", (handler, type, listener) => {
+      handler.addEventListener(type, listener);
+      this.unregisters.push(() => handler.removeEventListener(type, listener));
+    });
+    __publicField(this, "unregister", () => {
+      this.unregisters.forEach((f) => f());
+      this.reset();
+    });
+    this.canvas = canvas;
+    this.unregisters = [];
+    this.mouse = new InputMouse(camera, canvas, viewer);
+    this.touch = new InputTouch(camera, viewer, this.mouse);
+    this.keyboard = new InputKeyboard(camera, viewer, this.mouse);
+  }
+  register() {
+    this.reg(this.canvas, "mousedown", this.mouse.onMouseDown);
+    this.reg(this.canvas, "wheel", this.mouse.onMouseWheel);
+    this.reg(this.canvas, "mousemove", this.mouse.onMouseMove);
+    this.reg(this.canvas, "mouseup", this.mouse.onMouseUp);
+    this.reg(this.canvas, "touchstart", this.touch.onTouchStart);
+    this.reg(this.canvas, "touchend", this.touch.onTouchEnd);
+    this.reg(this.canvas, "touchmove", this.touch.onTouchMove);
+    this.reg(document, "keydown", this.keyboard.onKeyDown);
+    this.reg(document, "keyup", this.keyboard.onKeyUp);
+  }
+  reset() {
+    this.mouse.reset();
+    this.keyboard.reset();
+    this.touch.reset();
   }
 }
 function ___$insertStyle(css2) {
@@ -39149,7 +39275,7 @@ class Viewer {
       this.stats.dom.style.left = "16px";
       document.body.appendChild(this.stats.dom);
     }
-    this.controls = new ViewerInput(this.canvas, this.settings, this.cameraController, this);
+    this.controls = new ViewerInput(this.canvas, this.cameraController, this);
     this.controls.register();
     this.selection = new Selection(this);
     loadAny(this.settings.url, this.loadInScene.bind(this));
