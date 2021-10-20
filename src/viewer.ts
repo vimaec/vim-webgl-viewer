@@ -101,12 +101,7 @@ export class Viewer {
     }
 
     // Input and Selection
-    this.controls = new ViewerInput(
-      this.canvas,
-      this.settings,
-      this.cameraController,
-      this
-    )
+    this.controls = new ViewerInput(this.canvas, this.cameraController, this)
     this.controls.register()
     this.selection = new Selection(this)
 
