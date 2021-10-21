@@ -5,6 +5,9 @@ import { VimG3d } from './g3d'
 type VimMesh = THREE.InstancedMesh<THREE.BufferGeometry, THREE.Material>
 
 class Vim {
+  static tableElement = 'Rvt.Element'
+  static tableNode = 'Vim.Node'
+
   header: string
   assets: BFast
   g3d: VimG3d
@@ -125,7 +128,7 @@ class VimScene {
   getElementIndexFromNodeIndex (nodeIndex: number): number | undefined {
     if (nodeIndex < 0) throw new Error('Invalid negative index')
 
-    return this.vim.bim.get('Vim.Node').get('Rvt.Element')[nodeIndex]
+    return this.vim.bim.get(Vim.tableNode).get(Vim.tableElement)[nodeIndex]
   }
 
   getElementIdFromNodeIndex (nodeIndex: number): number | undefined {
@@ -134,7 +137,7 @@ class VimScene {
     const elementIndex = this.getElementIndexFromNodeIndex(nodeIndex)
     if (elementIndex === undefined) return
 
-    return this.vim.bim.get('Rvt.Element').get('Id')[elementIndex]
+    return this.vim.bim.get(Vim.tableElement).get('Id')[elementIndex]
   }
 
   // TODO add better ways to access bim
@@ -144,7 +147,9 @@ class VimScene {
     const elementIndex = this.getElementIndexFromNodeIndex(nodeIndex)
     if (elementIndex === undefined) return
 
-    const nameIndex = this.vim.bim.get('Rvt.Element').get('Name')[elementIndex]
+    const nameIndex = this.vim.bim.get(Vim.tableElement).get('Name')[
+      elementIndex
+    ]
 
     return this.getStringFromIndex(nameIndex as number)
   }
