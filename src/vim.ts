@@ -2,7 +2,7 @@ import * as THREE from 'three'
 import { BFast } from './bfast'
 import { VimG3d } from './g3d'
 
-type Mesh = THREE.InstancedMesh<THREE.BufferGeometry, THREE.Material>
+type VimMesh = THREE.InstancedMesh<THREE.BufferGeometry, THREE.Material>
 
 class Vim {
   header: string
@@ -27,21 +27,29 @@ class Vim {
 }
 
 class VimSceneGeometry {
-  meshes: Mesh[]
+  meshes: VimMesh[]
   boundingSphere: THREE.Sphere
-  nodeIndexToMeshInstance: Map<number, [Mesh, number]>
+  nodeIndexToMeshInstance: Map<number, [VimMesh, number]>
   meshIdToNodeIndex: Map<number, [number]>
 
   constructor (
-    meshes: Mesh[],
+    meshes: VimMesh[],
     boundingSphere: THREE.Sphere,
-    nodeIndexToMeshInstance: Map<number, [Mesh, number]>,
+    nodeIndexToMeshInstance: Map<number, [VimMesh, number]>,
     meshIdToNodeIndex: Map<number, [number]>
   ) {
     this.meshes = meshes
     this.boundingSphere = boundingSphere
     this.nodeIndexToMeshInstance = nodeIndexToMeshInstance
     this.meshIdToNodeIndex = meshIdToNodeIndex
+  }
+
+  getNodeCount (): number {
+    return this.nodeIndexToMeshInstance.size
+  }
+
+  getMeshCount (): number {
+    return this.meshes.length
   }
 }
 
@@ -57,14 +65,13 @@ class VimScene {
   }
 
   private mapElements (): Map<number, number[]> {
-    const nodeCount = this.getNodeCount()
-    if (nodeCount <= 0) return null
-
+    const nodeCount = this.geometry.getNodeCount()
     const map = new Map<number, number[]>()
     for (let i = 0; i < nodeCount; i++) {
-      const elementId = this.getElementIdFromNodeIndex(i)
-      if (map.has(elementId)) {
-        map.get(elementId).push(i)
+      const elementId = this.getElementIdFromNodeIndex(i)!
+      const nodes = map.get(elementId)
+      if (nodes) {
+        nodes.push(i)
       } else {
         map.set(elementId, [i])
       }
@@ -72,56 +79,79 @@ class VimScene {
     return map
   }
 
-  getNodeCount (): number {
-    return this.geometry.nodeIndexToMeshInstance.size
+  getNodeIndicesFromElement (elementId: number): number[] | undefined {
+    return this.elementToNodes.get(elementId)
   }
 
-  getNodeIndicesFromElement (elementId: number): number[] | null {
-    return this.elementToNodes?.has(elementId)
-      ? this.elementToNodes.get(elementId)
-      : null
-  }
-
-  getMeshesFromElement (elementId: number): number[] | [Mesh, number][] {
-    const result: [Mesh, number][] = []
+  getMeshesFromElement (
+    elementId: number
+  ): number[] | [VimMesh, number][] | undefined {
     const nodeIndices = this.getNodeIndicesFromElement(elementId)
+    if (!nodeIndices || !nodeIndices.length) return
+
+    const result: [VimMesh, number][] = []
     nodeIndices.forEach((i) => {
-      result.push(this.getMeshFromNodeIndex(i))
+      result.push(this.getMeshFromNodeIndex(i)!)
     })
     return result
   }
 
-  getMeshFromNodeIndex (nodeIndex: number): [Mesh, number] {
+  getMeshFromNodeIndex (nodeIndex: number): [VimMesh, number] | undefined {
+    if (nodeIndex < 0) throw new Error('Invalid negative index')
+
     return this.geometry.nodeIndexToMeshInstance.get(nodeIndex)
   }
 
-  getNodeIndexFromMesh (mesh: THREE.Mesh, instance: number): number | null {
-    return this.geometry.meshIdToNodeIndex.get(mesh.id)[instance]
+  getNodeIndexFromMesh (mesh: THREE.Mesh, instance: number): number | undefined {
+    if (instance < 0) throw new Error('Invalid negative index')
+    if (!mesh) throw new Error('Invalid null mesh')
+
+    const nodes = this.geometry.meshIdToNodeIndex.get(mesh.id)
+    if (!nodes) return
+
+    return nodes[instance]
   }
 
-  getElementIdFromMesh (mesh: THREE.Mesh, instance: number): number | null {
+  getElementIdFromMesh (mesh: THREE.Mesh, instance: number): number | undefined {
+    if (instance < 0) throw new Error('Invalid negative index')
+    if (!mesh) throw new Error('Invalid null mesh')
+
     const nodeIndex = this.getNodeIndexFromMesh(mesh, instance)
-    return nodeIndex ? this.getElementIndexFromNodeIndex(nodeIndex) : null
+    if (nodeIndex === undefined) return
+
+    return this.getElementIndexFromNodeIndex(nodeIndex)
   }
 
-  getElementIndexFromNodeIndex (nodeIndex: number) {
+  getElementIndexFromNodeIndex (nodeIndex: number): number | undefined {
+    if (nodeIndex < 0) throw new Error('Invalid negative index')
+
     return this.vim.bim.get('Vim.Node').get('Rvt.Element')[nodeIndex]
   }
 
-  getElementIdFromNodeIndex (nodeIndex: number) {
+  getElementIdFromNodeIndex (nodeIndex: number): number | undefined {
+    if (nodeIndex < 0) throw new Error('Invalid negative node index')
+
     const elementIndex = this.getElementIndexFromNodeIndex(nodeIndex)
-    const elementId = this.vim.bim.get('Rvt.Element').get('Id')[elementIndex]
-    return elementId
+    if (elementIndex === undefined) return
+
+    return this.vim.bim.get('Rvt.Element').get('Id')[elementIndex]
   }
 
   // TODO add better ways to access bim
-  getElementNameFromNodeIndex (nodeIndex: number) {
+  getElementNameFromNodeIndex (nodeIndex: number): string | undefined {
+    if (nodeIndex < 0) throw new Error('Invalid negative node index')
+
     const elementIndex = this.getElementIndexFromNodeIndex(nodeIndex)
+    if (elementIndex === undefined) return
+
     const nameIndex = this.vim.bim.get('Rvt.Element').get('Name')[elementIndex]
-    return this.getStringFromIndex(nameIndex)
+
+    return this.getStringFromIndex(nameIndex as number)
   }
 
-  getStringFromIndex (stringIndex: number) {
+  getStringFromIndex (stringIndex: number): string | undefined {
+    if (stringIndex < 0) throw new Error('Invalid negative string index')
+
     return this.vim.strings[stringIndex]
   }
 }

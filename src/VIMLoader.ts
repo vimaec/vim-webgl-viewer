@@ -402,7 +402,7 @@ export class VIMLoader {
   ): VimSceneGeometry {
     const matrixArity = 16
     const instanceCounters = new Int32Array(meshes.length)
-    let boundingSphere: THREE.Sphere = null
+    let boundingSphere: THREE.Sphere | null = null
     const nodeIndexToMeshInstance = new Map<number, [Mesh, number]>()
     const meshIdToNodeIndex = new Map<number, [number]>()
     const resultMeshes: Mesh[] = []
@@ -427,21 +427,24 @@ export class VIMLoader {
 
       // Set Node ID for picking
       nodeIndexToMeshInstance.set(i, [mesh, count])
-      if (meshIdToNodeIndex.has(mesh.id)) {
-        meshIdToNodeIndex.get(mesh.id).push(i)
+
+      const nodes = meshIdToNodeIndex.get(mesh.id)
+      if (nodes) {
+        nodes.push(i)
       } else {
         meshIdToNodeIndex.set(mesh.id, [i])
       }
 
-      const sphere = mesh.geometry.boundingSphere.clone()
+      // Sphere was computed when geometry was created
+      const sphere = mesh.geometry.boundingSphere!.clone()
       sphere.applyMatrix4(matrix)
-      boundingSphere = boundingSphere?.union(sphere) ?? sphere
+      boundingSphere = boundingSphere ? boundingSphere.union(sphere) : sphere
 
       resultMeshes.push(mesh)
     }
     return new VimSceneGeometry(
       resultMeshes,
-      boundingSphere,
+      boundingSphere ?? new THREE.Sphere(),
       nodeIndexToMeshInstance,
       meshIdToNodeIndex
     )
