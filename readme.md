@@ -56,6 +56,7 @@ Virtually the simplest usage of the VIM viewer is the following example:
     <title>VIM Viewer</title>
 </head>
 <body>
+    <script src="https://unpkg.com/three@0.133.1/build/three.min.js"></script>
     <script src="./dist/vim-webgl-viewer.iife.js"></script>
     <script>
         var viewer = new vim.Viewer();
@@ -84,6 +85,7 @@ If you want to use esm imports, you do it as follows:
 import { Viewer } from 'vim-webgl-viewer'
 
 // That will work if you use the bundled file directly
+// However, you still need to have threejs installed via npm and use a bundler
 import { Viewer } from './dist/vim-webgl-viewer.es.js'
 
 const viewer = new Viewer();
@@ -108,14 +110,8 @@ TBD
 
 ## The Sources and Dependencies
 
-The distributable file `vim-webgl-viewer.js` is a webpack bundle of: 
+The distributable file `vim-webgl-viewer.iife.js` does not contain the underlying source for [Three.JS](https://threejs.org) to avoid duplication. Please include Three.JS on your own. However, it comes bundled with:
 
-* [Three.JS](https://threejs.org)
-    * The main Three.JS distributable
-    * WebGL statistics utility
-    * Several file loaders for Three.JS from the `examples/loaders` folder
-    * Three.JS Orbit controls from the `examples/controls` folder    
-    * The custom `VIMLoader.js` file
-* [Dat.GUI](https://github.com/dataarts/dat.gui) 
-* The `vim-webgl-viewer.js` source file which encapsulates common Three JS boiler plate 
+* [Dat.GUI](https://github.com/dataarts/dat.gui)
+* The `vim-webgl-viewer.js` source file which encapsulates common Three JS boiler plate
 
