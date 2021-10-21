@@ -19007,73 +19007,6 @@ function toJSON(shapes, data) {
   }
   return data;
 }
-class SphereGeometry extends BufferGeometry {
-  constructor(radius = 1, widthSegments = 32, heightSegments = 16, phiStart = 0, phiLength = Math.PI * 2, thetaStart = 0, thetaLength = Math.PI) {
-    super();
-    this.type = "SphereGeometry";
-    this.parameters = {
-      radius,
-      widthSegments,
-      heightSegments,
-      phiStart,
-      phiLength,
-      thetaStart,
-      thetaLength
-    };
-    widthSegments = Math.max(3, Math.floor(widthSegments));
-    heightSegments = Math.max(2, Math.floor(heightSegments));
-    const thetaEnd = Math.min(thetaStart + thetaLength, Math.PI);
-    let index = 0;
-    const grid = [];
-    const vertex2 = new Vector3();
-    const normal = new Vector3();
-    const indices = [];
-    const vertices = [];
-    const normals = [];
-    const uvs = [];
-    for (let iy = 0; iy <= heightSegments; iy++) {
-      const verticesRow = [];
-      const v = iy / heightSegments;
-      let uOffset = 0;
-      if (iy == 0 && thetaStart == 0) {
-        uOffset = 0.5 / widthSegments;
-      } else if (iy == heightSegments && thetaEnd == Math.PI) {
-        uOffset = -0.5 / widthSegments;
-      }
-      for (let ix = 0; ix <= widthSegments; ix++) {
-        const u = ix / widthSegments;
-        vertex2.x = -radius * Math.cos(phiStart + u * phiLength) * Math.sin(thetaStart + v * thetaLength);
-        vertex2.y = radius * Math.cos(thetaStart + v * thetaLength);
-        vertex2.z = radius * Math.sin(phiStart + u * phiLength) * Math.sin(thetaStart + v * thetaLength);
-        vertices.push(vertex2.x, vertex2.y, vertex2.z);
-        normal.copy(vertex2).normalize();
-        normals.push(normal.x, normal.y, normal.z);
-        uvs.push(u + uOffset, 1 - v);
-        verticesRow.push(index++);
-      }
-      grid.push(verticesRow);
-    }
-    for (let iy = 0; iy < heightSegments; iy++) {
-      for (let ix = 0; ix < widthSegments; ix++) {
-        const a = grid[iy][ix + 1];
-        const b = grid[iy][ix];
-        const c = grid[iy + 1][ix];
-        const d = grid[iy + 1][ix + 1];
-        if (iy !== 0 || thetaStart > 0)
-          indices.push(a, b, d);
-        if (iy !== heightSegments - 1 || thetaEnd < Math.PI)
-          indices.push(b, c, d);
-      }
-    }
-    this.setIndex(indices);
-    this.setAttribute("position", new Float32BufferAttribute(vertices, 3));
-    this.setAttribute("normal", new Float32BufferAttribute(normals, 3));
-    this.setAttribute("uv", new Float32BufferAttribute(uvs, 2));
-  }
-  static fromJSON(data) {
-    return new SphereGeometry(data.radius, data.widthSegments, data.heightSegments, data.phiStart, data.phiLength, data.thetaStart, data.thetaLength);
-  }
-}
 class WireframeGeometry extends BufferGeometry {
   constructor(geometry = null) {
     super();
@@ -24178,14 +24111,82 @@ class Vim {
     this.strings = strings;
   }
 }
-class VimScene {
-  constructor(vim, meshes, sphere) {
-    __publicField(this, "vim");
+class VimSceneGeometry {
+  constructor(meshes, boundingSphere, nodeIndexToMeshInstance, meshIdToNodeIndex) {
     __publicField(this, "meshes");
     __publicField(this, "boundingSphere");
-    this.vim = vim;
+    __publicField(this, "nodeIndexToMeshInstance");
+    __publicField(this, "meshIdToNodeIndex");
     this.meshes = meshes;
-    this.boundingSphere = sphere;
+    this.boundingSphere = boundingSphere;
+    this.nodeIndexToMeshInstance = nodeIndexToMeshInstance;
+    this.meshIdToNodeIndex = meshIdToNodeIndex;
+  }
+}
+class VimScene {
+  constructor(vim, geometry) {
+    __publicField(this, "vim");
+    __publicField(this, "geometry");
+    __publicField(this, "elementToNodes");
+    this.vim = vim;
+    this.geometry = geometry;
+    this.elementToNodes = this.mapElements();
+  }
+  mapElements() {
+    const nodeCount = this.getNodeCount();
+    if (nodeCount <= 0)
+      return null;
+    const map2 = new Map();
+    for (let i = 0; i < nodeCount; i++) {
+      const elementId = this.getElementIdFromNodeIndex(i);
+      if (map2.has(elementId)) {
+        map2.get(elementId).push(i);
+      } else {
+        map2.set(elementId, [i]);
+      }
+    }
+    return map2;
+  }
+  getNodeCount() {
+    return this.geometry.nodeIndexToMeshInstance.size;
+  }
+  getNodeIndicesFromElement(elementId) {
+    var _a2;
+    return ((_a2 = this.elementToNodes) == null ? void 0 : _a2.has(elementId)) ? this.elementToNodes.get(elementId) : null;
+  }
+  getMeshesFromElement(elementId) {
+    const result2 = [];
+    const nodeIndices = this.getNodeIndicesFromElement(elementId);
+    nodeIndices.forEach((i) => {
+      result2.push(this.getMeshFromNodeIndex(i));
+    });
+    return result2;
+  }
+  getMeshFromNodeIndex(nodeIndex) {
+    return this.geometry.nodeIndexToMeshInstance.get(nodeIndex);
+  }
+  getNodeIndexFromMesh(mesh, instance) {
+    return this.geometry.meshIdToNodeIndex.get(mesh.id)[instance];
+  }
+  getElementIdFromMesh(mesh, instance) {
+    const nodeIndex = this.getNodeIndexFromMesh(mesh, instance);
+    return nodeIndex ? this.getElementIndexFromNodeIndex(nodeIndex) : null;
+  }
+  getElementIndexFromNodeIndex(nodeIndex) {
+    return this.vim.bim.get("Vim.Node").get("Rvt.Element")[nodeIndex];
+  }
+  getElementIdFromNodeIndex(nodeIndex) {
+    const elementIndex = this.getElementIndexFromNodeIndex(nodeIndex);
+    const elementId = this.vim.bim.get("Rvt.Element").get("Id")[elementIndex];
+    return elementId;
+  }
+  getElementNameFromNodeIndex(nodeIndex) {
+    const elementIndex = this.getElementIndexFromNodeIndex(nodeIndex);
+    const nameIndex = this.vim.bim.get("Rvt.Element").get("Name")[elementIndex];
+    return this.getStringFromIndex(nameIndex);
+  }
+  getStringFromIndex(stringIndex) {
+    return this.vim.strings[stringIndex];
   }
 }
 const ViewerSettings = {
@@ -27839,13 +27840,8 @@ class VIMLoader {
     console.log("Allocating Instanced Meshes");
     const rawMeshes = this.allocateMeshes(geometry, vim.g3d.instanceMeshes);
     console.log("Applying Matrices");
-    const [meshes, boundingSphere] = this.applyMatrices(rawMeshes, vim.g3d.instanceMeshes, vim.g3d.instanceTransforms);
-    function notNull(arg) {
-      return arg !== null;
-    }
-    const validMeshes = meshes.filter(notNull);
-    console.timeEnd("parsingVim");
-    return new VimScene(vim, validMeshes, boundingSphere);
+    const sceneGeometry = this.applyMatrices(rawMeshes, vim.g3d.instanceMeshes, vim.g3d.instanceTransforms);
+    return new VimScene(vim, sceneGeometry);
   }
   allocateMeshes(geometries, instanceMeshes) {
     const meshCount = geometries.length;
@@ -27876,6 +27872,9 @@ class VIMLoader {
     const matrixArity = 16;
     const instanceCounters = new Int32Array(meshes.length);
     let boundingSphere = null;
+    const nodeIndexToMeshInstance = new Map();
+    const meshIdToNodeIndex = new Map();
+    const resultMeshes = [];
     for (let i = 0; i < instanceMeshes.length; ++i) {
       const meshIndex = instanceMeshes[i];
       if (meshIndex < 0)
@@ -27888,14 +27887,18 @@ class VIMLoader {
       const matrix = new Matrix4();
       matrix.elements = Array.from(matrixAsArray);
       mesh.setMatrixAt(count, matrix);
-      if (!mesh.userData.instanceIndices)
-        mesh.userData.instanceIndices = [];
-      mesh.userData.instanceIndices.push(i);
+      nodeIndexToMeshInstance.set(i, [mesh, count]);
+      if (meshIdToNodeIndex.has(mesh.id)) {
+        meshIdToNodeIndex.get(mesh.id).push(i);
+      } else {
+        meshIdToNodeIndex.set(mesh.id, [i]);
+      }
       const sphere = mesh.geometry.boundingSphere.clone();
       sphere.applyMatrix4(matrix);
       boundingSphere = (_a2 = boundingSphere == null ? void 0 : boundingSphere.union(sphere)) != null ? _a2 : sphere;
+      resultMeshes.push(mesh);
     }
-    return [meshes, boundingSphere];
+    return new VimSceneGeometry(resultMeshes, boundingSphere, nodeIndexToMeshInstance, meshIdToNodeIndex);
   }
 }
 class TDSLoader extends Loader {
@@ -39217,6 +39220,42 @@ var stats_min = { exports: {} };
   });
 })(stats_min);
 var Stats = stats_min.exports;
+class Selection {
+  constructor(viewer) {
+    __publicField(this, "viewer");
+    __publicField(this, "mesh", null);
+    __publicField(this, "instanceIndex", null);
+    __publicField(this, "boundingSphere", null);
+    __publicField(this, "geometry", null);
+    __publicField(this, "highlightDisposer", null);
+    this.viewer = viewer;
+  }
+  hasSelection() {
+    return this.mesh !== null;
+  }
+  reset() {
+    this.mesh = null;
+    this.instanceIndex = null;
+    this.boundingSphere = null;
+    this.disposeResources();
+  }
+  disposeResources() {
+    var _a2, _b2;
+    (_a2 = this.geometry) == null ? void 0 : _a2.dispose();
+    this.geometry = null;
+    (_b2 = this.highlightDisposer) == null ? void 0 : _b2.call(this);
+    this.highlightDisposer = null;
+  }
+  select(mesh, index) {
+    this.disposeResources();
+    this.mesh = mesh;
+    this.instanceIndex = index;
+    this.geometry = this.viewer.createWorldGeometry(mesh, index);
+    this.geometry.computeBoundingSphere();
+    this.boundingSphere = this.geometry.boundingSphere;
+    this.highlightDisposer = this.viewer.highlight(this.geometry);
+  }
+}
 class Viewer {
   constructor() {
     __publicField(this, "canvas");
@@ -39340,25 +39379,12 @@ class Viewer {
   }
   onVimLoaded(vim) {
     this.vimScene = vim;
-    for (let i = 0; i < vim.meshes.length; ++i) {
-      this.addToScene(vim.meshes[i]);
-    }
-    this.boundingSphere = vim.boundingSphere.clone();
+    const meshes = vim.geometry.meshes;
+    meshes.forEach(this.addToScene.bind(this));
+    this.boundingSphere = vim.geometry.boundingSphere.clone();
     this.boundingSphere = this.boundingSphere.applyMatrix4(this.getViewMatrix());
     this.finishScene();
     this.focusModel();
-  }
-  drawSphere(sphere) {
-    const s = new LineSegments(new WireframeGeometry(new SphereGeometry(sphere.radius)), new LineBasicMaterial({
-      depthTest: false,
-      opacity: 0.5,
-      color: new Color$1(255),
-      transparent: true
-    }));
-    s.position.copy(sphere.center);
-    s.updateMatrix();
-    s.applyMatrix4(this.getViewMatrix());
-    this.scene.add(s);
   }
   addToScene(object) {
     this.scene.add(object);
@@ -39440,25 +39466,16 @@ class Viewer {
     geometry.applyMatrix4(matrix);
     return geometry;
   }
-  getNodeIndex(mesh, instance) {
-    const indices = mesh.userData.instanceIndices;
-    if (!indices) {
-      console.log("Error: Attempting to get node index of a non-vim object");
-      return null;
-    }
-    if (indices.length <= instance) {
-      console.log("Error: Attempting to get node index out of range");
-      return null;
-    }
-    return indices[instance];
+  selectByElementId(elementId) {
+    const meshes = this.vimScene.getMeshesFromElement(elementId);
+    this.select(meshes[0][0], meshes[0][1]);
   }
   select(mesh, index) {
     this.selection.select(mesh, index);
-    const nodeIndex = this.getNodeIndex(mesh, index);
-    if (nodeIndex) {
-      const elementName = this.getElementNameFromNodeIndex(nodeIndex);
-      console.log("Selected Element: " + elementName);
-    }
+    const nodeIndex = this.vimScene.getNodeIndexFromMesh(mesh, index);
+    const id = this.vimScene.getElementIdFromNodeIndex(nodeIndex);
+    const name = this.vimScene.getElementNameFromNodeIndex(nodeIndex);
+    console.log(`Selected Element: ${id} - ${name}`);
   }
   clearSelection() {
     this.selection.reset();
@@ -39519,49 +39536,6 @@ class Viewer {
       targetMaterial.wireframe = settings.wireframe;
     if ("shininess" in settings)
       targetMaterial.shininess = settings.shininess;
-  }
-  getElementNameFromNodeIndex(nodeIndex) {
-    const vim = this.vimScene.vim;
-    const elementIndex = vim.bim.get("Vim.Node").get("Rvt.Element")[nodeIndex];
-    const stringIndex = vim.bim.get("Rvt.Element").get("Name")[elementIndex];
-    const name = vim.strings[stringIndex];
-    return name;
-  }
-}
-class Selection {
-  constructor(viewer) {
-    __publicField(this, "viewer");
-    __publicField(this, "mesh", null);
-    __publicField(this, "instanceIndex", null);
-    __publicField(this, "boundingSphere", null);
-    __publicField(this, "geometry", null);
-    __publicField(this, "highlightDisposer", null);
-    this.viewer = viewer;
-  }
-  hasSelection() {
-    return this.mesh !== null;
-  }
-  reset() {
-    this.mesh = null;
-    this.instanceIndex = null;
-    this.boundingSphere = null;
-    this.disposeResources();
-  }
-  disposeResources() {
-    var _a2, _b2;
-    (_a2 = this.geometry) == null ? void 0 : _a2.dispose();
-    this.geometry = null;
-    (_b2 = this.highlightDisposer) == null ? void 0 : _b2.call(this);
-    this.highlightDisposer = null;
-  }
-  select(mesh, index) {
-    this.disposeResources();
-    this.mesh = mesh;
-    this.instanceIndex = index;
-    this.geometry = this.viewer.createWorldGeometry(mesh, index);
-    this.geometry.computeBoundingSphere();
-    this.boundingSphere = this.geometry.boundingSphere;
-    this.highlightDisposer = this.viewer.highlight(this.geometry);
   }
 }
 function isColor(obj) {

@@ -5,12 +5,9 @@
 import * as THREE from 'three'
 import { G3d, VimG3d, Attribute } from './g3d'
 import { BFast, BFastHeader } from './bfast'
-import { Vim, VimScene } from './vim'
+import { Vim, VimScene, VimSceneGeometry } from './vim'
 
-type NullableMesh = THREE.InstancedMesh<
-  THREE.BufferGeometry,
-  THREE.Material
-> | null
+type Mesh = THREE.InstancedMesh<THREE.BufferGeometry, THREE.Material>
 
 export class VIMLoader {
   material: THREE.Material
@@ -356,26 +353,19 @@ export class VIMLoader {
     const rawMeshes = this.allocateMeshes(geometry, vim.g3d.instanceMeshes)
 
     console.log('Applying Matrices')
-    const [meshes, boundingSphere] = this.applyMatrices(
+    const sceneGeometry = this.applyMatrices(
       rawMeshes,
       vim.g3d.instanceMeshes,
       vim.g3d.instanceTransforms
     )
 
-    // Type Guard to cast from nullable to value
-    function notNull<T> (arg: T | null): arg is T {
-      return arg !== null
-    }
-    const validMeshes = meshes.filter(notNull)
-    console.timeEnd('parsingVim')
-
-    return new VimScene(vim, validMeshes, boundingSphere)
+    return new VimScene(vim, sceneGeometry)
   }
 
   allocateMeshes (
     geometries: THREE.BufferGeometry[],
     instanceMeshes: Int32Array
-  ): NullableMesh[] {
+  ): (Mesh | null)[] {
     const meshCount = geometries.length
 
     console.log('Counting references')
@@ -387,7 +377,7 @@ export class VIMLoader {
     }
 
     console.log('Allocating instances.')
-    const meshes: NullableMesh[] = []
+    const meshes: (Mesh | null)[] = []
     for (let i = 0; i < meshCount; ++i) {
       const count = meshRefCounts[i]
       if (count === 0) {
@@ -406,13 +396,17 @@ export class VIMLoader {
   // instanceTransform: flat array of matrix4x4
   // Returns array of InstancedMesh and array of instance centers with matrices applied to both.
   applyMatrices (
-    meshes: NullableMesh[],
+    meshes: (Mesh | null)[],
     instanceMeshes: Int32Array,
     instanceTransforms: Float32Array
-  ): [NullableMesh[], THREE.Sphere] {
+  ): VimSceneGeometry {
     const matrixArity = 16
     const instanceCounters = new Int32Array(meshes.length)
     let boundingSphere: THREE.Sphere = null
+    const nodeIndexToMeshInstance = new Map<number, [Mesh, number]>()
+    const meshIdToNodeIndex = new Map<number, [number]>()
+    const resultMeshes: Mesh[] = []
+
     for (let i = 0; i < instanceMeshes.length; ++i) {
       const meshIndex = instanceMeshes[i]
       if (meshIndex < 0) continue
@@ -432,13 +426,24 @@ export class VIMLoader {
       mesh.setMatrixAt(count, matrix)
 
       // Set Node ID for picking
-      if (!mesh.userData.instanceIndices) mesh.userData.instanceIndices = []
-      mesh.userData.instanceIndices.push(i)
+      nodeIndexToMeshInstance.set(i, [mesh, count])
+      if (meshIdToNodeIndex.has(mesh.id)) {
+        meshIdToNodeIndex.get(mesh.id).push(i)
+      } else {
+        meshIdToNodeIndex.set(mesh.id, [i])
+      }
 
       const sphere = mesh.geometry.boundingSphere.clone()
       sphere.applyMatrix4(matrix)
       boundingSphere = boundingSphere?.union(sphere) ?? sphere
+
+      resultMeshes.push(mesh)
     }
-    return [meshes, boundingSphere]
+    return new VimSceneGeometry(
+      resultMeshes,
+      boundingSphere,
+      nodeIndexToMeshInstance,
+      meshIdToNodeIndex
+    )
   }
 }
