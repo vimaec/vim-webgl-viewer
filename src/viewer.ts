@@ -11,6 +11,7 @@ import { ViewerInput } from './viewer_input'
 import { ViewerGui } from './viewer_gui'
 import { loadAny } from './viewer_loader'
 import Stats from 'stats.js'
+import logo from './assets/logo.png'
 
 /*
 Vim Viewer
@@ -22,7 +23,6 @@ export class Viewer {
   canvas: HTMLCanvasElement | undefined = undefined
   logo: HTMLImageElement | undefined = undefined
   link: HTMLAnchorElement | undefined = undefined
-  favicon: HTMLImageElement | undefined = undefined
 
   stats: any
   settings: any
@@ -151,7 +151,7 @@ export class Viewer {
 
     // Add Vim logo
     this.logo = document.createElement('img')
-    this.logo.src = 'logo.png'
+    this.logo.src = logo
     this.logo.style.position = 'fixed'
     this.logo.style.top = '16px'
     this.logo.style.left = '16px'
@@ -163,11 +163,6 @@ export class Viewer {
     this.link.href = 'https://vimaec.com'
     this.link.appendChild(this.logo)
     document.body.prepend(this.link)
-
-    // Set Favicon
-    this.favicon = document.createElement('img')
-    this.favicon.setAttribute('href', 'favicon.ico')
-    document.head.appendChild(this.favicon)
   }
 
   loadInScene (
