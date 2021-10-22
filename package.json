@@ -17,12 +17,14 @@
     "url": "https://github.com/vimaec/vim-webgl-viewer.git"
   },
   "scripts": {
-    "dev": "npm-run-all --parallel watch preview",
-    "dev-host": "npm-run-all --parallel watch host",
+    "dev": "vite",
     "build": "vite build",
-    "watch": "vite build --watch",
-    "preview": "vite preview --port 8080",
-    "host": "vite preview --port 8080 --host",
+    "docs:dev": "npm-run-all --parallel docs:watch docs:preview",
+    "docs:dev-host": "npm-run-all --parallel docs:watch docs:host",
+    "docs:build": "vite build -c vite.config.docs.js",
+    "docs:watch": "vite build -c vite.config.docs.js --watch",
+    "docs:preview": "vite preview -c vite.config.docs.js --port 8080",
+    "docs:host": "vite preview -c vite.config.docs.js --port 8080 --host",
     "eslint": "eslint --ext .js,.ts src --fix"
   },
   "devDependencies": {
