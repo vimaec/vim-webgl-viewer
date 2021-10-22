@@ -5,20 +5,15 @@
 import * as THREE from 'three'
 import deepmerge from 'deepmerge'
 import { VimScene } from './vim'
-import { ViewerSettings } from './viewer_settings'
+import { ViewerSettings } from './viewerSettings'
 import { ViewerCamera } from './viewerCamera'
-import { ViewerInput } from './viewer_input'
-import { ViewerGui } from './viewer_gui'
-import { loadAny } from './viewer_loader'
+import { ViewerInput } from './viewerInput'
+import { ViewerGui } from './viewerGui'
+import { loadAny } from './viewerLoader'
 import Stats from 'stats.js'
 import logo from './assets/logo.png'
-import { Selection } from './viewer_selection'
-
-/*
-Vim Viewer
-Copyright VIMaec LLC, 2020
-Licensed under the terms of the MIT License
-*/
+import { Selection } from './viewerSelection'
+import { ViewerEnvironment } from './viewerEnvironment'
 
 export class Viewer {
   canvas: HTMLCanvasElement | undefined = undefined
@@ -27,32 +22,24 @@ export class Viewer {
 
   stats: any
   settings: any
+
   camera: THREE.PerspectiveCamera
   renderer: THREE.WebGLRenderer
   scene: THREE.Scene
-  meshes = []
-
-  plane: THREE.Mesh
-  skyLight: THREE.HemisphereLight
-  sunLight: THREE.DirectionalLight
-  material: THREE.MeshPhongMaterial
-  removeListeners: Function
-
-  // eslint-disable-next-line no-use-before-define
-  selection: Selection
-  cameraController: ViewerCamera
-  // eslint-disable-next-line no-use-before-define
-  controls: ViewerInput
-  vimScene: VimScene
   boundingSphere: THREE.Sphere
-
   clock = new THREE.Clock()
 
-  constructor () {
-    this.canvas = undefined
-  }
+  meshes = []
 
-  view (options: Record<string, unknown>) {
+  material: THREE.MeshPhongMaterial
+  environment: ViewerEnvironment
+
+  selection: Selection
+  cameraController: ViewerCamera
+  controls: ViewerInput
+  vimScene: VimScene
+
+  constructor (options: Record<string, unknown>) {
     this.settings = deepmerge(ViewerSettings.default, options, undefined)
 
     this.prepareDocument()
@@ -68,7 +55,7 @@ export class Viewer {
     // Create the camera and size everything appropriately
     this.camera = new THREE.PerspectiveCamera()
     this.cameraController = new ViewerCamera(this.camera, this.settings)
-    this.resizeCanvas(true)
+    this.resizeRenderer(true, this.canvas)
 
     // Create scene object
     this.scene = new THREE.Scene()
@@ -89,7 +76,7 @@ export class Viewer {
       side: THREE.DoubleSide,
       shininess: 70
     })
-
+    this.environment = ViewerEnvironment.createDefault()
     // Initial scene update: happens if controls change
     this.updateScene()
 
@@ -112,32 +99,6 @@ export class Viewer {
 
     // Start Loop
     this.animate()
-  }
-
-  finishScene () {
-    // Ground
-    this.plane = new THREE.Mesh(
-      new THREE.PlaneBufferGeometry(1000, 1000),
-      new THREE.MeshPhongMaterial()
-    )
-    this.plane.rotation.x = -Math.PI / 2
-    this.scene.add(this.plane)
-
-    // Lights
-
-    this.skyLight = new THREE.HemisphereLight(0xffffff, 0xffffff, 0.6)
-    this.skyLight.color.setHSL(0.6, 1, 0.6)
-    this.skyLight.groundColor.setHSL(0.095, 1, 0.75)
-    this.skyLight.position.set(0, 50, 0)
-    this.scene.add(this.skyLight)
-
-    this.sunLight = new THREE.DirectionalLight(0xffffff, 1)
-    this.sunLight.color.setHSL(0.1, 1, 0.95)
-    this.sunLight.position.set(-1, 1.75, 1)
-    this.sunLight.position.multiplyScalar(30)
-    this.scene.add(this.sunLight)
-
-    this.updateScene()
   }
 
   prepareDocument () {
@@ -205,8 +166,9 @@ export class Viewer {
     this.boundingSphere = vim.geometry.boundingSphere.clone()
     this.boundingSphere = this.boundingSphere.applyMatrix4(this.getViewMatrix())
 
-    this.finishScene()
+    this.environment.addToScene(this.scene)
     this.focusModel()
+    this.updateScene()
   }
 
   addToScene (object: THREE.Object3D) {
@@ -242,7 +204,7 @@ export class Viewer {
   animate () {
     requestAnimationFrame(() => this.animate())
     const timeDelta = this.clock.getDelta()
-    this.resizeCanvas()
+    this.resizeRenderer(false, this.canvas)
     this.updateObjects()
     this.cameraController.frameUpdate(timeDelta)
     this.renderer.render(this.scene, this.camera)
@@ -334,7 +296,7 @@ export class Viewer {
     this.cameraController.frameScene(this.boundingSphere)
   }
 
-  resizeCanvas (force: boolean = false) {
+  resizeRenderer (force: boolean = false, canvas: HTMLCanvasElement) {
     if (!this.settings.autoResize && !force) {
       return
     }
@@ -342,67 +304,38 @@ export class Viewer {
     const w = window.innerWidth / window.devicePixelRatio
     const h = window.innerHeight / window.devicePixelRatio
     this.renderer.setSize(w, h, false)
-    this.camera.aspect = this.canvas.width / this.canvas.height
+    this.camera.aspect = canvas.width / canvas.height
     this.camera.updateProjectionMatrix()
   }
 
   // Called every frame in case settings are updated
   updateScene () {
     this.scene.background = toColor(this.settings.background.color)
-
-    if (this.plane) {
-      this.plane.visible = this.settings.plane.show
-      this.updateMaterial(this.plane.material, this.settings.plane.material)
-      this.plane.position.copy(toVec(this.settings.plane.position))
-    }
-
-    if (this.skyLight) {
-      this.skyLight.color.setHSL(
-        this.settings.skylight.skyColor.h,
-        this.settings.skylight.skyColor.s,
-        this.settings.skylight.skyColor.l
-      )
-      this.skyLight.groundColor.setHSL(
-        this.settings.skylight.groundColor.h,
-        this.settings.skylight.groundColor.s,
-        this.settings.skylight.groundColor.l
-      )
-      this.skyLight.intensity = this.settings.skylight.intensity
-      this.sunLight.color.setHSL(
-        this.settings.sunLight.color.h,
-        this.settings.sunLight.color.s,
-        this.settings.sunLight.color.l
-      )
-    }
-    if (this.sunLight) {
-      this.sunLight.position.set(
-        this.settings.sunLight.position.x,
-        this.settings.sunLight.position.y,
-        this.settings.sunLight.position.z
-      )
-      this.sunLight.intensity = this.settings.sunLight.intensity
-    }
-
+    this.environment.applySettings(this.settings)
     this.cameraController.applySettings(this.settings)
-  }
-
-  updateMaterial (targetMaterial, settings) {
-    if ('color' in settings) targetMaterial.color = toColor(settings.color)
-    if ('flatShading' in settings) {
-      targetMaterial.flatShading = settings.flatShading
-    }
-    if ('emissive' in settings) {
-      targetMaterial.emissive = toColor(settings.emissive)
-    }
-    if ('specular' in settings) {
-      targetMaterial.specular = toColor(settings.specular)
-    }
-    if ('wireframe' in settings) targetMaterial.wireframe = settings.wireframe
-    if ('shininess' in settings) targetMaterial.shininess = settings.shininess
   }
 }
 
 // Helpers
+
+export function updateMaterial (
+  targetMaterial: THREE.MeshPhongMaterial,
+  settings: any
+) {
+  if ('color' in settings) targetMaterial.color = toColor(settings.color)
+  if ('flatShading' in settings) {
+    targetMaterial.flatShading = settings.flatShading
+  }
+  if ('emissive' in settings) {
+    targetMaterial.emissive = toColor(settings.emissive)
+  }
+  if ('specular' in settings) {
+    targetMaterial.specular = toColor(settings.specular)
+  }
+  if ('wireframe' in settings) targetMaterial.wireframe = settings.wireframe
+  if ('shininess' in settings) targetMaterial.shininess = settings.shininess
+}
+
 function isColor (obj) {
   return typeof obj === 'object' && 'r' in obj && 'g' in obj && 'b' in obj
 }
@@ -414,7 +347,7 @@ function toColor (c) {
   return new THREE.Color(c.r / 255, c.g / 255, c.b / 255)
 }
 
-function toVec (obj) {
+export function toVec (obj) {
   return new THREE.Vector3(obj.x, obj.y, obj.z)
 }
 

@@ -5,8 +5,7 @@ const url = params.has('model')
   ? params.get('model')
   : 'https://vim.azureedge.net/samples/residence.vim'
 
-const viewer = new Viewer()
-viewer.view({
+const viewer = new Viewer({
   url: url,
   object: {
     scale: 0.1,
