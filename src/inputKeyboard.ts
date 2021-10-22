@@ -107,7 +107,7 @@ export class InputKeyboard {
   mouse: InputMouse
 
   // State
-  shftDown: boolean
+  shftDown: boolean = false
 
   constructor (camera: ViewerCamera, viewer: Viewer, mouse: InputMouse) {
     this.camera = camera
@@ -119,15 +119,15 @@ export class InputKeyboard {
     this.shftDown = false
   }
 
-  onKeyUp = (event) => {
+  onKeyUp = (event: any) => {
     this.onKey(event, false)
   }
 
-  onKeyDown = (event) => {
+  onKeyDown = (event: any) => {
     this.onKey(event, true)
   }
 
-  onKey = (event, keyDown) => {
+  onKey = (event: any, keyDown: boolean) => {
     if (!keyDown) {
       switch (event.keyCode) {
         case KEYS.KEY_ADD:

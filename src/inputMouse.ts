@@ -15,9 +15,9 @@ export class InputMouse {
   private viewer: Viewer
 
   // State
-  private isMouseDown: Boolean
-  private hasMouseMoved: Boolean
-  private ctrlDown: Boolean
+  private isMouseDown: Boolean = false
+  private hasMouseMoved: Boolean = false
+  private ctrlDown: Boolean = false
 
   constructor (camera: ViewerCamera, canvas: HTMLCanvasElement, viewer: Viewer) {
     this.camera = camera
@@ -33,7 +33,7 @@ export class InputMouse {
     this.ctrlDown = value
   }
 
-  onMouseMove = (event) => {
+  onMouseMove = (event: any) => {
     if (!this.isMouseDown) {
       return
     }
@@ -77,7 +77,7 @@ export class InputMouse {
     }
   }
 
-  onMouseDown = (event) => {
+  onMouseDown = (event: any) => {
     event.preventDefault()
     this.isMouseDown = true
     this.hasMouseMoved = false
@@ -87,17 +87,16 @@ export class InputMouse {
     this.canvas.focus ? this.canvas.focus() : window.focus()
   }
 
-  mouseRaycast (mouseX, mouseY) {
-    const x = (mouseX / window.innerWidth) * 2 - 1
-    const y = -(mouseY / window.innerHeight) * 2 + 1
+  mouseRaycast (position: THREE.Vector2) {
+    const x = (position.x / window.innerWidth) * 2 - 1
+    const y = -(position.y / window.innerHeight) * 2 + 1
     const mouse = new THREE.Vector2(x, y)
     const raycaster = new THREE.Raycaster()
     raycaster.setFromCamera(mouse, this.camera.camera)
-    // raycaster.firstHitOnly = true;
     return raycaster.intersectObjects(this.viewer.meshes)
   }
 
-  onMouseUp = (event) => {
+  onMouseUp = (event: any) => {
     if (this.isMouseDown && !this.hasMouseMoved) {
       this.onMouseClick(new THREE.Vector2(event.x, event.y))
     }
@@ -105,7 +104,7 @@ export class InputMouse {
   }
 
   onMouseClick = (position: Vector2) => {
-    const hits = this.mouseRaycast(position.x, position.y)
+    const hits = this.mouseRaycast(position)
     if (hits.length > 0) {
       const mesh = hits[0].object
       const index = hits[0].instanceId
@@ -113,7 +112,7 @@ export class InputMouse {
       console.log(
         `Raycast hit. Position (${hits[0].point.x}, ${hits[0].point.y}, ${hits[0].point.z})`
       )
-      if (mesh instanceof THREE.Mesh) {
+      if (mesh instanceof THREE.Mesh && index !== undefined) {
         this.viewer.select(mesh, index)
       }
     }
