@@ -1,5 +1,5 @@
 import * as THREE from 'three'
-import { ViewerCamera } from './viewer_camera'
+import { ViewerCamera } from './viewerCamera'
 import { Viewer } from './viewer'
 import { Vector2 } from 'three'
 

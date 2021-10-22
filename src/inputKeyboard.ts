@@ -1,6 +1,6 @@
-import { ViewerCamera } from './viewer_camera'
+import { ViewerCamera } from './viewerCamera'
 import { Viewer } from './viewer'
-import { InputMouse } from './InputMouse'
+import { InputMouse } from './inputMouse'
 
 export const KEYS = {
   KEY_0: 48,

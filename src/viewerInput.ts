@@ -1,8 +1,8 @@
-import { ViewerCamera } from './viewer_camera'
+import { ViewerCamera } from './viewerCamera'
 import { Viewer } from './viewer'
-import { InputKeyboard } from './input_keyboard'
-import { InputTouch } from './input_touch'
-import { InputMouse } from './input_mouse'
+import { InputKeyboard } from './inputKeyboard'
+import { InputTouch } from './inputTouch'
+import { InputMouse } from './inputMouse'
 
 export class ViewerInput {
   // Dependencies

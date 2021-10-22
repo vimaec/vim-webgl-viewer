@@ -1,7 +1,7 @@
 import * as THREE from 'three'
-import { ViewerCamera } from './viewer_camera'
+import { ViewerCamera } from './viewerCamera'
 import { Viewer } from './viewer'
-import { InputMouse } from './input_mouse'
+import { InputMouse } from './inputMouse'
 
 export class InputTouch {
   // Consts
