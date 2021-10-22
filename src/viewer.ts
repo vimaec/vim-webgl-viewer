@@ -12,6 +12,7 @@ import { ViewerGui } from './viewer_gui'
 import { loadAny } from './viewer_loader'
 import Stats from 'stats.js'
 import logo from './assets/logo.png'
+import { Selection } from './viewer_selection'
 
 /*
 Vim Viewer
@@ -198,34 +199,14 @@ export class Viewer {
 
   onVimLoaded (vim: VimScene) {
     this.vimScene = vim
+    const meshes = vim.geometry.meshes
+    meshes.forEach(this.addToScene.bind(this))
 
-    for (let i = 0; i < vim.meshes.length; ++i) {
-      this.addToScene(vim.meshes[i])
-    }
-
-    this.boundingSphere = vim.boundingSphere.clone()
+    this.boundingSphere = vim.geometry.boundingSphere.clone()
     this.boundingSphere = this.boundingSphere.applyMatrix4(this.getViewMatrix())
 
     this.finishScene()
     this.focusModel()
-  }
-
-  drawSphere (sphere: THREE.Sphere) {
-    const s = new THREE.LineSegments(
-      new THREE.WireframeGeometry(
-        new THREE.SphereBufferGeometry(sphere.radius)
-      ),
-      new THREE.LineBasicMaterial({
-        depthTest: false,
-        opacity: 0.5,
-        color: new THREE.Color(0x0000ff),
-        transparent: true
-      })
-    )
-    s.position.copy(sphere.center)
-    s.updateMatrix()
-    s.applyMatrix4(this.getViewMatrix())
-    this.scene.add(s)
   }
 
   addToScene (object: THREE.Object3D) {
@@ -323,29 +304,17 @@ export class Viewer {
     return geometry
   }
 
-  getNodeIndex (mesh: THREE.Mesh, instance: number): number | null {
-    const indices = mesh.userData.instanceIndices as number[]
-
-    if (!indices) {
-      console.log('Error: Attempting to get node index of a non-vim object')
-      return null
-    }
-
-    if (indices.length <= instance) {
-      console.log('Error: Attempting to get node index out of range')
-      return null
-    }
-
-    return indices[instance]
+  selectByElementId (elementId: number) {
+    const meshes = this.vimScene.getMeshesFromElement(elementId)
+    this.select(meshes[0][0], meshes[0][1])
   }
 
   select (mesh: THREE.Mesh, index: number) {
     this.selection.select(mesh, index)
-    const nodeIndex = this.getNodeIndex(mesh, index)
-    if (nodeIndex) {
-      const elementName = this.getElementNameFromNodeIndex(nodeIndex)
-      console.log('Selected Element: ' + elementName)
-    }
+    const nodeIndex = this.vimScene.getNodeIndexFromMesh(mesh, index)
+    const id = this.vimScene.getElementIdFromNodeIndex(nodeIndex)
+    const name = this.vimScene.getElementNameFromNodeIndex(nodeIndex)
+    console.log(`Selected Element: ${id} - ${name}`)
   }
 
   clearSelection () {
@@ -430,63 +399,6 @@ export class Viewer {
     }
     if ('wireframe' in settings) targetMaterial.wireframe = settings.wireframe
     if ('shininess' in settings) targetMaterial.shininess = settings.shininess
-  }
-
-  // TODO: Add more granular ways to access the bim data.
-  getElementNameFromNodeIndex (nodeIndex: number) {
-    const vim = this.vimScene.vim
-    const elementIndex = vim.bim.get('Vim.Node').get('Rvt.Element')[nodeIndex]
-    const stringIndex = vim.bim.get('Rvt.Element').get('Name')[elementIndex]
-    const name = vim.strings[stringIndex]
-    return name
-  }
-}
-
-// TODO: Fix circular dependency
-class Selection {
-  // Dependencies
-  viewer: Viewer
-
-  // State
-  mesh: THREE.Mesh | null = null
-  instanceIndex: number | null = null
-  boundingSphere: THREE.Sphere | null = null
-
-  // Disposable State
-  geometry: THREE.BufferGeometry | null = null
-  highlightDisposer: Function | null = null
-
-  constructor (viewer: Viewer) {
-    this.viewer = viewer
-  }
-
-  hasSelection () {
-    return this.mesh !== null
-  }
-
-  reset () {
-    this.mesh = null
-    this.instanceIndex = null
-    this.boundingSphere = null
-    this.disposeResources()
-  }
-
-  disposeResources () {
-    this.geometry?.dispose()
-    this.geometry = null
-
-    this.highlightDisposer?.()
-    this.highlightDisposer = null
-  }
-
-  select (mesh: THREE.Mesh, index: number) {
-    this.disposeResources()
-    this.mesh = mesh
-    this.instanceIndex = index
-    this.geometry = this.viewer.createWorldGeometry(mesh, index)
-    this.geometry.computeBoundingSphere()
-    this.boundingSphere = this.geometry.boundingSphere
-    this.highlightDisposer = this.viewer.highlight(this.geometry)
   }
 }
 

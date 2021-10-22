@@ -22,7 +22,7 @@ export class ViewerInput {
     this.keyboard = new InputKeyboard(camera, viewer, this.mouse)
   }
 
-  reg = (
+  private reg = (
     // eslint-disable-next-line no-undef
     handler: DocumentAndElementEventHandlers,
     type: string,
