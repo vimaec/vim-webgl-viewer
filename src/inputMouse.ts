@@ -93,7 +93,7 @@ export class InputMouse {
     const mouse = new THREE.Vector2(x, y)
     const raycaster = new THREE.Raycaster()
     raycaster.setFromCamera(mouse, this.camera.camera)
-    return raycaster.intersectObjects(this.viewer.meshes)
+    return raycaster.intersectObjects(this.viewer.render.meshes)
   }
 
   onMouseUp = (event: any) => {

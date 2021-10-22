@@ -43,10 +43,8 @@ export class ViewerEnvironment {
     return new ViewerEnvironment(plane, skyLight, sunLight)
   }
 
-  addToScene (scene: THREE.Scene) {
-    scene.add(this.plane)
-    scene.add(this.skyLight)
-    scene.add(this.sunLight)
+  getElements (): THREE.Object3D[] {
+    return [this.plane, this.skyLight, this.sunLight]
   }
 
   applySettings (settings: any) {

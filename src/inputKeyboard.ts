@@ -150,7 +150,7 @@ export class InputKeyboard {
           }
           break
         case KEYS.KEY_HOME:
-          this.camera.frameScene(this.viewer.boundingSphere)
+          this.camera.frameScene(this.viewer.render.boundingSphere)
           break
         // Selection
         case KEYS.KEY_ESCAPE:

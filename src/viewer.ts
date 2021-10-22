@@ -11,29 +11,18 @@ import { ViewerInput } from './viewerInput'
 import { ViewerGui } from './viewerGui'
 import { loadAny } from './viewerLoader'
 import Stats from 'stats.js'
-import logo from './assets/logo.png'
-import { Selection } from './viewerSelection'
+import { Selection } from './selection'
 import { ViewerEnvironment } from './viewerEnvironment'
+import { ViewerRenderer } from './viewerRenderer'
+import { ViewerDocument } from './ViewerDocument'
 
 export class Viewer {
-  canvas: HTMLCanvasElement | undefined = undefined
-  logo: HTMLImageElement | undefined = undefined
-  link: HTMLAnchorElement | undefined = undefined
-
   stats: any
   settings: any
 
-  camera: THREE.PerspectiveCamera
-  renderer: THREE.WebGLRenderer
-  scene: THREE.Scene
-  boundingSphere: THREE.Sphere
-  clock = new THREE.Clock()
-
-  meshes = []
-
-  material: THREE.MeshPhongMaterial
+  document: ViewerDocument
   environment: ViewerEnvironment
-
+  render: ViewerRenderer
   selection: Selection
   cameraController: ViewerCamera
   controls: ViewerInput
@@ -41,44 +30,19 @@ export class Viewer {
 
   constructor (options: Record<string, unknown>) {
     this.settings = deepmerge(ViewerSettings.default, options, undefined)
+    this.document = new ViewerDocument(this.settings)
 
-    this.prepareDocument()
-
-    // Renderer
-    this.renderer = new THREE.WebGLRenderer({
-      antialias: true,
-      canvas: this.canvas
-    })
-    this.renderer.setPixelRatio(window.devicePixelRatio)
-    this.renderer.shadowMap.enabled = true
-
-    // Create the camera and size everything appropriately
-    this.camera = new THREE.PerspectiveCamera()
-    this.cameraController = new ViewerCamera(this.camera, this.settings)
-    this.resizeRenderer(true, this.canvas)
-
-    // Create scene object
-    this.scene = new THREE.Scene()
-
+    // Create a new DAT.gui controller
     if (this.settings.showGui) {
-      // Create a new DAT.gui controller
       ViewerGui.bind(this.settings, (settings) => {
         this.settings = settings
-        this.updateScene()
+        this.ApplySettings()
       })
     }
+    this.render = new ViewerRenderer(this.document.canvas)
+    this.cameraController = new ViewerCamera(this.render.camera, this.settings)
 
-    // Material
-    this.material = new THREE.MeshPhongMaterial({
-      color: 0xffffffff,
-      vertexColors: true,
-      flatShading: true,
-      side: THREE.DoubleSide,
-      shininess: 70
-    })
     this.environment = ViewerEnvironment.createDefault()
-    // Initial scene update: happens if controls change
-    this.updateScene()
 
     // Add Stats display
     if (this.settings.showStats) {
@@ -89,7 +53,11 @@ export class Viewer {
     }
 
     // Input and Selection
-    this.controls = new ViewerInput(this.canvas, this.cameraController, this)
+    this.controls = new ViewerInput(
+      this.document.canvas,
+      this.cameraController,
+      this
+    )
     this.controls.register()
     this.selection = new Selection(this)
 
@@ -98,34 +66,11 @@ export class Viewer {
     loadAny(this.settings.url, this.loadInScene.bind(this))
 
     // Start Loop
+    this.ApplySettings()
     this.animate()
   }
 
-  prepareDocument () {
-    // Get or Add Canvas
-    let canvas = document.getElementById(this.settings.canvasId)
-
-    if (!canvas) {
-      canvas = document.createElement('canvas')
-      document.body.appendChild(canvas)
-    }
-    this.canvas = canvas as HTMLCanvasElement
-
-    // Add Vim logo
-    this.logo = document.createElement('img')
-    this.logo.src = logo
-    this.logo.style.position = 'fixed'
-    this.logo.style.top = '16px'
-    this.logo.style.left = '16px'
-    this.logo.height = 48
-    this.logo.width = 128
-
-    // Add logo as link
-    this.link = document.createElement('a')
-    this.link.href = 'https://vimaec.com'
-    this.link.appendChild(this.logo)
-    document.body.prepend(this.link)
-  }
+  prepareDocument () {}
 
   loadInScene (
     result:
@@ -137,92 +82,55 @@ export class Viewer {
   ) {
     if (result instanceof VimScene) {
       this.onVimLoaded(result)
-      return
-    }
-
-    if (result instanceof THREE.Scene) {
+    } else if (result instanceof THREE.Scene) {
       result.traverse((obj) => {
-        if (obj instanceof THREE.Mesh) this.addToScene(obj)
+        if (obj instanceof THREE.Mesh) this.render.addToModel([obj])
       })
     } else if (result instanceof THREE.BufferGeometry) {
       result.computeVertexNormals()
-      this.addToScene(new THREE.Mesh(result))
+      this.render.addToModel([new THREE.Mesh(result)])
     } else if (
       result instanceof THREE.Group ||
       result instanceof THREE.Object3D
     ) {
-      this.addToScene(result)
+      this.render.addToModel([result])
     }
-    // this.boundingSphere = this.computeBoundingSphere(this.scene)
-    this.boundingSphere.applyMatrix4(this.getViewMatrix())
+
+    if (!this.render.boundingSphere) {
+      this.render.computeBoundingSphere(this.getViewMatrix())
+    }
+
     this.focusModel()
+    this.ApplySettings()
   }
 
   onVimLoaded (vim: VimScene) {
     this.vimScene = vim
-    const meshes = vim.geometry.meshes
-    meshes.forEach(this.addToScene.bind(this))
+    this.render.addToModel(vim.geometry.meshes)
+    this.render.addToScene(this.environment.getElements())
 
-    this.boundingSphere = vim.geometry.boundingSphere.clone()
-    this.boundingSphere = this.boundingSphere.applyMatrix4(this.getViewMatrix())
-
-    this.environment.addToScene(this.scene)
-    this.focusModel()
-    this.updateScene()
-  }
-
-  addToScene (object: THREE.Object3D) {
-    this.scene.add(object)
-    this.meshes.push(object)
-  }
-
-  computeBoundingSphere (scene: THREE.Scene): THREE.Sphere {
-    let sphere: THREE.Sphere = null
-
-    const grow = (geometry: THREE.BufferGeometry, matrix: THREE.Matrix4) => {
-      geometry.computeBoundingSphere()
-      let currentSphere = geometry.boundingSphere.clone()
-      currentSphere = currentSphere.applyMatrix4(matrix)
-      sphere = sphere ? sphere.union(currentSphere) : currentSphere
-    }
-    const matrix = new THREE.Matrix4()
-    scene.traverse((obj) => {
-      if (obj instanceof THREE.InstancedMesh) {
-        for (let i = 0; i < obj.count; i++) {
-          obj.getMatrixAt(i, matrix)
-          grow(obj.geometry, matrix)
-        }
-      } else if (obj instanceof THREE.Mesh) {
-        grow(obj.geometry, obj.matrix)
-      }
-    })
-
-    return sphere
+    const sphere = vim.geometry.boundingSphere.clone()
+    sphere.applyMatrix4(this.getViewMatrix())
+    this.render.boundingSphere = sphere
   }
 
   // Calls render, and asks the framework to prepare the next frame
   animate () {
     requestAnimationFrame(() => this.animate())
-    const timeDelta = this.clock.getDelta()
-    this.resizeRenderer(false, this.canvas)
-    this.updateObjects()
+
+    // Camera
+    const timeDelta = this.render.clock.getDelta()
     this.cameraController.frameUpdate(timeDelta)
-    this.renderer.render(this.scene, this.camera)
+
+    // Model
+    if (this.settings.autoResize) this.render.fitToCanvas()
+    this.render.updateModel(this.getViewMatrix())
+    this.render.render()
+
+    // Stats
     if (this.stats) {
       this.stats.update()
     }
-  }
-
-  updateObjects () {
-    for (let i = 0; i < this.meshes.length; i++) {
-      this.applyViewMatrix(this.meshes[i])
-    }
-  }
-
-  applyViewMatrix (mesh) {
-    const matrix = this.getViewMatrix()
-    mesh.matrixAutoUpdate = false
-    mesh.matrix.copy(matrix)
   }
 
   // TODO Not create this everytime, Not apply this every time either.
@@ -244,11 +152,11 @@ export class Viewer {
     })
     const line = new THREE.LineSegments(wireframe, material)
 
-    this.scene.add(line)
+    this.render.addToScene([line])
 
     // returns disposer
     return () => {
-      this.scene.remove(line)
+      this.render.scene.remove(line)
       wireframe.dispose()
       material.dispose()
     }
@@ -288,29 +196,17 @@ export class Viewer {
     if (this.selection.hasSelection()) {
       this.cameraController.lookAtSphere(this.selection.boundingSphere)
     } else {
-      this.cameraController.frameScene(this.boundingSphere)
+      this.cameraController.frameScene(this.render.boundingSphere)
     }
   }
 
   focusModel () {
-    this.cameraController.frameScene(this.boundingSphere)
-  }
-
-  resizeRenderer (force: boolean = false, canvas: HTMLCanvasElement) {
-    if (!this.settings.autoResize && !force) {
-      return
-    }
-
-    const w = window.innerWidth / window.devicePixelRatio
-    const h = window.innerHeight / window.devicePixelRatio
-    this.renderer.setSize(w, h, false)
-    this.camera.aspect = canvas.width / canvas.height
-    this.camera.updateProjectionMatrix()
+    this.cameraController.frameScene(this.render.boundingSphere)
   }
 
   // Called every frame in case settings are updated
-  updateScene () {
-    this.scene.background = toColor(this.settings.background.color)
+  ApplySettings () {
+    this.render.scene.background = toColor(this.settings.background.color)
     this.environment.applySettings(this.settings)
     this.cameraController.applySettings(this.settings)
   }
