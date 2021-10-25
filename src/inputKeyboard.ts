@@ -1,6 +1,6 @@
-import { ViewerCamera } from './viewer_camera'
+import { ViewerCamera } from './viewerCamera'
 import { Viewer } from './viewer'
-import { InputMouse } from './InputMouse'
+import { InputMouse } from './inputMouse'
 
 export const KEYS = {
   KEY_0: 48,
@@ -107,7 +107,7 @@ export class InputKeyboard {
   mouse: InputMouse
 
   // State
-  shftDown: boolean
+  shftDown: boolean = false
 
   constructor (camera: ViewerCamera, viewer: Viewer, mouse: InputMouse) {
     this.camera = camera
@@ -119,15 +119,15 @@ export class InputKeyboard {
     this.shftDown = false
   }
 
-  onKeyUp = (event) => {
+  onKeyUp = (event: any) => {
     this.onKey(event, false)
   }
 
-  onKeyDown = (event) => {
+  onKeyDown = (event: any) => {
     this.onKey(event, true)
   }
 
-  onKey = (event, keyDown) => {
+  onKey = (event: any, keyDown: boolean) => {
     if (!keyDown) {
       switch (event.keyCode) {
         case KEYS.KEY_ADD:
@@ -150,7 +150,7 @@ export class InputKeyboard {
           }
           break
         case KEYS.KEY_HOME:
-          this.camera.frameScene(this.viewer.boundingSphere)
+          this.camera.frameScene(this.viewer.render.boundingSphere)
           break
         // Selection
         case KEYS.KEY_ESCAPE:

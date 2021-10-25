@@ -1,12 +1,13 @@
 import * as THREE from 'three'
-import { ViewerCamera } from './viewer_camera'
+import { ViewerCamera } from './viewerCamera'
 import { Viewer } from './viewer'
-import { InputMouse } from './input_mouse'
+import { InputMouse } from './inputMouse'
 
 export class InputTouch {
   // Consts
   TouchMoveSensitivity: number
   TouchRotateSensitivity: number
+  TapDurationMs: number = 500
 
   // Dependencies
   private camera: ViewerCamera
@@ -14,10 +15,10 @@ export class InputTouch {
   private mouse: InputMouse
 
   // State
-  private touchStart: THREE.Vector2 = undefined // When one touch occurs this is the value, when two or more touches occur it is the average of the first two.
-  private touchStart1: THREE.Vector2 = undefined // The first touch when multiple touches occur, otherwise left undefined
-  private touchStart2: THREE.Vector2 = undefined // The second touch when multiple touches occur, otherwise left undefined
-  private touchStartTime: number = undefined // In ms since epoch
+  private touchStart: THREE.Vector2 | undefined = undefined // When one touch occurs this is the value, when two or more touches occur it is the average of the first two.
+  private touchStart1: THREE.Vector2 | undefined = undefined // The first touch when multiple touches occur, otherwise left undefined
+  private touchStart2: THREE.Vector2 | undefined = undefined // The second touch when multiple touches occur, otherwise left undefined
+  private touchStartTime: number | undefined = undefined // In ms since epoch
 
   constructor (camera: ViewerCamera, viewer: Viewer, mouse: InputMouse) {
     this.camera = camera
@@ -40,7 +41,7 @@ export class InputTouch {
     this.mouse.onMouseClick(position)
   }
 
-  onTouchStart = (event) => {
+  onTouchStart = (event: any) => {
     event.preventDefault() // prevent scrolling
     if (!event || !event.touches || !event.touches.length) {
       return
@@ -73,8 +74,10 @@ export class InputTouch {
     this.camera.moveCameraBy(move, Math.abs(delta))
   }
 
-  onTouchMove = (event) => {
+  onTouchMove = (event: any) => {
+    event.preventDefault()
     if (!event || !event.touches || !event.touches.length) return
+    if (!this.touchStart) return
 
     if (event.touches.length === 1) {
       const pos = this.touchToVector(event.touches[0])
@@ -84,6 +87,7 @@ export class InputTouch {
       return
     }
 
+    if (!this.touchStart1 || !this.touchStart2) return
     if (event.touches.length >= 2) {
       const p1 = this.touchToVector(event.touches[0])
       const p2 = this.touchToVector(event.touches[1])
@@ -106,21 +110,26 @@ export class InputTouch {
     }
   }
 
-  onTouchEnd = (event) => {
-    if (
-      this.touchStart &&
-      this.touchStartTime &&
-      !this.touchStart1 &&
-      !this.touchStart2
-    ) {
-      if (new Date().getTime() - this.touchStartTime < 500) {
-        this.onTap(this.touchStart)
+  onTouchEnd = (_: any) => {
+    if (this.isSingleTouch()) {
+      const touchDurationMs = new Date().getTime() - this.touchStartTime!
+      if (touchDurationMs < this.TapDurationMs) {
+        this.onTap(this.touchStart!)
       }
     }
     this.reset()
   }
 
-  touchToVector (touch) {
+  private isSingleTouch (): boolean {
+    return (
+      this.touchStart !== undefined &&
+      this.touchStartTime !== undefined &&
+      this.touchStart1 === undefined &&
+      this.touchStart2 === undefined
+    )
+  }
+
+  touchToVector (touch: any) {
     return new THREE.Vector2(touch.pageX, touch.pageY)
   }
 

@@ -5,7 +5,7 @@ import { VimG3d } from './g3d'
 type VimMesh = THREE.InstancedMesh<THREE.BufferGeometry, THREE.Material>
 
 class Vim {
-  static tableElement = 'Rvt.Element'
+  static tableElement = 'Vim.Element'
   static tableNode = 'Vim.Node'
 
   header: string
@@ -86,9 +86,7 @@ class VimScene {
     return this.elementToNodes.get(elementId)
   }
 
-  getMeshesFromElement (
-    elementId: number
-  ): number[] | [VimMesh, number][] | undefined {
+  getMeshesFromElement (elementId: number): [VimMesh, number][] | undefined {
     const nodeIndices = this.getNodeIndicesFromElement(elementId)
     if (!nodeIndices || !nodeIndices.length) return
 
