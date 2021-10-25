@@ -1,4 +1,4 @@
-import urlLogo from './assets/logo.png'
+import urlLogo from 'logo.93547066.png'
 
 export class ViewerDocument {
   canvas: HTMLCanvasElement
