@@ -5,7 +5,7 @@ import { VimG3d } from './g3d'
 type VimMesh = THREE.InstancedMesh<THREE.BufferGeometry, THREE.Material>
 
 class Vim {
-  static tableElement = 'Rvt.Element'
+  static tableElement = 'Vim.Element'
   static tableNode = 'Vim.Node'
 
   header: string
