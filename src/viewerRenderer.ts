@@ -4,10 +4,10 @@ export class ViewerRenderer {
   camera: THREE.PerspectiveCamera
   renderer: THREE.WebGLRenderer
   scene: THREE.Scene
-  boundingSphere: THREE.Sphere
   clock = new THREE.Clock()
   canvas: HTMLCanvasElement
 
+  boundingSphere: THREE.Sphere
   meshes: THREE.Object3D[] = []
 
   constructor (canvas: HTMLCanvasElement) {
@@ -21,6 +21,7 @@ export class ViewerRenderer {
 
     this.camera = new THREE.PerspectiveCamera()
     this.scene = new THREE.Scene()
+    this.boundingSphere = new THREE.Sphere()
     this.fitToCanvas()
   }
 
@@ -62,11 +63,11 @@ export class ViewerRenderer {
   }
 
   _computeBoundingSphere (scene: THREE.Scene): THREE.Sphere {
-    let sphere: THREE.Sphere = null
+    let sphere: THREE.Sphere | undefined
 
     const grow = (geometry: THREE.BufferGeometry, matrix: THREE.Matrix4) => {
       geometry.computeBoundingSphere()
-      let currentSphere = geometry.boundingSphere.clone()
+      let currentSphere = geometry.boundingSphere!.clone()
       currentSphere = currentSphere.applyMatrix4(matrix)
       sphere = sphere ? sphere.union(currentSphere) : currentSphere
     }
@@ -82,6 +83,6 @@ export class ViewerRenderer {
       }
     })
 
-    return sphere
+    return sphere ?? new THREE.Sphere()
   }
 }

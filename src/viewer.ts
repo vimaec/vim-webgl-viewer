@@ -20,17 +20,18 @@ export class Viewer {
   stats: any
   settings: any
 
-  document: ViewerDocument
+  htmlDocument: ViewerDocument
   environment: ViewerEnvironment
   render: ViewerRenderer
   selection: Selection
   cameraController: ViewerCamera
   controls: ViewerInput
-  vimScene: VimScene
+
+  vimScene: VimScene | undefined
 
   constructor (options: Record<string, unknown>) {
     this.settings = deepmerge(ViewerSettings.default, options, undefined)
-    this.document = new ViewerDocument(this.settings)
+    this.htmlDocument = new ViewerDocument(this.settings)
 
     // Create a new DAT.gui controller
     if (this.settings.showGui) {
@@ -39,7 +40,7 @@ export class Viewer {
         this.ApplySettings()
       })
     }
-    this.render = new ViewerRenderer(this.document.canvas)
+    this.render = new ViewerRenderer(this.htmlDocument.canvas)
     this.cameraController = new ViewerCamera(this.render.camera, this.settings)
 
     this.environment = ViewerEnvironment.createDefault()
@@ -54,7 +55,7 @@ export class Viewer {
 
     // Input and Selection
     this.controls = new ViewerInput(
-      this.document.canvas,
+      this.htmlDocument.canvas,
       this.cameraController,
       this
     )
@@ -142,7 +143,7 @@ export class Viewer {
     return matrix
   }
 
-  highlight (geometry): Function {
+  highlight (geometry: THREE.BufferGeometry): Function {
     const wireframe = new THREE.WireframeGeometry(geometry)
     const material = new THREE.LineBasicMaterial({
       depthTest: false,
@@ -175,13 +176,25 @@ export class Viewer {
   }
 
   selectByElementId (elementId: number) {
+    if (!this.vimScene) return
     const meshes = this.vimScene.getMeshesFromElement(elementId)
-    this.select(meshes[0][0], meshes[0][1])
+    if (meshes) this.select(meshes[0][0], meshes[0][1])
+    else console.log(`Could not find mesh for elemetId ${elementId}`)
   }
 
   select (mesh: THREE.Mesh, index: number) {
+    if (!this.vimScene) return
+    if (!mesh) throw new Error('Invalid null mesh')
+    if (index < 0) throw new Error('invalid negative index')
+
     this.selection.select(mesh, index)
+
     const nodeIndex = this.vimScene.getNodeIndexFromMesh(mesh, index)
+    if (nodeIndex === undefined) {
+      console.log('Could not find node for given mesh')
+      return
+    }
+
     const id = this.vimScene.getElementIdFromNodeIndex(nodeIndex)
     const name = this.vimScene.getElementNameFromNodeIndex(nodeIndex)
     console.log(`Selected Element: ${id} - ${name}`)
@@ -194,7 +207,7 @@ export class Viewer {
 
   focusSelection () {
     if (this.selection.hasSelection()) {
-      this.cameraController.lookAtSphere(this.selection.boundingSphere)
+      this.cameraController.lookAtSphere(this.selection.boundingSphere!)
     } else {
       this.cameraController.frameScene(this.render.boundingSphere)
     }
@@ -232,26 +245,32 @@ export function updateMaterial (
   if ('shininess' in settings) targetMaterial.shininess = settings.shininess
 }
 
-function isColor (obj) {
+function isColor (obj: any): boolean {
   return typeof obj === 'object' && 'r' in obj && 'g' in obj && 'b' in obj
 }
 
-function toColor (c) {
+function toColor (c: any): THREE.Color {
   if (!isColor(c)) {
     throw new Error('Not a color')
   }
   return new THREE.Color(c.r / 255, c.g / 255, c.b / 255)
 }
 
-export function toVec (obj) {
+function isVector (obj: any): boolean {
+  return typeof obj === 'object' && 'x' in obj && 'y' in obj && 'z' in obj
+}
+export function toVec (obj: any): THREE.Vector3 {
+  if (!isVector(obj)) {
+    throw new Error('Not a vector')
+  }
   return new THREE.Vector3(obj.x, obj.y, obj.z)
 }
 
-function scalarToVec (x) {
+function scalarToVec (x: number): THREE.Vector3 {
   return new THREE.Vector3(x, x, x)
 }
 
-function toEuler (rot) {
+function toEuler (rot: THREE.Vector3): THREE.Euler {
   return new THREE.Euler(
     (rot.x * Math.PI) / 180,
     (rot.y * Math.PI) / 180,
@@ -259,7 +278,7 @@ function toEuler (rot) {
   )
 }
 
-function toQuaternion (rot) {
+function toQuaternion (rot: THREE.Vector3): THREE.Quaternion {
   const q = new THREE.Quaternion()
   q.setFromEuler(toEuler(rot))
   return q

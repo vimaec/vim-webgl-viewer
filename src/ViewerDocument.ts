@@ -1,9 +1,9 @@
 import urlLogo from './assets/logo.png'
 
 export class ViewerDocument {
-  canvas: HTMLCanvasElement | undefined = undefined
-  logo: HTMLImageElement | undefined = undefined
-  link: HTMLAnchorElement | undefined = undefined
+  canvas: HTMLCanvasElement
+  logo: HTMLImageElement
+  link: HTMLAnchorElement
 
   constructor (settings: any) {
     // Get or Add Canvas

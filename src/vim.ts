@@ -86,9 +86,7 @@ class VimScene {
     return this.elementToNodes.get(elementId)
   }
 
-  getMeshesFromElement (
-    elementId: number
-  ): number[] | [VimMesh, number][] | undefined {
+  getMeshesFromElement (elementId: number): [VimMesh, number][] | undefined {
     const nodeIndices = this.getNodeIndicesFromElement(elementId)
     if (!nodeIndices || !nodeIndices.length) return
 
