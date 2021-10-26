@@ -122,7 +122,7 @@ The viewer is broadly divided into three layer.
 **Nodes:** The vim scene is a collection of nodes with a transform and a geometry, each node will result in zero or one object added to Three to be rendered. Nodes are refered by Index.
 **Elements:** objects from the original the bim software containing rich data. Each element can have from 0 to N nodes associated with it. Elements are refered to by Id or Index.
 
-**Exemple:**
+**Exemple:**  
 A table from Revit has elementId 12321  
 it gets exported into 5 nodes, 4 legs and a table top.  
 the 5 nodes are rendered using 2 meshes, one for the table top, one for all 4 legs.  
