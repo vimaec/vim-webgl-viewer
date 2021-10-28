@@ -3,6 +3,7 @@
 */
 
 import * as THREE from 'three'
+import * as BufferGeometryUtils from '../node_modules/three/examples/jsm/utils/BufferGeometryUtils.js'
 import { G3d, VimG3d, Attribute } from './g3d'
 import { BFast, BFastHeader } from './bfast'
 import { Vim, VimScene, VimSceneGeometry } from './vim'
@@ -264,35 +265,36 @@ export class VIMLoader {
     const submeshCount = g3d.submeshIndexOffset.length
     const indexCount = g3d.indices.length
 
+    const colorBuffer = new Float32Array(g3d.positions.length)
     const resultMeshes: THREE.BufferGeometry[] = []
     for (let mesh = 0; mesh < meshCount; mesh++) {
-      const meshIndices = []
-      const meshVertexPositions = []
-      const meshVertexColors = []
+      const indexSlice: number[] = []
 
       const meshStart = g3d.meshSubmeshes[mesh]
       const meshEnd =
         mesh < meshCount - 1 ? g3d.meshSubmeshes[mesh + 1] : submeshCount
 
+      let min: number = Number.MAX_SAFE_INTEGER
+      let max: number = 0
       for (let submesh = meshStart; submesh < meshEnd; submesh++) {
         let r: number
         let g: number
         let b: number
-        let a: number
         const material = g3d.submeshMaterial[submesh]
         if (material < 0) {
           r = 0.5
           g = 0.5
           b = 0.5
-          a = 1
         } else {
+          const alpha = g3d.materialColors[material * g3d.colorArity + 3]
+          if (alpha < 0.9) {
+            continue
+          }
+
           r = g3d.materialColors[material * g3d.colorArity]
           g = g3d.materialColors[material * g3d.colorArity + 1]
           b = g3d.materialColors[material * g3d.colorArity + 2]
-          a = g3d.materialColors[material * g3d.colorArity + 3]
         }
-
-        if (a < 0.9) continue
 
         const submeshStart = g3d.submeshIndexOffset[submesh]
         const submeshEnd =
@@ -302,28 +304,37 @@ export class VIMLoader {
 
         // TODO try not unpacking all vertices
         for (let index = submeshStart; index < submeshEnd; index++) {
-          meshIndices.push(meshIndices.length)
-
           const vertex = g3d.indices[index]
-          const x = g3d.positions[vertex * g3d.positionArity]
-          const y = g3d.positions[vertex * g3d.positionArity + 1]
-          const z = g3d.positions[vertex * g3d.positionArity + 2]
-
-          meshVertexPositions.push(x)
-          meshVertexPositions.push(y)
-          meshVertexPositions.push(z)
-
-          meshVertexColors.push(r)
-          meshVertexColors.push(g)
-          meshVertexColors.push(b)
+          indexSlice.push(vertex)
+          min = Math.min(min, vertex)
+          max = Math.max(max, vertex)
+          colorBuffer[vertex * 3] = r
+          colorBuffer[vertex * 3 + 1] = g
+          colorBuffer[vertex * 3 + 2] = b
         }
       }
 
+      // If mesh is empty we push null to keep results aligned
+      if (indexSlice.length === 0) {
+        resultMeshes.push(null)
+        continue
+      }
+
+      const sliceStart = min * 3
+      const sliceEnd = (max + 1) * 3
+      const vertexSlice = g3d.positions.subarray(sliceStart, sliceEnd)
+      const colorSlice = colorBuffer.subarray(sliceStart, sliceEnd)
+
+      for (let i = 0; i < indexSlice.length; i++) {
+        indexSlice[i] -= min
+      }
+
       const resultMesh = this.createBufferGeometry(
-        new Float32Array(meshVertexPositions),
-        new Int32Array(meshIndices),
-        new Float32Array(meshVertexColors)
+        vertexSlice,
+        new Int32Array(indexSlice),
+        colorSlice
       )
+
       resultMesh.computeBoundingSphere()
       resultMeshes.push(resultMesh)
     }
@@ -349,8 +360,16 @@ export class VIMLoader {
     const geometry = this.allocateGeometry(vim.g3d)
     console.log('Found # meshes ' + geometry.length)
 
+    console.log('Counting references')
+    const meshRefCounts = this.countMeshReferences(
+      vim.g3d.instanceMeshes,
+      geometry.length
+    )
+
+    console.log('Merging geometry')
+
     console.log('Allocating Instanced Meshes')
-    const rawMeshes = this.allocateMeshes(geometry, vim.g3d.instanceMeshes)
+    const rawMeshes = this.allocateMeshes(geometry, meshRefCounts)
 
     console.log('Applying Matrices')
     const sceneGeometry = this.applyMatrices(
@@ -359,35 +378,75 @@ export class VIMLoader {
       vim.g3d.instanceTransforms
     )
 
+    const singles: THREE.BufferGeometry[] = []
+    for (let i = 0; i < vim.g3d.instanceMeshes.length; i++) {
+      const meshIndex = vim.g3d.instanceMeshes[i]
+      if (meshIndex < 0) continue
+
+      const mesh = geometry[meshIndex]
+      if (!mesh) continue
+
+      if (meshRefCounts[meshIndex] === 1) {
+        const matrixAsArray = vim.g3d.instanceTransforms.subarray(
+          i * vim.g3d.matrixArity,
+          (i + 1) * vim.g3d.matrixArity
+        )
+        const matrix = new THREE.Matrix4()
+        matrix.elements = Array.from(matrixAsArray)
+        mesh.applyMatrix4(matrix)
+        singles.push(mesh)
+      }
+    }
+
+    const big: THREE.BufferGeometry =
+      BufferGeometryUtils.mergeBufferGeometries(singles)
+    const bigMesh = new THREE.InstancedMesh(big, this.material, 1)
+    bigMesh.setMatrixAt(0, new THREE.Matrix4())
+    big.computeBoundingSphere()
+    sceneGeometry.meshes.push(bigMesh)
+    sceneGeometry.boundingSphere = big.boundingSphere
+
+    console.log('Loading Completed')
     return new VimScene(vim, sceneGeometry)
   }
 
-  allocateMeshes (
-    geometries: THREE.BufferGeometry[],
-    instanceMeshes: Int32Array
-  ): (Mesh | null)[] {
-    const meshCount = geometries.length
-
-    console.log('Counting references')
+  countMeshReferences (
+    instanceMeshes: Int32Array,
+    meshCount: number
+  ): Int32Array {
     const meshRefCounts = new Int32Array(meshCount)
     for (let i = 0; i < instanceMeshes.length; ++i) {
       const mesh = instanceMeshes[i]
       if (mesh < 0) continue
       meshRefCounts[mesh]++
     }
+    return meshRefCounts
+  }
 
-    console.log('Allocating instances.')
+  allocateMeshes (
+    geometries: THREE.BufferGeometry[],
+    meshRefCounts: Int32Array
+  ): (Mesh | null)[] {
+    const meshCount = geometries.length
     const meshes: (Mesh | null)[] = []
+
     for (let i = 0; i < meshCount; ++i) {
       const count = meshRefCounts[i]
-      if (count === 0) {
+      if (count <= 1) {
         meshes.push(null)
-      } else {
-        const g = geometries[i]
-        const mesh = new THREE.InstancedMesh(g, this.material, count)
-        meshes.push(mesh)
+        continue
       }
+
+      const geometry = geometries[i]
+      if (geometry === null) {
+        meshes.push(null)
+        continue
+      }
+
+      const mesh = new THREE.InstancedMesh(geometry, this.material, count)
+      meshes.push(mesh)
     }
+
     return meshes
   }
 

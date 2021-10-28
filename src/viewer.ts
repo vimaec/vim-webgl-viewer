@@ -107,12 +107,19 @@ export class Viewer {
 
   onVimLoaded (vim: VimScene) {
     this.vimScene = vim
+    console.log('Adding models to scene')
     this.render.addToModel(vim.geometry.meshes)
+    console.log('Adding environement to scene')
     this.render.addToScene(this.environment.getElements())
 
     const sphere = vim.geometry.boundingSphere.clone()
     sphere.applyMatrix4(this.getViewMatrix())
     this.render.boundingSphere = sphere
+    this.render.updateModel(this.getViewMatrix())
+    console.log('Everything ready')
+    console.time('FirstRender')
+    this.render.render()
+    console.timeEnd('FirstRender')
   }
 
   // Calls render, and asks the framework to prepare the next frame
@@ -125,7 +132,6 @@ export class Viewer {
 
     // Model
     if (this.settings.autoResize) this.render.fitToCanvas()
-    this.render.updateModel(this.getViewMatrix())
     this.render.render()
 
     // Stats

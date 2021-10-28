@@ -1,4 +1,5 @@
 import * as THREE from 'three'
+import { ShadowMapType } from 'three'
 
 export class ViewerRenderer {
   camera: THREE.PerspectiveCamera
@@ -13,11 +14,15 @@ export class ViewerRenderer {
   constructor (canvas: HTMLCanvasElement) {
     this.canvas = canvas
     this.renderer = new THREE.WebGLRenderer({
-      antialias: true,
-      canvas: this.canvas
+      canvas: this.canvas,
+      antialias: false,
+      precision: 'lowp',
+      alpha: false,
+      stencil: false,
+      powerPreference: 'high-performance'
     })
     this.renderer.setPixelRatio(window.devicePixelRatio)
-    this.renderer.shadowMap.enabled = true
+    this.renderer.shadowMap.enabled = false
 
     this.camera = new THREE.PerspectiveCamera()
     this.scene = new THREE.Scene()
