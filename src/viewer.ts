@@ -113,6 +113,7 @@ export class Viewer {
     const sphere = vim.geometry.boundingSphere.clone()
     sphere.applyMatrix4(this.getViewMatrix())
     this.render.boundingSphere = sphere
+    this.render.updateModel(this.getViewMatrix())
   }
 
   // Calls render, and asks the framework to prepare the next frame
@@ -124,8 +125,10 @@ export class Viewer {
     this.cameraController.frameUpdate(timeDelta)
 
     // Model
-    if (this.settings.autoResize) this.render.fitToCanvas()
+    if (this.settings.autoResize) this.render.fitToCanvas()    
+
     this.render.updateModel(this.getViewMatrix())
+    
     this.render.render()
 
     // Stats

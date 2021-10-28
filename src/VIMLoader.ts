@@ -11,11 +11,24 @@ type Mesh = THREE.InstancedMesh<THREE.BufferGeometry, THREE.Material>
 
 export class VIMLoader {
   material: THREE.Material
+  timerName: string
 
   constructor (material: THREE.Material) {
     this.material = material
+    this.timerName = "VIM Loader"
   }
 
+
+  logStart() {
+    console.time(this.timerName)
+  }
+  log(msg: string) {
+    console.timeLog(this.timerName, msg)
+  }
+  logEnd() {
+    console.timeEnd(this.timerName)
+  }
+ 
   // Loads the VIM from a URL
   load (
     url: string,
@@ -23,6 +36,8 @@ export class VIMLoader {
     onProgress?: (request: ProgressEvent) => void,
     onError?: (event: ErrorEvent) => void
   ) {
+    this.logStart()
+
     const loader = new THREE.FileLoader()
     loader.setResponseType('arraybuffer')
     loader.setRequestHeader({
@@ -33,6 +48,7 @@ export class VIMLoader {
     loader.load(
       url,
       (data: string | ArrayBuffer) => {
+        this.log("Data arrived")
         if (typeof data === 'string') {
           onError?.(new ErrorEvent('Unsupported string loader response'))
           return
@@ -49,11 +65,14 @@ export class VIMLoader {
           return
         }
         // Don't catch exceptions in code provided by caller.
+        this.log("Calling onLoad() parameter")
         onLoad?.(vim)
+        this.log("Finished calling onLoad() parameter")
       },
       onProgress,
       onError
     )
+    this.log("Finished loading")
   }
 
   parseBFastFromArray (bytes: Uint8Array) {
@@ -65,7 +84,7 @@ export class VIMLoader {
     arrayBuffer: ArrayBuffer,
     byteOffset: number = 0,
     byteLength: number = arrayBuffer.byteLength - byteOffset
-  ): BFast {
+  ): BFast {    
     // Cast the input data to 32-bit integers
     // Note that according to the spec they are 64 bit numbers. In JavaScript you can't have 64 bit integers,
     // and it would bust the amount of memory we can work with in most browsers and low-power devices
@@ -73,8 +92,6 @@ export class VIMLoader {
 
     // Parse the header
     const header = BFastHeader.fromArray(data, byteLength)
-    console.log('BFAST header')
-    console.log(JSON.stringify(header))
 
     // Compute each buffer
     const buffers: Uint8Array[] = []
@@ -169,8 +186,10 @@ export class VIMLoader {
     for (let i = 0; i < bfast.buffers.length; ++i) {
       const current = bfast.names[i]
       const tableName = current.substring(current.indexOf(':') + 1)
+      const buffer = bfast.buffers[i]
+      this.log(`Constructing entity table ${current} which is ${buffer.length} size`);
       const next = this.constructEntityTable(
-        this.parseBFastFromArray(bfast.buffers[i])
+        this.parseBFastFromArray(buffer)
       )
       result.set(tableName, next)
     }
@@ -188,20 +207,38 @@ export class VIMLoader {
       lookup.set(bfast.names[i], bfast.buffers[i])
     }
 
-    const g3d = new VimG3d(
-      this.constructG3D(this.parseBFastFromArray(lookup.get('geometry')))
-    )
+    const assetData = lookup.get('assets');
+    const g3dData = lookup.get('geometry');
+    const headerData = lookup.get('header');
+    const entityData = lookup.get('entities');
+    const stringData = lookup.get(`strings`);  
+    
+    this.log(`Parsing header: ${headerData.length} bytes`);
+    const header = new TextDecoder('utf-8').decode(headerData);    
+        
+    this.log(`Constructing G3D: ${g3dData.length} bytes`);
+    const g3d = new VimG3d(this.constructG3D(this.parseBFastFromArray(g3dData)))    
+    this.log("Validating G3D")
     g3d.validate()
 
-    // Parse BFAST
+    this.log(`Retrieving assets: ${assetData.length} bytes`);
+    const assets = this.parseBFastFromArray(assetData);
+    this.log(`Found ${assets.buffers.length} assets`);
+
+    this.log(`Constructing entity tables: ${entityData.length} bytes`);
+    const entities = this.constructEntityTables(this.parseBFastFromArray(entityData));    
+    this.log(`Found ${entities.length} entity tables`);
+
+    this.log(`Decoding strings: ${stringData.length} bytes`);
+    const strings = new TextDecoder('utf-8').decode(stringData).split('\0');
+    this.log(`Found ${strings.length} strings`);
+
     return new Vim(
-      new TextDecoder('utf-8').decode(lookup.get('header')),
-      this.parseBFastFromArray(lookup.get('assets')),
+      header,
+      assets,
       g3d,
-      this.constructEntityTables(
-        this.parseBFastFromArray(lookup.get('entities'))
-      ),
-      new TextDecoder('utf-8').decode(lookup.get('strings')).split('\0')
+      entities,
+      strings,
     )
   }
 
@@ -275,17 +312,13 @@ export class VIMLoader {
         mesh < meshCount - 1 ? g3d.meshSubmeshes[mesh + 1] : submeshCount
 
       for (let submesh = meshStart; submesh < meshEnd; submesh++) {
-        let r: number
-        let g: number
-        let b: number
-        let a: number
+        let r = 0.5
+        let g = 0.5
+        let b = 0.5
+        let a = 1
         const material = g3d.submeshMaterial[submesh]
-        if (material < 0) {
-          r = 0.5
-          g = 0.5
-          b = 0.5
-          a = 1
-        } else {
+        if (material >= 0) 
+        {
           r = g3d.materialColors[material * g3d.colorArity]
           g = g3d.materialColors[material * g3d.colorArity + 1]
           b = g3d.materialColors[material * g3d.colorArity + 2]
@@ -333,10 +366,8 @@ export class VIMLoader {
 
   // Main
   parse (data: ArrayBuffer): VimScene {
-    console.time('parsingVim')
-    console.log(`Parsing Vim. Byte count: ${data.byteLength}`)
+    this.log(`Parsing Vim. Byte count: ${data.byteLength}`)
 
-    console.log('Parsing BFAST')
     const bfast = this.parseBFast(data)
 
     console.log(`found: ${bfast.buffers.length} buffers`)
