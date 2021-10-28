@@ -184,6 +184,25 @@ class VimG3d {
     )?.data as Float32Array
   }
 
+  getMeshSubmeshRange (mesh: number): [number, number] {
+    const start = this.meshSubmeshes[mesh]
+    const end =
+      mesh < this.meshSubmeshes.length - 1
+        ? this.meshSubmeshes[mesh + 1]
+        : this.submeshIndexOffset.length
+    return [start, end]
+  }
+
+  getSubmeshIndexRange (submesh: number): [number, number] {
+    const start = this.submeshIndexOffset[submesh]
+    const end =
+      submesh < this.submeshIndexOffset.length - 1
+        ? this.submeshIndexOffset[submesh + 1]
+        : this.indices.length
+
+    return [start, end]
+  }
+
   validate () {
     const isPresent = (attribute: any, label: string) => {
       if (!attribute) {

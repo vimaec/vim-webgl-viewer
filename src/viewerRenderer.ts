@@ -1,5 +1,4 @@
 import * as THREE from 'three'
-import { ShadowMapType } from 'three'
 
 export class ViewerRenderer {
   camera: THREE.PerspectiveCamera
@@ -15,8 +14,8 @@ export class ViewerRenderer {
     this.canvas = canvas
     this.renderer = new THREE.WebGLRenderer({
       canvas: this.canvas,
-      antialias: false,
-      precision: 'lowp',
+      antialias: true,
+      precision: 'lowp', // 'highp'
       alpha: false,
       stencil: false,
       powerPreference: 'high-performance'

@@ -31,6 +31,15 @@ export class VIMLoader {
     console.timeEnd(this.timerName)
   }
 
+  timeAction<T> (task: string, call: () => T): T {
+    console.log('Started ' + task)
+    const time = 'Ended ' + task
+    console.time(time)
+    const result = call()
+    console.timeEnd(time)
+    return result
+  }
+
   // Loads the VIM from a URL
   load (
     url: string,
@@ -199,7 +208,7 @@ export class VIMLoader {
   }
 
   // Given a BFAST container (header/names/buffers) constructs a VIM data structure
-  constructVIM (bfast: any): Vim {
+  constructVIM = (bfast: any): Vim => {
     if (bfast.buffers.length < 5) {
       throw new Error('VIM requires at least five BFast buffers')
     }
@@ -294,78 +303,55 @@ export class VIMLoader {
     return geometry
   }
 
-  allocateGeometry (g3d: VimG3d): THREE.BufferGeometry[] {
+  allocateGeometry = (g3d: VimG3d): THREE.BufferGeometry[] => {
     const meshCount = g3d.meshSubmeshes.length
-    const submeshCount = g3d.submeshIndexOffset.length
-    const indexCount = g3d.indices.length
-
+    // A full-sized temp color buffer because we don't know the vertex count of buffers in advance
     const colorBuffer = new Float32Array(g3d.positions.length)
+    const indexBuffer = new Int32Array(g3d.indices.length)
     const resultMeshes: THREE.BufferGeometry[] = []
+
     for (let mesh = 0; mesh < meshCount; mesh++) {
-      const indexSlice: number[] = []
-
-      const meshStart = g3d.meshSubmeshes[mesh]
-      const meshEnd =
-        mesh < meshCount - 1 ? g3d.meshSubmeshes[mesh + 1] : submeshCount
-
+      // min and max indices accumulated to slice into the vertex buffer
       let min: number = Number.MAX_SAFE_INTEGER
       let max: number = 0
+      let indexCount = 0
+
+      const [meshStart, meshEnd] = g3d.getMeshSubmeshRange(mesh)
       for (let submesh = meshStart; submesh < meshEnd; submesh++) {
-        let r: number
-        let g: number
-        let b: number
-        const material = g3d.submeshMaterial[submesh]
-        if (material < 0) {
-          r = 0.5
-          g = 0.5
-          b = 0.5
-        } else {
-          const alpha = g3d.materialColors[material * g3d.colorArity + 3]
-          if (alpha < 0.9) {
-            continue
-          }
-          r = g3d.materialColors[material * g3d.colorArity]
-          g = g3d.materialColors[material * g3d.colorArity + 1]
-          b = g3d.materialColors[material * g3d.colorArity + 2]
-        }
+        // transparent submeshes are skipped
+        const submeshColor = this.getSubmeshColor(g3d, submesh)
+        if (!submeshColor) continue
 
-        const submeshStart = g3d.submeshIndexOffset[submesh]
-        const submeshEnd =
-          submesh < submeshCount - 1
-            ? g3d.submeshIndexOffset[submesh + 1]
-            : indexCount
-
-        // TODO try not unpacking all vertices
+        const [submeshStart, submeshEnd] = g3d.getSubmeshIndexRange(submesh)
         for (let index = submeshStart; index < submeshEnd; index++) {
           const vertex = g3d.indices[index]
-          indexSlice.push(vertex)
+          indexBuffer[indexCount++] = vertex
           min = Math.min(min, vertex)
           max = Math.max(max, vertex)
-          colorBuffer[vertex * 3] = r
-          colorBuffer[vertex * 3 + 1] = g
-          colorBuffer[vertex * 3 + 2] = b
+          submeshColor.toArray(colorBuffer, vertex * 3)
         }
       }
 
-      // If mesh is empty we push null to keep results aligned
-      if (indexSlice.length === 0) {
+      // If all submesh are transparent, we push null to keep results aligned
+      // if (meshIndices.length === 0) {
+      if (indexCount === 0) {
         resultMeshes.push(null)
         continue
       }
 
+      // 3 is both the arity of the vertex buffer and of THREE.color
       const sliceStart = min * 3
       const sliceEnd = (max + 1) * 3
-      const vertexSlice = g3d.positions.subarray(sliceStart, sliceEnd)
-      const colorSlice = colorBuffer.subarray(sliceStart, sliceEnd)
 
-      for (let i = 0; i < indexSlice.length; i++) {
-        indexSlice[i] -= min
+      // Rebase indices in mesh space
+      for (let i = 0; i < indexCount; i++) {
+        indexBuffer[i] -= min
       }
 
       const resultMesh = this.createBufferGeometry(
-        vertexSlice,
-        new Int32Array(indexSlice),
-        colorSlice
+        g3d.positions.subarray(sliceStart, sliceEnd),
+        indexBuffer.subarray(0, indexCount),
+        colorBuffer.subarray(sliceStart, sliceEnd)
       )
 
       resultMesh.computeBoundingSphere()
@@ -375,40 +361,53 @@ export class VIMLoader {
     return resultMeshes
   }
 
+  defaultColor = new THREE.Color(0.5, 0.5, 0.5)
+  getSubmeshColor (g3d: VimG3d, submesh: number) {
+    const material = g3d.submeshMaterial[submesh]
+    if (material < 0) {
+      return this.defaultColor
+    }
+
+    const colorIndex = material * g3d.colorArity
+    const alpha = g3d.materialColors[colorIndex + 3]
+    if (alpha < 0.9) {
+      return // to skip transparent materials
+    }
+
+    return new THREE.Color().fromArray(g3d.materialColors, colorIndex)
+  }
+
   // Main
   parse (data: ArrayBuffer): VimScene {
-    this.log(`Parsing Vim. Byte count: ${data.byteLength}`)
-
-    const bfast = this.parseBFast(data)
+    const bfast = this.timeAction('Parsing Vim', () => this.parseBFast(data))
 
     console.log(`found: ${bfast.buffers.length} buffers`)
-    for (let i = 0; i < bfast.names.length; ++i) console.log(bfast.names[i])
+    console.log(bfast.names.join(', '))
 
-    console.log('Creating VIM')
-    const vim = this.constructVIM(bfast)
+    const vim = this.timeAction('Creating VIM', () => this.constructVIM(bfast))
 
-    console.log('Building meshes')
-    const geometry = this.allocateGeometry(vim.g3d)
+    const geometry = this.timeAction('Allocating Geometry', () =>
+      this.allocateGeometry(vim.g3d)
+    )
     console.log('Found # meshes ' + geometry.length)
 
-    console.log('Counting references')
-    const meshRefCounts = this.countMeshReferences(
-      vim.g3d.instanceMeshes,
-      geometry.length
+    const meshRefCounts = this.timeAction('Counting references', () =>
+      this.countMeshReferences(vim.g3d.instanceMeshes, geometry.length)
+    )
+
+    const rawMeshes = this.timeAction('Allocating Meshes', () =>
+      this.allocateMeshes(geometry, meshRefCounts)
+    )
+
+    const sceneGeometry = this.timeAction('Applying Matrices', () =>
+      this.applyMatrices(
+        rawMeshes,
+        vim.g3d.instanceMeshes,
+        vim.g3d.instanceTransforms
+      )
     )
 
     console.log('Merging geometry')
-
-    console.log('Allocating Instanced Meshes')
-    const rawMeshes = this.allocateMeshes(geometry, meshRefCounts)
-
-    console.log('Applying Matrices')
-    const sceneGeometry = this.applyMatrices(
-      rawMeshes,
-      vim.g3d.instanceMeshes,
-      vim.g3d.instanceTransforms
-    )
-
     const singles: THREE.BufferGeometry[] = []
     for (let i = 0; i < vim.g3d.instanceMeshes.length; i++) {
       const meshIndex = vim.g3d.instanceMeshes[i]
@@ -441,10 +440,10 @@ export class VIMLoader {
     return new VimScene(vim, sceneGeometry)
   }
 
-  countMeshReferences (
+  countMeshReferences = (
     instanceMeshes: Int32Array,
     meshCount: number
-  ): Int32Array {
+  ): Int32Array => {
     const meshRefCounts = new Int32Array(meshCount)
     for (let i = 0; i < instanceMeshes.length; ++i) {
       const mesh = instanceMeshes[i]
