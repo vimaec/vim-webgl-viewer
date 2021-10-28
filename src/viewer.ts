@@ -116,6 +116,7 @@ export class Viewer {
     sphere.applyMatrix4(this.getViewMatrix())
     this.render.boundingSphere = sphere
     this.render.updateModel(this.getViewMatrix())
+
     console.log('Everything ready')
     console.time('FirstRender')
     this.render.render()
@@ -132,6 +133,7 @@ export class Viewer {
 
     // Model
     if (this.settings.autoResize) this.render.fitToCanvas()
+
     this.render.render()
 
     // Stats
