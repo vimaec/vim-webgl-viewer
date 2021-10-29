@@ -1,10 +1,9 @@
 {
   "name": "vim-webgl-viewer",
-  "version": "0.6.1-beta.0",
-  "type": "module",
-  "description": "A 3D model viewer in JavaScript.",
-  "main": "./dist/vim-webgl-viewer.js",
-  "module": "/src/viewer.ts",
+  "version": "1.0.0-beta.0",
+  "description": "A high-performance 3D viewer and VIM file loader built on top of Three.JS.",
+  "main": "./dist/vim-webgl-viewer.iife.js",
+  "module": "/dist/vim-webgl-viewer.es.js",
   "homepage": "https://github.com/vimaec/vim-webgl-viewer.git",
   "bugs": "https://github.com/vimaec/vim-webgl-viewer/issues",
   "license": "MIT",
@@ -19,12 +18,7 @@
   "scripts": {
     "dev": "vite",
     "build": "vite build",
-    "docs:dev": "npm-run-all --parallel docs:build docs:watch docs:preview",
-    "docs:dev-host": "npm-run-all --parallel docs:build docs:watch docs:host",
-    "docs:build": "vite build -c vite.config.docs.js",
-    "docs:watch": "vite build -c vite.config.docs.js --watch",
-    "docs:preview": "vite preview -c vite.config.docs.js --port 8080",
-    "docs:host": "vite preview -c vite.config.docs.js --port 8080 --host",
+    "bump-prerelease": "npm version prerelease --preid=beta",
     "eslint": "eslint --ext .js,.ts src --fix"
   },
   "devDependencies": {
@@ -43,7 +37,8 @@
     "npm-run-all": "^4.1.5",
     "prettier": "^2.4.1",
     "typescript": "^4.4.3",
-    "vite": "^2.6.3"
+    "vite": "^2.6.3",
+    "http-server": "^14"
   },
   "dependencies": {
     "dat.gui": "^0.7.7",
