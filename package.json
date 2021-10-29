@@ -2,6 +2,7 @@
   "name": "vim-webgl-viewer",
   "version": "1.0.0-beta.1",
   "description": "A high-performance 3D viewer and VIM file loader built on top of Three.JS.",
+  "files": ["dist"],
   "main": "./dist/vim-webgl-viewer.iife.js",
   "module": "/dist/vim-webgl-viewer.es.js",
   "homepage": "https://github.com/vimaec/vim-webgl-viewer.git",
@@ -17,7 +18,7 @@
   "scripts": {
     "dev": "vite",
     "build": "vite build",
-    "bump-prerelease": "npm version prerelease --preid=beta",
+    "bump": "npm version prerelease --preid=beta",
     "eslint": "eslint --ext .js,.ts src --fix"
   },
   "devDependencies": {
