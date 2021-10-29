@@ -19,8 +19,8 @@
   "scripts": {
     "dev": "vite",
     "build": "vite build",
-    "docs:dev": "npm-run-all --parallel docs:watch docs:preview",
-    "docs:dev-host": "npm-run-all --parallel docs:watch docs:host",
+    "docs:dev": "npm-run-all --parallel docs:build docs:watch docs:preview",
+    "docs:dev-host": "npm-run-all --parallel docs:build docs:watch docs:host",
     "docs:build": "vite build -c vite.config.docs.js",
     "docs:watch": "vite build -c vite.config.docs.js --watch",
     "docs:preview": "vite preview -c vite.config.docs.js --port 8080",

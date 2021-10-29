@@ -3,6 +3,7 @@
 */
 
 import * as THREE from 'three'
+import * as BufferGeometryUtils from '../node_modules/three/examples/jsm/utils/BufferGeometryUtils.js'
 import { G3d, VimG3d, Attribute } from './g3d'
 import { BFast, BFastHeader } from './bfast'
 import { Vim, VimScene, VimSceneGeometry } from './vim'
@@ -11,9 +12,32 @@ type Mesh = THREE.InstancedMesh<THREE.BufferGeometry, THREE.Material>
 
 export class VIMLoader {
   material: THREE.Material
+  timerName: string
 
   constructor (material: THREE.Material) {
     this.material = material
+    this.timerName = 'VIM Loader'
+  }
+
+  logStart () {
+    console.time(this.timerName)
+  }
+
+  log (msg: string) {
+    console.timeLog(this.timerName, msg)
+  }
+
+  logEnd () {
+    console.timeEnd(this.timerName)
+  }
+
+  timeAction<T> (task: string, call: () => T): T {
+    console.log('Started ' + task)
+    const time = 'Ended ' + task
+    console.time(time)
+    const result = call()
+    console.timeEnd(time)
+    return result
   }
 
   // Loads the VIM from a URL
@@ -23,6 +47,8 @@ export class VIMLoader {
     onProgress?: (request: ProgressEvent) => void,
     onError?: (event: ErrorEvent) => void
   ) {
+    this.logStart()
+
     const loader = new THREE.FileLoader()
     loader.setResponseType('arraybuffer')
     loader.setRequestHeader({
@@ -33,6 +59,7 @@ export class VIMLoader {
     loader.load(
       url,
       (data: string | ArrayBuffer) => {
+        this.log('Data arrived')
         if (typeof data === 'string') {
           onError?.(new ErrorEvent('Unsupported string loader response'))
           return
@@ -49,11 +76,14 @@ export class VIMLoader {
           return
         }
         // Don't catch exceptions in code provided by caller.
+        this.log('Calling onLoad() parameter')
         onLoad?.(vim)
+        this.log('Finished calling onLoad() parameter')
       },
       onProgress,
       onError
     )
+    this.log('Finished loading')
   }
 
   parseBFastFromArray (bytes: Uint8Array) {
@@ -73,8 +103,6 @@ export class VIMLoader {
 
     // Parse the header
     const header = BFastHeader.fromArray(data, byteLength)
-    console.log('BFAST header')
-    console.log(JSON.stringify(header))
 
     // Compute each buffer
     const buffers: Uint8Array[] = []
@@ -169,16 +197,18 @@ export class VIMLoader {
     for (let i = 0; i < bfast.buffers.length; ++i) {
       const current = bfast.names[i]
       const tableName = current.substring(current.indexOf(':') + 1)
-      const next = this.constructEntityTable(
-        this.parseBFastFromArray(bfast.buffers[i])
+      const buffer = bfast.buffers[i]
+      this.log(
+        `Constructing entity table ${current} which is ${buffer.length} size`
       )
+      const next = this.constructEntityTable(this.parseBFastFromArray(buffer))
       result.set(tableName, next)
     }
     return result
   }
 
   // Given a BFAST container (header/names/buffers) constructs a VIM data structure
-  constructVIM (bfast: any): Vim {
+  constructVIM = (bfast: any): Vim => {
     if (bfast.buffers.length < 5) {
       throw new Error('VIM requires at least five BFast buffers')
     }
@@ -188,21 +218,35 @@ export class VIMLoader {
       lookup.set(bfast.names[i], bfast.buffers[i])
     }
 
-    const g3d = new VimG3d(
-      this.constructG3D(this.parseBFastFromArray(lookup.get('geometry')))
-    )
+    const assetData = lookup.get('assets')
+    const g3dData = lookup.get('geometry')
+    const headerData = lookup.get('header')
+    const entityData = lookup.get('entities')
+    const stringData = lookup.get('strings')
+
+    this.log(`Parsing header: ${headerData.length} bytes`)
+    const header = new TextDecoder('utf-8').decode(headerData)
+
+    this.log(`Constructing G3D: ${g3dData.length} bytes`)
+    const g3d = new VimG3d(this.constructG3D(this.parseBFastFromArray(g3dData)))
+    this.log('Validating G3D')
     g3d.validate()
 
-    // Parse BFAST
-    return new Vim(
-      new TextDecoder('utf-8').decode(lookup.get('header')),
-      this.parseBFastFromArray(lookup.get('assets')),
-      g3d,
-      this.constructEntityTables(
-        this.parseBFastFromArray(lookup.get('entities'))
-      ),
-      new TextDecoder('utf-8').decode(lookup.get('strings')).split('\0')
+    this.log(`Retrieving assets: ${assetData.length} bytes`)
+    const assets = this.parseBFastFromArray(assetData)
+    this.log(`Found ${assets.buffers.length} assets`)
+
+    this.log(`Constructing entity tables: ${entityData.length} bytes`)
+    const entities = this.constructEntityTables(
+      this.parseBFastFromArray(entityData)
     )
+    this.log(`Found ${entities.length} entity tables`)
+
+    this.log(`Decoding strings: ${stringData.length} bytes`)
+    const strings = new TextDecoder('utf-8').decode(stringData).split('\0')
+    this.log(`Found ${strings.length} strings`)
+
+    return new Vim(header, assets, g3d, entities, strings)
   }
 
   // Given a BFAST container (header/names/buffers) constructs a G3D data structure
@@ -259,71 +303,57 @@ export class VIMLoader {
     return geometry
   }
 
-  allocateGeometry (g3d: VimG3d): THREE.BufferGeometry[] {
+  allocateGeometry = (g3d: VimG3d): THREE.BufferGeometry[] => {
     const meshCount = g3d.meshSubmeshes.length
-    const submeshCount = g3d.submeshIndexOffset.length
-    const indexCount = g3d.indices.length
-
+    // A full-sized temp color buffer because we don't know the vertex count of buffers in advance
+    const colorBuffer = new Float32Array(g3d.positions.length)
+    const indexBuffer = new Int32Array(g3d.indices.length)
     const resultMeshes: THREE.BufferGeometry[] = []
+
     for (let mesh = 0; mesh < meshCount; mesh++) {
-      const meshIndices = []
-      const meshVertexPositions = []
-      const meshVertexColors = []
+      // min and max indices accumulated to slice into the vertex buffer
+      let min: number = Number.MAX_SAFE_INTEGER
+      let max: number = 0
+      let indexCount = 0
 
-      const meshStart = g3d.meshSubmeshes[mesh]
-      const meshEnd =
-        mesh < meshCount - 1 ? g3d.meshSubmeshes[mesh + 1] : submeshCount
-
+      const [meshStart, meshEnd] = g3d.getMeshSubmeshRange(mesh)
       for (let submesh = meshStart; submesh < meshEnd; submesh++) {
-        let r: number
-        let g: number
-        let b: number
-        let a: number
-        const material = g3d.submeshMaterial[submesh]
-        if (material < 0) {
-          r = 0.5
-          g = 0.5
-          b = 0.5
-          a = 1
-        } else {
-          r = g3d.materialColors[material * g3d.colorArity]
-          g = g3d.materialColors[material * g3d.colorArity + 1]
-          b = g3d.materialColors[material * g3d.colorArity + 2]
-          a = g3d.materialColors[material * g3d.colorArity + 3]
-        }
+        // transparent submeshes are skipped
+        const submeshColor = this.getSubmeshColor(g3d, submesh)
+        if (!submeshColor) continue
 
-        if (a < 0.9) continue
-
-        const submeshStart = g3d.submeshIndexOffset[submesh]
-        const submeshEnd =
-          submesh < submeshCount - 1
-            ? g3d.submeshIndexOffset[submesh + 1]
-            : indexCount
-
-        // TODO try not unpacking all vertices
+        const [submeshStart, submeshEnd] = g3d.getSubmeshIndexRange(submesh)
         for (let index = submeshStart; index < submeshEnd; index++) {
-          meshIndices.push(meshIndices.length)
-
           const vertex = g3d.indices[index]
-          const x = g3d.positions[vertex * g3d.positionArity]
-          const y = g3d.positions[vertex * g3d.positionArity + 1]
-          const z = g3d.positions[vertex * g3d.positionArity + 2]
-
-          meshVertexPositions.push(x)
-          meshVertexPositions.push(y)
-          meshVertexPositions.push(z)
-
-          meshVertexColors.push(r)
-          meshVertexColors.push(g)
-          meshVertexColors.push(b)
+          indexBuffer[indexCount++] = vertex
+          min = Math.min(min, vertex)
+          max = Math.max(max, vertex)
+          submeshColor.toArray(colorBuffer, vertex * 3)
         }
       }
 
+      // If all submesh are transparent, we push null to keep results aligned
+      // if (meshIndices.length === 0) {
+      if (indexCount === 0) {
+        resultMeshes.push(null)
+        continue
+      }
+
+      // 3 is both the arity of the vertex buffer and of THREE.color
+      const sliceStart = min * 3
+      const sliceEnd = (max + 1) * 3
+
+      // Rebase indices in mesh space
+      for (let i = 0; i < indexCount; i++) {
+        indexBuffer[i] -= min
+      }
+
       const resultMesh = this.createBufferGeometry(
-        new Float32Array(meshVertexPositions),
-        new Int32Array(meshIndices),
-        new Float32Array(meshVertexColors)
+        g3d.positions.subarray(sliceStart, sliceEnd),
+        indexBuffer.subarray(0, indexCount),
+        colorBuffer.subarray(sliceStart, sliceEnd)
       )
+
       resultMesh.computeBoundingSphere()
       resultMeshes.push(resultMesh)
     }
@@ -331,63 +361,122 @@ export class VIMLoader {
     return resultMeshes
   }
 
+  defaultColor = new THREE.Color(0.5, 0.5, 0.5)
+  getSubmeshColor (g3d: VimG3d, submesh: number) {
+    const material = g3d.submeshMaterial[submesh]
+    if (material < 0) {
+      return this.defaultColor
+    }
+
+    const colorIndex = material * g3d.colorArity
+    const alpha = g3d.materialColors[colorIndex + 3]
+    if (alpha < 0.9) {
+      return // to skip transparent materials
+    }
+
+    return new THREE.Color().fromArray(g3d.materialColors, colorIndex)
+  }
+
   // Main
   parse (data: ArrayBuffer): VimScene {
-    console.time('parsingVim')
-    console.log(`Parsing Vim. Byte count: ${data.byteLength}`)
-
-    console.log('Parsing BFAST')
-    const bfast = this.parseBFast(data)
+    const bfast = this.timeAction('Parsing Vim', () => this.parseBFast(data))
 
     console.log(`found: ${bfast.buffers.length} buffers`)
-    for (let i = 0; i < bfast.names.length; ++i) console.log(bfast.names[i])
+    console.log(bfast.names.join(', '))
 
-    console.log('Creating VIM')
-    const vim = this.constructVIM(bfast)
+    const vim = this.timeAction('Creating VIM', () => this.constructVIM(bfast))
 
-    console.log('Building meshes')
-    const geometry = this.allocateGeometry(vim.g3d)
+    const geometry = this.timeAction('Allocating Geometry', () =>
+      this.allocateGeometry(vim.g3d)
+    )
     console.log('Found # meshes ' + geometry.length)
 
-    console.log('Allocating Instanced Meshes')
-    const rawMeshes = this.allocateMeshes(geometry, vim.g3d.instanceMeshes)
-
-    console.log('Applying Matrices')
-    const sceneGeometry = this.applyMatrices(
-      rawMeshes,
-      vim.g3d.instanceMeshes,
-      vim.g3d.instanceTransforms
+    const meshRefCounts = this.timeAction('Counting references', () =>
+      this.countMeshReferences(vim.g3d.instanceMeshes, geometry.length)
     )
 
+    const rawMeshes = this.timeAction('Allocating Meshes', () =>
+      this.allocateMeshes(geometry, meshRefCounts)
+    )
+
+    const sceneGeometry = this.timeAction('Applying Matrices', () =>
+      this.applyMatrices(
+        rawMeshes,
+        vim.g3d.instanceMeshes,
+        vim.g3d.instanceTransforms
+      )
+    )
+
+    console.log('Merging geometry')
+    const singles: THREE.BufferGeometry[] = []
+    for (let i = 0; i < vim.g3d.instanceMeshes.length; i++) {
+      const meshIndex = vim.g3d.instanceMeshes[i]
+      if (meshIndex < 0) continue
+
+      const mesh = geometry[meshIndex]
+      if (!mesh) continue
+
+      if (meshRefCounts[meshIndex] === 1) {
+        const matrixAsArray = vim.g3d.instanceTransforms.subarray(
+          i * vim.g3d.matrixArity,
+          (i + 1) * vim.g3d.matrixArity
+        )
+        const matrix = new THREE.Matrix4()
+        matrix.elements = Array.from(matrixAsArray)
+        mesh.applyMatrix4(matrix)
+        singles.push(mesh)
+      }
+    }
+
+    const big: THREE.BufferGeometry =
+      BufferGeometryUtils.mergeBufferGeometries(singles)
+    const bigMesh = new THREE.InstancedMesh(big, this.material, 1)
+    bigMesh.setMatrixAt(0, new THREE.Matrix4())
+    big.computeBoundingSphere()
+    sceneGeometry.meshes.push(bigMesh)
+    sceneGeometry.boundingSphere = big.boundingSphere
+
+    console.log('Loading Completed')
     return new VimScene(vim, sceneGeometry)
   }
 
-  allocateMeshes (
-    geometries: THREE.BufferGeometry[],
-    instanceMeshes: Int32Array
-  ): (Mesh | null)[] {
-    const meshCount = geometries.length
-
-    console.log('Counting references')
+  countMeshReferences = (
+    instanceMeshes: Int32Array,
+    meshCount: number
+  ): Int32Array => {
     const meshRefCounts = new Int32Array(meshCount)
     for (let i = 0; i < instanceMeshes.length; ++i) {
       const mesh = instanceMeshes[i]
       if (mesh < 0) continue
       meshRefCounts[mesh]++
     }
+    return meshRefCounts
+  }
 
-    console.log('Allocating instances.')
+  allocateMeshes (
+    geometries: THREE.BufferGeometry[],
+    meshRefCounts: Int32Array
+  ): (Mesh | null)[] {
+    const meshCount = geometries.length
     const meshes: (Mesh | null)[] = []
+
     for (let i = 0; i < meshCount; ++i) {
       const count = meshRefCounts[i]
-      if (count === 0) {
+      if (count <= 1) {
         meshes.push(null)
-      } else {
-        const g = geometries[i]
-        const mesh = new THREE.InstancedMesh(g, this.material, count)
-        meshes.push(mesh)
+        continue
       }
+
+      const geometry = geometries[i]
+      if (geometry === null) {
+        meshes.push(null)
+        continue
+      }
+
+      const mesh = new THREE.InstancedMesh(geometry, this.material, count)
+      meshes.push(mesh)
     }
+
     return meshes
   }
 

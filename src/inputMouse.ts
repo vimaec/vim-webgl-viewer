@@ -104,6 +104,7 @@ export class InputMouse {
   }
 
   onMouseClick = (position: Vector2) => {
+    /*
     const hits = this.mouseRaycast(position)
     if (hits.length > 0) {
       const mesh = hits[0].object
@@ -116,5 +117,6 @@ export class InputMouse {
         this.viewer.select(mesh, index)
       }
     }
+    */
   }
 }

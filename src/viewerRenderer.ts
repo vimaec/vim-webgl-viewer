@@ -13,11 +13,15 @@ export class ViewerRenderer {
   constructor (canvas: HTMLCanvasElement) {
     this.canvas = canvas
     this.renderer = new THREE.WebGLRenderer({
+      canvas: this.canvas,
       antialias: true,
-      canvas: this.canvas
+      precision: 'lowp', // 'highp'
+      alpha: false,
+      stencil: false,
+      powerPreference: 'high-performance'
     })
     this.renderer.setPixelRatio(window.devicePixelRatio)
-    this.renderer.shadowMap.enabled = true
+    this.renderer.shadowMap.enabled = false
 
     this.camera = new THREE.PerspectiveCamera()
     this.scene = new THREE.Scene()

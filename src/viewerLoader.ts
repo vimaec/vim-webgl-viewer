@@ -21,6 +21,7 @@ const defaultMaterial = new THREE.MeshPhongMaterial({
   color: 0x999999,
   vertexColors: true,
   flatShading: true,
+  // TODO: experiment without being double-sided
   side: THREE.DoubleSide,
   shininess: 70
 })
