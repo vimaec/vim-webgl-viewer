@@ -7,7 +7,7 @@ export default defineConfig({
       entry: './src/viewer.ts',
       name: 'vim'
     },
-    minify: true,
+    minify: false,
     rollupOptions: {
       external: [
         'three'

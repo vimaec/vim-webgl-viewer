@@ -1,4 +1,4 @@
-﻿/**
+/**
  @author VIM / https://vimaec.com
 */
 
