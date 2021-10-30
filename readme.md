@@ -88,7 +88,7 @@ import { Viewer } from './dist/vim-webgl-viewer.es.js'
 
 const viewer = new Viewer();
 viewer.view({
-    url: 'https://vim.azureedge.net/samples/residence.vim',
+    url: './residence.vim',
     object: {
         scale: 0.1,
         rotation: { x: 270 },
