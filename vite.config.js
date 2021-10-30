@@ -7,7 +7,8 @@ export default defineConfig({
       entry: './src/viewer.ts',
       name: 'vim'
     },
-    minify: true,
+    // Minify set to true will break the IIFE output
+    minify: false,
     rollupOptions: {
       external: [
         'three'

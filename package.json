@@ -19,13 +19,14 @@
   },
   "scripts": {
     "dev": "vite",
-    "build": "vite build",
+    "build": "vite build && npm run gen-docs",
     "bump-dev": "npm version prerelease --preid=dev",
     "publish-dev": "npm publish --tag=dev",
     "serve-docs": "http-server ./docs",
+    "serve-dist": "http-server ./dist",
     "gen-docs": "node docs/genDocs.js",
-    "start-dev": "open https://vimaec.github.io/vim-webgl-viewer/index-dev.html?model=https%3A%2F%2Fvim.azureedge.net%2Fsamples%2Fskanska.vim",
-    "release-dev": "npm run build && npm run bump-dev && git push && npm run publish-dev && start-dev",
+    "start-dev": "opener https://vimaec.github.io/vim-webgl-viewer/index-dev.html?model=https%3A%2F%2Fvim.azureedge.net%2Fsamples%2Fskanska.vim",
+    "release-dev": "npm run build && npm run bump-dev && git push && npm run publish-dev && npm run start-dev",
     "eslint": "eslint --ext .js,.ts src --fix"
   },
   "devDependencies": {
@@ -44,6 +45,7 @@
     "http-server": "^14",
     "mustache": "^4.2.0",
     "npm-run-all": "^4.1.5",
+    "opener": "^1.5.2",
     "prettier": "^2.4.1",
     "typescript": "^4.4.3",
     "vite": "^2.6.3"

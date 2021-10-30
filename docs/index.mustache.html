@@ -15,13 +15,12 @@
 </head>
 <body>
     <script src="https://unpkg.com/three@0.133.1/build/three.min.js"></script>
-    <!-- Note: @latest is not required, we are just being explicit to differentiate from our dev index -->
     <script src="{{{viewerUrl}}}"></script>
     <script>
-        const params = new URLSearchParams(window.location.search)
+        const params = new URLSearchParams(window.location.search);
         const url = params.has('model')
             ? params.get('model')
-            : 'https://vim.azureedge.net/samples/residence.vim'
+            : 'https://vim.azureedge.net/samples/residence.vim';
 
         var viewer = new vim.Viewer({
             url: url,
