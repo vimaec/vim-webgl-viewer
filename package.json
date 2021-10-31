@@ -26,7 +26,7 @@
     "serve-dist": "http-server ./dist",
     "gen-docs": "node docs/genDocs.js",
     "test-dev": "opener https://vimaec.github.io/vim-webgl-viewer/index-dev.html?model=https%3A%2F%2Fvim.azureedge.net%2Fsamples%2Fskanska.vim",
-    "release-dev": "npm run build && npm run bump-dev && git commit -a -m \"Updating version\" && git push && npm run publish-dev && npm run test-dev",
+    "release-dev": "npm run build && npm run bump-dev && git push && npm run publish-dev && npm run test-dev",
     "eslint": "eslint --ext .js,.ts src --fix"
   },
   "devDependencies": {
