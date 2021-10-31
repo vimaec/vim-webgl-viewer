@@ -3,6 +3,9 @@
 [![npm](https://img.shields.io/npm/v/vim-webgl-viewer)](https://npmjs.com/package/vim-webgl-viewer)
 [![Website](https://img.shields.io/website?url=https%3A%2F%2Fvimaec.github.io%2Fvim-webgl-viewer)](https://vimaec.github.io/vim-webgl-viewer/)
 
+* [Small Model Demo - Residence](https://vimaec.github.io/vim-webgl-viewer)
+* [Medium Model Demo - Medical Tower](https://vimaec.github.io/vim-webgl-viewer?model=https://vim.azureedge.net/samples/skanska.vim)
+* [Large Model Demo - Stadium](https://vimaec.github.io/vim-webgl-viewer?model=https://vim.azureedge.net/samples/stadium.vim) (*Warning*: slow download times)
 
 The VIM WebGL Viewer is an open-source high-performance 3D model viewer built on top of the popular 
 [Three.JS](https://threejs.org) WebGL framework that specializes
