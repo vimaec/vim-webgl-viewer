@@ -355,6 +355,7 @@ export class VIMLoader {
       )
 
       resultMesh.computeBoundingSphere()
+      resultMesh.computeBoundingBox()
       resultMeshes.push(resultMesh)
     }
 
@@ -522,14 +523,13 @@ export class VIMLoader {
         nodes.push(i)
       } else {
         meshIdToNodeIndex.set(mesh.id, [i])
+        resultMeshes.push(mesh) // push mesh first time it is seen
       }
 
       // Sphere was computed when geometry was created
       const sphere = mesh.geometry.boundingSphere!.clone()
       sphere.applyMatrix4(matrix)
       boundingSphere = boundingSphere ? boundingSphere.union(sphere) : sphere
-
-      resultMeshes.push(mesh)
     }
     return new VimSceneGeometry(
       resultMeshes,

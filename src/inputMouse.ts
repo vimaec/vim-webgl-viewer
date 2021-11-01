@@ -105,7 +105,10 @@ export class InputMouse {
 
   onMouseClick = (position: Vector2) => {
     /*
+    console.time('raycast')
     const hits = this.mouseRaycast(position)
+    console.timeEnd('raycast')
+
     if (hits.length > 0) {
       const mesh = hits[0].object
       const index = hits[0].instanceId
