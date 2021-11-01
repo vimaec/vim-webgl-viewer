@@ -15,7 +15,8 @@ export class ViewerRenderer {
     this.renderer = new THREE.WebGLRenderer({
       canvas: this.canvas,
       antialias: true,
-      precision: 'lowp', // 'highp'
+      precision: 'highp', // 'lowp', 'mediump', 'highp'
+
       alpha: false,
       stencil: false,
       powerPreference: 'high-performance'
