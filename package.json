@@ -28,7 +28,7 @@
     "test-dist": "npm run build && npm run serve-dist",
     "test-latest": "opener https://vimaec.github.io/vim-webgl-viewer/?model=https%3A%2F%2Fvim.azureedge.net%2Fsamples%2Fskanska.vim",
     "test-dev": "opener https://vimaec.github.io/vim-webgl-viewer/index-dev.html?model=https%3A%2F%2Fvim.azureedge.net%2Fsamples%2Fskanska.vim",
-    "release-patch": "npm version patch && git push && npm publish && npm run test-release",
+    "release-patch": "npm version patch && git push && npm publish && npm run test-latest",
     "release-dev": "npm run build && npm run bump-dev && git push && npm run publish-dev && npm run test-dev",
     "eslint": "eslint --ext .js,.ts src --fix"
   },
