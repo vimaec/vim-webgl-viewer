@@ -120,7 +120,7 @@ The viewer is broadly divided into three layer.
 
 **Elements:** objects from the original the bim software containing rich data. Each element can have from 0 to N nodes associated with it. Elements are refered to by Id or Index.  
 
-**Exeaple:**  
+**Example:**  
 A table has elementId 12321  
 it gets exported into 5 nodes, 4 legs and a table top.  
 the 5 nodes are rendered using 2 meshes, one for the table top, one for all 4 legs.  
