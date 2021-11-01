@@ -67,12 +67,12 @@ distributable package. It contains three files after running the `build` script:
 ## Making a Pre-Release
 
 1. First develop and test the feature using `npm run dev`
-2. Login to npm if needed using `npm login`
 2. When satisfied using `npm run build` to build the distribution files.
 3. Use `npm run serve-dist` to test the built distribution files locally. Or `npm run test-dist` to combine steps 2 and 3. 
 4. When satisfied merge into and checkout the `main` branch (the default branch). 
 5. Assure that `git status` is clean 
-6. Use `npm run release-dev` to create a pre-release NPM package, and test it on the GitHub pages. 
+6. Login to npm if needed using `npm login`
+7. Use `npm run release-dev` to create a pre-release NPM package, and test it on the GitHub pages. 
 
 After making a pre-release package test it by running `npm run test-dev`. This will open `https://vimaec.github.io/vim-webgl-viewer/index-dev.html`.
 
