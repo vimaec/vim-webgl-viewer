@@ -7,6 +7,7 @@ import * as BufferGeometryUtils from '../node_modules/three/examples/jsm/utils/B
 import { G3d, VimG3d, Attribute } from './g3d'
 import { BFast, BFastHeader } from './bfast'
 import { Vim, VimScene, VimSceneGeometry } from './vim'
+import { BufferAttribute } from 'three'
 
 type Mesh = THREE.InstancedMesh<THREE.BufferGeometry, THREE.Material>
 
@@ -282,100 +283,19 @@ export class VIMLoader {
     return new G3d(meta, attributes)
   }
 
-  createBufferGeometry (
-    vertices: Float32Array,
-    indices: Int32Array,
-    vertexColors: Float32Array | undefined = undefined
-  ): THREE.BufferGeometry {
-    const geometry = new THREE.BufferGeometry()
-
-    // Vertices
-    geometry.setAttribute('position', new THREE.BufferAttribute(vertices, 3))
-
-    // Indices
-    geometry.setIndex(new THREE.Uint32BufferAttribute(indices, 1))
-
-    // Colors
-    if (vertexColors) {
-      geometry.setAttribute('color', new THREE.BufferAttribute(vertexColors, 3))
-    }
-
-    return geometry
-  }
-
   allocateGeometry = (g3d: VimG3d): THREE.BufferGeometry[] => {
     const meshCount = g3d.meshSubmeshes.length
-    // A full-sized temp color buffer because we don't know the vertex count of buffers in advance
-    const colorBuffer = new Float32Array(g3d.positions.length)
-    const indexBuffer = new Int32Array(g3d.indices.length)
+    const builder = new GeometryBufferBuilder(g3d)
     const resultMeshes: THREE.BufferGeometry[] = []
 
     for (let mesh = 0; mesh < meshCount; mesh++) {
-      // min and max indices accumulated to slice into the vertex buffer
-      let min: number = Number.MAX_SAFE_INTEGER
-      let max: number = 0
-      let indexCount = 0
-
-      const [meshStart, meshEnd] = g3d.getMeshSubmeshRange(mesh)
-      for (let submesh = meshStart; submesh < meshEnd; submesh++) {
-        // transparent submeshes are skipped
-        const submeshColor = this.getSubmeshColor(g3d, submesh)
-        if (!submeshColor) continue
-
-        const [submeshStart, submeshEnd] = g3d.getSubmeshIndexRange(submesh)
-        for (let index = submeshStart; index < submeshEnd; index++) {
-          const vertex = g3d.indices[index]
-          indexBuffer[indexCount++] = vertex
-          min = Math.min(min, vertex)
-          max = Math.max(max, vertex)
-          submeshColor.toArray(colorBuffer, vertex * 3)
-        }
-      }
-
-      // If all submesh are transparent, we push null to keep results aligned
-      // if (meshIndices.length === 0) {
-      if (indexCount === 0) {
-        resultMeshes.push(null)
-        continue
-      }
-
-      // 3 is both the arity of the vertex buffer and of THREE.color
-      const sliceStart = min * 3
-      const sliceEnd = (max + 1) * 3
-
-      // Rebase indices in mesh space
-      for (let i = 0; i < indexCount; i++) {
-        indexBuffer[i] -= min
-      }
-
-      const resultMesh = this.createBufferGeometry(
-        g3d.positions.subarray(sliceStart, sliceEnd),
-        indexBuffer.subarray(0, indexCount),
-        colorBuffer.subarray(sliceStart, sliceEnd)
-      )
-
-      resultMesh.computeBoundingSphere()
-      resultMesh.computeBoundingBox()
-      resultMeshes.push(resultMesh)
+      const result = builder.createGeometryBufferFromMeshIndex(mesh)
+      result?.computeBoundingSphere()
+      result?.computeBoundingBox()
+      resultMeshes.push(result)
     }
 
     return resultMeshes
-  }
-
-  defaultColor = new THREE.Color(0.5, 0.5, 0.5)
-  getSubmeshColor (g3d: VimG3d, submesh: number) {
-    const material = g3d.submeshMaterial[submesh]
-    if (material < 0) {
-      return this.defaultColor
-    }
-
-    const colorIndex = material * g3d.colorArity
-    const alpha = g3d.materialColors[colorIndex + 3]
-    if (alpha < 0.9) {
-      return // to skip transparent materials
-    }
-
-    return new THREE.Color().fromArray(g3d.materialColors, colorIndex)
   }
 
   // Main
@@ -414,8 +334,8 @@ export class VIMLoader {
       const meshIndex = vim.g3d.instanceMeshes[i]
       if (meshIndex < 0) continue
 
-      const mesh = geometry[meshIndex]
-      if (!mesh) continue
+      const geometryBuffer = geometry[meshIndex]
+      if (!geometryBuffer) continue
 
       if (meshRefCounts[meshIndex] === 1) {
         const matrixAsArray = vim.g3d.instanceTransforms.subarray(
@@ -424,8 +344,15 @@ export class VIMLoader {
         )
         const matrix = new THREE.Matrix4()
         matrix.elements = Array.from(matrixAsArray)
-        mesh.applyMatrix4(matrix)
-        singles.push(mesh)
+
+        // adding uvs for picking
+        const vertexCount = geometryBuffer.getAttribute('position').count
+        const uvs = new Float32Array(vertexCount)
+        uvs.fill(i)
+        geometryBuffer.setAttribute('uv', new BufferAttribute(uvs, 2))
+        geometryBuffer.applyMatrix4(matrix)
+
+        singles.push(geometryBuffer)
       }
     }
 
@@ -434,6 +361,7 @@ export class VIMLoader {
     const bigMesh = new THREE.InstancedMesh(big, this.material, 1)
     bigMesh.setMatrixAt(0, new THREE.Matrix4())
     big.computeBoundingSphere()
+    bigMesh.userData.merged = true
     sceneGeometry.meshes.push(bigMesh)
     sceneGeometry.boundingSphere = big.boundingSphere
 
@@ -537,5 +465,97 @@ export class VIMLoader {
       nodeIndexToMeshInstance,
       meshIdToNodeIndex
     )
+  }
+}
+
+class GeometryBufferBuilder {
+  defaultColor = new THREE.Color(0.5, 0.5, 0.5)
+  colorBuffer: Float32Array
+  indexBuffer: Int32Array
+  g3d: VimG3d
+
+  constructor (g3d: VimG3d) {
+    this.colorBuffer = new Float32Array(g3d.positions.length)
+    this.indexBuffer = new Int32Array(g3d.indices.length)
+    this.g3d = g3d
+  }
+
+  createGeometryBufferFromMeshIndex (
+    meshIndex: number
+  ): THREE.BufferGeometry | null {
+    // min and max indices accumulated to slice into the vertex buffer
+    let min: number = Number.MAX_SAFE_INTEGER
+    let max: number = 0
+    let indexCount = 0
+
+    const [meshStart, meshEnd] = this.g3d.getMeshSubmeshRange(meshIndex)
+    for (let submesh = meshStart; submesh < meshEnd; submesh++) {
+      // transparent submeshes are skipped
+      const submeshColor = this.getSubmeshColor(this.g3d, submesh)
+      if (!submeshColor) continue
+
+      const [submeshStart, submeshEnd] = this.g3d.getSubmeshIndexRange(submesh)
+      for (let index = submeshStart; index < submeshEnd; index++) {
+        const vertex = this.g3d.indices[index]
+        this.indexBuffer[indexCount++] = vertex
+        min = Math.min(min, vertex)
+        max = Math.max(max, vertex)
+        submeshColor.toArray(this.colorBuffer, vertex * 3)
+      }
+    }
+
+    // If all submesh are transparent, we push null to keep results aligned
+    if (indexCount === 0) return null
+
+    // 3 is both the arity of the vertex buffer and of THREE.color
+    const sliceStart = min * 3
+    const sliceEnd = (max + 1) * 3
+
+    // Rebase indices in mesh space
+    for (let i = 0; i < indexCount; i++) {
+      this.indexBuffer[i] -= min
+    }
+
+    return this.createBufferGeometryFromArrays(
+      this.g3d.positions.subarray(sliceStart, sliceEnd),
+      this.indexBuffer.subarray(0, indexCount),
+      this.colorBuffer.subarray(sliceStart, sliceEnd)
+    )
+  }
+
+  getSubmeshColor (g3d: VimG3d, submesh: number) {
+    const material = g3d.submeshMaterial[submesh]
+    if (material < 0) {
+      return this.defaultColor
+    }
+
+    const colorIndex = material * g3d.colorArity
+    const alpha = g3d.materialColors[colorIndex + 3]
+    if (alpha < 0.9) {
+      return // to skip transparent materials
+    }
+
+    return new THREE.Color().fromArray(g3d.materialColors, colorIndex)
+  }
+
+  createBufferGeometryFromArrays (
+    vertices: Float32Array,
+    indices: Int32Array,
+    vertexColors: Float32Array | undefined = undefined
+  ): THREE.BufferGeometry {
+    const geometry = new THREE.BufferGeometry()
+
+    // Vertices
+    geometry.setAttribute('position', new THREE.BufferAttribute(vertices, 3))
+
+    // Indices
+    geometry.setIndex(new THREE.Uint32BufferAttribute(indices, 1))
+
+    // Colors
+    if (vertexColors) {
+      geometry.setAttribute('color', new THREE.BufferAttribute(vertexColors, 3))
+    }
+
+    return geometry
   }
 }
