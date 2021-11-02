@@ -184,6 +184,9 @@ class VimG3d {
     )?.data as Float32Array
   }
 
+  getInstanceCount = () => this.instanceMeshes.length
+  getMeshCount = () => this.meshSubmeshes.length
+
   getMeshSubmeshRange (mesh: number): [number, number] {
     const start = this.meshSubmeshes[mesh]
     const end =
@@ -201,6 +204,13 @@ class VimG3d {
         : this.indices.length
 
     return [start, end]
+  }
+
+  getTransformMatrixAsArray (tranformIndex: number): Float32Array {
+    return this.instanceTransforms.subarray(
+      tranformIndex * this.matrixArity,
+      (tranformIndex + 1) * this.matrixArity
+    )
   }
 
   validate () {

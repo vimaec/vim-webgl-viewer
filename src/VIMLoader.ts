@@ -283,21 +283,6 @@ export class VIMLoader {
     return new G3d(meta, attributes)
   }
 
-  allocateGeometry = (g3d: VimG3d): THREE.BufferGeometry[] => {
-    const meshCount = g3d.meshSubmeshes.length
-    const builder = new GeometryBufferBuilder(g3d)
-    const resultMeshes: THREE.BufferGeometry[] = []
-
-    for (let mesh = 0; mesh < meshCount; mesh++) {
-      const result = builder.createGeometryBufferFromMeshIndex(mesh)
-      result?.computeBoundingSphere()
-      result?.computeBoundingBox()
-      resultMeshes.push(result)
-    }
-
-    return resultMeshes
-  }
-
   // Main
   parse (data: ArrayBuffer): VimScene {
     const bfast = this.timeAction('Parsing Vim', () => this.parseBFast(data))
@@ -307,8 +292,9 @@ export class VIMLoader {
 
     const vim = this.timeAction('Creating VIM', () => this.constructVIM(bfast))
 
+    const geometryBuilder = new GeometryBufferBuilder(vim.g3d)
     const geometry = this.timeAction('Allocating Geometry', () =>
-      this.allocateGeometry(vim.g3d)
+      geometryBuilder.createAllGeometry()
     )
     console.log('Found # meshes ' + geometry.length)
 
@@ -321,11 +307,7 @@ export class VIMLoader {
     )
 
     const sceneGeometry = this.timeAction('Applying Matrices', () =>
-      this.applyMatrices(
-        rawMeshes,
-        vim.g3d.instanceMeshes,
-        vim.g3d.instanceTransforms
-      )
+      this.applyMatrices(rawMeshes, vim.g3d)
     )
 
     console.log('Merging geometry')
@@ -338,14 +320,9 @@ export class VIMLoader {
       if (!geometryBuffer) continue
 
       if (meshRefCounts[meshIndex] === 1) {
-        const matrixAsArray = vim.g3d.instanceTransforms.subarray(
-          i * vim.g3d.matrixArity,
-          (i + 1) * vim.g3d.matrixArity
-        )
-        const matrix = new THREE.Matrix4()
-        matrix.elements = Array.from(matrixAsArray)
-
         // adding uvs for picking
+        const matrix = this.getMatrixFromIndex(vim.g3d, i)
+
         const vertexCount = geometryBuffer.getAttribute('position').count
         const uvs = new Float32Array(vertexCount)
         uvs.fill(i)
@@ -366,7 +343,14 @@ export class VIMLoader {
     sceneGeometry.boundingSphere = big.boundingSphere
 
     console.log('Loading Completed')
-    return new VimScene(vim, sceneGeometry)
+    return new VimScene(vim, sceneGeometry, geometryBuilder)
+  }
+
+  getMatrixFromIndex (g3d: VimG3d, index: number): THREE.Matrix4 {
+    const matrixAsArray = g3d.getTransformMatrixAsArray(index)
+    const matrix = new THREE.Matrix4()
+    matrix.elements = Array.from(matrixAsArray)
+    return matrix
   }
 
   countMeshReferences = (
@@ -413,20 +397,15 @@ export class VIMLoader {
   // instanceMeshes: array of mesh indices
   // instanceTransform: flat array of matrix4x4
   // Returns array of InstancedMesh and array of instance centers with matrices applied to both.
-  applyMatrices (
-    meshes: (Mesh | null)[],
-    instanceMeshes: Int32Array,
-    instanceTransforms: Float32Array
-  ): VimSceneGeometry {
-    const matrixArity = 16
+  applyMatrices (meshes: (Mesh | null)[], g3d: VimG3d): VimSceneGeometry {
     const instanceCounters = new Int32Array(meshes.length)
     let boundingSphere: THREE.Sphere | null = null
     const nodeIndexToMeshInstance = new Map<number, [Mesh, number]>()
     const meshIdToNodeIndex = new Map<number, [number]>()
     const resultMeshes: Mesh[] = []
 
-    for (let i = 0; i < instanceMeshes.length; ++i) {
-      const meshIndex = instanceMeshes[i]
+    for (let i = 0; i < g3d.getInstanceCount(); ++i) {
+      const meshIndex = g3d.instanceMeshes[i]
       if (meshIndex < 0) continue
 
       const mesh = meshes[meshIndex]
@@ -435,13 +414,7 @@ export class VIMLoader {
       const count = instanceCounters[meshIndex]++
 
       // Compute Matrix
-      const matrixAsArray = instanceTransforms.subarray(
-        i * matrixArity,
-        (i + 1) * matrixArity
-      )
-      const matrix = new THREE.Matrix4()
-      matrix.elements = Array.from(matrixAsArray)
-      mesh.setMatrixAt(count, matrix)
+      const matrix = this.getMatrixFromIndex(g3d, i)
 
       // Set Node ID for picking
       nodeIndexToMeshInstance.set(i, [mesh, count])
@@ -468,7 +441,7 @@ export class VIMLoader {
   }
 }
 
-class GeometryBufferBuilder {
+export class GeometryBufferBuilder {
   defaultColor = new THREE.Color(0.5, 0.5, 0.5)
   colorBuffer: Float32Array
   indexBuffer: Int32Array
@@ -478,6 +451,20 @@ class GeometryBufferBuilder {
     this.colorBuffer = new Float32Array(g3d.positions.length)
     this.indexBuffer = new Int32Array(g3d.indices.length)
     this.g3d = g3d
+  }
+
+  createAllGeometry = (): THREE.BufferGeometry[] => {
+    const meshCount = this.g3d.meshSubmeshes.length
+    const resultMeshes: THREE.BufferGeometry[] = []
+
+    for (let mesh = 0; mesh < meshCount; mesh++) {
+      const result = this.createGeometryBufferFromMeshIndex(mesh)
+      result?.computeBoundingSphere()
+      result?.computeBoundingBox()
+      resultMeshes.push(result)
+    }
+
+    return resultMeshes
   }
 
   createGeometryBufferFromMeshIndex (
