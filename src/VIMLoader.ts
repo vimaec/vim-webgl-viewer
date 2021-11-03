@@ -320,8 +320,6 @@ export class VIMLoader {
     return new VimScene(vim, sceneGeometry, geometryBuilder)
   }
 
-  instantiateSharedGeometry2 () {}
-
   mergeUniqueGeometry (
     g3d: VimG3d,
     geometry: THREE.BufferGeometry[],
