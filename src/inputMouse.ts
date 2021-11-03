@@ -1,7 +1,7 @@
 import * as THREE from 'three'
 import { ViewerCamera } from './viewerCamera'
 import { Viewer } from './viewer'
-import { Vector2 } from 'three'
+import { Mesh, Vector2 } from 'three'
 
 export class InputMouse {
   // Consts
@@ -87,15 +87,6 @@ export class InputMouse {
     this.canvas.focus ? this.canvas.focus() : window.focus()
   }
 
-  mouseRaycast (position: THREE.Vector2) {
-    const x = (position.x / window.innerWidth) * 2 - 1
-    const y = -(position.y / window.innerHeight) * 2 + 1
-    const mouse = new THREE.Vector2(x, y)
-    const raycaster = new THREE.Raycaster()
-    raycaster.setFromCamera(mouse, this.camera.camera)
-    return raycaster.intersectObjects(this.viewer.render.meshes)
-  }
-
   onMouseUp = (event: any) => {
     if (this.isMouseDown && !this.hasMouseMoved) {
       this.onMouseClick(new THREE.Vector2(event.x, event.y))
@@ -106,12 +97,32 @@ export class InputMouse {
   onMouseClick = (position: Vector2) => {
     console.time('raycast')
     const hits = this.mouseRaycast(position)
+    const [mesh, index] = this.findHitMeshIndex(hits)
     console.timeEnd('raycast')
 
+    // 0 is a valid value
+    if (index !== undefined) {
+      this.viewer.select(mesh, index)
+    }
+  }
+
+  mouseRaycast (position: THREE.Vector2) {
+    const x = (position.x / window.innerWidth) * 2 - 1
+    const y = -(position.y / window.innerHeight) * 2 + 1
+    const mouse = new THREE.Vector2(x, y)
+    const raycaster = new THREE.Raycaster()
+    raycaster.setFromCamera(mouse, this.camera.camera)
+    return raycaster.intersectObjects(this.viewer.render.meshes)
+  }
+
+  findHitMeshIndex (
+    hits: THREE.Intersection<THREE.Object3D<THREE.Event>>[]
+  ): [Mesh, number] {
     if (!hits?.length) {
       console.log('Raycast: No hit.')
       return
     }
+
     const mesh = hits[0].object
     if (!(mesh instanceof THREE.Mesh)) {
       console.log(`Raycast hit object: ${mesh} of unsupported type. Ignoring.`)
@@ -130,9 +141,6 @@ export class InputMouse {
       `Raycast hit. Position (${hits[0].point.x}, ${hits[0].point.y}, ${hits[0].point.z})`
     )
 
-    // 0 is a valid value
-    if (index !== undefined) {
-      this.viewer.select(mesh, index)
-    }
+    return [mesh, index]
   }
 }
