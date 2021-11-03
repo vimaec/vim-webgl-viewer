@@ -56,11 +56,15 @@ class VimSceneGeometry {
 
   addMesh (mesh: THREE.Mesh) {
     this.meshes.push(mesh)
-    if (mesh.geometry.boundingSphere) {
-      this.boundingSphere = this.boundingSphere.union(
-        mesh.geometry.boundingSphere
-      )
+
+    if (!mesh.geometry.boundingSphere) {
+      console.log('Bounding sphere undefined.')
+      return
     }
+
+    this.boundingSphere =
+      this.boundingSphere?.union(mesh.geometry.boundingSphere) ??
+      mesh.geometry.boundingSphere
   }
 }
 

@@ -185,10 +185,9 @@ export class Viewer {
   }
 
   createBufferGeometryFromNodeId (nodeIndex: number): THREE.BufferGeometry {
+    // TODO not create a full GeometryBuilder
     const builder = new BufferGeometryBuilder(this.vimScene.vim.g3d)
-
     const geometry = builder.createBufferGeometryFromInstanceIndex(nodeIndex)
-    // might be wrong, see above
     const matrix = this.getViewMatrix()
     geometry.applyMatrix4(matrix)
     return geometry

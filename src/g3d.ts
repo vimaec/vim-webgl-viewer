@@ -146,7 +146,6 @@ class VimG3d {
   instanceMeshes: Int32Array
   instanceTransforms: Float32Array
   meshSubmeshes: Int32Array
-  meshIndexOffset
   submeshIndexOffset: Int32Array
   submeshMaterial: Int32Array
   materialColors: Float32Array

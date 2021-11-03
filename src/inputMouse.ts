@@ -118,23 +118,20 @@ export class InputMouse {
       return
     }
 
-    let index: number
-    if (mesh.userData.merged) {
-      index = Math.round(hits[0].uv.x)
-      console.log(
-        `Raycast: Hit merged mesh with MeshId:${mesh.id} and uv: ${index}`
-      )
-    } else {
-      index = hits[0].instanceId
-      console.log(
-        `Raycast: Hit Mesh instance with MeshId:${mesh.id} and InstanceIndex: ${index}`
-      )
-    }
+    const [index, meshType]: [number, string] = mesh.userData.merged
+      ? [Math.round(hits[0].uv.x), 'Merged']
+      : [hits[0].instanceId, 'Instanced']
+
+    console.log(
+      `Raycast: Hit ${meshType} Mesh with MeshId:${mesh.id} and NodeIndex: ${index}`
+    )
 
     console.log(
       `Raycast hit. Position (${hits[0].point.x}, ${hits[0].point.y}, ${hits[0].point.z})`
     )
-    if (mesh instanceof THREE.Mesh && index !== undefined) {
+
+    // 0 is a valid value
+    if (index !== undefined) {
       this.viewer.select(mesh, index)
     }
   }
