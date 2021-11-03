@@ -1,7 +1,7 @@
 import * as THREE from 'three'
 import { BFast } from './bfast'
 import { VimG3d } from './g3d'
-import { GeometryBufferBuilder } from './VIMLoader'
+import { BufferGeometryBuilder } from './VIMLoader'
 
 class Vim {
   static tableElement = 'Vim.Element'
@@ -53,18 +53,27 @@ class VimSceneGeometry {
   getMeshCount (): number {
     return this.meshes.length
   }
+
+  addMesh (mesh: THREE.Mesh) {
+    this.meshes.push(mesh)
+    if (mesh.geometry.boundingSphere) {
+      this.boundingSphere = this.boundingSphere.union(
+        mesh.geometry.boundingSphere
+      )
+    }
+  }
 }
 
 class VimScene {
   vim: Vim
   geometry: VimSceneGeometry
-  geometryBuilder: GeometryBufferBuilder
+  geometryBuilder: BufferGeometryBuilder
   elementToNodes: Map<number, number[]>
 
   constructor (
     vim: Vim,
     geometry: VimSceneGeometry,
-    geometryBuilder: GeometryBufferBuilder
+    geometryBuilder: BufferGeometryBuilder
   ) {
     this.vim = vim
     this.geometry = geometry

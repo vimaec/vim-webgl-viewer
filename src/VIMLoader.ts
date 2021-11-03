@@ -7,7 +7,7 @@ import * as BufferGeometryUtils from '../node_modules/three/examples/jsm/utils/B
 import { G3d, VimG3d, Attribute } from './g3d'
 import { BFast, BFastHeader } from './bfast'
 import { Vim, VimScene, VimSceneGeometry } from './vim'
-import { BufferAttribute } from 'three'
+import { BufferAttribute, BufferGeometry } from 'three'
 
 type Mesh = THREE.InstancedMesh<THREE.BufferGeometry, THREE.Material>
 
@@ -306,44 +306,76 @@ export class VIMLoader {
       this.allocateMeshes(geometry, meshRefCounts)
     )
 
-    const sceneGeometry = this.timeAction('Applying Matrices', () =>
-      this.applyMatrices(rawMeshes, vim.g3d)
+    const sceneGeometry = this.timeAction('Instantiating Shared Geometry', () =>
+      this.instantiateSharedGeometry(rawMeshes, vim.g3d)
     )
 
-    console.log('Merging geometry')
-    const singles: THREE.BufferGeometry[] = []
-    for (let i = 0; i < vim.g3d.instanceMeshes.length; i++) {
-      const meshIndex = vim.g3d.instanceMeshes[i]
+    const mergedMesh = this.timeAction('Merging Unique Geometry', () =>
+      this.mergeUniqueGeometry(vim.g3d, geometry, meshRefCounts)
+    )
+    sceneGeometry.addMesh(mergedMesh)
+
+    console.log('Loading Completed')
+    return new VimScene(vim, sceneGeometry, geometryBuilder)
+  }
+
+  instantiateSharedGeometry2 () {}
+
+  mergeUniqueGeometry (
+    g3d: VimG3d,
+    geometry: THREE.BufferGeometry[],
+    meshRefCounts: Int32Array
+  ) {
+    const uniques = this.getTransformedUniqueGeometry(
+      g3d,
+      geometry,
+      meshRefCounts
+    )
+    return this.createMergedMesh(uniques)
+  }
+
+  getTransformedUniqueGeometry (
+    g3d: VimG3d,
+    geometry: THREE.BufferGeometry[],
+    meshRefCounts: Int32Array
+  ): THREE.BufferGeometry[] {
+    const result: THREE.BufferGeometry[] = []
+
+    for (let i = 0; i < g3d.instanceMeshes.length; i++) {
+      const meshIndex = g3d.instanceMeshes[i]
       if (meshIndex < 0) continue
 
-      const geometryBuffer = geometry[meshIndex]
-      if (!geometryBuffer) continue
+      const bufferGeometry = geometry[meshIndex]
+      if (!bufferGeometry) continue
 
+      // only merge unique objects
       if (meshRefCounts[meshIndex] === 1) {
         // adding uvs for picking
-        const matrix = this.getMatrixFromIndex(vim.g3d, i)
-
-        const vertexCount = geometryBuffer.getAttribute('position').count
-        const uvs = new Float32Array(vertexCount * 2)
-        uvs.fill(i)
-        geometryBuffer.setAttribute('uv', new BufferAttribute(uvs, 2))
-        geometryBuffer.applyMatrix4(matrix)
-
-        singles.push(geometryBuffer)
+        this.addUVs(bufferGeometry, i)
+        const matrix = this.getMatrixFromIndex(g3d, i)
+        bufferGeometry.applyMatrix4(matrix)
+        result.push(bufferGeometry)
       }
     }
+    return result
+  }
 
+  createMergedMesh (bufferGeometry: BufferGeometry[]): THREE.InstancedMesh {
     const big: THREE.BufferGeometry =
-      BufferGeometryUtils.mergeBufferGeometries(singles)
+      BufferGeometryUtils.mergeBufferGeometries(bufferGeometry)
     const bigMesh = new THREE.InstancedMesh(big, this.material, 1)
     bigMesh.setMatrixAt(0, new THREE.Matrix4())
     big.computeBoundingSphere()
     bigMesh.userData.merged = true
-    sceneGeometry.meshes.push(bigMesh)
-    sceneGeometry.boundingSphere = big.boundingSphere
+    return bigMesh
+  }
 
-    console.log('Loading Completed')
-    return new VimScene(vim, sceneGeometry, geometryBuilder)
+  addUVs (bufferGeometry: BufferGeometry, value: number) {
+    const uvArity = 2
+    const vertexCount = bufferGeometry.getAttribute('position').count
+    const uvs = new Float32Array(vertexCount * uvArity)
+    uvs.fill(value)
+    bufferGeometry.setAttribute('uv', new BufferAttribute(uvs, uvArity))
   }
 
   getMatrixFromIndex (g3d: VimG3d, index: number): THREE.Matrix4 {
@@ -393,11 +425,10 @@ export class VIMLoader {
     return meshes
   }
 
-  // meshes: array of THREE.InstancedMesh
-  // instanceMeshes: array of mesh indices
-  // instanceTransform: flat array of matrix4x4
-  // Returns array of InstancedMesh and array of instance centers with matrices applied to both.
-  applyMatrices (meshes: (Mesh | null)[], g3d: VimG3d): VimSceneGeometry {
+  instantiateSharedGeometry (
+    meshes: (Mesh | null)[],
+    g3d: VimG3d
+  ): VimSceneGeometry {
     const instanceCounters = new Int32Array(meshes.length)
     let boundingSphere: THREE.Sphere | null = null
     const nodeIndexToMeshInstance = new Map<number, [Mesh, number]>()
@@ -413,9 +444,6 @@ export class VIMLoader {
 
       const count = instanceCounters[meshIndex]++
 
-      // Set Node ID for picking
-      nodeIndexToMeshInstance.set(i, [mesh, count])
-
       // Set Node-MeshMap
       const nodes = meshIdToNodeIndex.get(mesh.id)
       if (nodes) {
@@ -424,6 +452,9 @@ export class VIMLoader {
         meshIdToNodeIndex.set(mesh.id, [i])
         resultMeshes.push(mesh) // push mesh first time it is seen
       }
+
+      // Set Node ID for picking
+      nodeIndexToMeshInstance.set(i, [mesh, count])
 
       // Set matrix
       const matrix = this.getMatrixFromIndex(g3d, i)
