@@ -8,6 +8,7 @@ import { G3d, VimG3d, Attribute } from './g3d'
 import { BFast, BFastHeader } from './bfast'
 import { Vim, VimScene, VimSceneGeometry } from './vim'
 import { BufferAttribute, BufferGeometry } from 'three'
+import { createBufferGeometryFromArrays } from './threeHelpers'
 
 type Mesh = THREE.InstancedMesh<THREE.BufferGeometry, THREE.Material>
 
@@ -557,33 +558,6 @@ export class BufferGeometryBuilder {
 
     return new THREE.Color().fromArray(g3d.materialColors, colorIndex)
   }
+}
 
-  createBufferGeometryFromArrays (
-    vertices: Float32Array,
-    indices: Int32Array,
-    vertexColors: Float32Array | undefined = undefined
-  ): THREE.BufferGeometry {
-    const geometry = new THREE.BufferGeometry()
-
-    // Vertices
-    geometry.setAttribute('position', new THREE.BufferAttribute(vertices, 3))
-
-    // Indices
-    geometry.setIndex(new THREE.Uint32BufferAttribute(indices, 1))
-
-    // Colors
-    if (vertexColors) {
-      geometry.setAttribute('color', new THREE.BufferAttribute(vertexColors, 3))
-    }
-
-    return geometry
-  }
-
-  // TODO Remove duplication
-  getMatrixFromNodeIndex (nodeIndex: number): THREE.Matrix4 {
-    const matrixAsArray = this.g3d.getTransformMatrixAsArray(nodeIndex)
-    const matrix = new THREE.Matrix4()
-    matrix.elements = Array.from(matrixAsArray)
-    return matrix
-  }
 }
