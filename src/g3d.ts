@@ -146,6 +146,7 @@ class VimG3d {
   instanceMeshes: Int32Array
   instanceTransforms: Float32Array
   meshSubmeshes: Int32Array
+  meshIndexOffset
   submeshIndexOffset: Int32Array
   submeshMaterial: Int32Array
   materialColors: Float32Array
@@ -211,6 +212,16 @@ class VimG3d {
       tranformIndex * this.matrixArity,
       (tranformIndex + 1) * this.matrixArity
     )
+  }
+
+  getMeshReferenceCounts = (): Int32Array => {
+    const meshRefCounts = new Int32Array(this.getMeshCount())
+    for (let i = 0; i < this.instanceMeshes.length; ++i) {
+      const mesh = this.instanceMeshes[i]
+      if (mesh < 0) continue
+      meshRefCounts[mesh]++
+    }
+    return meshRefCounts
   }
 
   validate () {

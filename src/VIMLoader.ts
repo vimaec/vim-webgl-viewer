@@ -299,7 +299,7 @@ export class VIMLoader {
     console.log('Found # meshes ' + geometry.length)
 
     const meshRefCounts = this.timeAction('Counting references', () =>
-      this.countMeshReferences(vim.g3d.instanceMeshes, geometry.length)
+      vim.g3d.getMeshReferenceCounts()
     )
 
     const rawMeshes = this.timeAction('Allocating Meshes', () =>
@@ -383,19 +383,6 @@ export class VIMLoader {
     const matrix = new THREE.Matrix4()
     matrix.elements = Array.from(matrixAsArray)
     return matrix
-  }
-
-  countMeshReferences = (
-    instanceMeshes: Int32Array,
-    meshCount: number
-  ): Int32Array => {
-    const meshRefCounts = new Int32Array(meshCount)
-    for (let i = 0; i < instanceMeshes.length; ++i) {
-      const mesh = instanceMeshes[i]
-      if (mesh < 0) continue
-      meshRefCounts[mesh]++
-    }
-    return meshRefCounts
   }
 
   allocateMeshes (
