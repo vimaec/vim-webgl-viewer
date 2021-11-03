@@ -184,7 +184,7 @@ export class Viewer {
     return geometry
   }
 
-  createGeometryBufferFromNodeId (nodeIndex: number): THREE.BufferGeometry {
+  createBufferGeometryFromNodeId (nodeIndex: number): THREE.BufferGeometry {
     const builder = new BufferGeometryBuilder(this.vimScene.vim.g3d)
 
     const geometry = builder.createBufferGeometryFromInstanceIndex(nodeIndex)

@@ -39,7 +39,7 @@ export class Selection {
   select (nodeIndex: number) {
     this.disposeResources()
     this.nodeIndex = nodeIndex
-    this.geometry = this.viewer.createGeometryBufferFromNodeId(nodeIndex)
+    this.geometry = this.viewer.createBufferGeometryFromNodeId(nodeIndex)
     this.geometry.computeBoundingSphere()
     this.boundingSphere = this.geometry.boundingSphere
     this.highlightDisposer = this.viewer.highlight(this.geometry)
