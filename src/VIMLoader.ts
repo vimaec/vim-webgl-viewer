@@ -356,7 +356,7 @@ export class VIMLoader {
       if (meshRefCounts[meshIndex] === 1) {
         // adding uvs for picking
         this.addUVs(bufferGeometry, i)
-        const matrix = this.getMatrixFromIndex(g3d, i)
+        const matrix = getMatrixFromNodeIndex(g3d, i)
         bufferGeometry.applyMatrix4(matrix)
         result.push(bufferGeometry)
       }
@@ -380,13 +380,6 @@ export class VIMLoader {
     const uvs = new Float32Array(vertexCount * uvArity)
     uvs.fill(value)
     bufferGeometry.setAttribute('uv', new BufferAttribute(uvs, uvArity))
-  }
-
-  getMatrixFromIndex (g3d: VimG3d, index: number): THREE.Matrix4 {
-    const matrixAsArray = g3d.getTransformMatrixAsArray(index)
-    const matrix = new THREE.Matrix4()
-    matrix.elements = Array.from(matrixAsArray)
-    return matrix
   }
 
   allocateMeshes (
@@ -445,7 +438,7 @@ export class VIMLoader {
       nodeIndexToMeshInstance.set(i, [mesh, count])
 
       // Set matrix
-      const matrix = this.getMatrixFromIndex(g3d, i)
+      const matrix = getMatrixFromNodeIndex(g3d, i)
       mesh.setMatrixAt(count, matrix)
 
       // Compute total bounding sphere
@@ -527,7 +520,7 @@ export class BufferGeometryBuilder {
       this.indexBuffer[i] -= min
     }
 
-    return this.createBufferGeometryFromArrays(
+    return createBufferGeometryFromArrays(
       this.vertexBuffer.subarray(sliceStart, sliceEnd),
       this.indexBuffer.subarray(0, indexCount),
       this.colorBuffer.subarray(sliceStart, sliceEnd)
@@ -539,7 +532,7 @@ export class BufferGeometryBuilder {
   ): THREE.BufferGeometry {
     const meshIndex = this.g3d.instanceMeshes[instanceIndex]
     const geometry = this.createBufferGeometryFromMeshIndex(meshIndex)
-    const matrix = this.getMatrixFromNodeIndex(instanceIndex)
+    const matrix = getMatrixFromNodeIndex(this.g3d, instanceIndex)
     geometry.applyMatrix4(matrix)
     return geometry
   }
@@ -560,4 +553,9 @@ export class BufferGeometryBuilder {
   }
 }
 
+function getMatrixFromNodeIndex (g3d: VimG3d, index: number): THREE.Matrix4 {
+  const matrixAsArray = g3d.getTransformMatrixAsArray(index)
+  const matrix = new THREE.Matrix4()
+  matrix.elements = Array.from(matrixAsArray)
+  return matrix
 }
