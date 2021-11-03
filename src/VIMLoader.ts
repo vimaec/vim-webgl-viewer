@@ -331,7 +331,10 @@ export class VIMLoader {
       geometry,
       meshRefCounts
     )
-    return this.createMergedMesh(uniques)
+
+    const result = this.createMergedMesh(uniques)
+    uniques.forEach((u) => u.dispose())
+    return result
   }
 
   getTransformedUniqueGeometry (
@@ -390,23 +393,20 @@ export class VIMLoader {
     meshRefCounts: Int32Array
   ): (Mesh | null)[] {
     const meshCount = geometries.length
-    const meshes: (Mesh | null)[] = []
+    const meshes: (Mesh | null)[] = new Array(meshCount)
 
     for (let i = 0; i < meshCount; ++i) {
       const count = meshRefCounts[i]
       if (count <= 1) {
-        meshes.push(null)
         continue
       }
 
       const geometry = geometries[i]
       if (geometry === null) {
-        meshes.push(null)
         continue
       }
 
-      const mesh = new THREE.InstancedMesh(geometry, this.material, count)
-      meshes.push(mesh)
+      meshes[i] = new THREE.InstancedMesh(geometry, this.material, count)
     }
 
     return meshes
