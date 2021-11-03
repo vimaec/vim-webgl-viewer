@@ -292,7 +292,7 @@ export class VIMLoader {
 
     const vim = this.timeAction('Creating VIM', () => this.constructVIM(bfast))
 
-    const geometryBuilder = new GeometryBufferBuilder(vim.g3d)
+    const geometryBuilder = new BufferGeometryBuilder(vim.g3d)
     const geometry = this.timeAction('Allocating Geometry', () =>
       geometryBuilder.createAllGeometry()
     )
@@ -324,7 +324,7 @@ export class VIMLoader {
         const matrix = this.getMatrixFromIndex(vim.g3d, i)
 
         const vertexCount = geometryBuffer.getAttribute('position').count
-        const uvs = new Float32Array(vertexCount)
+        const uvs = new Float32Array(vertexCount * 2)
         uvs.fill(i)
         geometryBuffer.setAttribute('uv', new BufferAttribute(uvs, 2))
         geometryBuffer.applyMatrix4(matrix)
@@ -413,12 +413,10 @@ export class VIMLoader {
 
       const count = instanceCounters[meshIndex]++
 
-      // Compute Matrix
-      const matrix = this.getMatrixFromIndex(g3d, i)
-
       // Set Node ID for picking
       nodeIndexToMeshInstance.set(i, [mesh, count])
 
+      // Set Node-MeshMap
       const nodes = meshIdToNodeIndex.get(mesh.id)
       if (nodes) {
         nodes.push(i)
@@ -427,7 +425,11 @@ export class VIMLoader {
         resultMeshes.push(mesh) // push mesh first time it is seen
       }
 
-      // Sphere was computed when geometry was created
+      // Set matrix
+      const matrix = this.getMatrixFromIndex(g3d, i)
+      mesh.setMatrixAt(count, matrix)
+
+      // Compute total bounding sphere
       const sphere = mesh.geometry.boundingSphere!.clone()
       sphere.applyMatrix4(matrix)
       boundingSphere = boundingSphere ? boundingSphere.union(sphere) : sphere
@@ -441,13 +443,16 @@ export class VIMLoader {
   }
 }
 
-export class GeometryBufferBuilder {
+export class BufferGeometryBuilder {
   defaultColor = new THREE.Color(0.5, 0.5, 0.5)
-  colorBuffer: Float32Array
   indexBuffer: Int32Array
+  vertexBuffer: Float32Array
+  colorBuffer: Float32Array
+
   g3d: VimG3d
 
   constructor (g3d: VimG3d) {
+    this.vertexBuffer = Float32Array.from(g3d.positions)
     this.colorBuffer = new Float32Array(g3d.positions.length)
     this.indexBuffer = new Int32Array(g3d.indices.length)
     this.g3d = g3d
@@ -458,7 +463,7 @@ export class GeometryBufferBuilder {
     const resultMeshes: THREE.BufferGeometry[] = []
 
     for (let mesh = 0; mesh < meshCount; mesh++) {
-      const result = this.createGeometryBufferFromMeshIndex(mesh)
+      const result = this.createBufferGeometryFromMeshIndex(mesh)
       result?.computeBoundingSphere()
       result?.computeBoundingBox()
       resultMeshes.push(result)
@@ -467,7 +472,7 @@ export class GeometryBufferBuilder {
     return resultMeshes
   }
 
-  createGeometryBufferFromMeshIndex (
+  createBufferGeometryFromMeshIndex (
     meshIndex: number
   ): THREE.BufferGeometry | null {
     // min and max indices accumulated to slice into the vertex buffer
@@ -504,10 +509,20 @@ export class GeometryBufferBuilder {
     }
 
     return this.createBufferGeometryFromArrays(
-      this.g3d.positions.subarray(sliceStart, sliceEnd),
+      this.vertexBuffer.subarray(sliceStart, sliceEnd),
       this.indexBuffer.subarray(0, indexCount),
       this.colorBuffer.subarray(sliceStart, sliceEnd)
     )
+  }
+
+  createBufferGeometryFromInstanceIndex (
+    instanceIndex: number
+  ): THREE.BufferGeometry {
+    const meshIndex = this.g3d.instanceMeshes[instanceIndex]
+    const geometry = this.createBufferGeometryFromMeshIndex(meshIndex)
+    const matrix = this.getMatrixFromNodeIndex(instanceIndex)
+    geometry.applyMatrix4(matrix)
+    return geometry
   }
 
   getSubmeshColor (g3d: VimG3d, submesh: number) {
@@ -544,5 +559,13 @@ export class GeometryBufferBuilder {
     }
 
     return geometry
+  }
+
+  // TODO Remove duplication
+  getMatrixFromNodeIndex (nodeIndex: number): THREE.Matrix4 {
+    const matrixAsArray = this.g3d.getTransformMatrixAsArray(nodeIndex)
+    const matrix = new THREE.Matrix4()
+    matrix.elements = Array.from(matrixAsArray)
+    return matrix
   }
 }

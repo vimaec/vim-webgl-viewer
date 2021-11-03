@@ -104,22 +104,38 @@ export class InputMouse {
   }
 
   onMouseClick = (position: Vector2) => {
-    /*
     console.time('raycast')
     const hits = this.mouseRaycast(position)
     console.timeEnd('raycast')
 
-    if (hits.length > 0) {
-      const mesh = hits[0].object
-      const index = hits[0].instanceId
-
-      console.log(
-        `Raycast hit. Position (${hits[0].point.x}, ${hits[0].point.y}, ${hits[0].point.z})`
-      )
-      if (mesh instanceof THREE.Mesh && index !== undefined) {
-        this.viewer.select(mesh, index)
-      }
+    if (!hits?.length) {
+      console.log('Raycast: No hit.')
+      return
     }
-    */
+    const mesh = hits[0].object
+    if (!(mesh instanceof THREE.Mesh)) {
+      console.log(`Raycast hit object: ${mesh} of unsupported type. Ignoring.`)
+      return
+    }
+
+    let index: number
+    if (mesh.userData.merged) {
+      index = Math.round(hits[0].uv.x)
+      console.log(
+        `Raycast: Hit merged mesh with MeshId:${mesh.id} and uv: ${index}`
+      )
+    } else {
+      index = hits[0].instanceId
+      console.log(
+        `Raycast: Hit Mesh instance with MeshId:${mesh.id} and InstanceIndex: ${index}`
+      )
+    }
+
+    console.log(
+      `Raycast hit. Position (${hits[0].point.x}, ${hits[0].point.y}, ${hits[0].point.z})`
+    )
+    if (mesh instanceof THREE.Mesh && index !== undefined) {
+      this.viewer.select(mesh, index)
+    }
   }
 }

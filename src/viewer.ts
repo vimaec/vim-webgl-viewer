@@ -15,6 +15,7 @@ import { Selection } from './selection'
 import { ViewerEnvironment } from './viewerEnvironment'
 import { ViewerRenderer } from './viewerRenderer'
 import { ViewerDocument } from './ViewerDocument'
+import { BufferGeometryBuilder } from './VIMLoader'
 
 export class Viewer {
   stats: any
@@ -171,7 +172,7 @@ export class Viewer {
     }
   }
 
-  createWorldGeometry (mesh: THREE.Mesh, index: number) {
+  createWorldGeometry (mesh: THREE.Mesh, index: number): THREE.BufferGeometry {
     const geometry = mesh.geometry.clone()
 
     let matrix = new THREE.Matrix4()
@@ -180,6 +181,16 @@ export class Viewer {
     matrix = this.getViewMatrix().multiply(matrix)
     geometry.applyMatrix4(matrix)
 
+    return geometry
+  }
+
+  createGeometryBufferFromNodeId (nodeIndex: number): THREE.BufferGeometry {
+    const builder = new BufferGeometryBuilder(this.vimScene.vim.g3d)
+
+    const geometry = builder.createBufferGeometryFromInstanceIndex(nodeIndex)
+    // might be wrong, see above
+    const matrix = this.getViewMatrix()
+    geometry.applyMatrix4(matrix)
     return geometry
   }
 
@@ -195,13 +206,19 @@ export class Viewer {
     if (!mesh) throw new Error('Invalid null mesh')
     if (index < 0) throw new Error('invalid negative index')
 
-    this.selection.select(mesh, index)
+    let nodeIndex: number
+    if (mesh.userData.merged) {
+      nodeIndex = index
+    } else {
+      nodeIndex = this.vimScene.getNodeIndexFromMesh(mesh, index)
+    }
 
-    const nodeIndex = this.vimScene.getNodeIndexFromMesh(mesh, index)
     if (nodeIndex === undefined) {
       console.log('Could not find node for given mesh')
       return
     }
+
+    this.selection.select(nodeIndex)
 
     const id = this.vimScene.getElementIdFromNodeIndex(nodeIndex)
     const name = this.vimScene.getElementNameFromNodeIndex(nodeIndex)
