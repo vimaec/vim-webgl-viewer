@@ -1,0 +1,27 @@
+.VimLoadingBox {
+  /*margin: auto;*/
+  width: 320px;
+  padding: 10px;
+  border: 1px solid #e3e3e3;
+  background-color: #f6f6f6;
+  border-radius: 3px;
+  font-family: 'Roboto', sans-serif;
+}
+
+html,
+body {
+  margin: 0;
+  padding: 0;
+  overflow: hidden;
+}
+
+.VimLoadingBox h1 {
+  color: #050c1a;
+}
+
+.center {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+}
