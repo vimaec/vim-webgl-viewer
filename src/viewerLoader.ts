@@ -44,7 +44,8 @@ export const loadAny = function (
       | THREE.Group
       | THREE.Object3D
       | THREE.BufferGeometry
-  ) => void
+  ) => void,
+  onProgress: (progress: ProgressEvent) => void
 ) {
   const ext = getExt(fileName)
 
@@ -90,7 +91,7 @@ export const loadAny = function (
       break
     }
     case 'vim': {
-      new VIMLoader(defaultMaterial).load(fileName, onFileLoaded)
+      new VIMLoader(defaultMaterial).load(fileName, onFileLoaded, onProgress)
       break
     }
     default:

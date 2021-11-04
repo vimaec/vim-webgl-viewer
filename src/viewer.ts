@@ -17,6 +17,11 @@ import { ViewerRenderer } from './viewerRenderer'
 import { ViewerDocument } from './ViewerDocument'
 import { BufferGeometryBuilder } from './VIMLoader'
 
+export type ViewerState =
+  | 'Default'
+  | [state: 'Downloading', progress: number]
+  | 'Processing'
+
 export class Viewer {
   stats: any
   settings: any
@@ -29,10 +34,15 @@ export class Viewer {
   controls: ViewerInput
 
   vimScene: VimScene | undefined
+  state: ViewerState = 'Default'
+  stateChangeEventName = 'viewerStateChangedEvent'
 
   constructor (options: Record<string, unknown>) {
     this.settings = deepmerge(ViewerSettings.default, options, undefined)
-    this.htmlDocument = new ViewerDocument(this.settings)
+    this.htmlDocument = new ViewerDocument(
+      this.settings,
+      this.stateChangeEventName
+    )
 
     // Create a new DAT.gui controller
     if (this.settings.showGui) {
@@ -65,23 +75,45 @@ export class Viewer {
 
     // Add all of the appropriate mouse, touch-pad, and keyboard listeners
     // Load Vim
-    loadAny(this.settings.url, this.loadInScene.bind(this))
+    loadAny(
+      this.settings.url,
+      (
+        result:
+          | VimScene
+          | THREE.Scene
+          | THREE.Group
+          | THREE.Object3D
+          | THREE.BufferGeometry
+      ) => {
+        this.setState('Processing')
+        setTimeout(() => this.loadInScene(result), 1000)
+      },
+      (progress) => {
+        this.setState(['Downloading', progress.loaded])
+      }
+    )
 
     // Start Loop
     this.ApplySettings()
     this.animate()
   }
 
-  prepareDocument () {}
+  setState = (state: ViewerState) => {
+    this.state = state
+    const event = new CustomEvent(this.stateChangeEventName, {
+      detail: this.state
+    })
+    dispatchEvent(event)
+  }
 
-  loadInScene (
+  loadInScene = (
     result:
       | VimScene
       | THREE.Scene
       | THREE.Group
       | THREE.Object3D
       | THREE.BufferGeometry
-  ) {
+  ) => {
     if (result instanceof VimScene) {
       this.onVimLoaded(result)
     } else if (result instanceof THREE.Scene) {
@@ -104,6 +136,7 @@ export class Viewer {
 
     this.focusModel()
     this.ApplySettings()
+    this.setState('Default')
   }
 
   onVimLoaded (vim: VimScene) {

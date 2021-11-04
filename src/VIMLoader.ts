@@ -46,7 +46,7 @@ export class VIMLoader {
   load (
     url: string,
     onLoad?: (response: VimScene) => void,
-    onProgress?: (request: ProgressEvent) => void,
+    onProgress?: (progress: ProgressEvent) => void,
     onError?: (event: ErrorEvent) => void
   ) {
     this.logStart()
