@@ -1,7 +1,7 @@
 import * as THREE from 'three'
 import { ViewerCamera } from './viewerCamera'
 import { Viewer } from './viewer'
-import { Vector2 } from 'three'
+import { Mesh, Vector2 } from 'three'
 
 export class InputMouse {
   // Consts
@@ -87,6 +87,25 @@ export class InputMouse {
     this.canvas.focus ? this.canvas.focus() : window.focus()
   }
 
+  onMouseUp = (event: any) => {
+    if (this.isMouseDown && !this.hasMouseMoved) {
+      this.onMouseClick(new THREE.Vector2(event.x, event.y))
+    }
+    this.isMouseDown = false
+  }
+
+  onMouseClick = (position: Vector2) => {
+    console.time('raycast')
+    const hits = this.mouseRaycast(position)
+    const [mesh, index] = this.findHitMeshIndex(hits)
+    console.timeEnd('raycast')
+
+    // 0 is a valid value
+    if (index !== undefined) {
+      this.viewer.select(mesh, index)
+    }
+  }
+
   mouseRaycast (position: THREE.Vector2) {
     const x = (position.x / window.innerWidth) * 2 - 1
     const y = -(position.y / window.innerHeight) * 2 + 1
@@ -96,30 +115,32 @@ export class InputMouse {
     return raycaster.intersectObjects(this.viewer.render.meshes)
   }
 
-  onMouseUp = (event: any) => {
-    if (this.isMouseDown && !this.hasMouseMoved) {
-      this.onMouseClick(new THREE.Vector2(event.x, event.y))
+  findHitMeshIndex (
+    hits: THREE.Intersection<THREE.Object3D<THREE.Event>>[]
+  ): [Mesh, number] {
+    if (!hits?.length) {
+      console.log('Raycast: No hit.')
+      return
     }
-    this.isMouseDown = false
-  }
 
-  onMouseClick = (position: Vector2) => {
-    /*
-    console.time('raycast')
-    const hits = this.mouseRaycast(position)
-    console.timeEnd('raycast')
-
-    if (hits.length > 0) {
-      const mesh = hits[0].object
-      const index = hits[0].instanceId
-
-      console.log(
-        `Raycast hit. Position (${hits[0].point.x}, ${hits[0].point.y}, ${hits[0].point.z})`
-      )
-      if (mesh instanceof THREE.Mesh && index !== undefined) {
-        this.viewer.select(mesh, index)
-      }
+    const mesh = hits[0].object
+    if (!(mesh instanceof THREE.Mesh)) {
+      console.log(`Raycast hit object: ${mesh} of unsupported type. Ignoring.`)
+      return
     }
-    */
+
+    const [index, meshType]: [number, string] = mesh.userData.merged
+      ? [Math.round(hits[0].uv.x), 'Merged']
+      : [hits[0].instanceId, 'Instanced']
+
+    console.log(
+      `Raycast: Hit ${meshType} Mesh with MeshId:${mesh.id} and NodeIndex: ${index}`
+    )
+
+    console.log(
+      `Raycast hit. Position (${hits[0].point.x}, ${hits[0].point.y}, ${hits[0].point.z})`
+    )
+
+    return [mesh, index]
   }
 }

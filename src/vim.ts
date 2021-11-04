@@ -1,8 +1,7 @@
 import * as THREE from 'three'
 import { BFast } from './bfast'
 import { VimG3d } from './g3d'
-
-type VimMesh = THREE.InstancedMesh<THREE.BufferGeometry, THREE.Material>
+import { BufferGeometryBuilder } from './VIMLoader'
 
 class Vim {
   static tableElement = 'Vim.Element'
@@ -30,15 +29,15 @@ class Vim {
 }
 
 class VimSceneGeometry {
-  meshes: VimMesh[]
+  meshes: THREE.Mesh[]
   boundingSphere: THREE.Sphere
-  nodeIndexToMeshInstance: Map<number, [VimMesh, number]>
+  nodeIndexToMeshInstance: Map<number, [THREE.Mesh, number]>
   meshIdToNodeIndex: Map<number, [number]>
 
   constructor (
-    meshes: VimMesh[],
+    meshes: THREE.Mesh[],
     boundingSphere: THREE.Sphere,
-    nodeIndexToMeshInstance: Map<number, [VimMesh, number]>,
+    nodeIndexToMeshInstance: Map<number, [THREE.Mesh, number]>,
     meshIdToNodeIndex: Map<number, [number]>
   ) {
     this.meshes = meshes
@@ -54,16 +53,35 @@ class VimSceneGeometry {
   getMeshCount (): number {
     return this.meshes.length
   }
+
+  addMesh (mesh: THREE.Mesh) {
+    this.meshes.push(mesh)
+
+    if (!mesh.geometry.boundingSphere) {
+      console.log('Bounding sphere undefined.')
+      return
+    }
+
+    this.boundingSphere =
+      this.boundingSphere?.union(mesh.geometry.boundingSphere) ??
+      mesh.geometry.boundingSphere
+  }
 }
 
 class VimScene {
   vim: Vim
   geometry: VimSceneGeometry
+  geometryBuilder: BufferGeometryBuilder
   elementToNodes: Map<number, number[]>
 
-  constructor (vim: Vim, geometry: VimSceneGeometry) {
+  constructor (
+    vim: Vim,
+    geometry: VimSceneGeometry,
+    geometryBuilder: BufferGeometryBuilder
+  ) {
     this.vim = vim
     this.geometry = geometry
+    this.geometryBuilder = geometryBuilder
     this.elementToNodes = this.mapElements()
   }
 
@@ -86,18 +104,18 @@ class VimScene {
     return this.elementToNodes.get(elementId)
   }
 
-  getMeshesFromElement (elementId: number): [VimMesh, number][] | undefined {
+  getMeshesFromElement (elementId: number): [THREE.Mesh, number][] | undefined {
     const nodeIndices = this.getNodeIndicesFromElement(elementId)
     if (!nodeIndices || !nodeIndices.length) return
 
-    const result: [VimMesh, number][] = []
+    const result: [THREE.Mesh, number][] = []
     nodeIndices.forEach((i) => {
       result.push(this.getMeshFromNodeIndex(i)!)
     })
     return result
   }
 
-  getMeshFromNodeIndex (nodeIndex: number): [VimMesh, number] | undefined {
+  getMeshFromNodeIndex (nodeIndex: number): [THREE.Mesh, number] | undefined {
     if (nodeIndex < 0) throw new Error('Invalid negative index')
 
     return this.geometry.nodeIndexToMeshInstance.get(nodeIndex)

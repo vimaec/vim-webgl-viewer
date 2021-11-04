@@ -7,8 +7,7 @@ export class Selection {
   viewer: Viewer
 
   // State
-  mesh: THREE.Mesh | null = null
-  instanceIndex: number | null = null
+  nodeIndex: number | null = null
   boundingSphere: THREE.Sphere | null = null
 
   // Disposable State
@@ -20,12 +19,11 @@ export class Selection {
   }
 
   hasSelection () {
-    return this.mesh !== null
+    return this.nodeIndex !== null
   }
 
   reset () {
-    this.mesh = null
-    this.instanceIndex = null
+    this.nodeIndex = null
     this.boundingSphere = null
     this.disposeResources()
   }
@@ -38,11 +36,10 @@ export class Selection {
     this.highlightDisposer = null
   }
 
-  select (mesh: THREE.Mesh, index: number) {
+  select (nodeIndex: number) {
     this.disposeResources()
-    this.mesh = mesh
-    this.instanceIndex = index
-    this.geometry = this.viewer.createWorldGeometry(mesh, index)
+    this.nodeIndex = nodeIndex
+    this.geometry = this.viewer.createBufferGeometryFromNodeId(nodeIndex)
     this.geometry.computeBoundingSphere()
     this.boundingSphere = this.geometry.boundingSphere
     this.highlightDisposer = this.viewer.highlight(this.geometry)

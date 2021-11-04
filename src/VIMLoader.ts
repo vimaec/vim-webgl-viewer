@@ -7,6 +7,8 @@ import * as BufferGeometryUtils from '../node_modules/three/examples/jsm/utils/B
 import { G3d, VimG3d, Attribute } from './g3d'
 import { BFast, BFastHeader } from './bfast'
 import { Vim, VimScene, VimSceneGeometry } from './vim'
+import { BufferAttribute, BufferGeometry } from 'three'
+import { createBufferGeometryFromArrays } from './threeHelpers'
 
 type Mesh = THREE.InstancedMesh<THREE.BufferGeometry, THREE.Material>
 
@@ -282,87 +284,264 @@ export class VIMLoader {
     return new G3d(meta, attributes)
   }
 
-  createBufferGeometry (
-    vertices: Float32Array,
-    indices: Int32Array,
-    vertexColors: Float32Array | undefined = undefined
-  ): THREE.BufferGeometry {
-    const geometry = new THREE.BufferGeometry()
+  // Main
+  parse (data: ArrayBuffer): VimScene {
+    const bfast = this.timeAction('Parsing Vim', () => this.parseBFast(data))
 
-    // Vertices
-    geometry.setAttribute('position', new THREE.BufferAttribute(vertices, 3))
+    console.log(`found: ${bfast.buffers.length} buffers`)
+    console.log(bfast.names.join(', '))
 
-    // Indices
-    geometry.setIndex(new THREE.Uint32BufferAttribute(indices, 1))
+    const vim = this.timeAction('Creating VIM', () => this.constructVIM(bfast))
 
-    // Colors
-    if (vertexColors) {
-      geometry.setAttribute('color', new THREE.BufferAttribute(vertexColors, 3))
-    }
+    const geometryBuilder = new BufferGeometryBuilder(vim.g3d)
+    const geometry = this.timeAction('Allocating Geometry', () =>
+      geometryBuilder.createAllGeometry()
+    )
+    console.log('Found # meshes ' + geometry.length)
 
-    return geometry
+    const meshRefCounts = this.timeAction('Counting references', () =>
+      vim.g3d.getMeshReferenceCounts()
+    )
+
+    const rawMeshes = this.timeAction('Allocating Meshes', () =>
+      this.allocateMeshes(geometry, meshRefCounts)
+    )
+
+    const sceneGeometry = this.timeAction('Instantiating Shared Geometry', () =>
+      this.instantiateSharedGeometry(rawMeshes, vim.g3d)
+    )
+
+    const mergedMesh = this.timeAction('Merging Unique Geometry', () =>
+      this.mergeUniqueGeometry(vim.g3d, geometry, meshRefCounts)
+    )
+    sceneGeometry.addMesh(mergedMesh)
+
+    console.log('Loading Completed')
+    return new VimScene(vim, sceneGeometry, geometryBuilder)
   }
 
-  allocateGeometry = (g3d: VimG3d): THREE.BufferGeometry[] => {
-    const meshCount = g3d.meshSubmeshes.length
-    // A full-sized temp color buffer because we don't know the vertex count of buffers in advance
-    const colorBuffer = new Float32Array(g3d.positions.length)
-    const indexBuffer = new Int32Array(g3d.indices.length)
-    const resultMeshes: THREE.BufferGeometry[] = []
+  mergeUniqueGeometry (
+    g3d: VimG3d,
+    geometry: THREE.BufferGeometry[],
+    meshRefCounts: Int32Array
+  ) {
+    const uniques = this.getTransformedUniqueGeometry(
+      g3d,
+      geometry,
+      meshRefCounts
+    )
 
-    for (let mesh = 0; mesh < meshCount; mesh++) {
-      // min and max indices accumulated to slice into the vertex buffer
-      let min: number = Number.MAX_SAFE_INTEGER
-      let max: number = 0
-      let indexCount = 0
+    const result = this.createMergedMesh(uniques)
+    uniques.forEach((u) => u.dispose())
+    return result
+  }
 
-      const [meshStart, meshEnd] = g3d.getMeshSubmeshRange(mesh)
-      for (let submesh = meshStart; submesh < meshEnd; submesh++) {
-        // transparent submeshes are skipped
-        const submeshColor = this.getSubmeshColor(g3d, submesh)
-        if (!submeshColor) continue
+  getTransformedUniqueGeometry (
+    g3d: VimG3d,
+    geometry: THREE.BufferGeometry[],
+    meshRefCounts: Int32Array
+  ): THREE.BufferGeometry[] {
+    const result: THREE.BufferGeometry[] = []
 
-        const [submeshStart, submeshEnd] = g3d.getSubmeshIndexRange(submesh)
-        for (let index = submeshStart; index < submeshEnd; index++) {
-          const vertex = g3d.indices[index]
-          indexBuffer[indexCount++] = vertex
-          min = Math.min(min, vertex)
-          max = Math.max(max, vertex)
-          submeshColor.toArray(colorBuffer, vertex * 3)
-        }
+    for (let i = 0; i < g3d.instanceMeshes.length; i++) {
+      const meshIndex = g3d.instanceMeshes[i]
+      if (meshIndex < 0) continue
+
+      const bufferGeometry = geometry[meshIndex]
+      if (!bufferGeometry) continue
+
+      // only merge unique objects
+      if (meshRefCounts[meshIndex] === 1) {
+        // adding uvs for picking
+        this.addUVs(bufferGeometry, i)
+        const matrix = getMatrixFromNodeIndex(g3d, i)
+        bufferGeometry.applyMatrix4(matrix)
+        result.push(bufferGeometry)
       }
+    }
+    return result
+  }
 
-      // If all submesh are transparent, we push null to keep results aligned
-      // if (meshIndices.length === 0) {
-      if (indexCount === 0) {
-        resultMeshes.push(null)
+  // TODO Use and support a simple THREE.Mesh
+  createMergedMesh (bufferGeometry: BufferGeometry[]): THREE.InstancedMesh {
+    const mergedbufferGeometry: THREE.BufferGeometry =
+      BufferGeometryUtils.mergeBufferGeometries(bufferGeometry)
+
+    const mergedMesh = new THREE.InstancedMesh(
+      mergedbufferGeometry,
+      this.material,
+      1
+    )
+    mergedMesh.setMatrixAt(0, new THREE.Matrix4())
+    mergedbufferGeometry.computeBoundingSphere()
+    // Used by picking to distinguish merged meshes
+    mergedMesh.userData.merged = true
+    return mergedMesh
+  }
+
+  addUVs (bufferGeometry: BufferGeometry, value: number) {
+    const uvArity = 2
+    const vertexCount = bufferGeometry.getAttribute('position').count
+    const uvs = new Float32Array(vertexCount * uvArity)
+    uvs.fill(value)
+    bufferGeometry.setAttribute('uv', new BufferAttribute(uvs, uvArity))
+  }
+
+  allocateMeshes (
+    geometries: THREE.BufferGeometry[],
+    meshRefCounts: Int32Array
+  ): (Mesh | null)[] {
+    const meshCount = geometries.length
+    const meshes: (Mesh | null)[] = new Array(meshCount)
+
+    for (let i = 0; i < meshCount; ++i) {
+      const count = meshRefCounts[i]
+      if (count <= 1) {
         continue
       }
 
-      // 3 is both the arity of the vertex buffer and of THREE.color
-      const sliceStart = min * 3
-      const sliceEnd = (max + 1) * 3
-
-      // Rebase indices in mesh space
-      for (let i = 0; i < indexCount; i++) {
-        indexBuffer[i] -= min
+      const geometry = geometries[i]
+      if (geometry === null) {
+        continue
       }
 
-      const resultMesh = this.createBufferGeometry(
-        g3d.positions.subarray(sliceStart, sliceEnd),
-        indexBuffer.subarray(0, indexCount),
-        colorBuffer.subarray(sliceStart, sliceEnd)
-      )
+      meshes[i] = new THREE.InstancedMesh(geometry, this.material, count)
+    }
 
-      resultMesh.computeBoundingSphere()
-      resultMesh.computeBoundingBox()
-      resultMeshes.push(resultMesh)
+    return meshes
+  }
+
+  instantiateSharedGeometry (
+    meshes: (Mesh | null)[],
+    g3d: VimG3d
+  ): VimSceneGeometry {
+    const instanceCounters = new Int32Array(meshes.length)
+    let boundingSphere: THREE.Sphere | null = null
+    const nodeIndexToMeshInstance = new Map<number, [Mesh, number]>()
+    const meshIdToNodeIndex = new Map<number, [number]>()
+    const resultMeshes: Mesh[] = []
+
+    for (let i = 0; i < g3d.getInstanceCount(); ++i) {
+      const meshIndex = g3d.instanceMeshes[i]
+      if (meshIndex < 0) continue
+
+      const mesh = meshes[meshIndex]
+      if (!mesh) continue
+
+      const count = instanceCounters[meshIndex]++
+
+      // Set Node-MeshMap
+      const nodes = meshIdToNodeIndex.get(mesh.id)
+      if (nodes) {
+        nodes.push(i)
+      } else {
+        meshIdToNodeIndex.set(mesh.id, [i])
+        resultMeshes.push(mesh) // push mesh first time it is seen
+      }
+
+      // Set Node ID for picking
+      nodeIndexToMeshInstance.set(i, [mesh, count])
+
+      // Set matrix
+      const matrix = getMatrixFromNodeIndex(g3d, i)
+      mesh.setMatrixAt(count, matrix)
+
+      // Compute total bounding sphere
+      const sphere = mesh.geometry.boundingSphere!.clone()
+      sphere.applyMatrix4(matrix)
+      boundingSphere = boundingSphere ? boundingSphere.union(sphere) : sphere
+    }
+    return new VimSceneGeometry(
+      resultMeshes,
+      boundingSphere ?? new THREE.Sphere(),
+      nodeIndexToMeshInstance,
+      meshIdToNodeIndex
+    )
+  }
+}
+
+export class BufferGeometryBuilder {
+  defaultColor = new THREE.Color(0.5, 0.5, 0.5)
+  indexBuffer: Int32Array
+  vertexBuffer: Float32Array
+  colorBuffer: Float32Array
+
+  g3d: VimG3d
+
+  constructor (g3d: VimG3d) {
+    this.vertexBuffer = Float32Array.from(g3d.positions)
+    this.colorBuffer = new Float32Array(g3d.positions.length)
+    this.indexBuffer = new Int32Array(g3d.indices.length)
+    this.g3d = g3d
+  }
+
+  createAllGeometry = (): THREE.BufferGeometry[] => {
+    const meshCount = this.g3d.meshSubmeshes.length
+    const resultMeshes: THREE.BufferGeometry[] = []
+
+    for (let mesh = 0; mesh < meshCount; mesh++) {
+      const result = this.createBufferGeometryFromMeshIndex(mesh)
+      result?.computeBoundingSphere()
+      result?.computeBoundingBox()
+      resultMeshes.push(result)
     }
 
     return resultMeshes
   }
 
-  defaultColor = new THREE.Color(0.5, 0.5, 0.5)
+  createBufferGeometryFromMeshIndex (
+    meshIndex: number
+  ): THREE.BufferGeometry | null {
+    // min and max indices accumulated to slice into the vertex buffer
+    let min: number = Number.MAX_SAFE_INTEGER
+    let max: number = 0
+    let indexCount = 0
+
+    const [meshStart, meshEnd] = this.g3d.getMeshSubmeshRange(meshIndex)
+    for (let submesh = meshStart; submesh < meshEnd; submesh++) {
+      // transparent submeshes are skipped
+      const submeshColor = this.getSubmeshColor(this.g3d, submesh)
+      if (!submeshColor) continue
+
+      const [submeshStart, submeshEnd] = this.g3d.getSubmeshIndexRange(submesh)
+      for (let index = submeshStart; index < submeshEnd; index++) {
+        const vertex = this.g3d.indices[index]
+        this.indexBuffer[indexCount++] = vertex
+        min = Math.min(min, vertex)
+        max = Math.max(max, vertex)
+        submeshColor.toArray(this.colorBuffer, vertex * 3)
+      }
+    }
+
+    // If all submesh are transparent, we push null to keep results aligned
+    if (indexCount === 0) return null
+
+    // 3 is both the arity of the vertex buffer and of THREE.color
+    const sliceStart = min * 3
+    const sliceEnd = (max + 1) * 3
+
+    // Rebase indices in mesh space
+    for (let i = 0; i < indexCount; i++) {
+      this.indexBuffer[i] -= min
+    }
+
+    return createBufferGeometryFromArrays(
+      this.vertexBuffer.subarray(sliceStart, sliceEnd),
+      this.indexBuffer.subarray(0, indexCount),
+      this.colorBuffer.subarray(sliceStart, sliceEnd)
+    )
+  }
+
+  createBufferGeometryFromInstanceIndex (
+    instanceIndex: number
+  ): THREE.BufferGeometry {
+    const meshIndex = this.g3d.instanceMeshes[instanceIndex]
+    const geometry = this.createBufferGeometryFromMeshIndex(meshIndex)
+    const matrix = getMatrixFromNodeIndex(this.g3d, instanceIndex)
+    geometry.applyMatrix4(matrix)
+    return geometry
+  }
+
   getSubmeshColor (g3d: VimG3d, submesh: number) {
     const material = g3d.submeshMaterial[submesh]
     if (material < 0) {
@@ -377,165 +556,11 @@ export class VIMLoader {
 
     return new THREE.Color().fromArray(g3d.materialColors, colorIndex)
   }
+}
 
-  // Main
-  parse (data: ArrayBuffer): VimScene {
-    const bfast = this.timeAction('Parsing Vim', () => this.parseBFast(data))
-
-    console.log(`found: ${bfast.buffers.length} buffers`)
-    console.log(bfast.names.join(', '))
-
-    const vim = this.timeAction('Creating VIM', () => this.constructVIM(bfast))
-
-    const geometry = this.timeAction('Allocating Geometry', () =>
-      this.allocateGeometry(vim.g3d)
-    )
-    console.log('Found # meshes ' + geometry.length)
-
-    const meshRefCounts = this.timeAction('Counting references', () =>
-      this.countMeshReferences(vim.g3d.instanceMeshes, geometry.length)
-    )
-
-    const rawMeshes = this.timeAction('Allocating Meshes', () =>
-      this.allocateMeshes(geometry, meshRefCounts)
-    )
-
-    const sceneGeometry = this.timeAction('Applying Matrices', () =>
-      this.applyMatrices(
-        rawMeshes,
-        vim.g3d.instanceMeshes,
-        vim.g3d.instanceTransforms
-      )
-    )
-
-    console.log('Merging geometry')
-    const singles: THREE.BufferGeometry[] = []
-    for (let i = 0; i < vim.g3d.instanceMeshes.length; i++) {
-      const meshIndex = vim.g3d.instanceMeshes[i]
-      if (meshIndex < 0) continue
-
-      const mesh = geometry[meshIndex]
-      if (!mesh) continue
-
-      if (meshRefCounts[meshIndex] === 1) {
-        const matrixAsArray = vim.g3d.instanceTransforms.subarray(
-          i * vim.g3d.matrixArity,
-          (i + 1) * vim.g3d.matrixArity
-        )
-        const matrix = new THREE.Matrix4()
-        matrix.elements = Array.from(matrixAsArray)
-        mesh.applyMatrix4(matrix)
-        singles.push(mesh)
-      }
-    }
-
-    const big: THREE.BufferGeometry =
-      BufferGeometryUtils.mergeBufferGeometries(singles)
-    const bigMesh = new THREE.InstancedMesh(big, this.material, 1)
-    bigMesh.setMatrixAt(0, new THREE.Matrix4())
-    big.computeBoundingSphere()
-    sceneGeometry.meshes.push(bigMesh)
-    sceneGeometry.boundingSphere = big.boundingSphere
-
-    console.log('Loading Completed')
-    return new VimScene(vim, sceneGeometry)
-  }
-
-  countMeshReferences = (
-    instanceMeshes: Int32Array,
-    meshCount: number
-  ): Int32Array => {
-    const meshRefCounts = new Int32Array(meshCount)
-    for (let i = 0; i < instanceMeshes.length; ++i) {
-      const mesh = instanceMeshes[i]
-      if (mesh < 0) continue
-      meshRefCounts[mesh]++
-    }
-    return meshRefCounts
-  }
-
-  allocateMeshes (
-    geometries: THREE.BufferGeometry[],
-    meshRefCounts: Int32Array
-  ): (Mesh | null)[] {
-    const meshCount = geometries.length
-    const meshes: (Mesh | null)[] = []
-
-    for (let i = 0; i < meshCount; ++i) {
-      const count = meshRefCounts[i]
-      if (count <= 1) {
-        meshes.push(null)
-        continue
-      }
-
-      const geometry = geometries[i]
-      if (geometry === null) {
-        meshes.push(null)
-        continue
-      }
-
-      const mesh = new THREE.InstancedMesh(geometry, this.material, count)
-      meshes.push(mesh)
-    }
-
-    return meshes
-  }
-
-  // meshes: array of THREE.InstancedMesh
-  // instanceMeshes: array of mesh indices
-  // instanceTransform: flat array of matrix4x4
-  // Returns array of InstancedMesh and array of instance centers with matrices applied to both.
-  applyMatrices (
-    meshes: (Mesh | null)[],
-    instanceMeshes: Int32Array,
-    instanceTransforms: Float32Array
-  ): VimSceneGeometry {
-    const matrixArity = 16
-    const instanceCounters = new Int32Array(meshes.length)
-    let boundingSphere: THREE.Sphere | null = null
-    const nodeIndexToMeshInstance = new Map<number, [Mesh, number]>()
-    const meshIdToNodeIndex = new Map<number, [number]>()
-    const resultMeshes: Mesh[] = []
-
-    for (let i = 0; i < instanceMeshes.length; ++i) {
-      const meshIndex = instanceMeshes[i]
-      if (meshIndex < 0) continue
-
-      const mesh = meshes[meshIndex]
-      if (!mesh) continue
-
-      const count = instanceCounters[meshIndex]++
-
-      // Compute Matrix
-      const matrixAsArray = instanceTransforms.subarray(
-        i * matrixArity,
-        (i + 1) * matrixArity
-      )
-      const matrix = new THREE.Matrix4()
-      matrix.elements = Array.from(matrixAsArray)
-      mesh.setMatrixAt(count, matrix)
-
-      // Set Node ID for picking
-      nodeIndexToMeshInstance.set(i, [mesh, count])
-
-      const nodes = meshIdToNodeIndex.get(mesh.id)
-      if (nodes) {
-        nodes.push(i)
-      } else {
-        meshIdToNodeIndex.set(mesh.id, [i])
-        resultMeshes.push(mesh) // push mesh first time it is seen
-      }
-
-      // Sphere was computed when geometry was created
-      const sphere = mesh.geometry.boundingSphere!.clone()
-      sphere.applyMatrix4(matrix)
-      boundingSphere = boundingSphere ? boundingSphere.union(sphere) : sphere
-    }
-    return new VimSceneGeometry(
-      resultMeshes,
-      boundingSphere ?? new THREE.Sphere(),
-      nodeIndexToMeshInstance,
-      meshIdToNodeIndex
-    )
-  }
+function getMatrixFromNodeIndex (g3d: VimG3d, index: number): THREE.Matrix4 {
+  const matrixAsArray = g3d.getTransformMatrixAsArray(index)
+  const matrix = new THREE.Matrix4()
+  matrix.elements = Array.from(matrixAsArray)
+  return matrix
 }
