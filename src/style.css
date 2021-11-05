@@ -1,12 +1,21 @@
-.VimLoadingBox {
-  width: 320px;
+.vim-loading-box {
+  width: fit-content;
+  height: fit-content;
   padding: 10px;
   border: 1px solid #e3e3e3;
-  background-color: #f6f6f6;
   border-radius: 3px;
+  background-color: #f6f6f6;
+
   font-family: 'Roboto', sans-serif;
+
+  /*Centers the box*/
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
 }
 
+/*Makes full screen and remove scrollbars*/
 html,
 body {
   margin: 0;
@@ -16,11 +25,4 @@ body {
 
 .VimLoadingBox h1 {
   color: #050c1a;
-}
-
-.center {
-  position: absolute;
-  top: 50%;
-  left: 50%;
-  transform: translate(-50%, -50%);
 }

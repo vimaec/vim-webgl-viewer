@@ -76,10 +76,8 @@ function FormatStateMessage (state: ViewerState): string {
 function VimLoadingBox (prop: { msg: string }) {
   if (prop.msg === '') return null
   return (
-    <div className="center">
-      <div className="VimLoadingBox">
-        <h1> {prop.msg} </h1>
-      </div>
+    <div className="vim-loading-box">
+      <h1> {prop.msg} </h1>
     </div>
   )
 }
