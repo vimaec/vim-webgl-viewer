@@ -22,10 +22,11 @@ export class ViewerDocument {
     this.canvas = canvas as HTMLCanvasElement
 
     const ui = document.createElement('div')
+    ui.className = 'vim-ui'
     ui.style.position = 'fixed'
     ui.style.width = '100%'
     ui.style.height = '100%'
-    // ui.style.display = 'block'
+    ui.style.pointerEvents = 'none'
     document.body.prepend(ui)
     this.ui = ui
 
