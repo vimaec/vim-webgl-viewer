@@ -3,7 +3,7 @@ import React, { useState } from 'react'
 import ReactDOM from 'react-dom'
 import urlLogo from './assets/logo.png'
 import { ViewerState } from './viewer'
-import './styles.css'
+import './style.css'
 
 export class ViewerDocument {
   canvas: HTMLCanvasElement
