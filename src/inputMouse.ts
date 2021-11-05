@@ -101,7 +101,7 @@ export class InputMouse {
     console.timeEnd('raycast')
 
     // 0 is a valid value
-    if (index !== undefined) {
+    if (index !== null) {
       this.viewer.select(mesh, index)
     }
   }
@@ -120,13 +120,13 @@ export class InputMouse {
   ): [Mesh, number] {
     if (!hits?.length) {
       console.log('Raycast: No hit.')
-      return
+      return [null, null]
     }
 
     const mesh = hits[0].object
     if (!(mesh instanceof THREE.Mesh)) {
       console.log(`Raycast hit object: ${mesh} of unsupported type. Ignoring.`)
-      return
+      return [null, null]
     }
 
     const [index, meshType]: [number, string] = mesh.userData.merged
