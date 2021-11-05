@@ -118,6 +118,7 @@ class ViewerCamera {
     vector.applyQuaternion(this.camera.quaternion)
     const y = this.camera.position.y
     this.camera.position.add(vector)
+    this.OrbitalTarget.add(vector)
     if (onlyHoriz) this.camera.position.y = y
   }
 
