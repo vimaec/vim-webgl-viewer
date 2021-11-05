@@ -86,7 +86,7 @@ export class Viewer {
           | THREE.BufferGeometry
       ) => {
         this.setState('Processing')
-        setTimeout(() => this.loadInScene(result), 1000)
+        setTimeout(() => this.loadInScene(result), 0)
       },
       (progress) => {
         this.setState(['Downloading', progress.loaded])
