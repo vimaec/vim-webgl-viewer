@@ -2,7 +2,7 @@
 import React, { useState } from 'react'
 import ReactDOM from 'react-dom'
 import urlLogo from './assets/logo.png'
-import { ViewerState } from './viewer'
+import { ViewerState } from '../viewer'
 import './style.css'
 
 export class ViewerDocument {
@@ -13,14 +13,6 @@ export class ViewerDocument {
   onProgress: (state: ViewerState) => void
 
   constructor (settings: any, stateChangeEventName: string) {
-    // Get or Add Canvas
-    let canvas = document.getElementById(settings.canvasId)
-    if (!canvas) {
-      canvas = document.createElement('canvas')
-      document.body.appendChild(canvas)
-    }
-    this.canvas = canvas as HTMLCanvasElement
-
     const ui = document.createElement('div')
     ui.className = 'vim-ui'
     ui.style.position = 'fixed'

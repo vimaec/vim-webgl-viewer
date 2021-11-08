@@ -14,7 +14,6 @@ import Stats from 'stats.js'
 import { Selection } from './selection'
 import { ViewerEnvironment } from './viewerEnvironment'
 import { ViewerRenderer } from './viewerRenderer'
-import { ViewerDocument } from './ViewerDocument'
 import { BufferGeometryBuilder } from './VIMLoader'
 
 export type ViewerState =
@@ -26,7 +25,7 @@ export class Viewer {
   stats: any
   settings: any
 
-  htmlDocument: ViewerDocument
+  canvas: HTMLCanvasElement
   environment: ViewerEnvironment
   render: ViewerRenderer
   selection: Selection
@@ -39,10 +38,13 @@ export class Viewer {
 
   constructor (options: Record<string, unknown>) {
     this.settings = deepmerge(ViewerSettings.default, options, undefined)
-    this.htmlDocument = new ViewerDocument(
-      this.settings,
-      this.stateChangeEventName
-    )
+
+    let canvas = document.getElementById(this.settings.canvasId)
+    if (!canvas) {
+      canvas = document.createElement('canvas')
+      document.body.appendChild(canvas)
+    }
+    this.canvas = canvas as HTMLCanvasElement
 
     // Create a new DAT.gui controller
     if (this.settings.showGui) {
@@ -51,7 +53,7 @@ export class Viewer {
         this.ApplySettings()
       })
     }
-    this.render = new ViewerRenderer(this.htmlDocument.canvas)
+    this.render = new ViewerRenderer(this.canvas)
     this.cameraController = new ViewerCamera(this.render.camera, this.settings)
 
     this.environment = ViewerEnvironment.createDefault()
@@ -65,11 +67,7 @@ export class Viewer {
     }
 
     // Input and Selection
-    this.controls = new ViewerInput(
-      this.htmlDocument.canvas,
-      this.cameraController,
-      this
-    )
+    this.controls = new ViewerInput(this.canvas, this.cameraController, this)
     this.controls.register()
     this.selection = new Selection(this)
 
