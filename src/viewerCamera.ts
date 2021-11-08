@@ -75,7 +75,7 @@ class ViewerCamera {
     this.camera.position.copy(pos)
     this.OrbitalTarget = sphere.center
     this.CurrentOrbitalDistance = this.OrbitalTarget.clone().sub(pos).length()
-    this.CurrentOrbitalDistance = this.TargetOrbitalDistance
+    this.TargetOrbitalDistance = this.CurrentOrbitalDistance
   }
 
   frameScene (sphere: THREE.Sphere) {
@@ -89,7 +89,7 @@ class ViewerCamera {
     this.CurrentOrbitalDistance = this.OrbitalTarget.clone()
       .sub(this.camera.position)
       .length()
-    this.CurrentOrbitalDistance = this.TargetOrbitalDistance
+    this.TargetOrbitalDistance = this.CurrentOrbitalDistance
   }
 
   applySettings (newSettings: any) {
@@ -142,13 +142,13 @@ class ViewerCamera {
     this.camera.quaternion.setFromEuler(euler)
 
     if (!this.MouseOrbit) {
+      const offset = new THREE.Vector3(0, 0, 1)
+        .applyQuaternion(this.camera.quaternion)
+        .multiplyScalar(this.CurrentOrbitalDistance);
+        
       this.OrbitalTarget = this.camera.position
         .clone()
-        .add(
-          new THREE.Vector3(0, 0, 1)
-            .applyQuaternion(this.camera.quaternion)
-            .multiplyScalar(this.CurrentOrbitalDistance)
-        )
+        .sub(offset);
     }
   }
 
