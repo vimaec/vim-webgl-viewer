@@ -6,7 +6,7 @@ const url = params.has('model')
   : 'https://vim.azureedge.net/samples/residence.vim'
 
 const viewer = new Viewer({
-  mouseOrbit: true,
+  mouseOrbit: false,
   url: url,
   object: {
     scale: 0.1,
