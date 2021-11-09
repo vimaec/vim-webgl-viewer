@@ -3,11 +3,10 @@
 */
 
 import * as THREE from 'three'
-import * as BufferGeometryUtils from '../node_modules/three/examples/jsm/utils/BufferGeometryUtils.js'
+import * as BufferGeometryUtils from 'three/examples/jsm/utils/BufferGeometryUtils'
 import { G3d, VimG3d, Attribute } from './g3d'
 import { BFast, BFastHeader } from './bfast'
 import { Vim, VimScene, VimSceneGeometry } from './vim'
-import { BufferAttribute, BufferGeometry } from 'three'
 import { createBufferGeometryFromArrays } from './threeHelpers'
 
 type Mesh = THREE.InstancedMesh<THREE.BufferGeometry, THREE.Material>
@@ -363,7 +362,9 @@ export class VIMLoader {
   }
 
   // TODO Use and support a simple THREE.Mesh
-  createMergedMesh (bufferGeometry: BufferGeometry[]): THREE.InstancedMesh {
+  createMergedMesh (
+    bufferGeometry: THREE.BufferGeometry[]
+  ): THREE.InstancedMesh {
     const mergedbufferGeometry: THREE.BufferGeometry =
       BufferGeometryUtils.mergeBufferGeometries(bufferGeometry)
 
@@ -379,12 +380,12 @@ export class VIMLoader {
     return mergedMesh
   }
 
-  addUVs (bufferGeometry: BufferGeometry, value: number) {
+  addUVs (bufferGeometry: THREE.BufferGeometry, value: number) {
     const uvArity = 2
     const vertexCount = bufferGeometry.getAttribute('position').count
     const uvs = new Float32Array(vertexCount * uvArity)
     uvs.fill(value)
-    bufferGeometry.setAttribute('uv', new BufferAttribute(uvs, uvArity))
+    bufferGeometry.setAttribute('uv', new THREE.BufferAttribute(uvs, uvArity))
   }
 
   allocateMeshes (

@@ -1,5 +1,5 @@
-import { ViewerCamera } from './viewerCamera'
 import { Viewer } from './viewer'
+import { ViewerCamera } from './viewerCamera'
 import { InputKeyboard } from './inputKeyboard'
 import { InputTouch } from './inputTouch'
 import { InputMouse } from './inputMouse'

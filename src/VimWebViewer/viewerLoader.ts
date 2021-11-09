@@ -1,5 +1,8 @@
 import * as THREE from 'three'
-import { VIMLoader } from './VIMLoader'
+
+// vim
+import { VIMLoader } from '../VimLoader/VIMLoader'
+import { VimScene } from '../VimLoader/vim'
 
 // Other loaders
 import { TDSLoader } from 'three/examples/jsm/loaders/TDSLoader'
@@ -14,7 +17,6 @@ import { OBJLoader } from 'three/examples/jsm/loaders/OBJLoader'
 import { PCDLoader } from 'three/examples/jsm/loaders/PCDLoader'
 import { PLYLoader } from 'three/examples/jsm/loaders/PLYLoader'
 import { STLLoader } from 'three/examples/jsm/loaders/STLLoader'
-import { VimScene } from './vim'
 
 // Material
 const defaultMaterial = new THREE.MeshPhongMaterial({

@@ -11,9 +11,8 @@ export class ViewerRenderer {
   meshes: THREE.Object3D[] = []
 
   constructor (canvas: HTMLCanvasElement) {
-    this.canvas = canvas
     this.renderer = new THREE.WebGLRenderer({
-      canvas: this.canvas,
+      canvas: canvas,
       antialias: true,
       precision: 'highp', // 'lowp', 'mediump', 'highp'
 
@@ -21,6 +20,8 @@ export class ViewerRenderer {
       stencil: false,
       powerPreference: 'high-performance'
     })
+    this.canvas = this.renderer.domElement
+
     this.renderer.setPixelRatio(window.devicePixelRatio)
     this.renderer.shadowMap.enabled = false
 

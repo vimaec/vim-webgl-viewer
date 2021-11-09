@@ -2,19 +2,22 @@
  @author VIM / https://vimaec.com
 */
 
+// external
 import * as THREE from 'three'
 import deepmerge from 'deepmerge'
-import { VimScene } from './vim'
+
+// internal
 import { ViewerSettings } from './viewerSettings'
 import { ViewerCamera } from './viewerCamera'
 import { ViewerInput } from './viewerInput'
-import { ViewerGui } from './viewerGui'
 import { loadAny } from './viewerLoader'
-import Stats from 'stats.js'
 import { Selection } from './selection'
 import { ViewerEnvironment } from './viewerEnvironment'
 import { ViewerRenderer } from './viewerRenderer'
-import { BufferGeometryBuilder } from './VIMLoader'
+
+// loader
+import { VimScene } from '../VimLoader/vim'
+import { BufferGeometryBuilder } from '../VimLoader/VIMLoader'
 
 export type ViewerState =
   | 'Default'
@@ -25,7 +28,6 @@ export class Viewer {
   stats: any
   settings: any
 
-  canvas: HTMLCanvasElement
   environment: ViewerEnvironment
   render: ViewerRenderer
   selection: Selection
@@ -34,40 +36,24 @@ export class Viewer {
 
   vimScene: VimScene | undefined
   state: ViewerState = 'Default'
-  stateChangeEventName = 'viewerStateChangedEvent'
+  static stateChangeEventName = 'viewerStateChangedEvent'
 
   constructor (options: Record<string, unknown>) {
     this.settings = deepmerge(ViewerSettings.default, options, undefined)
 
-    let canvas = document.getElementById(this.settings.canvasId)
-    if (!canvas) {
-      canvas = document.createElement('canvas')
-      document.body.appendChild(canvas)
-    }
-    this.canvas = canvas as HTMLCanvasElement
-
-    // Create a new DAT.gui controller
-    if (this.settings.showGui) {
-      ViewerGui.bind(this.settings, (settings) => {
-        this.settings = settings
-        this.ApplySettings()
-      })
-    }
-    this.render = new ViewerRenderer(this.canvas)
+    this.render = new ViewerRenderer(
+      document.getElementById(this.settings.canvasId) as HTMLCanvasElement
+    )
     this.cameraController = new ViewerCamera(this.render.camera, this.settings)
 
     this.environment = ViewerEnvironment.createDefault()
 
-    // Add Stats display
-    if (this.settings.showStats) {
-      this.stats = new Stats()
-      this.stats.dom.style.top = '84px'
-      this.stats.dom.style.left = '16px'
-      document.body.appendChild(this.stats.dom)
-    }
-
     // Input and Selection
-    this.controls = new ViewerInput(this.canvas, this.cameraController, this)
+    this.controls = new ViewerInput(
+      this.render.canvas,
+      this.cameraController,
+      this
+    )
     this.controls.register()
     this.selection = new Selection(this)
 
@@ -98,7 +84,7 @@ export class Viewer {
 
   setState = (state: ViewerState) => {
     this.state = state
-    const event = new CustomEvent(this.stateChangeEventName, {
+    const event = new CustomEvent(Viewer.stateChangeEventName, {
       detail: this.state
     })
     dispatchEvent(event)
