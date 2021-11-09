@@ -97,12 +97,14 @@ export class InputMouse {
   onMouseClick = (position: Vector2) => {
     console.time('raycast')
     const hits = this.mouseRaycast(position)
-    const [mesh, index] = this.findHitMeshIndex(hits)
+    const [mesh, index] = this.findHitMeshIndex(hits) ?? [null, null]
     console.timeEnd('raycast')
 
     // 0 is a valid value
-    if (index !== undefined) {
+    if (index != null) {
       this.viewer.select(mesh, index)
+    } else {
+      this.viewer.clearSelection()
     }
   }
 
