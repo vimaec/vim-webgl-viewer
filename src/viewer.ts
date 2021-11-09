@@ -68,7 +68,7 @@ export class Viewer {
     loadAny(
       this.settings.url,
       this.loadInScene.bind(this),
-      this.settings.overrideFileExtension
+      this.settings.fileExtension
     )
 
     // Start Loop
