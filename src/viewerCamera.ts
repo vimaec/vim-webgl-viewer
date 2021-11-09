@@ -94,6 +94,7 @@ class ViewerCamera {
 
   applySettings (newSettings: any) {
     // TODO: camera updates aren't working
+    this.MouseOrbit = newSettings.mouseOrbit
     this.camera.fov = newSettings.camera.fov
     this.camera.zoom = newSettings.camera.zoom
     this.camera.near = newSettings.camera.near
@@ -144,11 +145,9 @@ class ViewerCamera {
     if (!this.MouseOrbit) {
       const offset = new THREE.Vector3(0, 0, 1)
         .applyQuaternion(this.camera.quaternion)
-        .multiplyScalar(this.CurrentOrbitalDistance);
-        
-      this.OrbitalTarget = this.camera.position
-        .clone()
-        .sub(offset);
+        .multiplyScalar(this.CurrentOrbitalDistance)
+
+      this.OrbitalTarget = this.camera.position.clone().sub(offset)
     }
   }
 
