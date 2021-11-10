@@ -97,12 +97,14 @@ export class InputMouse {
   onMouseClick = (position: Vector2) => {
     console.time('raycast')
     const hits = this.mouseRaycast(position)
-    const [mesh, index] = this.findHitMeshIndex(hits)
+    const [mesh, index] = this.findHitMeshIndex(hits) ?? [null, null]
     console.timeEnd('raycast')
 
     // 0 is a valid value
-    if (index !== null) {
+    if (index != null) {
       this.viewer.select(mesh, index)
+    } else {
+      this.viewer.clearSelection()
     }
   }
 
@@ -120,13 +122,13 @@ export class InputMouse {
   ): [Mesh, number] {
     if (!hits?.length) {
       console.log('Raycast: No hit.')
-      return [null, null]
+      return
     }
 
     const mesh = hits[0].object
     if (!(mesh instanceof THREE.Mesh)) {
       console.log(`Raycast hit object: ${mesh} of unsupported type. Ignoring.`)
-      return [null, null]
+      return
     }
 
     const [index, meshType]: [number, string] = mesh.userData.merged

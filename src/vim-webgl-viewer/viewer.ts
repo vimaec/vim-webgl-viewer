@@ -79,7 +79,8 @@ export class Viewer {
       },
       (progress) => {
         this.setState(['Downloading', progress.loaded])
-      }
+      },
+      this.settings.fileExtension
     )
 
     // Start Loop

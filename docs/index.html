@@ -23,7 +23,7 @@
 </head>
 <body>
     <script src="https://unpkg.com/three@0.133.1/build/three.min.js"></script>
-    <script src="https://unpkg.com/vim-webgl-viewer@latest"></script>
+    <script src="https://unpkg.com/vim-webgl-viewer"></script>
     <script>
         const params = new URLSearchParams(window.location.search);
         const url = params.has('model')
@@ -31,6 +31,8 @@
             : 'https://vim.azureedge.net/samples/residence.vim';
 
         var viewer = new vim.Viewer({
+            fileExtension: params.get('extension'),
+            mouseOrbit: false,
             url: url,
             object: {
                 rotation: { x: 270 },
