@@ -25,7 +25,6 @@ export type ViewerState =
   | 'Processing'
 
 export class Viewer {
-  stats: any
   settings: any
 
   environment: ViewerEnvironment
@@ -159,11 +158,6 @@ export class Viewer {
     if (this.settings.autoResize) this.render.fitToCanvas()
 
     this.render.render()
-
-    // Stats
-    if (this.stats) {
-      this.stats.update()
-    }
   }
 
   // TODO Not create this everytime, Not apply this every time either.
