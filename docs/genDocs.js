@@ -17,7 +17,7 @@ const devFile = 'docs/index-dev.html'
 const distFile = 'dist/index.html'
 const unpckg = 'https://unpkg.com/vim-webgl-viewer'
 const prodData = {
-  viewerUrl: unpckg + '@latest',
+  viewerUrl: unpckg,
   style: unpckg + '@latest/dist/style.css'
 }
 const devData = {
