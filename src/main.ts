@@ -1,4 +1,4 @@
-import { Viewer } from './vim-web-viewer/viewer'
+import { Viewer } from './vim-webgl-viewer/viewer'
 
 const params = new URLSearchParams(window.location.search)
 const url = params.has('model')
