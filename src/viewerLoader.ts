@@ -44,9 +44,10 @@ export const loadAny = function (
       | THREE.Group
       | THREE.Object3D
       | THREE.BufferGeometry
-  ) => void
+  ) => void,
+  overrideFileExtension: string = null
 ) {
-  const ext = getExt(fileName)
+  const ext = overrideFileExtension ?? getExt(fileName)
 
   switch (ext) {
     case '3ds': {

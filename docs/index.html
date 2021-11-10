@@ -23,6 +23,8 @@
             : 'https://vim.azureedge.net/samples/residence.vim';
 
         var viewer = new vim.Viewer({
+            fileExtension: params.get('extension'),
+            mouseOrbit: false,
             url: url,
             object: {
                 rotation: { x: 270 },

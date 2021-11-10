@@ -65,7 +65,11 @@ export class Viewer {
 
     // Add all of the appropriate mouse, touch-pad, and keyboard listeners
     // Load Vim
-    loadAny(this.settings.url, this.loadInScene.bind(this))
+    loadAny(
+      this.settings.url,
+      this.loadInScene.bind(this),
+      this.settings.fileExtension
+    )
 
     // Start Loop
     this.ApplySettings()
