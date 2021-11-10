@@ -41,9 +41,15 @@ export class Viewer {
   constructor (options: Record<string, unknown>) {
     this.settings = deepmerge(ViewerSettings.default, options, undefined)
 
-    this.render = new ViewerRenderer(
-      document.getElementById(this.settings.canvasId) as HTMLCanvasElement
-    )
+    let canvas = document.getElementById(
+      this.settings.canvasId
+    ) as HTMLCanvasElement
+    if (!canvas) {
+      canvas = document.createElement('canvas')
+      document.body.appendChild(canvas)
+    }
+    this.render = new ViewerRenderer(canvas)
+
     this.cameraController = new ViewerCamera(this.render.camera, this.settings)
 
     this.environment = ViewerEnvironment.createDefault()
