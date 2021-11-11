@@ -1,4 +1,4 @@
-import { Viewer } from './viewer'
+import { Viewer } from './vim-webgl-viewer/viewer'
 
 const params = new URLSearchParams(window.location.search)
 const url = params.has('model')
@@ -15,8 +15,7 @@ const viewer = new Viewer({
   },
   plane: {
     show: false
-  },
-  showStats: true
+  }
 })
 
 globalThis.viewer = viewer

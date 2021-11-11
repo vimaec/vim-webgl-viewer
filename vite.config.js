@@ -4,20 +4,16 @@ export default defineConfig({
   build: {
     lib: {
       formats: ['iife', 'es'],
-      entry: './src/viewer.ts',
+      entry: './src/vim-webgl-viewer/viewer.ts',
       name: 'vim'
     },
     // Minify set to true will break the IIFE output
     minify: false,
     rollupOptions: {
-      external: [
-        'three'
-        // 'dat.gui'
-      ],
+      external: ['three'],
       output: {
         globals: {
           three: 'THREE'
-          // 'dat.gui': 'dat'
         }
       }
     }

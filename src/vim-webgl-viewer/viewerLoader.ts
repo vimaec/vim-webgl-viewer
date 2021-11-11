@@ -1,5 +1,8 @@
 import * as THREE from 'three'
-import { VIMLoader } from './VIMLoader'
+
+// vim
+import { VIMLoader } from '../vim-loader/VIMLoader'
+import { VimScene } from '../vim-loader/vim'
 
 // Other loaders
 import { TDSLoader } from 'three/examples/jsm/loaders/TDSLoader'
@@ -14,7 +17,6 @@ import { OBJLoader } from 'three/examples/jsm/loaders/OBJLoader'
 import { PCDLoader } from 'three/examples/jsm/loaders/PCDLoader'
 import { PLYLoader } from 'three/examples/jsm/loaders/PLYLoader'
 import { STLLoader } from 'three/examples/jsm/loaders/STLLoader'
-import { VimScene } from './vim'
 
 // Material
 const defaultMaterial = new THREE.MeshPhongMaterial({
@@ -45,6 +47,7 @@ export const loadAny = function (
       | THREE.Object3D
       | THREE.BufferGeometry
   ) => void,
+  onProgress: (progress: ProgressEvent) => void,
   overrideFileExtension: string = null
 ) {
   const ext = overrideFileExtension ?? getExt(fileName)
@@ -91,7 +94,7 @@ export const loadAny = function (
       break
     }
     case 'vim': {
-      new VIMLoader(defaultMaterial).load(fileName, onFileLoaded)
+      new VIMLoader(defaultMaterial).load(fileName, onFileLoaded, onProgress)
       break
     }
     default:

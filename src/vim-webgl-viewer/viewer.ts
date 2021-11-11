@@ -2,26 +2,31 @@
  @author VIM / https://vimaec.com
 */
 
+// external
 import * as THREE from 'three'
 import deepmerge from 'deepmerge'
-import { VimScene } from './vim'
+
+// internal
 import { ViewerSettings } from './viewerSettings'
 import { ViewerCamera } from './viewerCamera'
 import { ViewerInput } from './viewerInput'
-import { ViewerGui } from './viewerGui'
 import { loadAny } from './viewerLoader'
-import Stats from 'stats.js'
 import { Selection } from './selection'
 import { ViewerEnvironment } from './viewerEnvironment'
 import { ViewerRenderer } from './viewerRenderer'
-import { ViewerDocument } from './ViewerDocument'
-import { BufferGeometryBuilder } from './VIMLoader'
+
+// loader
+import { VimScene } from '../vim-loader/vim'
+import { BufferGeometryBuilder } from '../vim-loader/VIMLoader'
+
+export type ViewerState =
+  | 'Default'
+  | [state: 'Downloading', progress: number]
+  | 'Processing'
 
 export class Viewer {
-  stats: any
   settings: any
 
-  htmlDocument: ViewerDocument
   environment: ViewerEnvironment
   render: ViewerRenderer
   selection: Selection
@@ -29,34 +34,28 @@ export class Viewer {
   controls: ViewerInput
 
   vimScene: VimScene | undefined
+  state: ViewerState = 'Default'
+  static stateChangeEventName = 'viewerStateChangedEvent'
 
   constructor (options: Record<string, unknown>) {
     this.settings = deepmerge(ViewerSettings.default, options, undefined)
-    this.htmlDocument = new ViewerDocument(this.settings)
 
-    // Create a new DAT.gui controller
-    if (this.settings.showGui) {
-      ViewerGui.bind(this.settings, (settings) => {
-        this.settings = settings
-        this.ApplySettings()
-      })
+    let canvas = document.getElementById(
+      this.settings.canvasId
+    ) as HTMLCanvasElement
+    if (!canvas) {
+      canvas = document.createElement('canvas')
+      document.body.appendChild(canvas)
     }
-    this.render = new ViewerRenderer(this.htmlDocument.canvas)
+    this.render = new ViewerRenderer(canvas)
+
     this.cameraController = new ViewerCamera(this.render.camera, this.settings)
 
     this.environment = ViewerEnvironment.createDefault()
 
-    // Add Stats display
-    if (this.settings.showStats) {
-      this.stats = new Stats()
-      this.stats.dom.style.top = '84px'
-      this.stats.dom.style.left = '16px'
-      document.body.appendChild(this.stats.dom)
-    }
-
     // Input and Selection
     this.controls = new ViewerInput(
-      this.htmlDocument.canvas,
+      this.render.canvas,
       this.cameraController,
       this
     )
@@ -67,7 +66,20 @@ export class Viewer {
     // Load Vim
     loadAny(
       this.settings.url,
-      this.loadInScene.bind(this),
+      (
+        result:
+          | VimScene
+          | THREE.Scene
+          | THREE.Group
+          | THREE.Object3D
+          | THREE.BufferGeometry
+      ) => {
+        this.setState('Processing')
+        setTimeout(() => this.loadInScene(result), 0)
+      },
+      (progress) => {
+        this.setState(['Downloading', progress.loaded])
+      },
       this.settings.fileExtension
     )
 
@@ -76,16 +88,22 @@ export class Viewer {
     this.animate()
   }
 
-  prepareDocument () {}
+  setState = (state: ViewerState) => {
+    this.state = state
+    const event = new CustomEvent(Viewer.stateChangeEventName, {
+      detail: this.state
+    })
+    dispatchEvent(event)
+  }
 
-  loadInScene (
+  loadInScene = (
     result:
       | VimScene
       | THREE.Scene
       | THREE.Group
       | THREE.Object3D
       | THREE.BufferGeometry
-  ) {
+  ) => {
     if (result instanceof VimScene) {
       this.onVimLoaded(result)
     } else if (result instanceof THREE.Scene) {
@@ -108,6 +126,7 @@ export class Viewer {
 
     this.focusModel()
     this.ApplySettings()
+    this.setState('Default')
   }
 
   onVimLoaded (vim: VimScene) {
@@ -140,11 +159,6 @@ export class Viewer {
     if (this.settings.autoResize) this.render.fitToCanvas()
 
     this.render.render()
-
-    // Stats
-    if (this.stats) {
-      this.stats.update()
-    }
   }
 
   // TODO Not create this everytime, Not apply this every time either.

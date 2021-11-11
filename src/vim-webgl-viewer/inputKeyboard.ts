@@ -133,10 +133,12 @@ export class InputKeyboard {
         case KEYS.KEY_ADD:
         case KEYS.KEY_OEM_PLUS:
           this.camera.SpeedMultiplier += 1
+          event.preventDefault()
           break
         case KEYS.KEY_SUBTRACT:
         case KEYS.KEY_OEM_MINUS:
           this.camera.SpeedMultiplier -= 1
+          event.preventDefault()
           break
         case KEYS.KEY_F8:
           this.camera.MouseOrbit = !this.camera.MouseOrbit
@@ -148,16 +150,20 @@ export class InputKeyboard {
             this.camera.TargetOrbitalDistance =
               this.camera.CurrentOrbitalDistance
           }
+          event.preventDefault()
           break
         case KEYS.KEY_HOME:
           this.camera.frameScene(this.viewer.render.boundingSphere)
+          event.preventDefault()
           break
         // Selection
         case KEYS.KEY_ESCAPE:
           this.viewer.clearSelection()
+          event.preventDefault()
           break
         case KEYS.KEY_Z:
           this.viewer.focusSelection()
+          event.preventDefault()
           break
       }
     }
@@ -170,27 +176,34 @@ export class InputKeyboard {
       case KEYS.KEY_W:
       case KEYS.KEY_UP:
         this.camera.InputVelocity.z = -speed
+        event.preventDefault()
         break
       case KEYS.KEY_S:
       case KEYS.KEY_DOWN:
         this.camera.InputVelocity.z = speed
+        event.preventDefault()
         break
       case KEYS.KEY_D:
       case KEYS.KEY_RIGHT:
         this.camera.InputVelocity.x = speed
+        event.preventDefault()
         break
       case KEYS.KEY_A:
       case KEYS.KEY_LEFT:
         this.camera.InputVelocity.x = -speed
+        event.preventDefault()
         break
       case KEYS.KEY_E:
         this.camera.InputVelocity.y = speed
+        event.preventDefault()
         break
       case KEYS.KEY_Q:
         this.camera.InputVelocity.y = -speed
+        event.preventDefault()
         break
       case KEYS.KEY_CTRL:
         this.mouse.setCtrl(keyDown)
+        event.preventDefault()
         break
       case KEYS.KEY_SHIFT:
         if (this.shftDown !== keyDown) {
@@ -201,9 +214,8 @@ export class InputKeyboard {
             this.camera.InputVelocity.multiplyScalar(1.0 / this.ShiftMultiplier)
           }
         }
+        event.preventDefault()
         break
     }
-
-    event.preventDefault()
   }
 }
