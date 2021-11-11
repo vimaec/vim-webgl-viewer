@@ -2,6 +2,7 @@ import { defineConfig } from 'vite'
 
 export default defineConfig({
   build: {
+    sourcemap: true,
     lib: {
       formats: ['iife', 'es'],
       entry: './src/vim-webgl-viewer/viewer.ts',
