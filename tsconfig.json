@@ -1,6 +1,5 @@
 {
   "compilerOptions": {
-    "jsx": "react",
     "target": "esnext",
     "module": "esnext",
     "moduleResolution": "node",
