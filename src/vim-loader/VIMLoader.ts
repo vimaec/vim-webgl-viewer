@@ -315,7 +315,7 @@ export class VIMLoader {
     const mergedMesh = this.timeAction('Merging Unique Geometry', () =>
       this.mergeUniqueGeometry(vim.g3d, geometry, meshRefCounts)
     )
-    sceneGeometry.addMesh(mergedMesh)
+    if (mergedMesh) sceneGeometry.addMesh(mergedMesh)
 
     console.log('Loading Completed')
     return new VimScene(vim, sceneGeometry, geometryBuilder)
@@ -325,12 +325,13 @@ export class VIMLoader {
     g3d: VimG3d,
     geometry: THREE.BufferGeometry[],
     meshRefCounts: Int32Array
-  ) {
+  ): THREE.Mesh | null {
     const uniques = this.getTransformedUniqueGeometry(
       g3d,
       geometry,
       meshRefCounts
     )
+    if (uniques.length === 0) return null
 
     const result = this.createMergedMesh(uniques)
     uniques.forEach((u) => u.dispose())
