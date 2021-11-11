@@ -16,7 +16,7 @@ import { ViewerEnvironment } from './viewerEnvironment'
 import { ViewerRenderer } from './viewerRenderer'
 
 // loader
-import { VimScene } from '../vim-loader/vim'
+import { VimScene } from '../vim-loader/vimScene'
 import { BufferGeometryBuilder } from '../vim-loader/VIMLoader'
 
 export type ViewerState =

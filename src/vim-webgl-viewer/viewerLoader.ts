@@ -2,7 +2,7 @@ import * as THREE from 'three'
 
 // vim
 import { VIMLoader } from '../vim-loader/VIMLoader'
-import { VimScene } from '../vim-loader/vim'
+import { VimScene } from '../vim-loader/vimScene'
 
 // Other loaders
 import { TDSLoader } from 'three/examples/jsm/loaders/TDSLoader'

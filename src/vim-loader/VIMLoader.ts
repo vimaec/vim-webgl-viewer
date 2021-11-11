@@ -6,7 +6,9 @@ import * as THREE from 'three'
 import * as BufferGeometryUtils from 'three/examples/jsm/utils/BufferGeometryUtils'
 import { G3d, VimG3d, Attribute } from './g3d'
 import { BFast, BFastHeader } from './bfast'
-import { Vim, VimScene, VimSceneGeometry } from './vim'
+import { Vim } from './vim'
+import { VimSceneGeometry } from './vimSceneGeometry'
+import { VimScene } from './vimScene'
 import { createBufferGeometryFromArrays } from './threeHelpers'
 
 type Mesh = THREE.InstancedMesh<THREE.BufferGeometry, THREE.Material>
