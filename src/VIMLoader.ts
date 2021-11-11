@@ -364,8 +364,11 @@ export class VIMLoader {
 
   // TODO Use and support a simple THREE.Mesh
   createMergedMesh (bufferGeometry: BufferGeometry[]): THREE.InstancedMesh {
-    const mergedbufferGeometry: THREE.BufferGeometry =
-      BufferGeometryUtils.mergeBufferGeometries(bufferGeometry)
+    let mergedbufferGeometry = bufferGeometry[0]
+
+    if (bufferGeometry.length > 1) {
+      mergedbufferGeometry = BufferGeometryUtils.mergeBufferGeometries(bufferGeometry)
+    }
 
     const mergedMesh = new THREE.InstancedMesh(
       mergedbufferGeometry,
@@ -373,7 +376,7 @@ export class VIMLoader {
       1
     )
     mergedMesh.setMatrixAt(0, new THREE.Matrix4())
-    mergedbufferGeometry.computeBoundingSphere()
+    mergedbufferGeometry?.computeBoundingSphere()
     // Used by picking to distinguish merged meshes
     mergedMesh.userData.merged = true
     return mergedMesh
