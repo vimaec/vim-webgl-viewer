@@ -15,8 +15,7 @@ const viewer = new Viewer({
   },
   plane: {
     show: false
-  },
-  showStats: true
+  }
 })
 
 globalThis.viewer = viewer

@@ -10,14 +10,10 @@ export default defineConfig({
     // Minify set to true will break the IIFE output
     minify: false,
     rollupOptions: {
-      external: [
-        'three'
-        // 'dat.gui'
-      ],
+      external: ['three'],
       output: {
         globals: {
           three: 'THREE'
-          // 'dat.gui': 'dat'
         }
       }
     }

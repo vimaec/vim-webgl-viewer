@@ -4,8 +4,6 @@
 
 export const ViewerSettings = {
   default: {
-    showGui: true,
-    showStats: true,
     camera: {
       near: 0.1,
       far: 15000,
