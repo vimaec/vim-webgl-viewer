@@ -16,7 +16,7 @@ import { ViewerEnvironment } from './viewerEnvironment'
 import { ViewerRenderer } from './viewerRenderer'
 
 // loader
-import { VimScene } from '../vim-loader/vim'
+import { VimScene } from '../vim-loader/vimScene'
 import { BufferGeometryBuilder } from '../vim-loader/VIMLoader'
 
 export type ViewerState =
@@ -213,8 +213,8 @@ export class Viewer {
 
   selectByElementId (elementId: number) {
     if (!this.vimScene) return
-    const meshes = this.vimScene.getMeshesFromElement(elementId)
-    if (meshes) this.select(meshes[0][0], meshes[0][1])
+    const meshes = this.vimScene.getMeshesFromElementId(elementId)
+    if (meshes?.length) this.select(meshes[0][0], meshes[0][1])
     else console.log(`Could not find mesh for elemetId ${elementId}`)
   }
 
