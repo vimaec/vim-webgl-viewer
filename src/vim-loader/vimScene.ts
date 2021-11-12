@@ -42,17 +42,20 @@ export class VimScene {
 
   getNodeTable = (from: any = this.vim.bim) => from.get(Vim.tableNode)
 
-  getNodeIndicesFromElement (elementId: number): number[] | undefined {
+  getNodeIndicesFromElementId (elementId: number): number[] | undefined {
     return this.elementToNodes.get(elementId)
   }
 
-  getMeshesFromElement (elementId: number): [THREE.Mesh, number][] | undefined {
-    const nodeIndices = this.getNodeIndicesFromElement(elementId)
+  getMeshesFromElementId (
+    elementId: number
+  ): [THREE.Mesh, number][] | undefined {
+    const nodeIndices = this.getNodeIndicesFromElementId(elementId)
     if (!nodeIndices || !nodeIndices.length) return
 
     const result: [THREE.Mesh, number][] = []
     nodeIndices.forEach((i) => {
-      result.push(this.getMeshFromNodeIndex(i)!)
+      const mesh = this.getMeshFromNodeIndex(i)
+      if (mesh) result.push(mesh)
     })
     return result
   }
