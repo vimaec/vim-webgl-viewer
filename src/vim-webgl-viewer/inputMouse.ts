@@ -105,11 +105,16 @@ export class InputMouse {
       return
     }
     if (typeof result === 'number') {
-      this.viewer.selectByNodeIndex(result)
+      const element = this.viewer.getElementIndexFromNodeIndex(result)
+      this.viewer.selectByElementIndex(element)
       return
     }
 
-    this.viewer.selectByMeshInstance(result[0], result[1])
+    const element = this.viewer.getElementIndexFromMeshInstance(
+      result[0],
+      result[1]
+    )
+    this.viewer.selectByElementIndex(element)
   }
 
   mouseRaycast (position: THREE.Vector2) {

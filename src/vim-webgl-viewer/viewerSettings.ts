@@ -2,7 +2,10 @@
  @author VIM / https://vimaec.com
 */
 
-export const ViewerSettings = {
+import * as THREE from 'three'
+import deepmerge from 'deepmerge'
+
+export const defaultSettings = {
   default: {
     camera: {
       near: 0.1,
@@ -34,7 +37,7 @@ export const ViewerSettings = {
       }
     },
     skylight: {
-      skyColor: { h: 0.6, s: 1, l: 0.6 },
+      color: { h: 0.6, s: 1, l: 0.6 },
       groundColor: { h: 0.095, s: 1, l: 0.75 },
       intensity: 0.6
     },
@@ -57,4 +60,104 @@ export const ViewerSettings = {
       }
     }
   }
+}
+
+export class ViewerSettings {
+  raw: any
+
+  constructor (raw: any) {
+    this.raw = deepmerge(defaultSettings.default, raw, undefined)
+  }
+
+  getPlaneShow = () => this.raw.plane.show
+  getPlanePosition = () => this.raw.plane.position
+  getBackgroundColor = () => toRGBColor(this.raw.background.color)
+
+  getObjectMatrix = () =>
+    new THREE.Matrix4().compose(
+      this.getObjectPosition(),
+      this.getObjectRotation(),
+      this.getObjectScale()
+    )
+
+  getSkylightColor = () => toHSLColor(this.raw.skylight.color)
+  getSkylightGroundColor = () => toHSLColor(this.raw.skylight.groundColor)
+  getSkylightIntensity = () => this.raw.skylight.intensity
+
+  getSunlightColor = () => toHSLColor(this.raw.sunLight.color)
+  getSunlightPosition = () => toVec(this.raw.sunLight.position)
+  getSunlightIntensity = () => this.raw.sunLight.intensity
+
+  getObjectPosition = () => toVec(this.raw.object.position)
+  getObjectRotation = () => toQuaternion(this.raw.object.rotation)
+  getObjectScale = () => scalarToVec(this.raw.object.scale)
+
+  getColor = () => toRGBColor(this.raw.object.material.color)
+  getFlatShading = () => this.raw.object.material.flatShading
+  getEmissive = () => toRGBColor(this.raw.object.material.emissive)
+  getSpecular = () => toRGBColor(this.raw.object.material.specular)
+  getWireframe = () => this.raw.object.material.wireframe
+  getShininess = () => this.raw.object.material.shininess
+
+  updateMaterial (material: THREE.MeshPhongMaterial) {
+    material.color = this.getColor() ?? material.color
+    material.flatShading = this.getFlatShading() ?? material.flatShading
+
+    material.emissive = this.getEmissive() ?? material.emissive
+    material.specular = this.getSpecular() ?? material.specular
+
+    material.wireframe = this.getWireframe() ?? material.wireframe
+    material.shininess = this.getShininess() ?? material.shininess
+  }
+}
+
+function isRGBColor (obj: any): boolean {
+  return typeof obj === 'object' && 'r' in obj && 'g' in obj && 'b' in obj
+}
+
+function toRGBColor (c: any): THREE.Color {
+  if (!isRGBColor(c)) {
+    throw new Error('Not a RGB color')
+  }
+  return new THREE.Color(c.r / 255, c.g / 255, c.b / 255)
+}
+function isHSLColor (obj: any): boolean {
+  return typeof obj === 'object' && 'h' in obj && 's' in obj && 'l' in obj
+}
+
+function toHSLColor (obj: any): THREE.Color {
+  if (!isHSLColor(obj)) {
+    throw new Error('Not a HSL color')
+  }
+  const color = new THREE.Color()
+  color.setHSL(obj.h, obj.s, obj.l)
+  return color
+}
+
+function isVector (obj: any): boolean {
+  return typeof obj === 'object' && 'x' in obj && 'y' in obj && 'z' in obj
+}
+export function toVec (obj: any): THREE.Vector3 {
+  if (!isVector(obj)) {
+    throw new Error('Not a vector')
+  }
+  return new THREE.Vector3(obj.x, obj.y, obj.z)
+}
+
+function scalarToVec (x: number): THREE.Vector3 {
+  return new THREE.Vector3(x, x, x)
+}
+
+function toEuler (rot: THREE.Vector3): THREE.Euler {
+  return new THREE.Euler(
+    (rot.x * Math.PI) / 180,
+    (rot.y * Math.PI) / 180,
+    (rot.z * Math.PI) / 180
+  )
+}
+
+function toQuaternion (rot: THREE.Vector3): THREE.Quaternion {
+  const q = new THREE.Quaternion()
+  q.setFromEuler(toEuler(rot))
+  return q
 }

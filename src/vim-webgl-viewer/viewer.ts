@@ -4,7 +4,7 @@
 
 // external
 import * as THREE from 'three'
-import deepmerge from 'deepmerge'
+
 import * as BufferGeometryUtils from 'three/examples/jsm/utils/BufferGeometryUtils'
 
 // internal
@@ -27,7 +27,7 @@ export type ViewerState =
   | 'Processing'
 
 export class Viewer {
-  settings: any
+  settings: ViewerSettings
 
   environment: ViewerEnvironment
   render: ViewerRenderer
@@ -40,10 +40,9 @@ export class Viewer {
   static stateChangeEventName = 'viewerStateChangedEvent'
 
   constructor (options: Record<string, unknown>) {
-    this.settings = deepmerge(ViewerSettings.default, options, undefined)
-
+    this.settings = new ViewerSettings(options)
     let canvas = document.getElementById(
-      this.settings.canvasId
+      this.settings.raw.canvasId
     ) as HTMLCanvasElement
     if (!canvas) {
       canvas = document.createElement('canvas')
@@ -64,10 +63,9 @@ export class Viewer {
     this.controls.register()
     this.selection = new Selection(this)
 
-    // Add all of the appropriate mouse, touch-pad, and keyboard listeners
     // Load Vim
     loadAny(
-      this.settings.url,
+      this.settings.raw.url,
       (
         result:
           | VimScene
@@ -82,7 +80,7 @@ export class Viewer {
       (progress) => {
         this.setState(['Downloading', progress.loaded])
       },
-      this.settings.fileExtension
+      this.settings.raw.fileExtension
     )
 
     // Start Loop
@@ -90,7 +88,7 @@ export class Viewer {
     this.animate()
   }
 
-  setState = (state: ViewerState) => {
+  private setState = (state: ViewerState) => {
     this.state = state
     const event = new CustomEvent(Viewer.stateChangeEventName, {
       detail: this.state
@@ -98,7 +96,7 @@ export class Viewer {
     dispatchEvent(event)
   }
 
-  loadInScene = (
+  private loadInScene = (
     result:
       | VimScene
       | THREE.Scene
@@ -123,34 +121,16 @@ export class Viewer {
     }
 
     if (!this.render.boundingSphere) {
-      this.render.computeBoundingSphere(this.getViewMatrix())
+      this.render.computeBoundingSphere(this.settings.getObjectMatrix())
     }
 
-    this.focusModel()
+    this.lookAtModel()
     this.ApplySettings()
     this.setState('Default')
   }
 
-  onVimLoaded (vim: VimScene) {
-    this.vimScene = vim
-    console.log('Adding models to scene')
-    this.render.addToModel(vim.geometry.meshes)
-    console.log('Adding environement to scene')
-    this.render.addToScene(this.environment.getElements())
-
-    const sphere = vim.geometry.boundingSphere.clone()
-    sphere.applyMatrix4(this.getViewMatrix())
-    this.render.boundingSphere = sphere
-    this.render.updateModel(this.getViewMatrix())
-
-    console.log('Everything ready')
-    console.time('FirstRender')
-    this.render.render()
-    console.timeEnd('FirstRender')
-  }
-
   // Calls render, and asks the framework to prepare the next frame
-  animate () {
+  private animate () {
     requestAnimationFrame(() => this.animate())
 
     // Camera
@@ -158,21 +138,137 @@ export class Viewer {
     this.cameraController.frameUpdate(timeDelta)
 
     // Model
-    if (this.settings.autoResize) this.render.fitToCanvas()
+    if (this.settings.raw.autoResize) this.render.fitToCanvas()
 
     this.render.render()
   }
 
-  // TODO Not create this everytime, Not apply this every time either.
-  getViewMatrix () {
-    const pos = this.settings.object.position
-    const rot = toQuaternion(this.settings.object.rotation)
-    const scl = scalarToVec(0.1)
-    const matrix = new THREE.Matrix4().compose(pos, rot, scl)
-    return matrix
+  private onVimLoaded (vim: VimScene) {
+    this.vimScene = vim
+    console.log('Adding models to scene')
+    this.render.addToModel(vim.geometry.meshes)
+    console.log('Adding environement to scene')
+    this.render.addToScene(this.environment.getElements())
+
+    const sphere = vim.geometry.boundingSphere.clone()
+    sphere.applyMatrix4(this.settings.getObjectMatrix())
+    this.render.boundingSphere = sphere
+    this.render.updateModel(this.settings.getObjectMatrix())
+
+    console.log('Everything ready')
+    console.time('FirstRender')
+    this.render.render()
+    console.timeEnd('FirstRender')
   }
 
-  highlight (geometry: THREE.BufferGeometry): Function {
+  /**
+   * Get the element index from the element Id
+   * @param elementId id of element
+   * @returns index of element
+   */
+  getElementIndexFromId = (elementId: number) =>
+    this.vimScene.getElementIndexFromId(elementId)
+
+  /**
+   * Get the parent element index from a node index
+   * @param nodeIndex index of node
+   * @returns index of element
+   */
+  getElementIndexFromNodeIndex = (nodeIndex: number) =>
+    this.vimScene.getElementIndexFromNodeIndex(nodeIndex)
+
+  /**
+   * Get the element index related to given mesh
+   * @param mesh instanced mesh
+   * @param index index into the instanced mesh
+   * @returns index of element
+   */
+  getElementIndexFromMeshInstance = (mesh: THREE.Mesh, index: number) =>
+    this.vimScene.getNodeIndexFromMesh(mesh, index)
+
+  /**
+   * highlight all geometry related to and element
+   * @param elementIndex index of element
+   * @returns a disposer function for the created geometry
+   */
+  highlightElementByIndex (elementIndex: number): Function {
+    const nodes = this.vimScene.getNodeIndicesFromElementIndex(elementIndex)
+    const geometry = this.createBufferGeometryFromNodeIndices(nodes)
+    const disposer = this.highlight(geometry)
+
+    return () => {
+      disposer()
+      geometry.dispose()
+    }
+  }
+
+  /**
+   * Compute total bounding box of all geometries related to an element
+   * @param elementIndex index of element
+   * @returns THREE bounding
+   */
+  getBoudingBoxForElementIndex (elementIndex: number): THREE.Box3 {
+    const nodes = this.vimScene.getNodeIndicesFromElementIndex(elementIndex)
+    const geometry = this.createBufferGeometryFromNodeIndices(nodes)
+    geometry.computeBoundingBox()
+    const result = geometry.boundingBox
+    geometry.dispose()
+    return result
+  }
+
+  /**
+   * Select all geometry related to a given element
+   * @param elementIndex index of element
+   */
+  selectByElementIndex (elementIndex: number) {
+    this.selection.select(elementIndex)
+  }
+
+  /**
+   * Clear current selection
+   */
+  clearSelection () {
+    this.selection.reset()
+    console.log('Cleared Selection')
+  }
+
+  /**
+   * Move the camera to frame all geometry related to an element
+   * @param elementIndex index of element
+   */
+  lookAtElementIndex (elementIndex: number) {
+    const box = this.getBoudingBoxForElementIndex(elementIndex)
+    const sphere = box.getBoundingSphere(new THREE.Sphere())
+    this.cameraController.lookAtSphere(sphere, true)
+  }
+
+  /**
+   * Move the camera to frame current selection
+   */
+  lookAtSelection () {
+    if (this.selection.hasSelection()) {
+      this.cameraController.lookAtSphere(this.selection.boundingSphere!)
+    } else {
+      this.cameraController.frameScene(this.render.boundingSphere)
+    }
+  }
+
+  /**
+   * Move the camera to frame the whole model
+   */
+  lookAtModel () {
+    this.cameraController.frameScene(this.render.boundingSphere)
+  }
+
+  // Called every frame in case settings are updated
+  private ApplySettings () {
+    this.render.scene.background = this.settings.getBackgroundColor()
+    this.environment.applySettings(this.settings)
+    this.cameraController.applySettings(this.settings)
+  }
+
+  // TODO: Move to geometry layer
+  private highlight (geometry: THREE.BufferGeometry): Function {
     const wireframe = new THREE.WireframeGeometry(geometry)
     const material = new THREE.LineBasicMaterial({
       depthTest: false,
@@ -192,56 +288,8 @@ export class Viewer {
     }
   }
 
-  createWorldGeometry (mesh: THREE.Mesh, index: number): THREE.BufferGeometry {
-    const geometry = mesh.geometry.clone()
-
-    let matrix = new THREE.Matrix4()
-    if (mesh instanceof THREE.InstancedMesh) mesh.getMatrixAt(index, matrix)
-    else matrix.copy(mesh.matrix)
-    matrix = this.getViewMatrix().multiply(matrix)
-    geometry.applyMatrix4(matrix)
-
-    return geometry
-  }
-
-  createBufferGeometryFromNodeId (
-    nodeIndex: number | number[]
-  ): THREE.BufferGeometry | null {
-    // TODO not create a full GeometryBuilder
-
-    let geometry: THREE.BufferGeometry
-    if (typeof nodeIndex === 'number') {
-      const builder = new BufferGeometryBuilder(this.vimScene.vim.g3d)
-      geometry = builder.createBufferGeometryFromInstanceIndex(nodeIndex)
-    } else {
-      geometry = this.createBufferGeometryFromNodeIndices(nodeIndex)
-    }
-    if (!geometry) return null
-
-    const matrix = this.getViewMatrix()
-    geometry.applyMatrix4(matrix)
-    return geometry
-  }
-
-  getElementIndex = (elementId: number) =>
-    this.vimScene.getElementIndexFromId(elementId)
-
-  getBoudingBoxForElement (elementIndex: number) {
-    const nodes = this.vimScene.getNodeIndicesFromElementIndex(elementIndex)
-    const geometry = this.createBufferGeometryFromNodeId(nodes)
-    geometry.computeBoundingBox()
-    const result = geometry.boundingBox
-    geometry.dispose()
-    return result
-  }
-
-  lookAtElement (elementIndex: number) {
-    const box = this.getBoudingBoxForElement(elementIndex)
-    const sphere = box.getBoundingSphere(new THREE.Sphere())
-    this.cameraController.lookAtSphere(sphere, true)
-  }
-
-  createBufferGeometryFromNodeIndices (
+  // TODO: Move Somewhere
+  private createBufferGeometryFromNodeIndices (
     nodeIndices: number[]
   ): THREE.BufferGeometry | null {
     let geometries = nodeIndices.map((nodeIndex) => {
@@ -251,122 +299,10 @@ export class Viewer {
     })
     geometries = geometries.filter((b) => b !== null)
     if (geometries.length === 0) return null
-    const result = BufferGeometryUtils.mergeBufferGeometries(geometries)
+    const geometry = BufferGeometryUtils.mergeBufferGeometries(geometries)
     geometries.forEach((b) => b.dispose)
-    return result
+
+    geometry.applyMatrix4(this.settings.getObjectMatrix())
+    return geometry
   }
-
-  selectByElementId (elementId: number) {
-    const elementIndex = this.vimScene.getElementIndexFromId(elementId)
-    if (elementIndex === undefined) {
-      console.log(`Could not find mesh for elemetId ${elementId}`)
-      return
-    }
-    this.selection.select(elementIndex)
-  }
-
-  selectByNodeIndex (nodeIndex: number) {
-    if (nodeIndex < 0) throw new Error('invalid negative index')
-    const elementIndex = this.vimScene.getElementIndexFromNodeIndex(nodeIndex)
-    this.selection.select(elementIndex)
-
-    const id = this.vimScene.getElementIdFromNodeIndex(nodeIndex)
-    const name = this.vimScene.getElementNameFromNodeIndex(nodeIndex)
-    console.log(`Selected Element: ${id} - ${name}`)
-  }
-
-  selectByMeshInstance (mesh: THREE.Mesh, index: number) {
-    if (!mesh) throw new Error('Invalid null mesh')
-    if (index < 0) throw new Error('invalid negative index')
-
-    const nodeIndex = this.vimScene.getNodeIndexFromMesh(mesh, index)
-    this.selectByNodeIndex(nodeIndex)
-  }
-
-  selectByElementIndex (elementIndex: number) {
-    if (elementIndex < 0) throw new Error('invalid negative index')
-  }
-
-  clearSelection () {
-    this.selection.reset()
-    console.log('Cleared Selection')
-  }
-
-  focusSelection () {
-    if (this.selection.hasSelection()) {
-      this.cameraController.lookAtSphere(this.selection.boundingSphere!)
-    } else {
-      this.cameraController.frameScene(this.render.boundingSphere)
-    }
-  }
-
-  focusModel () {
-    this.cameraController.frameScene(this.render.boundingSphere)
-  }
-
-  // Called every frame in case settings are updated
-  ApplySettings () {
-    this.render.scene.background = toColor(this.settings.background.color)
-    this.environment.applySettings(this.settings)
-    this.cameraController.applySettings(this.settings)
-  }
-}
-
-// Helpers
-
-export function updateMaterial (
-  targetMaterial: THREE.MeshPhongMaterial,
-  settings: any
-) {
-  if ('color' in settings) targetMaterial.color = toColor(settings.color)
-  if ('flatShading' in settings) {
-    targetMaterial.flatShading = settings.flatShading
-  }
-  if ('emissive' in settings) {
-    targetMaterial.emissive = toColor(settings.emissive)
-  }
-  if ('specular' in settings) {
-    targetMaterial.specular = toColor(settings.specular)
-  }
-  if ('wireframe' in settings) targetMaterial.wireframe = settings.wireframe
-  if ('shininess' in settings) targetMaterial.shininess = settings.shininess
-}
-
-function isColor (obj: any): boolean {
-  return typeof obj === 'object' && 'r' in obj && 'g' in obj && 'b' in obj
-}
-
-function toColor (c: any): THREE.Color {
-  if (!isColor(c)) {
-    throw new Error('Not a color')
-  }
-  return new THREE.Color(c.r / 255, c.g / 255, c.b / 255)
-}
-
-function isVector (obj: any): boolean {
-  return typeof obj === 'object' && 'x' in obj && 'y' in obj && 'z' in obj
-}
-export function toVec (obj: any): THREE.Vector3 {
-  if (!isVector(obj)) {
-    throw new Error('Not a vector')
-  }
-  return new THREE.Vector3(obj.x, obj.y, obj.z)
-}
-
-function scalarToVec (x: number): THREE.Vector3 {
-  return new THREE.Vector3(x, x, x)
-}
-
-function toEuler (rot: THREE.Vector3): THREE.Euler {
-  return new THREE.Euler(
-    (rot.x * Math.PI) / 180,
-    (rot.y * Math.PI) / 180,
-    (rot.z * Math.PI) / 180
-  )
-}
-
-function toQuaternion (rot: THREE.Vector3): THREE.Quaternion {
-  const q = new THREE.Quaternion()
-  q.setFromEuler(toEuler(rot))
-  return q
 }

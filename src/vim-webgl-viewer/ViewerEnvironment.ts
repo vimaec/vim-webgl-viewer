@@ -1,5 +1,5 @@
 import * as THREE from 'three'
-import { updateMaterial, toVec } from './viewer'
+import { ViewerSettings } from './viewerSettings'
 
 /*
 Vim Viewer
@@ -22,6 +22,7 @@ export class ViewerEnvironment {
   }
 
   static createDefault (): ViewerEnvironment {
+    // TODO Remove values
     // Ground
     const plane = new THREE.Mesh(
       new THREE.PlaneBufferGeometry(1000, 1000),
@@ -47,35 +48,22 @@ export class ViewerEnvironment {
     return [this.plane, this.skyLight, this.sunLight]
   }
 
-  applySettings (settings: any) {
-    this.plane.visible = settings.plane.show
+  applySettings (settings: ViewerSettings) {
+    // Plane
+    this.plane.visible = settings.getPlaneShow()
+    this.plane.position.copy(settings.getPlanePosition())
     if (this.plane.material instanceof THREE.MeshPhongMaterial) {
-      updateMaterial(this.plane.material, settings.plane.material)
+      settings.updateMaterial(this.plane.material)
     }
-    this.plane.position.copy(toVec(settings.plane.position))
 
-    this.skyLight.color.setHSL(
-      settings.skylight.skyColor.h,
-      settings.skylight.skyColor.s,
-      settings.skylight.skyColor.l
-    )
-    this.skyLight.groundColor.setHSL(
-      settings.skylight.groundColor.h,
-      settings.skylight.groundColor.s,
-      settings.skylight.groundColor.l
-    )
-    this.skyLight.intensity = settings.skylight.intensity
-    this.sunLight.color.setHSL(
-      settings.sunLight.color.h,
-      settings.sunLight.color.s,
-      settings.sunLight.color.l
-    )
+    // Skylight
+    this.skyLight.color.copy(settings.getSkylightColor())
+    this.skyLight.groundColor.copy(settings.getSkylightGroundColor())
+    this.skyLight.intensity = settings.getSkylightIntensity()
 
-    this.sunLight.position.set(
-      settings.sunLight.position.x,
-      settings.sunLight.position.y,
-      settings.sunLight.position.z
-    )
-    this.sunLight.intensity = settings.sunLight.intensity
+    // Sunlight
+    this.sunLight.color.copy(settings.getSunlightColor())
+    this.sunLight.position.copy(settings.getSunlightPosition())
+    this.sunLight.intensity = settings.getSunlightIntensity()
   }
 }
