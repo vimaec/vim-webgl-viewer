@@ -130,7 +130,7 @@ the 5 nodes are rendered using 2 meshes, one for the table top, one for all 4 le
 ## How To
 
 **Frame the camera on an element**
-`
+```
 // if you already have element index from the vim you can skip this line
 const elementIndex = viewer.getElementIndexFromId(MY_ELEMENT_ID)
 
@@ -139,4 +139,4 @@ viewer.lookAtElementIndex(elementIndex)
 // Optional highlight for your element
 // call disposer() to remove highligh
 const disposer = viewer.highlightElementByIndex(755)
-` 
+```
