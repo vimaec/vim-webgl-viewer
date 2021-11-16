@@ -162,7 +162,7 @@ export class InputKeyboard {
           event.preventDefault()
           break
         case KEYS.KEY_Z:
-          this.viewer.focusSelection()
+          this.viewer.lookAtSelection()
           event.preventDefault()
           break
       }
