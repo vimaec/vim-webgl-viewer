@@ -161,6 +161,7 @@ export class Viewer {
     console.timeEnd('FirstRender')
   }
 
+  // TODO: Handle case where an element Id is not unique
   /**
    * Get the element index from the element Id
    * @param elementId id of element

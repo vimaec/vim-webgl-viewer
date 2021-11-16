@@ -62,7 +62,7 @@ export class VimScene {
     return map
   }
 
-  public getElementIndexFromId = (elementId: number) =>
+  getElementIndexFromElementId = (elementId: number) =>
     this.elementIdToIndex.get(elementId)
 
   getElementTable = (from: any = this.vim.bim) =>
