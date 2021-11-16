@@ -138,5 +138,5 @@ viewer.lookAtElementIndex(elementIndex)
 
 // Optional highlight for your element
 // call disposer() to remove highligh
-const disposer = viewer.highlightElementByIndex(755)
+const disposer = viewer.highlightElementByIndex(elementIndex)
 ```
