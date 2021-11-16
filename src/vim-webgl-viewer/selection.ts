@@ -7,7 +7,7 @@ export class Selection {
   viewer: Viewer
 
   // State
-  nodeIndex: number | null = null
+  elementIndex: number | null = null
   boundingSphere: THREE.Sphere | null = null
 
   // Disposable State
@@ -19,11 +19,11 @@ export class Selection {
   }
 
   hasSelection () {
-    return this.nodeIndex !== null
+    return this.elementIndex !== null
   }
 
   reset () {
-    this.nodeIndex = null
+    this.elementIndex = null
     this.boundingSphere = null
     this.disposeResources()
   }
@@ -36,10 +36,21 @@ export class Selection {
     this.highlightDisposer = null
   }
 
-  select (nodeIndex: number) {
+  select (elementIndex: number) {
     this.disposeResources()
-    this.nodeIndex = nodeIndex
-    this.geometry = this.viewer.createBufferGeometryFromNodeId(nodeIndex)
+    this.elementIndex = elementIndex
+    // TODO Support multi node per Element selection
+    const nodes =
+      this.viewer.vimScene.getNodeIndicesFromElementIndex(elementIndex)
+
+    this.geometry = this.viewer.createBufferGeometryFromNodeId(nodes)
+    if (!this.geometry) {
+      console.log(
+        'Selection Failed. Could not find elementIndex: ' + elementIndex
+      )
+      return
+    }
+
     this.geometry.computeBoundingSphere()
     this.boundingSphere = this.geometry.boundingSphere
     this.highlightDisposer = this.viewer.highlight(this.geometry)

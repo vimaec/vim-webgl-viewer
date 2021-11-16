@@ -97,15 +97,19 @@ export class InputMouse {
   onMouseClick = (position: Vector2) => {
     console.time('raycast')
     const hits = this.mouseRaycast(position)
-    const [mesh, index] = this.findHitMeshIndex(hits) ?? [null, null]
     console.timeEnd('raycast')
+    const result = this.findHitMeshIndex(hits)
 
-    // 0 is a valid value
-    if (index != null) {
-      this.viewer.select(mesh, index)
-    } else {
+    if (result === null) {
       this.viewer.clearSelection()
+      return
     }
+    if (typeof result === 'number') {
+      this.viewer.selectByNodeIndex(result)
+      return
+    }
+
+    this.viewer.selectByMeshInstance(result[0], result[1])
   }
 
   mouseRaycast (position: THREE.Vector2) {
@@ -119,30 +123,35 @@ export class InputMouse {
 
   findHitMeshIndex (
     hits: THREE.Intersection<THREE.Object3D<THREE.Event>>[]
-  ): [Mesh, number] {
+  ): [mesh: Mesh, index: number] | number | null {
     if (!hits?.length) {
       console.log('Raycast: No hit.')
-      return
+      return null
     }
 
     const mesh = hits[0].object
     if (!(mesh instanceof THREE.Mesh)) {
       console.log(`Raycast hit object: ${mesh} of unsupported type. Ignoring.`)
-      return
+      return null
     }
-
-    const [index, meshType]: [number, string] = mesh.userData.merged
-      ? [Math.round(hits[0].uv.x), 'Merged']
-      : [hits[0].instanceId, 'Instanced']
-
-    console.log(
-      `Raycast: Hit ${meshType} Mesh with MeshId:${mesh.id} and NodeIndex: ${index}`
-    )
 
     console.log(
       `Raycast hit. Position (${hits[0].point.x}, ${hits[0].point.y}, ${hits[0].point.z})`
     )
+    console.log(`Raycast: Hit Mesh with MeshId:${mesh.id}`)
 
-    return [mesh, index]
+    // Merged mesh have node origin of each face encoded in uvs
+    if (mesh.userData.merged) {
+      const node = Math.round(hits[0].uv.x)
+      console.log(
+        `Mesh is merged mesh. Hit face ${hits[0].faceIndex} coming from Node: ${node}`
+      )
+      return node
+    }
+
+    const instanceId = hits[0].instanceId
+    console.log(`Mesh is Instanced. Instance Index: ${instanceId}`)
+
+    return [mesh, instanceId]
   }
 }

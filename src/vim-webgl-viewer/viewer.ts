@@ -5,12 +5,14 @@
 // external
 import * as THREE from 'three'
 import deepmerge from 'deepmerge'
+import * as BufferGeometryUtils from 'three/examples/jsm/utils/BufferGeometryUtils'
 
 // internal
 import { ViewerSettings } from './viewerSettings'
 import { ViewerCamera } from './viewerCamera'
 import { ViewerInput } from './viewerInput'
 import { loadAny } from './viewerLoader'
+
 import { Selection } from './selection'
 import { ViewerEnvironment } from './viewerEnvironment'
 import { ViewerRenderer } from './viewerRenderer'
@@ -202,44 +204,87 @@ export class Viewer {
     return geometry
   }
 
-  createBufferGeometryFromNodeId (nodeIndex: number): THREE.BufferGeometry {
+  createBufferGeometryFromNodeId (
+    nodeIndex: number | number[]
+  ): THREE.BufferGeometry | null {
     // TODO not create a full GeometryBuilder
-    const builder = new BufferGeometryBuilder(this.vimScene.vim.g3d)
-    const geometry = builder.createBufferGeometryFromInstanceIndex(nodeIndex)
+
+    let geometry: THREE.BufferGeometry
+    if (typeof nodeIndex === 'number') {
+      const builder = new BufferGeometryBuilder(this.vimScene.vim.g3d)
+      geometry = builder.createBufferGeometryFromInstanceIndex(nodeIndex)
+    } else {
+      geometry = this.createBufferGeometryFromNodeIndices(nodeIndex)
+    }
+    if (!geometry) return null
+
     const matrix = this.getViewMatrix()
     geometry.applyMatrix4(matrix)
     return geometry
   }
 
-  selectByElementId (elementId: number) {
-    if (!this.vimScene) return
-    const meshes = this.vimScene.getMeshesFromElementId(elementId)
-    if (meshes?.length) this.select(meshes[0][0], meshes[0][1])
-    else console.log(`Could not find mesh for elemetId ${elementId}`)
+  getElementIndex = (elementId: number) =>
+    this.vimScene.getElementIndexFromId(elementId)
+
+  getBoudingBoxForElement (elementIndex: number) {
+    const nodes = this.vimScene.getNodeIndicesFromElementIndex(elementIndex)
+    const geometry = this.createBufferGeometryFromNodeId(nodes)
+    geometry.computeBoundingBox()
+    const result = geometry.boundingBox
+    geometry.dispose()
+    return result
   }
 
-  select (mesh: THREE.Mesh, index: number) {
-    if (!this.vimScene) return
-    if (!mesh) throw new Error('Invalid null mesh')
-    if (index < 0) throw new Error('invalid negative index')
+  lookAtElement (elementIndex: number) {
+    const box = this.getBoudingBoxForElement(elementIndex)
+    const sphere = box.getBoundingSphere(new THREE.Sphere())
+    this.cameraController.lookAtSphere(sphere, true)
+  }
 
-    let nodeIndex: number
-    if (mesh.userData.merged) {
-      nodeIndex = index
-    } else {
-      nodeIndex = this.vimScene.getNodeIndexFromMesh(mesh, index)
-    }
+  createBufferGeometryFromNodeIndices (
+    nodeIndices: number[]
+  ): THREE.BufferGeometry | null {
+    let geometries = nodeIndices.map((nodeIndex) => {
+      // this is awful to create builder everytime
+      const builder = new BufferGeometryBuilder(this.vimScene.vim.g3d)
+      return builder.createBufferGeometryFromInstanceIndex(nodeIndex)
+    })
+    geometries = geometries.filter((b) => b !== null)
+    if (geometries.length === 0) return null
+    const result = BufferGeometryUtils.mergeBufferGeometries(geometries)
+    geometries.forEach((b) => b.dispose)
+    return result
+  }
 
-    if (nodeIndex === undefined) {
-      console.log('Could not find node for given mesh')
+  selectByElementId (elementId: number) {
+    const elementIndex = this.vimScene.getElementIndexFromId(elementId)
+    if (elementIndex === undefined) {
+      console.log(`Could not find mesh for elemetId ${elementId}`)
       return
     }
+    this.selection.select(elementIndex)
+  }
 
-    this.selection.select(nodeIndex)
+  selectByNodeIndex (nodeIndex: number) {
+    if (nodeIndex < 0) throw new Error('invalid negative index')
+    const elementIndex = this.vimScene.getElementIndexFromNodeIndex(nodeIndex)
+    this.selection.select(elementIndex)
 
     const id = this.vimScene.getElementIdFromNodeIndex(nodeIndex)
     const name = this.vimScene.getElementNameFromNodeIndex(nodeIndex)
     console.log(`Selected Element: ${id} - ${name}`)
+  }
+
+  selectByMeshInstance (mesh: THREE.Mesh, index: number) {
+    if (!mesh) throw new Error('Invalid null mesh')
+    if (index < 0) throw new Error('invalid negative index')
+
+    const nodeIndex = this.vimScene.getNodeIndexFromMesh(mesh, index)
+    this.selectByNodeIndex(nodeIndex)
+  }
+
+  selectByElementIndex (elementIndex: number) {
+    if (elementIndex < 0) throw new Error('invalid negative index')
   }
 
   clearSelection () {

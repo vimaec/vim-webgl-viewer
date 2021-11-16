@@ -300,22 +300,25 @@ export class VIMLoader {
     )
     console.log('Found # meshes ' + geometry.length)
 
-    const meshRefCounts = this.timeAction('Counting references', () =>
-      vim.g3d.getMeshReferenceCounts()
+    const nodesByMeshes = this.timeAction('Counting references', () =>
+      vim.g3d.getNodesByMeshes()
     )
 
     const rawMeshes = this.timeAction('Allocating Meshes', () =>
-      this.allocateMeshes(geometry, meshRefCounts)
+      this.allocateMeshes(geometry, nodesByMeshes)
     )
 
     const sceneGeometry = this.timeAction('Instantiating Shared Geometry', () =>
       this.instantiateSharedGeometry(rawMeshes, vim.g3d)
     )
 
-    const mergedMesh = this.timeAction('Merging Unique Geometry', () =>
-      this.mergeUniqueGeometry(vim.g3d, geometry, meshRefCounts)
+    const merge = this.timeAction('Merging Unique Geometry', () =>
+      this.mergeUniqueGeometry(vim.g3d, geometry, nodesByMeshes)
     )
-    if (mergedMesh) sceneGeometry.addMesh(mergedMesh)
+    if (merge !== null) {
+      const [mesh, nodes] = merge
+      sceneGeometry.addMesh(mesh, nodes)
+    }
 
     console.log('Loading Completed')
     return new VimScene(vim, sceneGeometry, geometryBuilder)
@@ -323,27 +326,28 @@ export class VIMLoader {
 
   mergeUniqueGeometry (
     g3d: VimG3d,
-    geometry: THREE.BufferGeometry[],
-    meshRefCounts: Int32Array
-  ): THREE.Mesh | null {
-    const uniques = this.getTransformedUniqueGeometry(
+    geometry: (THREE.BufferGeometry | null)[],
+    nodesByMesh: number[][]
+  ): [THREE.Mesh, number[]] | null {
+    const [uniques, nodes] = this.getTransformedUniqueGeometry(
       g3d,
       geometry,
-      meshRefCounts
+      nodesByMesh
     )
     if (uniques.length === 0) return null
 
     const result = this.createMergedMesh(uniques)
     uniques.forEach((u) => u.dispose())
-    return result
+    return [result, nodes]
   }
 
   getTransformedUniqueGeometry (
     g3d: VimG3d,
-    geometry: THREE.BufferGeometry[],
-    meshRefCounts: Int32Array
-  ): THREE.BufferGeometry[] {
+    geometry: (THREE.BufferGeometry | null)[],
+    nodesByMesh: number[][]
+  ): [THREE.BufferGeometry[], number[]] {
     const result: THREE.BufferGeometry[] = []
+    const nodes: number[] = []
 
     for (let i = 0; i < g3d.instanceMeshes.length; i++) {
       const meshIndex = g3d.instanceMeshes[i]
@@ -353,15 +357,17 @@ export class VIMLoader {
       if (!bufferGeometry) continue
 
       // only merge unique objects
-      if (meshRefCounts[meshIndex] === 1) {
+      const meshNodes = nodesByMesh[meshIndex]
+      if (meshNodes.length === 1) {
         // adding uvs for picking
         this.addUVs(bufferGeometry, i)
         const matrix = getMatrixFromNodeIndex(g3d, i)
         bufferGeometry.applyMatrix4(matrix)
         result.push(bufferGeometry)
+        nodes.push(meshNodes[0])
       }
     }
-    return result
+    return [result, nodes]
   }
 
   // TODO Use and support a simple THREE.Mesh
@@ -392,14 +398,14 @@ export class VIMLoader {
   }
 
   allocateMeshes (
-    geometries: THREE.BufferGeometry[],
-    meshRefCounts: Int32Array
+    geometries: (THREE.BufferGeometry | null)[],
+    nodesByMesh: number[][]
   ): (Mesh | null)[] {
     const meshCount = geometries.length
     const meshes: (Mesh | null)[] = new Array(meshCount)
 
     for (let i = 0; i < meshCount; ++i) {
-      const count = meshRefCounts[i]
+      const count = nodesByMesh[i]?.length ?? 0
       if (count <= 1) {
         continue
       }
@@ -422,7 +428,7 @@ export class VIMLoader {
     const instanceCounters = new Int32Array(meshes.length)
     let boundingSphere: THREE.Sphere | null = null
     const nodeIndexToMeshInstance = new Map<number, [Mesh, number]>()
-    const meshIdToNodeIndex = new Map<number, [number]>()
+    const meshIdToNodeIndex = new Map<number, number[]>()
     const resultMeshes: Mesh[] = []
 
     for (let i = 0; i < g3d.getInstanceCount(); ++i) {
@@ -479,9 +485,9 @@ export class BufferGeometryBuilder {
     this.g3d = g3d
   }
 
-  createAllGeometry = (): THREE.BufferGeometry[] => {
+  createAllGeometry = (): (THREE.BufferGeometry | null)[] => {
     const meshCount = this.g3d.meshSubmeshes.length
-    const resultMeshes: THREE.BufferGeometry[] = []
+    const resultMeshes: (THREE.BufferGeometry | null)[] = []
 
     for (let mesh = 0; mesh < meshCount; mesh++) {
       const result = this.createBufferGeometryFromMeshIndex(mesh)
@@ -538,9 +544,13 @@ export class BufferGeometryBuilder {
 
   createBufferGeometryFromInstanceIndex (
     instanceIndex: number
-  ): THREE.BufferGeometry {
+  ): THREE.BufferGeometry | null {
+    if (instanceIndex < 0) throw new Error('Invalid negative index.')
+
     const meshIndex = this.g3d.instanceMeshes[instanceIndex]
+    if (meshIndex < 0) return null
     const geometry = this.createBufferGeometryFromMeshIndex(meshIndex)
+    if (!geometry) return null
     const matrix = getMatrixFromNodeIndex(this.g3d, instanceIndex)
     geometry.applyMatrix4(matrix)
     return geometry
