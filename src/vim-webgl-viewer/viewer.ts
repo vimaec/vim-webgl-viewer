@@ -168,7 +168,7 @@ export class Viewer {
    * @returns index of element
    */
   getElementIndexFromId = (elementId: number) =>
-    this.vimScene.getElementIndexFromId(elementId)
+    this.vimScene.getElementIndexFromElementId(elementId)
 
   /**
    * Get the parent element index from a node index
