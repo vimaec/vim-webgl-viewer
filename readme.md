@@ -129,9 +129,9 @@ the 5 nodes are rendered using 2 meshes, one for the table top, one for all 4 le
 
 ## How To
 
-**Frame the camera on an element**
-```
-// if you already have element index from the vim you can skip this line
+**Frame camera on an element**
+```javascript
+// If you already have element index from the vim you can skip this line
 const elementIndex = viewer.getElementIndexFromId(MY_ELEMENT_ID)
 
 viewer.lookAtElementIndex(elementIndex)
