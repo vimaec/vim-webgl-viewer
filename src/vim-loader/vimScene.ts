@@ -76,9 +76,9 @@ export class VimScene {
 
   getMeshesFromElementIndex (
     elementIndex: number
-  ): [THREE.Mesh, number][] | undefined {
+  ): [THREE.Mesh, number][] | null {
     const nodeIndices = this.getNodeIndicesFromElementIndex(elementIndex)
-    if (!nodeIndices || !nodeIndices.length) return
+    if (!nodeIndices || !nodeIndices.length) return null
 
     const result: [THREE.Mesh, number][] = []
     nodeIndices.forEach((i) => {
@@ -139,11 +139,8 @@ export class VimScene {
   }
 
   // TODO add better ways to access bim
-  getElementNameFromNodeIndex (nodeIndex: number): string | undefined {
-    if (nodeIndex < 0) throw new Error('Invalid negative node index')
-
-    const elementIndex = this.getElementIndexFromNodeIndex(nodeIndex)
-    if (elementIndex === undefined) return
+  getElementName (elementIndex: number): string | undefined {
+    if (elementIndex < 0) throw new Error('Invalid negative index.')
 
     const names = this.getElementTable().get('Name')
     if (!names) return

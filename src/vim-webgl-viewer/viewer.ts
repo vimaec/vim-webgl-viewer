@@ -183,8 +183,10 @@ export class Viewer {
    * @param index index into the instanced mesh
    * @returns index of element
    */
-  getElementIndexFromMeshInstance = (mesh: THREE.Mesh, index: number) =>
-    this.vimScene.getNodeIndexFromMesh(mesh, index)
+  getElementIndexFromMeshInstance = (mesh: THREE.Mesh, index: number) => {
+    const nodeIndex = this.vimScene.getNodeIndexFromMesh(mesh, index)
+    return this.vimScene.getElementIndexFromNodeIndex(nodeIndex)
+  }
 
   /**
    * highlight all geometry related to and element
@@ -193,6 +195,13 @@ export class Viewer {
    */
   highlightElementByIndex (elementIndex: number): Function {
     const nodes = this.vimScene.getNodeIndicesFromElementIndex(elementIndex)
+    if (!nodes) {
+      console.error(
+        'Could not find nodes geometry for element index: ' + elementIndex
+      )
+      return () => {}
+    }
+
     const geometry = this.createBufferGeometryFromNodeIndices(nodes)
     if (!geometry) {
       console.error(
@@ -200,6 +209,7 @@ export class Viewer {
       )
       return () => {}
     }
+
     const disposer = this.highlight(geometry)
 
     return () => {
@@ -233,6 +243,10 @@ export class Viewer {
    * @param elementIndex index of element
    */
   selectByElementIndex (elementIndex: number) {
+    console.log('Selecting element with index: ' + elementIndex)
+    console.log(
+      'Bim Element Name: ' + this.vimScene.getElementName(elementIndex)
+    )
     this.selection.select(elementIndex)
   }
 
