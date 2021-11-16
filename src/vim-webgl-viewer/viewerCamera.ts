@@ -3,6 +3,7 @@
 */
 
 import * as THREE from 'three'
+import { ViewerSettings } from './viewerSettings'
 
 const direction = {
   forward: new THREE.Vector3(0, 0, -1),
@@ -17,7 +18,7 @@ class ViewerCamera {
   MinOrbitalDistance: number = 1.0
 
   camera: THREE.PerspectiveCamera
-  settings: any
+  settings: ViewerSettings
 
   Rotation: THREE.Vector2
   InputVelocity: THREE.Vector3
@@ -38,8 +39,9 @@ class ViewerCamera {
 
   VelocityBlendFactor: number = 0.0001
 
-  constructor (camera: THREE.PerspectiveCamera, settings: any) {
+  constructor (camera: THREE.PerspectiveCamera, settings: ViewerSettings) {
     this.camera = camera
+    this.settings = settings
     this.applySettings(settings)
 
     this.Rotation = new THREE.Vector2(0, 0)
@@ -92,13 +94,13 @@ class ViewerCamera {
     this.TargetOrbitalDistance = this.CurrentOrbitalDistance
   }
 
-  applySettings (newSettings: any) {
+  applySettings (newSettings: ViewerSettings) {
     // TODO: camera updates aren't working
-    this.MouseOrbit = newSettings.mouseOrbit
-    this.camera.fov = newSettings.camera.fov
-    this.camera.zoom = newSettings.camera.zoom
-    this.camera.near = newSettings.camera.near
-    this.camera.far = newSettings.camera.far
+    this.MouseOrbit = newSettings.raw.mouseOrbit
+    this.camera.fov = newSettings.raw.camera.fov
+    this.camera.zoom = newSettings.raw.camera.zoom
+    this.camera.near = newSettings.raw.camera.near
+    this.camera.far = newSettings.raw.camera.far
     this.settings = newSettings
   }
 
@@ -124,15 +126,15 @@ class ViewerCamera {
   }
 
   panCameraBy (pt: THREE.Vector2) {
-    const speed = this.settings.camera.controls.panSpeed
+    const speed = this.settings.raw.camera.controls.panSpeed
     this.moveCameraBy(new THREE.Vector3(-pt.x, pt.y, 0), speed)
   }
 
   rotateCameraBy (pt: THREE.Vector2) {
     const euler = new THREE.Euler(0, 0, 0, 'YXZ')
     euler.setFromQuaternion(this.camera.quaternion)
-    euler.y += -pt.x * this.settings.camera.controls.rotateSpeed
-    euler.x += -pt.y * this.settings.camera.controls.rotateSpeed
+    euler.y += -pt.x * this.settings.raw.camera.controls.rotateSpeed
+    euler.x += -pt.y * this.settings.raw.camera.controls.rotateSpeed
     euler.z = 0
     const PI_2 = Math.PI / 2
     const minPolarAngle = -2 * Math.PI

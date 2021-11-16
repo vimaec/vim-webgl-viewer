@@ -7,7 +7,8 @@ export class VimScene {
   vim: Vim
   geometry: VimSceneGeometry
   geometryBuilder: BufferGeometryBuilder
-  elementToNodes: Map<number, number[]>
+  elementIndexToNodeIndices: Map<number, number[]>
+  elementIdToIndex: Map<number, number>
 
   constructor (
     vim: Vim,
@@ -17,40 +18,67 @@ export class VimScene {
     this.vim = vim
     this.geometry = geometry
     this.geometryBuilder = geometryBuilder
-    this.elementToNodes = this.mapElements()
+    this.elementIndexToNodeIndices = this.mapElementIndexToNodeIndices()
+    this.elementIdToIndex = this.mapElementIdToIndex()
   }
 
-  private mapElements (): Map<number, number[]> {
-    const nodeCount = this.geometry.getNodeCount()
+  private mapElementIndexToNodeIndices (): Map<number, number[]> {
     const map = new Map<number, number[]>()
-    for (let i = 0; i < nodeCount; i++) {
-      const elementId = this.getElementIdFromNodeIndex(i)
-      if (elementId === undefined) continue
+    const nodeElements = this.getElementTable(this.getNodeTable())
+    const nodeCount = nodeElements.length
 
-      const nodes = map.get(elementId)
+    for (let node = 0; node < nodeCount; node++) {
+      const element = nodeElements[node]
+      if (element === undefined) continue
+
+      const nodes = map.get(element)
       if (nodes) {
-        nodes.push(i)
+        nodes.push(node)
       } else {
-        map.set(elementId, [i])
+        map.set(element, [node])
       }
     }
     return map
   }
 
+  private mapElementIdToIndex (): Map<number, number> {
+    const map = new Map<number, number>()
+    const elementIds = this.getElementTable().get('Id')
+
+    for (let element = 0; element < elementIds.length; element++) {
+      const id = elementIds[element]
+
+      if (id < 0) {
+        console.log('ignoring element with negative id')
+        continue
+      }
+      if (map.has(id)) {
+        console.error('duplicate id: ' + id)
+        continue
+      }
+
+      map.set(id, element)
+    }
+    return map
+  }
+
+  getElementIndexFromElementId = (elementId: number) =>
+    this.elementIdToIndex.get(elementId)
+
   getElementTable = (from: any = this.vim.bim) =>
     from.get(Vim.tableElement) ?? from.get(Vim.tableElementLegacy)
 
-  getNodeTable = (from: any = this.vim.bim) => from.get(Vim.tableNode)
+  getNodeTable = () => this.vim.bim.get(Vim.tableNode)
 
-  getNodeIndicesFromElementId (elementId: number): number[] | undefined {
-    return this.elementToNodes.get(elementId)
+  getNodeIndicesFromElementIndex (elementIndex: number): number[] | undefined {
+    return this.elementIndexToNodeIndices.get(elementIndex)
   }
 
-  getMeshesFromElementId (
-    elementId: number
-  ): [THREE.Mesh, number][] | undefined {
-    const nodeIndices = this.getNodeIndicesFromElementId(elementId)
-    if (!nodeIndices || !nodeIndices.length) return
+  getMeshesFromElementIndex (
+    elementIndex: number
+  ): [THREE.Mesh, number][] | null {
+    const nodeIndices = this.getNodeIndicesFromElementIndex(elementIndex)
+    if (!nodeIndices || !nodeIndices.length) return null
 
     const result: [THREE.Mesh, number][] = []
     nodeIndices.forEach((i) => {
@@ -111,11 +139,8 @@ export class VimScene {
   }
 
   // TODO add better ways to access bim
-  getElementNameFromNodeIndex (nodeIndex: number): string | undefined {
-    if (nodeIndex < 0) throw new Error('Invalid negative node index')
-
-    const elementIndex = this.getElementIndexFromNodeIndex(nodeIndex)
-    if (elementIndex === undefined) return
+  getElementName (elementIndex: number): string | undefined {
+    if (elementIndex < 0) throw new Error('Invalid negative index.')
 
     const names = this.getElementTable().get('Name')
     if (!names) return

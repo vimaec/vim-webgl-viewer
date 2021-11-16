@@ -146,7 +146,7 @@ class VimG3d {
   instanceMeshes: Int32Array
   instanceTransforms: Float32Array
   meshSubmeshes: Int32Array
-    submeshIndexOffset: Int32Array
+  submeshIndexOffset: Int32Array
   submeshMaterial: Int32Array
   materialColors: Float32Array
   rawG3d: G3d
@@ -221,6 +221,18 @@ class VimG3d {
       meshRefCounts[mesh]++
     }
     return meshRefCounts
+  }
+
+  getNodesByMeshes = (): number[][] => {
+    const nodesByMeshes: number[][] = []
+    for (let node = 0; node < this.instanceMeshes.length; node++) {
+      const mesh = this.instanceMeshes[node]
+      if (mesh < 0) continue
+      const nodes = nodesByMeshes[mesh]
+      if (nodes) nodes.push(node)
+      else nodesByMeshes[mesh] = [node]
+    }
+    return nodesByMeshes
   }
 
   validate () {

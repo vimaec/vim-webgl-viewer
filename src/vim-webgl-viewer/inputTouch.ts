@@ -1,7 +1,7 @@
 import * as THREE from 'three'
 import { ViewerCamera } from './viewerCamera'
-import { Viewer } from './viewer'
 import { InputMouse } from './inputMouse'
+import { ViewerSettings } from './viewerSettings'
 
 export class InputTouch {
   // Consts
@@ -11,7 +11,7 @@ export class InputTouch {
 
   // Dependencies
   private camera: ViewerCamera
-  private viewer: Viewer
+  private settings: ViewerSettings
   private mouse: InputMouse
 
   // State
@@ -20,11 +20,16 @@ export class InputTouch {
   private touchStart2: THREE.Vector2 | undefined = undefined // The second touch when multiple touches occur, otherwise left undefined
   private touchStartTime: number | undefined = undefined // In ms since epoch
 
-  constructor (camera: ViewerCamera, viewer: Viewer, mouse: InputMouse) {
+  constructor (
+    camera: ViewerCamera,
+    settings: ViewerSettings,
+    mouse: InputMouse
+  ) {
     this.camera = camera
-    this.viewer = viewer
+    this.settings = settings
     this.mouse = mouse
 
+    // TODO: Move to settings
     this.TouchMoveSensitivity = this.mouse.MouseMoveSensitivity * 20
     this.TouchRotateSensitivity = this.mouse.MouseRotateSensitivity
   }
@@ -63,13 +68,13 @@ export class InputTouch {
   }
 
   onDoubleDrag = (delta: THREE.Vector2) => {
-    const matrix = this.viewer.getViewMatrix()
+    const matrix = this.settings.getObjectMatrix()
     const move = new THREE.Vector3(delta.x, 0, delta.y).applyMatrix4(matrix)
     this.camera.moveCameraBy(move, delta.length())
   }
 
   onPinchSpread = (delta: number) => {
-    const matrix = this.viewer.getViewMatrix()
+    const matrix = this.settings.getObjectMatrix()
     const move = new THREE.Vector3(0, delta, 0).applyMatrix4(matrix)
     this.camera.moveCameraBy(move, Math.abs(delta))
   }

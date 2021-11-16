@@ -18,7 +18,7 @@ export class ViewerInput {
     this.canvas = canvas
     this.unregisters = []
     this.mouse = new InputMouse(camera, canvas, viewer)
-    this.touch = new InputTouch(camera, viewer, this.mouse)
+    this.touch = new InputTouch(camera, viewer.settings, this.mouse)
     this.keyboard = new InputKeyboard(camera, viewer, this.mouse)
   }
 

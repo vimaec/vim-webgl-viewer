@@ -1,6 +1,6 @@
 {
   "name": "vim-webgl-viewer",
-  "version": "1.1.4",
+  "version": "1.1.5-dev.2",
   "description": "A high-performance 3D viewer and VIM file loader built on top of Three.JS.",
   "files": [
     "dist"
@@ -19,18 +19,19 @@
   },
   "scripts": {
     "dev": "vite",
-    "build": "vite build && npm run gen-docs",
+    "build": "vite build && npm run gen-index.html",
     "bump-dev": "npm version prerelease --preid=dev",
     "publish-dev": "npm publish --tag=dev",
     "serve-docs": "http-server ./docs -o",
     "serve-dist": "http-server ./dist -o",
-    "gen-docs": "node docs/genDocs.js",
+    "gen-index.html": "node docs/genDocs.js",
     "test-dist": "npm run build && npm run serve-dist",
     "test-latest": "opener https://vimaec.github.io/vim-webgl-viewer/?model=https%3A%2F%2Fvim.azureedge.net%2Fsamples%2Fskanska.vim",
     "test-dev": "opener https://vimaec.github.io/vim-webgl-viewer/index-dev.html?model=https%3A%2F%2Fvim.azureedge.net%2Fsamples%2Fskanska.vim",
     "release-patch": "npm version patch && git push && npm publish && npm run test-latest",
     "release-dev": "npm run build && npm run bump-dev && git push && npm run publish-dev && npm run test-dev",
-    "eslint": "eslint --ext .js,.ts src --fix"
+    "eslint": "eslint --ext .js,.ts src --fix",
+    "document": "typedoc --out docs/api --excludePrivate ./src/vim-webgl-viewer/viewer.ts"
   },
   "devDependencies": {
     "@types/three": "^0.133.0",
@@ -48,7 +49,8 @@
     "opener": "^1.5.2",
     "prettier": "^2.4.1",
     "typescript": "^4.4.3",
-    "vite": "^2.6.3"
+    "vite": "^2.6.3",
+    "typedoc": "^0.22.9"
   },
   "dependencies": {
     "deepmerge": "^4.2.2",

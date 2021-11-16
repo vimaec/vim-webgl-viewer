@@ -7,11 +7,10 @@ export class Selection {
   viewer: Viewer
 
   // State
-  nodeIndex: number | null = null
+  elementIndex: number | null = null
   boundingSphere: THREE.Sphere | null = null
 
   // Disposable State
-  geometry: THREE.BufferGeometry | null = null
   highlightDisposer: Function | null = null
 
   constructor (viewer: Viewer) {
@@ -19,29 +18,27 @@ export class Selection {
   }
 
   hasSelection () {
-    return this.nodeIndex !== null
+    return this.elementIndex !== null
   }
 
   reset () {
-    this.nodeIndex = null
+    this.elementIndex = null
     this.boundingSphere = null
     this.disposeResources()
   }
 
   disposeResources () {
-    this.geometry?.dispose()
-    this.geometry = null
-
     this.highlightDisposer?.()
     this.highlightDisposer = null
   }
 
-  select (nodeIndex: number) {
+  select (elementIndex: number) {
     this.disposeResources()
-    this.nodeIndex = nodeIndex
-    this.geometry = this.viewer.createBufferGeometryFromNodeId(nodeIndex)
-    this.geometry.computeBoundingSphere()
-    this.boundingSphere = this.geometry.boundingSphere
-    this.highlightDisposer = this.viewer.highlight(this.geometry)
+    this.elementIndex = elementIndex
+    this.highlightDisposer = this.viewer.highlightElementByIndex(elementIndex)
+    this.boundingSphere =
+      this.viewer
+        .getBoudingBoxForElementIndex(elementIndex)
+        ?.getBoundingSphere(new THREE.Sphere()) ?? null
   }
 }
