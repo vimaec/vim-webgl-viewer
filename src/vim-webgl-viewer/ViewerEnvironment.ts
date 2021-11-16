@@ -21,8 +21,8 @@ export class ViewerEnvironment {
     this.sunLight = sunLight
   }
 
+  // TODO Remove values
   static createDefault (): ViewerEnvironment {
-    // TODO Remove values
     // Ground
     const plane = new THREE.Mesh(
       new THREE.PlaneBufferGeometry(1000, 1000),
