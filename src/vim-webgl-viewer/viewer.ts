@@ -194,6 +194,12 @@ export class Viewer {
   highlightElementByIndex (elementIndex: number): Function {
     const nodes = this.vimScene.getNodeIndicesFromElementIndex(elementIndex)
     const geometry = this.createBufferGeometryFromNodeIndices(nodes)
+    if (!geometry) {
+      console.error(
+        'Could not create geometry for element index: ' + elementIndex
+      )
+      return () => {}
+    }
     const disposer = this.highlight(geometry)
 
     return () => {
@@ -207,9 +213,15 @@ export class Viewer {
    * @param elementIndex index of element
    * @returns THREE bounding
    */
-  getBoudingBoxForElementIndex (elementIndex: number): THREE.Box3 {
+  getBoudingBoxForElementIndex (elementIndex: number): THREE.Box3 | null {
     const nodes = this.vimScene.getNodeIndicesFromElementIndex(elementIndex)
     const geometry = this.createBufferGeometryFromNodeIndices(nodes)
+    if (!geometry) {
+      console.error(
+        'Could not create geometry for element index: ' + elementIndex
+      )
+      return null
+    }
     geometry.computeBoundingBox()
     const result = geometry.boundingBox
     geometry.dispose()
@@ -238,6 +250,13 @@ export class Viewer {
    */
   lookAtElementIndex (elementIndex: number) {
     const box = this.getBoudingBoxForElementIndex(elementIndex)
+    if (!box) {
+      console.error(
+        'Could not create geometry for element index: ' + elementIndex
+      )
+      return
+    }
+
     const sphere = box.getBoundingSphere(new THREE.Sphere())
     this.cameraController.lookAtSphere(sphere, true)
   }

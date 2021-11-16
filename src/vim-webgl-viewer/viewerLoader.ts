@@ -48,7 +48,7 @@ export const loadAny = function (
       | THREE.BufferGeometry
   ) => void,
   onProgress: (progress: ProgressEvent) => void,
-  overrideFileExtension: string = null
+  overrideFileExtension: string | null = null
 ) {
   const ext = overrideFileExtension ?? getExt(fileName)
 

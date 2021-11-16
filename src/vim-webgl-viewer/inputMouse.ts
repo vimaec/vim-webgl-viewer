@@ -95,26 +95,39 @@ export class InputMouse {
   }
 
   onMouseClick = (position: Vector2) => {
+    // Find geometry and bim data at mouse position
     console.time('raycast')
     const hits = this.mouseRaycast(position)
     console.timeEnd('raycast')
     const result = this.findHitMeshIndex(hits)
 
+    // No hit
     if (result === null) {
       this.viewer.clearSelection()
       return
     }
+
+    // Hit a merged mesh, we get node index
     if (typeof result === 'number') {
       const element = this.viewer.getElementIndexFromNodeIndex(result)
-      this.viewer.selectByElementIndex(element)
+      if (element) this.viewer.selectByElementIndex(element)
+      else {
+        console.error('Could not find elment for node index: ' + result)
+      }
       return
     }
 
+    // Hit a an instances mesh, we get mesh and index
     const element = this.viewer.getElementIndexFromMeshInstance(
       result[0],
       result[1]
     )
-    this.viewer.selectByElementIndex(element)
+    if (element) this.viewer.selectByElementIndex(element)
+    else {
+      console.error(
+        `Could not find element for mesh: ${result[0]}, index: ${result[1]}`
+      )
+    }
   }
 
   mouseRaycast (position: THREE.Vector2) {
@@ -129,34 +142,37 @@ export class InputMouse {
   findHitMeshIndex (
     hits: THREE.Intersection<THREE.Object3D<THREE.Event>>[]
   ): [mesh: Mesh, index: number] | number | null {
-    if (!hits?.length) {
+    const hit = hits[0]
+    if (!hit) {
       console.log('Raycast: No hit.')
       return null
     }
 
-    const mesh = hits[0].object
-    if (!(mesh instanceof THREE.Mesh)) {
-      console.log(`Raycast hit object: ${mesh} of unsupported type. Ignoring.`)
-      return null
-    }
-
     console.log(
-      `Raycast hit. Position (${hits[0].point.x}, ${hits[0].point.y}, ${hits[0].point.z})`
+      'Raycast hit. \n' +
+        `Position: (${hit.point.x}, ${hit.point.y}, ${hit.point.z}) \n` +
+        `ObjectId: ${hit.object.id}`
     )
-    console.log(`Raycast: Hit Mesh with MeshId:${mesh.id}`)
 
     // Merged mesh have node origin of each face encoded in uvs
-    if (mesh.userData.merged) {
-      const node = Math.round(hits[0].uv.x)
+    if (hit.object.userData.merged && hit.uv !== undefined) {
+      const node = Math.round(hit.uv.x)
       console.log(
         `Mesh is merged mesh. Hit face ${hits[0].faceIndex} coming from Node: ${node}`
       )
       return node
     }
 
-    const instanceId = hits[0].instanceId
-    console.log(`Mesh is Instanced. Instance Index: ${instanceId}`)
+    // For instanced mesh we get the instance id directly from hit
+    if (hit.instanceId !== undefined) {
+      const instanceId = hit.instanceId
+      console.log(`Mesh is Instanced. Instance Index: ${instanceId}`)
+      return [hit.object as THREE.InstancedMesh, instanceId]
+    }
 
-    return [mesh, instanceId]
+    console.log(
+      'Raycast hit unsupported object type. It might be an object not created by the vim api. Make sure such objects are not included in viewer this.viewer.render.meshes'
+    )
+    return null
   }
 }

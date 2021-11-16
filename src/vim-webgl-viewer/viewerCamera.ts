@@ -39,8 +39,9 @@ class ViewerCamera {
 
   VelocityBlendFactor: number = 0.0001
 
-  constructor (camera: THREE.PerspectiveCamera, settings: any) {
+  constructor (camera: THREE.PerspectiveCamera, settings: ViewerSettings) {
     this.camera = camera
+    this.settings = settings
     this.applySettings(settings)
 
     this.Rotation = new THREE.Vector2(0, 0)
