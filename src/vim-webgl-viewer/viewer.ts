@@ -28,6 +28,8 @@ export type ViewerState =
   | [state: 'Error', error: ErrorEvent]
   | 'Ready'
 
+const NO_SCENE_LOADED = 'No loaded in viewer. Ignoring'
+
 export class Viewer {
   settings: ViewerSettings
 
@@ -176,16 +178,20 @@ export class Viewer {
    * @param elementId id of element
    * @returns index of element
    */
-  getElementIndexFromElementId = (elementId: number) =>
-    this.vimScene.getElementIndexFromElementId(elementId)
+  getElementIndexFromElementId = (elementId: number) => {
+    if (!this.vimScene) throw new Error(NO_SCENE_LOADED)
+    return this.vimScene.getElementIndexFromElementId(elementId)
+  }
 
   /**
    * Get the parent element index from a node index
    * @param nodeIndex index of node
    * @returns index of element
    */
-  getElementIndexFromNodeIndex = (nodeIndex: number) =>
-    this.vimScene.getElementIndexFromNodeIndex(nodeIndex)
+  getElementIndexFromNodeIndex = (nodeIndex: number) => {
+    if (!this.vimScene) throw new Error(NO_SCENE_LOADED)
+    return this.vimScene.getElementIndexFromNodeIndex(nodeIndex)
+  }
 
   /**
    * Get the element index related to given mesh
@@ -194,7 +200,12 @@ export class Viewer {
    * @returns index of element
    */
   getElementIndexFromMeshInstance = (mesh: THREE.Mesh, index: number) => {
+    if (!this.vimScene) throw new Error(NO_SCENE_LOADED)
     const nodeIndex = this.vimScene.getNodeIndexFromMesh(mesh, index)
+    if (nodeIndex === undefined) {
+      console.error(`Could not find nodeIndex for mesh:${mesh}, index:${index}`)
+      return undefined
+    }
     return this.vimScene.getElementIndexFromNodeIndex(nodeIndex)
   }
 
@@ -204,6 +215,7 @@ export class Viewer {
    * @returns a disposer function for the created geometry
    */
   highlightElementByIndex (elementIndex: number): Function {
+    if (!this.vimScene) throw new Error(NO_SCENE_LOADED)
     const nodes = this.vimScene.getNodeIndicesFromElementIndex(elementIndex)
     if (!nodes) {
       console.error(
@@ -234,7 +246,13 @@ export class Viewer {
    * @returns THREE bounding
    */
   getBoudingBoxForElementIndex (elementIndex: number): THREE.Box3 | null {
+    if (!this.vimScene) throw new Error(NO_SCENE_LOADED)
     const nodes = this.vimScene.getNodeIndicesFromElementIndex(elementIndex)
+    if (!nodes) {
+      console.error('Could not find nodes for : ' + elementIndex)
+      return null
+    }
+
     const geometry = this.createBufferGeometryFromNodeIndices(nodes)
     if (!geometry) {
       console.error(
@@ -253,6 +271,7 @@ export class Viewer {
    * @param elementIndex index of element
    */
   selectByElementIndex (elementIndex: number) {
+    if (!this.vimScene) throw new Error(NO_SCENE_LOADED)
     console.log('Selecting element with index: ' + elementIndex)
     console.log(
       'Bim Element Name: ' + this.vimScene.getElementName(elementIndex)
@@ -335,17 +354,27 @@ export class Viewer {
   private createBufferGeometryFromNodeIndices (
     nodeIndices: number[]
   ): THREE.BufferGeometry | null {
-    let geometries = nodeIndices.map((nodeIndex) => {
-      // this is awful to create builder everytime
-      const builder = new BufferGeometryBuilder(this.vimScene.vim.g3d)
-      return builder.createBufferGeometryFromInstanceIndex(nodeIndex)
+    if (!this.vimScene) throw new Error(NO_SCENE_LOADED)
+    const scene = this.vimScene
+
+    // Create geometry for every node
+    const geometries: THREE.BufferGeometry[] = []
+    nodeIndices.forEach((nodeIndex) => {
+      const builder = new BufferGeometryBuilder(scene.vim.g3d)
+      const g = builder.createBufferGeometryFromInstanceIndex(nodeIndex)
+      if (g) geometries.push(g)
     })
-    geometries = geometries.filter((b) => b !== null)
+
+    // bail if none of the node had geometry
     if (geometries.length === 0) return null
+
+    // Merge all geometry
     const geometry = BufferGeometryUtils.mergeBufferGeometries(geometries)
+    geometry.applyMatrix4(this.settings.getObjectMatrix())
+
+    // Dispose intermediate geometries
     geometries.forEach((b) => b.dispose)
 
-    geometry.applyMatrix4(this.settings.getObjectMatrix())
     return geometry
   }
 }
