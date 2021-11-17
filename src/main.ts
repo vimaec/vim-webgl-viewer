@@ -1,4 +1,4 @@
-import { Viewer } from './vim-webgl-viewer/viewer'
+import { Viewer, ViewerState } from './vim-webgl-viewer/viewer'
 
 const params = new URLSearchParams(window.location.search)
 const url = params.has('model')
@@ -16,6 +16,15 @@ const viewer = new Viewer({
   plane: {
     show: false
   }
+})
+
+addEventListener(Viewer.stateChangeEvent, (event: CustomEvent<ViewerState>) => {
+  const state = event.detail
+  if (state[0] === 'Downloading') console.log('Downloading : ' + state[1])
+  if (state[0] === 'Error') {
+    console.log('Error : ' + (state[1] as ErrorEvent).message)
+  }
+  if (state === 'Ready') console.log('Viewer Ready')
 })
 
 globalThis.viewer = viewer

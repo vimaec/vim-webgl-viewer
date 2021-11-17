@@ -22,9 +22,11 @@ import { VimScene } from '../vim-loader/vimScene'
 import { BufferGeometryBuilder } from '../vim-loader/VIMLoader'
 
 export type ViewerState =
-  | 'Default'
+  | 'Uninitialized'
   | [state: 'Downloading', progress: number]
   | 'Processing'
+  | [state: 'Error', error: ErrorEvent]
+  | 'Ready'
 
 export class Viewer {
   settings: ViewerSettings
@@ -36,18 +38,13 @@ export class Viewer {
   controls: ViewerInput
 
   vimScene: VimScene | undefined
-  state: ViewerState = 'Default'
-  static stateChangeEventName = 'viewerStateChangedEvent'
+  state: ViewerState = 'Uninitialized'
+  static stateChangeEvent = 'viewerStateChangedEvent'
 
   constructor (options: Record<string, unknown>) {
     this.settings = new ViewerSettings(options)
-    let canvas = document.getElementById(
-      this.settings.raw.canvasId
-    ) as HTMLCanvasElement
-    if (!canvas) {
-      canvas = document.createElement('canvas')
-      document.body.appendChild(canvas)
-    }
+
+    const canvas = Viewer.getOrCreateCanvas(this.settings.raw.canvasId)
     this.render = new ViewerRenderer(canvas)
 
     this.cameraController = new ViewerCamera(this.render.camera, this.settings)
@@ -80,6 +77,7 @@ export class Viewer {
       (progress) => {
         this.setState(['Downloading', progress.loaded])
       },
+      (error) => this.setState(['Error', error]),
       this.settings.raw.fileExtension
     )
 
@@ -90,10 +88,21 @@ export class Viewer {
 
   private setState = (state: ViewerState) => {
     this.state = state
-    const event = new CustomEvent(Viewer.stateChangeEventName, {
-      detail: this.state
+    const event = new CustomEvent(Viewer.stateChangeEvent, {
+      detail: this.state,
+      bubbles: true
     })
-    dispatchEvent(event)
+    this.render.canvas.dispatchEvent(event)
+  }
+
+  private static getOrCreateCanvas (canvasId: string) {
+    let canvas = document.getElementById(canvasId) as HTMLCanvasElement
+
+    if (!canvas) {
+      canvas = document.createElement('canvas')
+      document.body.appendChild(canvas)
+    }
+    return canvas
   }
 
   private loadInScene = (
@@ -126,7 +135,7 @@ export class Viewer {
 
     this.lookAtModel()
     this.ApplySettings()
-    this.setState('Default')
+    this.setState('Ready')
   }
 
   // Calls render, and asks the framework to prepare the next frame

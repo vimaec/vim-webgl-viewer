@@ -75,7 +75,7 @@ export class VIMLoader {
           console.log(
             `Error occured when loading VIM from ${url}, message = ${error} at = ${error.stack}`
           )
-          onError?.(new ErrorEvent('Loading Error', { error: exception }))
+          onError?.(new ErrorEvent('Loading Error', error))
           return
         }
         // Don't catch exceptions in code provided by caller.

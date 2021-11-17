@@ -48,6 +48,7 @@ export const loadAny = function (
       | THREE.BufferGeometry
   ) => void,
   onProgress: (progress: ProgressEvent) => void,
+  onError: (error: ErrorEvent) => void,
   overrideFileExtension: string | null = null
 ) {
   const ext = overrideFileExtension ?? getExt(fileName)
@@ -94,7 +95,12 @@ export const loadAny = function (
       break
     }
     case 'vim': {
-      new VIMLoader(defaultMaterial).load(fileName, onFileLoaded, onProgress)
+      new VIMLoader(defaultMaterial).load(
+        fileName,
+        onFileLoaded,
+        onProgress,
+        onError
+      )
       break
     }
     default:
