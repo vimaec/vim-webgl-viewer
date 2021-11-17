@@ -126,3 +126,17 @@ The viewer is broadly divided into three layer.
 A table has elementId 12321  
 it gets exported into 5 nodes, 4 legs and a table top.  
 the 5 nodes are rendered using 2 meshes, one for the table top, one for all 4 legs.
+
+## How To
+
+**Frame camera on an element**
+```javascript
+// If you already have element index from the vim you can skip this line
+const elementIndex = viewer.getElementIndexFromId(MY_ELEMENT_ID)
+
+viewer.lookAtElementIndex(elementIndex)
+
+// Optional highlight for your element
+// call disposer() to remove highligh
+const disposer = viewer.highlightElementByIndex(elementIndex)
+```
