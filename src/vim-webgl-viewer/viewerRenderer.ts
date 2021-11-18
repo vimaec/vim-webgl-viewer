@@ -7,7 +7,7 @@ export class ViewerRenderer {
   clock = new THREE.Clock()
   canvas: HTMLCanvasElement
 
-  boundingSphere: THREE.Sphere
+  boundingBox: THREE.Box3
   meshes: THREE.Object3D[] = []
 
   constructor (canvas: HTMLCanvasElement) {
@@ -27,8 +27,12 @@ export class ViewerRenderer {
 
     this.camera = new THREE.PerspectiveCamera()
     this.scene = new THREE.Scene()
-    this.boundingSphere = new THREE.Sphere()
+    this.boundingBox = new THREE.Box3()
     this.fitToCanvas()
+  }
+
+  getBoundingSphere () {
+    return this.boundingBox.getBoundingSphere(new THREE.Sphere())
   }
 
   render () {
@@ -63,19 +67,19 @@ export class ViewerRenderer {
     }
   }
 
-  computeBoundingSphere (matrix: THREE.Matrix4) {
-    this.boundingSphere = this._computeBoundingSphere(this.scene)
-    this.boundingSphere.applyMatrix4(matrix)
+  computeBoundingBox (matrix: THREE.Matrix4) {
+    this.boundingBox = this._computeBoundingBox(this.scene)
+    this.boundingBox.applyMatrix4(matrix)
   }
 
-  _computeBoundingSphere (scene: THREE.Scene): THREE.Sphere {
-    let sphere: THREE.Sphere | undefined
+  _computeBoundingBox (scene: THREE.Scene): THREE.Box3 {
+    let box: THREE.Box3 | undefined
 
     const grow = (geometry: THREE.BufferGeometry, matrix: THREE.Matrix4) => {
       geometry.computeBoundingSphere()
-      let currentSphere = geometry.boundingSphere!.clone()
-      currentSphere = currentSphere.applyMatrix4(matrix)
-      sphere = sphere ? sphere.union(currentSphere) : currentSphere
+      let currentBox = geometry.boundingBox!.clone()
+      currentBox = currentBox.applyMatrix4(matrix)
+      box = box ? box.union(currentBox) : currentBox
     }
     const matrix = new THREE.Matrix4()
     scene.traverse((obj) => {
@@ -89,6 +93,6 @@ export class ViewerRenderer {
       }
     })
 
-    return sphere ?? new THREE.Sphere()
+    return box ?? new THREE.Box3()
   }
 }

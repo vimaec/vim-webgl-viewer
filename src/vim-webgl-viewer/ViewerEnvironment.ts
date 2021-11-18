@@ -1,5 +1,6 @@
 import * as THREE from 'three'
 import { ViewerSettings } from './viewerSettings'
+import grid from '../../assets/grid.png'
 
 /*
 Vim Viewer
@@ -25,8 +26,8 @@ export class ViewerEnvironment {
   static createDefault (): ViewerEnvironment {
     // Ground
     const plane = new THREE.Mesh(
-      new THREE.PlaneBufferGeometry(1000, 1000),
-      new THREE.MeshPhongMaterial()
+      new THREE.PlaneBufferGeometry(1, 1),
+      new THREE.MeshBasicMaterial()
     )
     plane.rotation.x = -Math.PI / 2
 
@@ -48,12 +49,23 @@ export class ViewerEnvironment {
     return [this.plane, this.skyLight, this.sunLight]
   }
 
-  applySettings (settings: ViewerSettings) {
+  applySettings (settings: ViewerSettings, model: THREE.Box3) {
     // Plane
-    this.plane.visible = settings.getPlaneShow()
-    this.plane.position.copy(settings.getPlanePosition())
-    if (this.plane.material instanceof THREE.MeshPhongMaterial) {
-      settings.updateMaterial(this.plane.material)
+    if (model) {
+      this.plane.visible = settings.getPlaneShow()
+      // this.plane.position.copy(settings.getPlanePosition())
+      const center = model.getCenter(new THREE.Vector3())
+      const sphere = model.getBoundingSphere(new THREE.Sphere())
+      this.plane.position.set(center.x, model.min.y, center.z)
+      const l = new THREE.TextureLoader()
+      this.plane.material = new THREE.MeshBasicMaterial({
+        map: l.load(grid)
+      })
+      this.plane.scale.set(
+        sphere.radius * 3,
+        sphere.radius * 3,
+        sphere.radius * 3
+      )
     }
 
     // Skylight

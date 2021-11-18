@@ -71,6 +71,7 @@ export class ViewerSettings {
 
   getPlaneShow = () => this.raw.plane.show
   getPlanePosition = () => this.raw.plane.position
+  getPlaneColor = () => toRGBColor(this.raw.plane.material.color)
   getBackgroundColor = () => toRGBColor(this.raw.background.color)
 
   getObjectMatrix = () =>
