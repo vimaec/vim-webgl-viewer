@@ -9,9 +9,7 @@ const viewer = new Viewer({
   mouseOrbit: false,
   url: url,
   object: {
-    scale: 0.1,
-    rotation: { x: 270 },
-    position: { y: 0 }
+    rotation: { x: 270 }
   },
   plane: {
     show: true,
