@@ -42,7 +42,7 @@ export const defaultSettings = {
       intensity: 0.6
     },
     sunLight: {
-      position: { x: -1 * 30, y: 1.75 * 30, z: 1 * 30 },
+      position: { x: -47.0, y: 22, z: -45 },
       color: { h: 0.1, s: 1, l: 0.95 },
       intensity: 1
     },
