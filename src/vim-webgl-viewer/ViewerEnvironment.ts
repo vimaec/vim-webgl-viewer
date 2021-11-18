@@ -56,7 +56,7 @@ export class ViewerEnvironment {
       // this.plane.position.copy(settings.getPlanePosition())
       const center = model.getCenter(new THREE.Vector3())
       const sphere = model.getBoundingSphere(new THREE.Sphere())
-      this.plane.position.set(center.x, model.min.y, center.z)
+      this.plane.position.set(center.x, model.min.y - 0.1, center.z)
 
       if (settings.raw.plane.texture) {
         const l = new THREE.TextureLoader()
