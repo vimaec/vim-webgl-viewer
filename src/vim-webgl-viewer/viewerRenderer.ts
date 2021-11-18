@@ -16,7 +16,7 @@ export class ViewerRenderer {
       antialias: true,
       precision: 'highp', // 'lowp', 'mediump', 'highp'
 
-      alpha: false,
+      alpha: true,
       stencil: false,
       powerPreference: 'high-performance'
     })
