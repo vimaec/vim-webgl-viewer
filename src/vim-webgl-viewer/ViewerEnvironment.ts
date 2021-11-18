@@ -1,6 +1,6 @@
 import * as THREE from 'three'
 import { ViewerSettings } from './viewerSettings'
-import grid from '../../assets/grid.png'
+// import grid from '../../grid.png'
 
 /*
 Vim Viewer
@@ -57,10 +57,15 @@ export class ViewerEnvironment {
       const center = model.getCenter(new THREE.Vector3())
       const sphere = model.getBoundingSphere(new THREE.Sphere())
       this.plane.position.set(center.x, model.min.y, center.z)
-      const l = new THREE.TextureLoader()
-      this.plane.material = new THREE.MeshBasicMaterial({
-        map: l.load(grid)
-      })
+
+      if (settings.raw.plane.texture) {
+        const l = new THREE.TextureLoader()
+        this.plane.material = new THREE.MeshBasicMaterial({
+          map: l.load(settings.raw.plane.texture)
+          // map: l.load(grid)
+        })
+      }
+
       this.plane.scale.set(
         sphere.radius * 3,
         sphere.radius * 3,
