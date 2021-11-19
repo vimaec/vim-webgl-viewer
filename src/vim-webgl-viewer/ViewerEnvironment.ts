@@ -1,6 +1,6 @@
 import * as THREE from 'three'
 import { ViewerSettings } from './viewerSettings'
-// import grid from '../../grid.png'
+import { EnvironmentPlane } from './EnvironmentPlane'
 
 /*
 Vim Viewer
@@ -8,12 +8,12 @@ Copyright VIMaec LLC, 2020
 Licensed under the terms of the MIT License
 */
 export class ViewerEnvironment {
-  plane: THREE.Mesh
+  plane: EnvironmentPlane
   skyLight: THREE.HemisphereLight
   sunLight: THREE.DirectionalLight
 
   constructor (
-    plane: THREE.Mesh,
+    plane: EnvironmentPlane,
     skyLight: THREE.HemisphereLight,
     sunLight: THREE.DirectionalLight
   ) {
@@ -24,12 +24,8 @@ export class ViewerEnvironment {
 
   // TODO Remove values
   static createDefault (): ViewerEnvironment {
-    // Ground
-    const plane = new THREE.Mesh(
-      new THREE.PlaneBufferGeometry(1, 1),
-      new THREE.MeshBasicMaterial()
-    )
-    plane.rotation.x = -Math.PI / 2
+    // Plane
+    const plane = new EnvironmentPlane()
 
     // Lights
     const skyLight = new THREE.HemisphereLight(0xffffff, 0xffffff, 0.6)
@@ -46,35 +42,12 @@ export class ViewerEnvironment {
   }
 
   getElements (): THREE.Object3D[] {
-    return [this.plane, this.skyLight, this.sunLight]
+    return [this.plane.mesh, this.skyLight, this.sunLight]
   }
 
-  applySettings (settings: ViewerSettings, model: THREE.Box3) {
+  applySettings (settings: ViewerSettings, box: THREE.Box3) {
     // Plane
-    if (model) {
-      this.plane.visible = settings.getPlaneShow()
-      const center = model.getCenter(new THREE.Vector3())
-      const sphere = model.getBoundingSphere(new THREE.Sphere())
-      this.plane.position.set(
-        center.x,
-        model.min.y - settings.getObjectScale().y,
-        center.z
-      )
-
-      if (settings.raw.plane.texture) {
-        const l = new THREE.TextureLoader()
-        this.plane.material = new THREE.MeshBasicMaterial({
-          map: l.load(settings.raw.plane.texture)
-          // map: l.load(grid)
-        })
-      }
-
-      this.plane.scale.set(
-        sphere.radius * 3,
-        sphere.radius * 3,
-        sphere.radius * 3
-      )
-    }
+    this.plane.applySettings(settings, box)
 
     // Skylight
     this.skyLight.color.copy(settings.getSkylightColor())

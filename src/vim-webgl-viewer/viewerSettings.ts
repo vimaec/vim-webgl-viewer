@@ -26,15 +26,10 @@ export const defaultSettings = {
     },
     plane: {
       show: true,
-      material: {
-        color: { r: 0x99, g: 0x99, b: 0x99 },
-        specular: { r: 0x10, g: 0x10, b: 0x10 }
-      },
-      position: {
-        x: 0,
-        y: 0,
-        z: 0
-      }
+      texture: null,
+      opacity: 1,
+      color: { r: 0x99, g: 0x99, b: 0x99 },
+      size: 3
     },
     skylight: {
       color: { h: 0.6, s: 1, l: 0.6 },
@@ -69,9 +64,8 @@ export class ViewerSettings {
     this.raw = deepmerge(defaultSettings.default, raw, undefined)
   }
 
-  getPlaneShow = () => this.raw.plane.show
-  getPlanePosition = () => this.raw.plane.position
-  getPlaneColor = () => toRGBColor(this.raw.plane.material.color)
+  getPlaneColor = () => toRGBColor(this.raw.plane.color)
+
   getBackgroundColor = () => toRGBColor(this.raw.background.color)
 
   getObjectMatrix = () =>
