@@ -1,5 +1,6 @@
 import * as THREE from 'three'
 import { ViewerSettings } from './viewerSettings'
+import { EnvironmentPlane } from './EnvironmentPlane'
 
 /*
 Vim Viewer
@@ -7,12 +8,12 @@ Copyright VIMaec LLC, 2020
 Licensed under the terms of the MIT License
 */
 export class ViewerEnvironment {
-  plane: THREE.Mesh
+  plane: EnvironmentPlane
   skyLight: THREE.HemisphereLight
   sunLight: THREE.DirectionalLight
 
   constructor (
-    plane: THREE.Mesh,
+    plane: EnvironmentPlane,
     skyLight: THREE.HemisphereLight,
     sunLight: THREE.DirectionalLight
   ) {
@@ -23,12 +24,8 @@ export class ViewerEnvironment {
 
   // TODO Remove values
   static createDefault (): ViewerEnvironment {
-    // Ground
-    const plane = new THREE.Mesh(
-      new THREE.PlaneBufferGeometry(1000, 1000),
-      new THREE.MeshPhongMaterial()
-    )
-    plane.rotation.x = -Math.PI / 2
+    // Plane
+    const plane = new EnvironmentPlane()
 
     // Lights
     const skyLight = new THREE.HemisphereLight(0xffffff, 0xffffff, 0.6)
@@ -45,16 +42,12 @@ export class ViewerEnvironment {
   }
 
   getElements (): THREE.Object3D[] {
-    return [this.plane, this.skyLight, this.sunLight]
+    return [this.plane.mesh, this.skyLight, this.sunLight]
   }
 
-  applySettings (settings: ViewerSettings) {
+  applySettings (settings: ViewerSettings, box: THREE.Box3) {
     // Plane
-    this.plane.visible = settings.getPlaneShow()
-    this.plane.position.copy(settings.getPlanePosition())
-    if (this.plane.material instanceof THREE.MeshPhongMaterial) {
-      settings.updateMaterial(this.plane.material)
-    }
+    this.plane.applySettings(settings, box)
 
     // Skylight
     this.skyLight.color.copy(settings.getSkylightColor())

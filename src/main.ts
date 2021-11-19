@@ -9,12 +9,14 @@ const viewer = new Viewer({
   mouseOrbit: false,
   url: url,
   object: {
-    scale: 0.1,
-    rotation: { x: 270 },
-    position: { y: 0 }
+    rotation: { x: 270 }
   },
   plane: {
-    show: false
+    show: true,
+    texture:
+      'https://vimdevelopment01storage.blob.core.windows.net/textures/vim-floor-soft.png',
+    opacity: 1,
+    size: 5
   }
 })
 

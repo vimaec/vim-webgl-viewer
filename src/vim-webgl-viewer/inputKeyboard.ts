@@ -153,7 +153,7 @@ export class InputKeyboard {
           event.preventDefault()
           break
         case KEYS.KEY_HOME:
-          this.camera.frameScene(this.viewer.render.boundingSphere)
+          this.viewer.lookAtModel()
           event.preventDefault()
           break
         // Selection

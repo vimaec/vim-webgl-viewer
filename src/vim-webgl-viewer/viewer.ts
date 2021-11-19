@@ -120,8 +120,8 @@ export class Viewer {
       this.render.addToModel([result])
     }
 
-    if (!this.render.boundingSphere) {
-      this.render.computeBoundingSphere(this.settings.getObjectMatrix())
+    if (!this.render.boundingBox) {
+      this.render.computeBoundingBox(this.settings.getObjectMatrix())
     }
 
     this.lookAtModel()
@@ -150,9 +150,9 @@ export class Viewer {
     console.log('Adding environement to scene')
     this.render.addToScene(this.environment.getElements())
 
-    const sphere = vim.geometry.boundingSphere.clone()
-    sphere.applyMatrix4(this.settings.getObjectMatrix())
-    this.render.boundingSphere = sphere
+    const box = vim.geometry.boundingBox.clone()
+    box.applyMatrix4(this.settings.getObjectMatrix())
+    this.render.boundingBox = box
     this.render.updateModel(this.settings.getObjectMatrix())
 
     console.log('Everything ready')
@@ -283,7 +283,7 @@ export class Viewer {
     if (this.selection.hasSelection()) {
       this.cameraController.lookAtSphere(this.selection.boundingSphere!)
     } else {
-      this.cameraController.frameScene(this.render.boundingSphere)
+      this.cameraController.frameScene(this.render.getBoundingSphere())
     }
   }
 
@@ -291,13 +291,14 @@ export class Viewer {
    * Move the camera to frame the whole model
    */
   lookAtModel () {
-    this.cameraController.frameScene(this.render.boundingSphere)
+    this.cameraController.frameScene(this.render.getBoundingSphere())
   }
 
-  // Called every frame in case settings are updated
-  private ApplySettings () {
-    this.render.scene.background = this.settings.getBackgroundColor()
-    this.environment.applySettings(this.settings)
+  /**
+   * Apply modified viewer settings
+   */
+  public ApplySettings () {
+    this.environment.applySettings(this.settings, this.render.boundingBox)
     this.cameraController.applySettings(this.settings)
   }
 
