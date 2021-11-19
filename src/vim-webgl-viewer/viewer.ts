@@ -294,8 +294,10 @@ export class Viewer {
     this.cameraController.frameScene(this.render.getBoundingSphere())
   }
 
-  // Called every frame in case settings are updated
-  private ApplySettings () {
+  /**
+   * Apply modified viewer settings
+   */
+  public ApplySettings () {
     this.environment.applySettings(this.settings, this.render.boundingBox)
     this.cameraController.applySettings(this.settings)
   }

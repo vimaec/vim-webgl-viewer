@@ -14,7 +14,8 @@ const viewer = new Viewer({
   plane: {
     show: true,
     texture:
-      'https://vimdevelopment01storage.blob.core.windows.net/samples/grid.png'
+      'https://vimdevelopment01storage.blob.core.windows.net/textures/vim-floor-radial-400.png',
+    opacity: 0.8
   }
 })
 

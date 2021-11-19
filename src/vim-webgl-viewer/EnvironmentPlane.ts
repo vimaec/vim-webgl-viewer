@@ -12,17 +12,18 @@ export class EnvironmentPlane {
 
   constructor () {
     this.geometry = new THREE.PlaneBufferGeometry()
-    this.material = new THREE.MeshBasicMaterial()
+    this.material = new THREE.MeshBasicMaterial({ transparent: true })
     this.mesh = new THREE.Mesh(this.geometry, this.material)
   }
 
   applySettings (settings: ViewerSettings, box: THREE.Box3) {
     // Visibily
     this.mesh.visible = settings.raw.plane.show
-    // Texture
+
+    // Looks
     this.applyTexture(settings.raw.plane.texture)
-    // Color
-    this.material.color.set(settings.getPlaneColor())
+    this.material.color.copy(settings.getPlaneColor())
+    this.material.opacity = settings.raw.plane.opacity
 
     // Position
     const center =

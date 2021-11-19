@@ -28,7 +28,7 @@ export const defaultSettings = {
       show: true,
       texture: null,
       opacity: 1,
-      color: { r: 0x99, g: 0x99, b: 0x99 },
+      color: { r: 0xff, g: 0xff, b: 0xff },
       size: 3
     },
     skylight: {

@@ -16,6 +16,7 @@
       margin: 0;
       padding: 0;
       overflow: hidden;
+      background: radial-gradient(circle at center, #E9E9E9, #CCCCCC);
     }
   </style>
     <title>VIM 3D Model Viewer</title>
@@ -38,7 +39,10 @@
                 rotation: { x: 270 },
             },
             plane: {
-                show: false
+              show: true,
+              texture:
+                'https://vimdevelopment01storage.blob.core.windows.net/textures/vim-floor-radial-400.png',
+              opacity: 0.8
             },
         });
     </script> 
