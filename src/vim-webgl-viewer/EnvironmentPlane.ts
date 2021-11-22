@@ -1,5 +1,5 @@
 import * as THREE from 'three'
-import { ViewerSettings } from './viewerSettings'
+import { ModelSettings, ViewerSettings } from './viewerSettings'
 
 export class EnvironmentPlane {
   source: string
@@ -16,7 +16,11 @@ export class EnvironmentPlane {
     this.mesh = new THREE.Mesh(this.geometry, this.material)
   }
 
-  applySettings (settings: ViewerSettings, box: THREE.Box3) {
+  applySettings (
+    settings: ViewerSettings,
+    modelSettings?: ModelSettings,
+    box?: THREE.Box3
+  ) {
     // Visibily
     this.mesh.visible = settings.raw.plane.show
 
@@ -25,17 +29,18 @@ export class EnvironmentPlane {
     this.material.color.copy(settings.getPlaneColor())
     this.material.opacity = settings.raw.plane.opacity
 
+    if (!box || !modelSettings) return
+
     // Position
-    const center =
-      box?.getCenter(new THREE.Vector3()) ?? new THREE.Vector3(0, 0, 0)
+    const center = box.getCenter(new THREE.Vector3())
     const position = new THREE.Vector3(
       center.x,
-      box.min.y - settings.getObjectScale().y,
+      box.min.y - modelSettings.getObjectScale().y,
       center.z
     )
     this.mesh.position.copy(position)
     // Rotation
-    const rotation = settings.getObjectRotation()
+    const rotation = modelSettings.getObjectRotation()
     this.mesh.quaternion.copy(rotation)
 
     // Scale
@@ -43,8 +48,6 @@ export class EnvironmentPlane {
     const size = (sphere?.radius ?? 1) * settings.raw.plane.size
     const scale = new THREE.Vector3(1, 1, 1).multiplyScalar(size)
     this.mesh.scale.copy(scale)
-
-    // this.mesh.matrix.compose(position, rotation, scale)
   }
 
   applyTexture (texUrl: string) {

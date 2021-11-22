@@ -17,10 +17,20 @@ export class VIMLoader {
   material: THREE.Material
   timerName: string
 
-  constructor (material: THREE.Material) {
-    this.material = material
+  constructor (material?: THREE.Material) {
+    this.material = material ?? this.createDefaultMaterial()
     this.timerName = 'VIM Loader'
   }
+
+  createDefaultMaterial = () =>
+    new THREE.MeshPhongMaterial({
+      color: 0x999999,
+      vertexColors: true,
+      flatShading: true,
+      // TODO: experiment without being double-sided
+      side: THREE.DoubleSide,
+      shininess: 70
+    })
 
   logStart () {
     console.time(this.timerName)
@@ -47,46 +57,43 @@ export class VIMLoader {
   load (
     url: string,
     onLoad?: (response: VimScene) => void,
-    onProgress?: (progress: ProgressEvent) => void,
+    onProgress?: (progress: ProgressEvent | 'processing') => void,
     onError?: (event: ErrorEvent) => void
   ) {
-    this.logStart()
-
     const loader = new THREE.FileLoader()
     loader.setResponseType('arraybuffer')
     loader.setRequestHeader({
       'Content-Encoding': 'gzip'
-      // 'Accept-Encoding': 'gzip, deflate'
     })
 
+    this.logStart()
     loader.load(
       url,
       (data: string | ArrayBuffer) => {
-        this.log('Data arrived')
         if (typeof data === 'string') {
           onError?.(new ErrorEvent('Unsupported string loader response'))
           return
         }
+        onProgress('processing')
+
+        // Try parse vim file
         let vim: any
         try {
           vim = this.parse(data)
         } catch (exception) {
-          const error = exception as Error
-          console.log(
-            `Error occured when loading VIM from ${url}, message = ${error} at = ${error.stack}`
-          )
-          onError?.(new ErrorEvent('Loading Error', error))
+          onError?.(new ErrorEvent('Loading Error', exception as Error))
           return
         }
-        // Don't catch exceptions in code provided by caller.
-        this.log('Calling onLoad() parameter')
+        this.logEnd()
+        // Don't catch exceptions in callback.
         onLoad?.(vim)
-        this.log('Finished calling onLoad() parameter')
       },
       onProgress,
-      onError
+      (error) => {
+        this.logEnd()
+        onError(error)
+      }
     )
-    this.log('Finished loading')
   }
 
   parseBFastFromArray (bytes: Uint8Array) {

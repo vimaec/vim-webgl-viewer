@@ -7,10 +7,6 @@ const url = params.has('model')
 
 const viewer = new Viewer({
   mouseOrbit: false,
-  url: url,
-  object: {
-    rotation: { x: 270 }
-  },
   plane: {
     show: true,
     texture:
@@ -20,13 +16,31 @@ const viewer = new Viewer({
   }
 })
 
+viewer.loadModel(
+  {
+    url: url,
+    rotation: { x: 270 }
+  },
+  (vim) => console.log('Callback: Viewer Ready!'),
+  (progress) => {
+    if (progress === 'processing') console.log('Callback: Processing')
+    else {
+      console.log(`Callback: Downloading: ${progress.loaded / 1000000} MB`)
+    }
+  },
+  (error) => console.error('Callback: Error: ' + error.message)
+)
+
 addEventListener(Viewer.stateChangeEvent, (event: CustomEvent<ViewerState>) => {
   const state = event.detail
-  if (state[0] === 'Downloading') console.log('Downloading : ' + state[1])
-  if (state[0] === 'Error') {
-    console.log('Error : ' + (state[1] as ErrorEvent).message)
+  if (state[0] === 'Downloading') {
+    console.log(`Event: Downloading: ${(state[1] as number) / 1000000} MB`)
   }
-  if (state === 'Ready') console.log('Viewer Ready')
+  if (state[0] === 'Error') {
+    console.log('Event: Error : ' + (state[1] as ErrorEvent).message)
+  }
+  if (state === 'Processing') console.log('Event: Processing')
+  if (state === 'Ready') console.log('Event: Viewer Ready')
 })
 
 globalThis.viewer = viewer

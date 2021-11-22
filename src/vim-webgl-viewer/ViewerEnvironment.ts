@@ -1,5 +1,5 @@
 import * as THREE from 'three'
-import { ViewerSettings } from './viewerSettings'
+import { ModelSettings, ViewerSettings } from './viewerSettings'
 import { EnvironmentPlane } from './EnvironmentPlane'
 
 /*
@@ -45,9 +45,13 @@ export class ViewerEnvironment {
     return [this.plane.mesh, this.skyLight, this.sunLight]
   }
 
-  applySettings (settings: ViewerSettings, box: THREE.Box3) {
+  applySettings (
+    settings: ViewerSettings,
+    modelSettings?: ModelSettings,
+    box?: THREE.Box3
+  ) {
     // Plane
-    this.plane.applySettings(settings, box)
+    this.plane.applySettings(settings, modelSettings, box)
 
     // Skylight
     this.skyLight.color.copy(settings.getSkylightColor())

@@ -5,69 +5,68 @@
 import * as THREE from 'three'
 import deepmerge from 'deepmerge'
 
-export const defaultSettings = {
-  default: {
-    camera: {
-      near: 0.1,
-      far: 15000,
-      fov: 50,
-      zoom: 1,
-      rotate: 1.0,
-      controls: {
-        speed: 0.1,
-        shiftMultiplier: 5.0,
-        zoomSpeed: 0.2,
-        rotateSpeed: 0.01,
-        panSpeed: 0.1
-      }
-    },
-    background: {
-      color: { r: 0x72, g: 0x64, b: 0x5b }
-    },
-    plane: {
-      show: true,
-      texture: null,
-      opacity: 1,
-      color: { r: 0xff, g: 0xff, b: 0xff },
-      size: 3
-    },
-    skylight: {
-      color: { h: 0.6, s: 1, l: 0.6 },
-      groundColor: { h: 0.095, s: 1, l: 0.75 },
-      intensity: 0.6
-    },
-    sunLight: {
-      position: { x: -47.0, y: 22, z: -45 },
-      color: { h: 0.1, s: 1, l: 0.95 },
-      intensity: 1
-    },
-    object: {
-      scale: 0.01,
-      position: { x: 0, y: 0, z: 0 },
-      rotation: { x: 0, y: 0, z: 0 },
-      material: {
-        color: { r: 0x00, g: 0x55, b: 0xff },
-        emissive: { r: 0x00, g: 0x00, b: 0x00 },
-        specular: { r: 0x11, g: 0x11, b: 0x11 },
-        flatShading: true,
-        shininess: 30,
-        wireframe: false
-      }
+export const defaultViewerSettings = {
+  camera: {
+    near: 0.1,
+    far: 15000,
+    fov: 50,
+    zoom: 1,
+    rotate: 1.0,
+    controls: {
+      speed: 0.1,
+      shiftMultiplier: 5.0,
+      zoomSpeed: 0.2,
+      rotateSpeed: 0.01,
+      panSpeed: 0.1
     }
+  },
+  background: {
+    color: { r: 0x72, g: 0x64, b: 0x5b }
+  },
+  plane: {
+    show: true,
+    texture: null,
+    opacity: 1,
+    color: { r: 0xff, g: 0xff, b: 0xff },
+    size: 3
+  },
+  skylight: {
+    color: { h: 0.6, s: 1, l: 0.6 },
+    groundColor: { h: 0.095, s: 1, l: 0.75 },
+    intensity: 0.6
+  },
+  sunLight: {
+    position: { x: -47.0, y: 22, z: -45 },
+    color: { h: 0.1, s: 1, l: 0.95 },
+    intensity: 1
   }
 }
 
-export class ViewerSettings {
-  raw: any
+export const defaultModelSettings = {
+  scale: 0.01,
+  position: { x: 0, y: 0, z: 0 },
+  rotation: { x: 0, y: 0, z: 0 },
+  material: {
+    color: { r: 0x00, g: 0x55, b: 0xff },
+    emissive: { r: 0x00, g: 0x00, b: 0x00 },
+    specular: { r: 0x11, g: 0x11, b: 0x11 },
+    flatShading: true,
+    shininess: 30,
+    wireframe: false
+  }
+}
 
-  constructor (raw: any) {
-    this.raw = deepmerge(defaultSettings.default, raw, undefined)
+export class ModelSettings {
+  data: any
+
+  constructor (options: any) {
+    this.data = deepmerge(defaultModelSettings, options, undefined)
   }
 
-  getPlaneColor = () => toRGBColor(this.raw.plane.color)
-
-  getBackgroundColor = () => toRGBColor(this.raw.background.color)
-
+  getURL = () => this.data.url
+  getObjectPosition = () => toVec(this.data.position)
+  getObjectRotation = () => toQuaternion(this.data.rotation)
+  getObjectScale = () => scalarToVec(this.data.scale)
   getObjectMatrix = () =>
     new THREE.Matrix4().compose(
       this.getObjectPosition(),
@@ -75,24 +74,12 @@ export class ViewerSettings {
       this.getObjectScale()
     )
 
-  getSkylightColor = () => toHSLColor(this.raw.skylight.color)
-  getSkylightGroundColor = () => toHSLColor(this.raw.skylight.groundColor)
-  getSkylightIntensity = () => this.raw.skylight.intensity
-
-  getSunlightColor = () => toHSLColor(this.raw.sunLight.color)
-  getSunlightPosition = () => toVec(this.raw.sunLight.position)
-  getSunlightIntensity = () => this.raw.sunLight.intensity
-
-  getObjectPosition = () => toVec(this.raw.object.position)
-  getObjectRotation = () => toQuaternion(this.raw.object.rotation)
-  getObjectScale = () => scalarToVec(this.raw.object.scale)
-
-  getColor = () => toRGBColor(this.raw.object.material.color)
-  getFlatShading = () => this.raw.object.material.flatShading
-  getEmissive = () => toRGBColor(this.raw.object.material.emissive)
-  getSpecular = () => toRGBColor(this.raw.object.material.specular)
-  getWireframe = () => this.raw.object.material.wireframe
-  getShininess = () => this.raw.object.material.shininess
+  getColor = () => toRGBColor(this.data.material.color)
+  getFlatShading = () => this.data.material.flatShading
+  getEmissive = () => toRGBColor(this.data.material.emissive)
+  getSpecular = () => toRGBColor(this.data.material.specular)
+  getWireframe = () => this.data.material.wireframe
+  getShininess = () => this.data.material.shininess
 
   updateMaterial (material: THREE.MeshPhongMaterial) {
     material.color = this.getColor() ?? material.color
@@ -104,6 +91,25 @@ export class ViewerSettings {
     material.wireframe = this.getWireframe() ?? material.wireframe
     material.shininess = this.getShininess() ?? material.shininess
   }
+}
+
+export class ViewerSettings {
+  raw: any
+
+  constructor (raw: any) {
+    this.raw = deepmerge(defaultViewerSettings, raw, undefined)
+  }
+
+  getPlaneColor = () => toRGBColor(this.raw.plane.color)
+  getBackgroundColor = () => toRGBColor(this.raw.background.color)
+
+  getSkylightColor = () => toHSLColor(this.raw.skylight.color)
+  getSkylightGroundColor = () => toHSLColor(this.raw.skylight.groundColor)
+  getSkylightIntensity = () => this.raw.skylight.intensity
+
+  getSunlightColor = () => toHSLColor(this.raw.sunLight.color)
+  getSunlightPosition = () => toVec(this.raw.sunLight.position)
+  getSunlightIntensity = () => this.raw.sunLight.intensity
 }
 
 function isRGBColor (obj: any): boolean {
