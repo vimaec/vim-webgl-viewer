@@ -112,7 +112,7 @@ export class Viewer {
         this.setState(
           progress === 'processing'
             ? 'Processing'
-            : ['Downloading', progress.loaded]
+            : ['Downloading', progress?.loaded ?? 0]
         )
         onProgress?.call(progress)
       },
