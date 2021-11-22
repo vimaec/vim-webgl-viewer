@@ -383,7 +383,7 @@ export class VIMLoader {
       1
     )
     mergedMesh.setMatrixAt(0, new THREE.Matrix4())
-    mergedbufferGeometry.computeBoundingSphere()
+    mergedbufferGeometry.computeBoundingBox()
     // Used by picking to distinguish merged meshes
     mergedMesh.userData.merged = true
     return mergedMesh
@@ -426,7 +426,7 @@ export class VIMLoader {
     g3d: VimG3d
   ): VimSceneGeometry {
     const instanceCounters = new Int32Array(meshes.length)
-    let boundingSphere: THREE.Sphere | null = null
+    let boundingBox: THREE.Box3 | null = null
     const nodeIndexToMeshInstance = new Map<number, [Mesh, number]>()
     const meshIdToNodeIndex = new Map<number, number[]>()
     const resultMeshes: Mesh[] = []
@@ -456,14 +456,14 @@ export class VIMLoader {
       const matrix = getMatrixFromNodeIndex(g3d, i)
       mesh.setMatrixAt(count, matrix)
 
-      // Compute total bounding sphere
-      const sphere = mesh.geometry.boundingSphere!.clone()
-      sphere.applyMatrix4(matrix)
-      boundingSphere = boundingSphere ? boundingSphere.union(sphere) : sphere
+      // Compute total bounding box
+      const box = mesh.geometry.boundingBox!.clone()
+      box.applyMatrix4(matrix)
+      boundingBox = boundingBox ? boundingBox.union(box) : box
     }
     return new VimSceneGeometry(
       resultMeshes,
-      boundingSphere ?? new THREE.Sphere(),
+      boundingBox ?? new THREE.Box3(),
       nodeIndexToMeshInstance,
       meshIdToNodeIndex
     )
@@ -491,7 +491,6 @@ export class BufferGeometryBuilder {
 
     for (let mesh = 0; mesh < meshCount; mesh++) {
       const result = this.createBufferGeometryFromMeshIndex(mesh)
-      result?.computeBoundingSphere()
       result?.computeBoundingBox()
       resultMeshes.push(result)
     }
