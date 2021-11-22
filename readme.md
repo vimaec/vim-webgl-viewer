@@ -36,9 +36,10 @@ Virtually the simplest usage of the VIM viewer is the following example:
     <script src="https://unpkg.com/three@0.133.1/build/three.min.js"></script>
     <script src="https://unpkg.com/vim-webgl-viewer"></script>
     <script>
-      var viewer = new vim.Viewer({
+      var viewer = new vim.Viewer()
+      viewer.loadModel({
         url: 'https://vim.azureedge.net/samples/residence.vim',
-        object: { rotation: { x: 270 } }
+        rotation: { x: 270 }
       })
     </script>
   </body>
