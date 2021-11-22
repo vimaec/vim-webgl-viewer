@@ -31,21 +31,31 @@
             ? params.get('model')
             : 'https://vim.azureedge.net/samples/residence.vim';
 
-        var viewer = new vim.Viewer({
-            fileExtension: params.get('extension'),
-            mouseOrbit: false,
-            url: url,
-            object: {
-                rotation: { x: 270 },
-            },
-            plane: {
-              show: true,
-              texture:
+        const viewer = new Viewer({
+          mouseOrbit: false,
+          plane: {
+            show: true,
+            texture:
               'https://vimdevelopment01storage.blob.core.windows.net/textures/vim-floor-soft.png',
-              opacity: 1,
-              size: 5
-            },
-        });
+            opacity: 1,
+            size: 5
+          }
+        })
+
+        viewer.loadModel(
+          {
+            url: url,
+            rotation: { x: 270 }
+          },
+          (vim) => console.log('Callback: Viewer Ready!'),
+          (progress) => {
+            if (progress === 'processing') console.log('Callback: Processing')
+            else {
+              console.log(`Callback: Downloading: ${progress.loaded / 1000000} MB`)
+            }
+          },
+          (error) => console.error('Callback: Error: ' + error.message)
+        )
     </script> 
 </body>
 </html>
