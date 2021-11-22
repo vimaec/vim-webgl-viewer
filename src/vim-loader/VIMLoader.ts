@@ -71,27 +71,27 @@ export class VIMLoader {
       url,
       (data: string | ArrayBuffer) => {
         if (typeof data === 'string') {
-          onError?.call(new ErrorEvent('Unsupported string loader response'))
+          onError?.(new ErrorEvent('Unsupported string loader response'))
           return
         }
-        onProgress?.call('processing')
+        onProgress?.('processing')
 
         // Try parse vim file
         let vim: any
         try {
           vim = this.parse(data)
         } catch (exception) {
-          onError?.call(new ErrorEvent('Loading Error', exception as Error))
+          onError?.(new ErrorEvent('Loading Error', exception as Error))
           return
         }
         this.logEnd()
         // Don't catch exceptions in callback.
-        onLoad?.call(vim)
+        onLoad?.(vim)
       },
       onProgress,
       (error) => {
         this.logEnd()
-        onError?.call(error)
+        onError?.(error)
       }
     )
   }

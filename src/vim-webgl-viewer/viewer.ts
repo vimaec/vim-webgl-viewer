@@ -106,7 +106,7 @@ export class Viewer {
       (vim) => {
         this.onVimLoaded(vim)
         this.setState('Ready')
-        onLoad?.call(vim)
+        onLoad?.(vim)
       },
       (progress) => {
         this.setState(
@@ -114,12 +114,12 @@ export class Viewer {
             ? 'Processing'
             : ['Downloading', progress?.loaded ?? 0]
         )
-        onProgress?.call(progress)
+        onProgress?.(progress)
       },
       (error) => {
         this.modelSettings = null
         this.setState(['Error', error])
-        onError?.call(error)
+        onError?.(error)
       }
     )
   }
