@@ -32,12 +32,8 @@
             : 'https://vim.azureedge.net/samples/residence.vim';
 
         var viewer = new vim.Viewer({
-            fileExtension: params.get('extension'),
+
             mouseOrbit: false,
-            url: url,
-            object: {
-                rotation: { x: 270 },
-            },
             plane: {
               show: true,
               texture:
@@ -46,6 +42,12 @@
               size: 5
             },
         });
+
+        viewer.loadModel({
+            fileExtension: params.get('extension'),
+            url: url,
+            rotation: { x: 270 }
+        })
     </script> 
 </body>
 </html>
