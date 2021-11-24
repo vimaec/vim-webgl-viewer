@@ -95,12 +95,12 @@ class ViewerCamera {
   }
 
   applySettings (newSettings: ViewerSettings) {
-    // TODO: camera updates aren't working
     this.MouseOrbit = newSettings.raw.mouseOrbit
     this.camera.fov = newSettings.raw.camera.fov
     this.camera.zoom = newSettings.raw.camera.zoom
     this.camera.near = newSettings.raw.camera.near
     this.camera.far = newSettings.raw.camera.far
+    this.camera.updateProjectionMatrix()
     this.settings = newSettings
   }
 
