@@ -52,7 +52,7 @@ export class InputMouse {
     )
 
     if (event.buttons & 2) {
-      this.camera.panCameraBy(delta)
+      this.camera.TruckPedestalCameraBy(delta)
     } else {
       // delta.multiplyScalar(this.MouseRotateSensitivity)
       this.camera.rotateCameraBy(delta)
