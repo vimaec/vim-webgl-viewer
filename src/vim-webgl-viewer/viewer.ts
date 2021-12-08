@@ -325,7 +325,10 @@ export class Viewer {
       this.modelSettings,
       this.render.boundingBox
     )
-    this.cameraController.applySettings(this.settings)
+    this.cameraController.applySettings(
+      this.settings,
+      this.render.getBoundingSphere()
+    )
   }
 
   // TODO: Move to geometry layer

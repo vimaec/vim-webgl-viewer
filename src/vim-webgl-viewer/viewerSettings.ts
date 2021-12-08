@@ -13,11 +13,9 @@ export const defaultViewerSettings = {
     zoom: 1,
     rotate: 1.0,
     controls: {
-      speed: 0.1,
-      shiftMultiplier: 5.0,
-      zoomSpeed: 0.2,
-      rotateSpeed: 0.01,
-      panSpeed: 0.1
+      modelReferenceSize: 1,
+      rotateSpeed: 1,
+      moveSpeed: 1
     }
   },
   background: {
@@ -110,6 +108,11 @@ export class ViewerSettings {
   getSunlightColor = () => toHSLColor(this.raw.sunLight.color)
   getSunlightPosition = () => toVec(this.raw.sunLight.position)
   getSunlightIntensity = () => this.raw.sunLight.intensity
+
+  getCameraMoveSpeed = () => this.raw.camera.controls.moveSpeed
+  getCameraRotateSpeed = () => this.raw.camera.controls.rotateSpeed
+  getCameraReferenceModelSize = () =>
+    this.raw.camera.controls.modelReferenceSize
 }
 
 function isRGBColor (obj: any): boolean {
