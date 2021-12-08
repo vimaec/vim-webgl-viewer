@@ -33,6 +33,10 @@ export class InputMouse {
     this.ctrlDown = value
   }
 
+  onMouseOut = (_: any) => {
+    this.isMouseDown = this.hasMouseMoved = false
+  }
+
   onMouseMove = (event: any) => {
     if (!this.isMouseDown) {
       return
@@ -93,6 +97,7 @@ export class InputMouse {
       this.onMouseClick(new THREE.Vector2(event.x, event.y))
     }
     this.isMouseDown = false
+    event.preventDefault()
   }
 
   onMouseClick = (position: Vector2) => {
