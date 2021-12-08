@@ -6,6 +6,9 @@ import * as THREE from 'three'
 import deepmerge from 'deepmerge'
 
 export const defaultViewerSettings = {
+  canvas: {
+    resizeDelay: 200
+  },
   camera: {
     near: 0.1,
     far: 15000,
@@ -113,6 +116,8 @@ export class ViewerSettings {
   getCameraRotateSpeed = () => this.raw.camera.controls.rotateSpeed
   getCameraReferenceModelSize = () =>
     this.raw.camera.controls.modelReferenceSize
+
+  getCanvasResizeDelay = () => this.raw.canvas.resizeDelay
 }
 
 function isRGBColor (obj: any): boolean {

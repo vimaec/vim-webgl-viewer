@@ -48,7 +48,7 @@ export class Viewer {
     this.settings = new ViewerSettings(options)
 
     const canvas = Viewer.getOrCreateCanvas(this.settings.raw.canvasId)
-    this.render = new ViewerRenderer(canvas)
+    this.render = new ViewerRenderer(canvas, this.settings)
 
     this.cameraController = new ViewerCamera(this.render.camera, this.settings)
 
