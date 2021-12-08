@@ -64,14 +64,10 @@ export class InputTouch {
   }
 
   onDoubleDrag = (delta: THREE.Vector2) => {
-    // const matrix = this.viewer.getModelMatrix()
-    // const move = new THREE.Vector3(delta.x, 0, delta.y).applyMatrix4(matrix)
     this.camera.TruckPedestalCameraBy(delta)
   }
 
   onPinchOrSpread = (delta: number) => {
-    // const matrix = this.viewer.getModelMatrix()
-    // const move = new THREE.Vector3(0, delta, 0).applyMatrix4(matrix)
     this.camera.dollyCameraBy(delta)
   }
 
@@ -104,13 +100,15 @@ export class InputTouch {
         .clone()
         .sub(p)
         .multiply(
-          new THREE.Vector2(1 / window.innerWidth, 1 / window.innerHeight)
+          // -1 to invert movement
+          new THREE.Vector2(-1 / window.innerWidth, -1 / window.innerHeight)
         )
 
       const zoom = p1.distanceTo(p2)
       const prevZoom = this.touchStart1.distanceTo(this.touchStart2)
       const min = Math.min(window.innerWidth, window.innerHeight)
-      const zoomDelta = (zoom - prevZoom) / min
+      // -1 to invert movement
+      const zoomDelta = (zoom - prevZoom) / -min
 
       this.touchStart = p
       this.touchStart1 = p1
