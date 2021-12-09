@@ -24,7 +24,7 @@ export class VimScene {
 
   private mapElementIndexToNodeIndices (): Map<number, number[]> {
     const map = new Map<number, number[]>()
-    const nodeElements = this.getElementTable(this.getNodeTable())
+    const nodeElements = this.getElementIndices(this.getNodeTable())
     const nodeCount = nodeElements.length
 
     for (let node = 0; node < nodeCount; node++) {
@@ -43,7 +43,7 @@ export class VimScene {
 
   private mapElementIdToIndex (): Map<number, number> {
     const map = new Map<number, number>()
-    const elementIds = this.getElementTable().get('Id')
+    const elementIds = this.getIntColumn(this.getElementTable(), 'Id')
 
     for (let element = 0; element < elementIds.length; element++) {
       const id = elementIds[element]
@@ -65,8 +65,32 @@ export class VimScene {
   getElementIndexFromElementId = (elementId: number) =>
     this.elementIdToIndex.get(elementId)
 
-  getElementTable = (from: any = this.vim.bim) =>
-    from.get(Vim.tableElement) ?? from.get(Vim.tableElementLegacy)
+  getStringColumn = (table: any, colNameNoPrefix: string) =>
+    table?.get('string:' + colNameNoPrefix)
+
+  getIndexColumn = (table: any, tableName: string, fieldName: string) =>
+    table?.get(`index:${tableName}:${fieldName}`)
+
+  getDataColumn = (table: any, typePrefix, colNameNoPrefix) =>
+    table?.get(typePrefix + colNameNoPrefix) ?? table?.get('numeric:' + colNameNoPrefix) // Backwards compatible call with vim0.9
+
+  getIntColumn = (table: any, colNameNoPrefix: string) =>
+    this.getDataColumn(table, 'int:', colNameNoPrefix)
+
+  getByteColumn = (table: any, colNameNoPrefix: string) =>
+    this.getDataColumn(table, 'byte:', colNameNoPrefix)
+
+  getFloatColumn = (table: any, colNameNoPrefix: string) =>
+    this.getDataColumn(table, 'float:', colNameNoPrefix)
+
+  getDoubleColumn = (table: any, colNameNoPrefix: string) =>
+    this.getDataColumn(table, 'double:', colNameNoPrefix)
+
+  getElementIndices = (table: any) =>
+    this.getIndexColumn(table, Vim.tableElement, 'Element') ?? table?.get(Vim.tableElementLegacy) // Backwards compatible call with vim0.9
+
+  getElementTable = () =>
+    this.vim.bim?.get(Vim.tableElement) ?? this.vim.bim?.get(Vim.tableElementLegacy)
 
   getNodeTable = () => this.vim.bim.get(Vim.tableNode)
 
@@ -120,7 +144,7 @@ export class VimScene {
     const node = this.getNodeTable()
     if (!node) return
 
-    const elements = this.getElementTable(node)
+    const elements = this.getElementIndices(node)
     if (!elements) return
 
     return elements[nodeIndex]
@@ -132,7 +156,7 @@ export class VimScene {
     const elementIndex = this.getElementIndexFromNodeIndex(nodeIndex)
     if (elementIndex === undefined) return
 
-    const ids = this.getElementTable()?.get('Id')
+    const ids = this.getIntColumn(this.getElementTable(), 'Id')
     if (!ids) return
 
     return ids[elementIndex]
@@ -142,7 +166,7 @@ export class VimScene {
   getElementName (elementIndex: number): string | undefined {
     if (elementIndex < 0) throw new Error('Invalid negative index.')
 
-    const names = this.getElementTable().get('Name')
+    const names = this.getStringColumn(this.getElementTable(), 'Name')
     if (!names) return
 
     const nameIndex = names[elementIndex] as number
