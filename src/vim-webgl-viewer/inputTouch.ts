@@ -5,8 +5,8 @@ import { Viewer } from './viewer'
 
 export class InputTouch {
   // Consts
-  TouchMoveSensitivity: number
-  TouchRotateSensitivity: number
+  // TouchMoveSensitivity: number
+  // TouchRotateSensitivity: number
   TapDurationMs: number = 500
 
   // Dependencies
@@ -26,8 +26,8 @@ export class InputTouch {
     this.mouse = mouse
 
     // TODO: Move to settings
-    this.TouchMoveSensitivity = this.mouse.MouseMoveSensitivity * 20
-    this.TouchRotateSensitivity = this.mouse.MouseRotateSensitivity
+    // this.TouchMoveSensitivity = this.mouse.MouseMoveSensitivity * 20
+    // this.TouchRotateSensitivity = this.mouse.MouseRotateSensitivity
   }
 
   reset = () => {
@@ -64,15 +64,11 @@ export class InputTouch {
   }
 
   onDoubleDrag = (delta: THREE.Vector2) => {
-    const matrix = this.viewer.getModelMatrix()
-    const move = new THREE.Vector3(delta.x, 0, delta.y).applyMatrix4(matrix)
-    this.camera.moveCameraBy(move, delta.length())
+    this.camera.TruckPedestalCameraBy(delta)
   }
 
   onPinchOrSpread = (delta: number) => {
-    const matrix = this.viewer.getModelMatrix()
-    const move = new THREE.Vector3(0, delta, 0).applyMatrix4(matrix)
-    this.camera.moveCameraBy(move, Math.abs(delta))
+    this.camera.dollyCameraBy(delta)
   }
 
   onTouchMove = (event: any) => {
@@ -82,7 +78,13 @@ export class InputTouch {
 
     if (event.touches.length === 1) {
       const pos = this.touchToVector(event.touches[0])
-      const delta = pos.clone().sub(this.touchStart)
+      const delta = pos
+        .clone()
+        .sub(this.touchStart)
+        .multiply(
+          new THREE.Vector2(1 / window.innerWidth, 1 / window.innerHeight)
+        )
+
       this.touchStart = pos
       this.onDrag(delta)
       return
@@ -94,10 +96,19 @@ export class InputTouch {
       const p2 = this.touchToVector(event.touches[1])
       const p = this.average(p1, p2)
 
-      const moveDelta = this.touchStart.clone().sub(p)
+      const moveDelta = this.touchStart
+        .clone()
+        .sub(p)
+        .multiply(
+          // -1 to invert movement
+          new THREE.Vector2(-1 / window.innerWidth, -1 / window.innerHeight)
+        )
+
       const zoom = p1.distanceTo(p2)
       const prevZoom = this.touchStart1.distanceTo(this.touchStart2)
-      const zoomDelta = zoom - prevZoom
+      const min = Math.min(window.innerWidth, window.innerHeight)
+      // -1 to invert movement
+      const zoomDelta = (zoom - prevZoom) / -min
 
       this.touchStart = p
       this.touchStart1 = p1

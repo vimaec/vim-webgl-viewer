@@ -38,6 +38,7 @@ export class ViewerInput {
     this.reg(this.canvas, 'wheel', this.mouse.onMouseWheel)
     this.reg(this.canvas, 'mousemove', this.mouse.onMouseMove)
     this.reg(this.canvas, 'mouseup', this.mouse.onMouseUp)
+    this.reg(this.canvas, 'mouseout', this.mouse.onMouseOut)
 
     // touch
     this.reg(this.canvas, 'touchstart', this.touch.onTouchStart)
@@ -47,6 +48,9 @@ export class ViewerInput {
     // keys
     this.reg(document, 'keydown', this.keyboard.onKeyDown)
     this.reg(document, 'keyup', this.keyboard.onKeyUp)
+
+    // Disable right click menu
+    this.reg(this.canvas, 'contextmenu', (e) => e.preventDefault())
   }
 
   unregister = () => {

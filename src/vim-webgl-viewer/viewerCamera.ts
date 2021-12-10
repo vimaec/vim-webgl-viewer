@@ -3,6 +3,7 @@
 */
 
 import * as THREE from 'three'
+import { MathUtils } from 'three'
 import { ViewerSettings } from './viewerSettings'
 
 const direction = {
@@ -18,13 +19,13 @@ class ViewerCamera {
   MinOrbitalDistance: number = 1.0
 
   camera: THREE.PerspectiveCamera
-  settings: ViewerSettings
 
   Rotation: THREE.Vector2
   InputVelocity: THREE.Vector3
   Velocity: THREE.Vector3
   Impulse: THREE.Vector3
   SpeedMultiplier: number
+
   Orbit: boolean
   CenterOfInterest: THREE.Vector3
   OrbitalTarget: THREE.Vector3
@@ -37,18 +38,23 @@ class ViewerCamera {
   MouseMoveDolly: Boolean = false
   MouseMovePan: Boolean = false
 
+  // Settings
+
   VelocityBlendFactor: number = 0.0001
+  ModelSizeMultiplier: number = 1
+  MoveSpeed: number = 1
+  RotateSpeed: number = 1
 
   constructor (camera: THREE.PerspectiveCamera, settings: ViewerSettings) {
     this.camera = camera
-    this.settings = settings
     this.applySettings(settings)
 
     this.Rotation = new THREE.Vector2(0, 0)
     this.InputVelocity = new THREE.Vector3(0, 0, 0)
     this.Velocity = new THREE.Vector3(0, 0, 0)
     this.Impulse = new THREE.Vector3(0, 0, 0)
-    this.SpeedMultiplier = 0.0
+    this.SpeedMultiplier = 0
+    this.ModelSizeMultiplier = 1
     this.Orbit = false
     this.CenterOfInterest = new THREE.Vector3(0, 0, 0)
     this.OrbitalTarget = new THREE.Vector3(0, 0, 0)
@@ -94,18 +100,32 @@ class ViewerCamera {
     this.TargetOrbitalDistance = this.CurrentOrbitalDistance
   }
 
-  applySettings (newSettings: ViewerSettings) {
-    // TODO: camera updates aren't working
+  applySettings (newSettings: ViewerSettings, modelSphere?: THREE.Sphere) {
+    // Mode
+
     this.MouseOrbit = newSettings.raw.mouseOrbit
+
+    // Camera
     this.camera.fov = newSettings.raw.camera.fov
     this.camera.zoom = newSettings.raw.camera.zoom
     this.camera.near = newSettings.raw.camera.near
     this.camera.far = newSettings.raw.camera.far
-    this.settings = newSettings
+
+    this.camera.updateProjectionMatrix()
+
+    // Controls
+    if (modelSphere) {
+      this.ModelSizeMultiplier =
+        modelSphere.radius / newSettings.getCameraReferenceModelSize()
+    }
+    this.MoveSpeed = newSettings.getCameraMoveSpeed()
+    this.RotateSpeed = newSettings.getCameraRotateSpeed()
   }
 
   applyLocalImpulse (impulse: THREE.Vector3) {
-    const localImpulse = impulse.clone()
+    const localImpulse = impulse
+      .clone()
+      .multiplyScalar(this.getSpeedMultiplier())
     localImpulse.applyQuaternion(this.camera.quaternion)
     this.Impulse.add(localImpulse)
   }
@@ -125,24 +145,39 @@ class ViewerCamera {
     if (onlyHoriz) this.camera.position.y = y
   }
 
-  panCameraBy (pt: THREE.Vector2) {
-    const speed = this.settings.raw.camera.controls.panSpeed
-    this.moveCameraBy(new THREE.Vector3(-pt.x, pt.y, 0), speed)
+  TruckPedestalCameraBy (pt: THREE.Vector2) {
+    this.moveCameraBy(
+      new THREE.Vector3(-pt.x, pt.y, 0),
+      this.MoveSpeed * this.getSpeedMultiplier()
+    )
+  }
+
+  dollyCameraBy (amount: number) {
+    this.moveCameraBy(
+      new THREE.Vector3(0, 0, amount),
+      this.MoveSpeed * this.getSpeedMultiplier()
+    )
   }
 
   rotateCameraBy (pt: THREE.Vector2) {
     const euler = new THREE.Euler(0, 0, 0, 'YXZ')
     euler.setFromQuaternion(this.camera.quaternion)
-    euler.y += -pt.x * this.settings.raw.camera.controls.rotateSpeed
-    euler.x += -pt.y * this.settings.raw.camera.controls.rotateSpeed
+
+    // When moving the mouse one full sreen
+    // Orbit will rotate 180 degree around the model
+    // Basic will rotate camera by one full FOV
+    const ratio = this.MouseOrbit
+      ? Math.PI
+      : MathUtils.DEG2RAD * this.camera.fov
+
+    euler.y -= pt.x * ratio * this.RotateSpeed
+    euler.x -= pt.y * ratio * this.RotateSpeed
     euler.z = 0
-    const PI_2 = Math.PI / 2
-    const minPolarAngle = -2 * Math.PI
-    const maxPolarAngle = 2 * Math.PI
-    euler.x = Math.max(
-      PI_2 - maxPolarAngle,
-      Math.min(PI_2 - minPolarAngle, euler.x)
-    )
+
+    // Clamp X rotation to prevent performing a loop.
+    const max = Math.PI * 0.48
+    euler.x = Math.max(-max, Math.min(max, euler.x))
+
     this.camera.quaternion.setFromEuler(euler)
 
     if (!this.MouseOrbit) {
@@ -155,7 +190,7 @@ class ViewerCamera {
   }
 
   getSpeedMultiplier () {
-    return Math.pow(1.1, this.SpeedMultiplier)
+    return Math.pow(1.1, this.SpeedMultiplier) * this.ModelSizeMultiplier
   }
 
   updateOrbitalDistance (diff: number) {
