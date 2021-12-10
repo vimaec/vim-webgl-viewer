@@ -168,36 +168,41 @@ export class VIMLoader {
   constructEntityTable (bfast: BFast) {
     const result = new Map<string, any>()
     for (let i = 0; i < bfast.buffers.length; ++i) {
-      const tmp = bfast.names[i].split(':')
-      const columnType = tmp[0]
-      const columnName = tmp[1]
+      const columnName = bfast.names[i]
+      // eslint-disable-next-line no-unused-vars
+      const [columnType, ..._] = columnName.split(':')
       const buffer = bfast.buffers[i]
-      let columnData
-      if (columnType === 'numeric') {
-        columnData = new Float64Array(
-          buffer.buffer,
-          buffer.byteOffset,
-          buffer.byteLength / 8
-        )
-        result.set(columnName, columnData)
-      } else if (columnType === 'string' || columnType === 'index') {
-        columnData = new Int32Array(
-          buffer.buffer,
-          buffer.byteOffset,
-          buffer.byteLength / 4
-        )
-        result.set(columnName, columnData)
-      } else if (columnType === 'properties') {
-        columnData = new Int32Array(
-          buffer.buffer,
-          buffer.byteOffset,
-          buffer.byteLength / 4
-        )
-        // TODO Fix this JS
-        result.set('properties', buffer)
-      } else {
-        throw new Error('Unrecognized column type ' + columnType)
+
+      let length
+      let ctor
+      switch (columnType) {
+        case 'byte':
+          length = buffer.byteLength
+          ctor = Int8Array
+          break
+        case 'float':
+          length = buffer.byteLength / 4
+          ctor = Float32Array
+          break
+        case 'double':
+        case 'numeric': // legacy (vim0.9)
+          length = buffer.byteLength / 8
+          ctor = Float64Array
+          break
+        case 'string': // i.e. indices into the string table
+        case 'index':
+        case 'int':
+        case 'properties': // legacy (vim0.9)
+          length = buffer.byteLength / 4
+          ctor = Int32Array
+          break
+        default:
+          throw new Error('Unrecognized column type ' + columnType)
       }
+
+      // eslint-disable-next-line new-cap
+      const columnData = new ctor(buffer.buffer, buffer.byteOffset, length)
+      result.set(columnName, columnData)
     }
     return result
   }

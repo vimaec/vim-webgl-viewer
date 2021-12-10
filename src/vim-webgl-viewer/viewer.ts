@@ -48,7 +48,7 @@ export class Viewer {
     this.settings = new ViewerSettings(options)
 
     const canvas = Viewer.getOrCreateCanvas(this.settings.raw.canvasId)
-    this.render = new ViewerRenderer(canvas)
+    this.render = new ViewerRenderer(canvas, this.settings)
 
     this.cameraController = new ViewerCamera(this.render.camera, this.settings)
 
@@ -325,7 +325,10 @@ export class Viewer {
       this.modelSettings,
       this.render.boundingBox
     )
-    this.cameraController.applySettings(this.settings)
+    this.cameraController.applySettings(
+      this.settings,
+      this.render.getBoundingSphere()
+    )
   }
 
   // TODO: Move to geometry layer

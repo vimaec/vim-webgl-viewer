@@ -1,4 +1,5 @@
 import * as THREE from 'three'
+import { ViewerSettings } from './viewerSettings'
 
 export class ViewerRenderer {
   camera: THREE.PerspectiveCamera
@@ -10,7 +11,7 @@ export class ViewerRenderer {
   boundingBox: THREE.Box3
   meshes: THREE.Object3D[] = []
 
-  constructor (canvas: HTMLCanvasElement) {
+  constructor (canvas: HTMLCanvasElement, settings: ViewerSettings) {
     this.renderer = new THREE.WebGLRenderer({
       canvas: canvas,
       antialias: true,
@@ -29,6 +30,27 @@ export class ViewerRenderer {
     this.scene = new THREE.Scene()
     this.boundingBox = new THREE.Box3()
     this.fitToCanvas()
+    this.setOnResize(this.fitToCanvas, settings.getCanvasResizeDelay())
+  }
+
+  /**
+   * Set a callback for canvas resize with debouncing
+   * https://stackoverflow.com/questions/5825447/javascript-event-for-canvas-resize/30688151
+   * @param callback code to be called
+   * @param timeout time after the last resize before code will be called
+   */
+  setOnResize (callback, timeout) {
+    let timerId
+    window.addEventListener('resize', function () {
+      if (timerId !== undefined) {
+        clearTimeout(timerId)
+        timerId = undefined
+      }
+      timerId = setTimeout(function () {
+        timerId = undefined
+        callback()
+      }, timeout)
+    })
   }
 
   getBoundingSphere () {
@@ -39,7 +61,7 @@ export class ViewerRenderer {
     this.renderer.render(this.scene, this.camera)
   }
 
-  fitToCanvas () {
+  fitToCanvas = () => {
     const w = window.innerWidth / window.devicePixelRatio
     const h = window.innerHeight / window.devicePixelRatio
     this.renderer.setSize(w, h, false)

@@ -94,12 +94,8 @@ export const KEYS = {
 }
 
 export class InputKeyboard {
-  // Consts
-  MaximumInclination: number = 1.4
+  // Settings
   ShiftMultiplier: number = 3.0
-  MinimumSpeedDifference: number = 0.01
-  VelocityBlendFactor: number = 0.0001
-  BaseKeyboardSpeed: number = 5
 
   // Dependencies
   camera: ViewerCamera
@@ -168,9 +164,7 @@ export class InputKeyboard {
       }
     }
 
-    const speed = keyDown
-      ? this.BaseKeyboardSpeed * (this.shftDown ? this.ShiftMultiplier : 1.0)
-      : 0.0
+    const speed = keyDown ? (this.shftDown ? this.ShiftMultiplier : 1.0) : 0.0
     switch (event.keyCode) {
       // Camera
       case KEYS.KEY_W:

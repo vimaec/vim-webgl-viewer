@@ -36,9 +36,10 @@ Virtually the simplest usage of the VIM viewer is the following example:
     <script src="https://unpkg.com/three@0.133.1/build/three.min.js"></script>
     <script src="https://unpkg.com/vim-webgl-viewer"></script>
     <script>
-      var viewer = new vim.Viewer({
+      var viewer = new vim.Viewer()
+      viewer.loadModel({
         url: 'https://vim.azureedge.net/samples/residence.vim',
-        object: { rotation: { x: 270 } }
+        rotation: { x: 270 }
       })
     </script>
   </body>
@@ -111,6 +112,39 @@ command line by writing `npm run <script-name>` where `<script-name>` is the nam
 ## The Sources and Dependencies
 
 The distributable file `vim-webgl-viewer.iife.js` does not contain the underlying source for [Three.JS](https://threejs.org) to avoid duplication. Please include Three.JS on your own.
+
+## Camera Controls
+
+### Keyboard
+**W/Up:** Move camera forward  
+**A/Left:** Move camera to the left  
+**S/Down:** Move camera backward  
+**D/Right:** Move camera to the right  
+**E:** Move camera up  
+**Q:** Move camera down  
+**Shift + direction:** faster camera movement  
+**+:** Increase camera speed  
+**-:** Decrease camera speed  
+
+**F8:** Toggle orbit mode  
+**Home:** Look at model  
+**Escape:** Clear selection  
+**Z:** Look at selection  
+
+### Mouse
+**Hold left click + Move mouse:** Tilt/Pan camera  
+**Hold right click + Move mouse:** Truck/Pedestal camera  
+**Mouse wheel:** Dolly Camera  
+**Left click:** Select object  
+**Ctrl + Mouse wheel:** Increase/Decrease camera speed  
+
+### Touch
+**One Finger swipe:** Tilt/Pan camera  
+**Two Finger swipe:** Truck/Pedestal camera  
+**Two Finger pinch/spread:** Dolly Camera  
+
+(https://blog.storyblocks.com/video-tutorials/7-basic-camera-movements/)
+
 
 ## Meshes, Nodes and Elements
 

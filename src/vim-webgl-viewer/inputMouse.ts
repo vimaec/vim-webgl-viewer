@@ -5,9 +5,9 @@ import { Mesh, Vector2 } from 'three'
 
 export class InputMouse {
   // Consts
-  MouseMoveSensitivity: number = 0.05
-  MouseRotateSensitivity: number = 0.2
-  MouseScrollSensitivity: number = 0.05
+  // MouseMoveSensitivity: number = 0.05
+  // MouseRotateSensitivity: number = 0.2
+  // MouseScrollSensitivity: number = 0.02
 
   // Dependencies
   private camera: ViewerCamera
@@ -33,6 +33,10 @@ export class InputMouse {
     this.ctrlDown = value
   }
 
+  onMouseOut = (_: any) => {
+    this.isMouseDown = this.hasMouseMoved = false
+  }
+
   onMouseMove = (event: any) => {
     if (!this.isMouseDown) {
       return
@@ -46,12 +50,15 @@ export class InputMouse {
       event.movementX || event.mozMovementX || event.webkitMovementX || 0
     const deltaY =
       event.movementY || event.mozMovementY || event.webkitMovementY || 0
-    const delta = new THREE.Vector2(deltaX, deltaY)
+    const delta = new THREE.Vector2(
+      deltaX / window.innerWidth,
+      deltaY / window.innerHeight
+    )
 
     if (event.buttons & 2) {
-      this.camera.panCameraBy(delta)
+      this.camera.TruckPedestalCameraBy(delta)
     } else {
-      delta.multiplyScalar(this.MouseRotateSensitivity)
+      // delta.multiplyScalar(this.MouseRotateSensitivity)
       this.camera.rotateCameraBy(delta)
     }
   }
@@ -59,20 +66,18 @@ export class InputMouse {
   onMouseWheel = (event: any) => {
     event.preventDefault()
     event.stopPropagation()
+
+    // Value of event.deltaY will change from browser to browser
+    // https://stackoverflow.com/questions/38942821/wheel-event-javascript-give-inconsistent-values
+    // Thus we only use the direction of the valuw
+    const scrollValue = Math.sign(event.deltaY)
+
     if (this.ctrlDown) {
-      this.camera.SpeedMultiplier -= event.deltaY * 0.01
+      this.camera.SpeedMultiplier -= scrollValue
     } else if (this.camera.MouseOrbit) {
-      this.camera.updateOrbitalDistance(
-        -event.deltaY * this.MouseScrollSensitivity
-      )
+      this.camera.updateOrbitalDistance(-scrollValue)
     } else {
-      const impulse = new THREE.Vector3(
-        0,
-        0,
-        event.deltaY *
-          this.MouseScrollSensitivity *
-          this.camera.getSpeedMultiplier()
-      )
+      const impulse = new THREE.Vector3(0, 0, scrollValue)
       this.camera.applyLocalImpulse(impulse)
     }
   }
@@ -92,6 +97,7 @@ export class InputMouse {
       this.onMouseClick(new THREE.Vector2(event.x, event.y))
     }
     this.isMouseDown = false
+    event.preventDefault()
   }
 
   onMouseClick = (position: Vector2) => {
