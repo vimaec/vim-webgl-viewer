@@ -29,11 +29,12 @@ export class VimSceneGeometry {
     })
     this.meshIdToNodeIndex.set(mesh.id, nodes)
 
-    if (!mesh.geometry.boundingSphere) {
-      console.log('Bounding sphere undefined.')
+    if (!mesh.geometry.boundingBox) {
+      console.error('Bounding box undefined.')
       return
     }
 
+    // update the scene bounding box to include this mesh
     this.boundingBox =
       this.boundingBox?.union(mesh.geometry.boundingBox) ??
       mesh.geometry.boundingBox

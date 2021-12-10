@@ -10,7 +10,7 @@ export const defaultViewerSettings = {
     resizeDelay: 200
   },
   camera: {
-    near: 0.1,
+    near: 0.01,
     far: 15000,
     fov: 50,
     zoom: 1,
