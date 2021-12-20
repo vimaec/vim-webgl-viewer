@@ -3,6 +3,8 @@ import { ViewerCamera } from './viewerCamera'
 import { Viewer } from './viewer'
 import { Mesh, Vector2 } from 'three'
 
+type RaycastResult = [mesh: Mesh, index: number] | number | null
+
 export class InputMouse {
   // Consts
   // MouseMoveSensitivity: number = 0.05
@@ -56,7 +58,7 @@ export class InputMouse {
     )
 
     if (event.buttons & 2) {
-      this.camera.TruckPedestalCameraBy(delta)
+      this.camera.truckPedestalCameraBy(delta)
     } else {
       // delta.multiplyScalar(this.MouseRotateSensitivity)
       this.camera.rotateCameraBy(delta)
@@ -69,7 +71,7 @@ export class InputMouse {
 
     // Value of event.deltaY will change from browser to browser
     // https://stackoverflow.com/questions/38942821/wheel-event-javascript-give-inconsistent-values
-    // Thus we only use the direction of the valuw
+    // Thus we only use the direction of the value
     const scrollValue = Math.sign(event.deltaY)
 
     if (this.ctrlDown) {
@@ -94,45 +96,30 @@ export class InputMouse {
 
   onMouseUp = (event: any) => {
     if (this.isMouseDown && !this.hasMouseMoved) {
-      this.onMouseClick(new THREE.Vector2(event.x, event.y))
+      this.onMouseClick(new THREE.Vector2(event.x, event.y), false)
     }
     this.isMouseDown = false
     event.preventDefault()
   }
 
-  onMouseClick = (position: Vector2) => {
+  onDoubleClick = (event: any) => {
+    this.onMouseClick(new THREE.Vector2(event.x, event.y), true)
+  }
+
+  onMouseClick = (position: Vector2, double: boolean) => {
     // Find geometry and bim data at mouse position
     console.time('raycast')
     const hits = this.mouseRaycast(position)
     console.timeEnd('raycast')
     const result = this.findHitMeshIndex(hits)
 
-    // No hit
-    if (result === null) {
+    const [element, error] = this.getElementIndex(result)
+    if (element >= 0) {
+      this.viewer.selectByElementIndex(element)
+      if (double) this.viewer.lookAtSelection()
+    } else {
       this.viewer.clearSelection()
-      return
-    }
-
-    // Hit a merged mesh, we get node index
-    if (typeof result === 'number') {
-      const element = this.viewer.getElementIndexFromNodeIndex(result)
-      if (element) this.viewer.selectByElementIndex(element)
-      else {
-        console.error('Could not find elment for node index: ' + result)
-      }
-      return
-    }
-
-    // Hit a an instances mesh, we get mesh and index
-    const element = this.viewer.getElementIndexFromMeshInstance(
-      result[0],
-      result[1]
-    )
-    if (element) this.viewer.selectByElementIndex(element)
-    else {
-      console.error(
-        `Could not find element for mesh: ${result[0]}, index: ${result[1]}`
-      )
+      if (error) console.log(error)
     }
   }
 
@@ -147,7 +134,7 @@ export class InputMouse {
 
   findHitMeshIndex (
     hits: THREE.Intersection<THREE.Object3D<THREE.Event>>[]
-  ): [mesh: Mesh, index: number] | number | null {
+  ): RaycastResult {
     const hit = hits[0]
     if (!hit) {
       console.log('Raycast: No hit.')
@@ -180,5 +167,34 @@ export class InputMouse {
       'Raycast hit unsupported object type. It might be an object not created by the vim api. Make sure such objects are not included in viewer this.viewer.render.meshes'
     )
     return null
+  }
+
+  getElementIndex (
+    raycast: RaycastResult
+  ): [elementIndex: number, error: string] {
+    // No hit
+    if (raycast === null) {
+      return [-1, undefined]
+    }
+
+    // Hit a merged mesh, we get node index
+    if (typeof raycast === 'number') {
+      const element = this.viewer.getElementIndexFromNodeIndex(raycast)
+      return element >= 0
+        ? [element, undefined]
+        : [-1, 'Could not find elment for node index: ' + raycast]
+    }
+
+    // Hit a an instances mesh, we get mesh and index
+    const element = this.viewer.getElementIndexFromMeshInstance(
+      raycast[0],
+      raycast[1]
+    )
+    return element >= 0
+      ? [element, undefined]
+      : [
+          -1,
+          `Could not find element for mesh: ${raycast[0]}, index: ${raycast[1]}`
+        ]
   }
 }

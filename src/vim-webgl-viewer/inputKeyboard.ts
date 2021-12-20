@@ -1,4 +1,7 @@
+import * as THREE from 'three'
+
 import { ViewerCamera } from './viewerCamera'
+import { CameraGizmo } from './CameraGizmo'
 import { Viewer } from './viewer'
 import { InputMouse } from './inputMouse'
 
@@ -101,9 +104,16 @@ export class InputKeyboard {
   camera: ViewerCamera
   viewer: Viewer
   mouse: InputMouse
+  gizmo: CameraGizmo
 
   // State
-  shftDown: boolean = false
+  isShftPressed: boolean = false
+  isUpPressed: boolean
+  isDownPressed: boolean
+  isLeftPressed: boolean
+  isRightPressed: boolean
+  isEPressed: boolean
+  isQPressed: boolean
 
   constructor (camera: ViewerCamera, viewer: Viewer, mouse: InputMouse) {
     this.camera = camera
@@ -112,7 +122,7 @@ export class InputKeyboard {
   }
 
   reset = () => {
-    this.shftDown = false
+    this.isShftPressed = false
   }
 
   onKeyUp = (event: any) => {
@@ -158,58 +168,72 @@ export class InputKeyboard {
           event.preventDefault()
           break
         case KEYS.KEY_Z:
+        case KEYS.KEY_F:
           this.viewer.lookAtSelection()
           event.preventDefault()
+          break
+        case KEYS.KEY_CTRL:
+          this.mouse.setCtrl(keyDown)
+          event.preventDefault()
+          break
+        case KEYS.KEY_SPACE:
+          this.camera.MouseOrbit = !this.camera.MouseOrbit
           break
       }
     }
 
-    const speed = keyDown ? (this.shftDown ? this.ShiftMultiplier : 1.0) : 0.0
+    // Camera Movement
     switch (event.keyCode) {
-      // Camera
       case KEYS.KEY_W:
       case KEYS.KEY_UP:
-        this.camera.InputVelocity.z = -speed
+        this.isUpPressed = keyDown
+        this.applyMove()
         event.preventDefault()
         break
       case KEYS.KEY_S:
       case KEYS.KEY_DOWN:
-        this.camera.InputVelocity.z = speed
+        this.isDownPressed = keyDown
+        this.applyMove()
         event.preventDefault()
         break
       case KEYS.KEY_D:
       case KEYS.KEY_RIGHT:
-        this.camera.InputVelocity.x = speed
+        this.isRightPressed = keyDown
+        this.applyMove()
         event.preventDefault()
         break
       case KEYS.KEY_A:
       case KEYS.KEY_LEFT:
-        this.camera.InputVelocity.x = -speed
+        this.isLeftPressed = keyDown
+        this.applyMove()
         event.preventDefault()
         break
       case KEYS.KEY_E:
-        this.camera.InputVelocity.y = speed
+        this.isEPressed = keyDown
+        this.applyMove()
         event.preventDefault()
         break
       case KEYS.KEY_Q:
-        this.camera.InputVelocity.y = -speed
-        event.preventDefault()
-        break
-      case KEYS.KEY_CTRL:
-        this.mouse.setCtrl(keyDown)
+        this.isQPressed = keyDown
+        this.applyMove()
         event.preventDefault()
         break
       case KEYS.KEY_SHIFT:
-        if (this.shftDown !== keyDown) {
-          this.shftDown = keyDown
-          if (keyDown) {
-            this.camera.InputVelocity.multiplyScalar(this.ShiftMultiplier)
-          } else {
-            this.camera.InputVelocity.multiplyScalar(1.0 / this.ShiftMultiplier)
-          }
-        }
+        this.isShftPressed = keyDown
+        this.applyMove()
         event.preventDefault()
         break
     }
+  }
+
+  applyMove = () => {
+    const move = new THREE.Vector3(
+      (this.isRightPressed ? 1 : 0) - (this.isLeftPressed ? 1 : 0),
+      (this.isEPressed ? 1 : 0) - (this.isQPressed ? 1 : 0),
+      (this.isUpPressed ? 1 : 0) - (this.isDownPressed ? 1 : 0)
+    )
+    const speed = this.isShftPressed ? this.ShiftMultiplier : 1
+    move.multiplyScalar(speed)
+    this.camera.setCameraLocalVelocity(move)
   }
 }

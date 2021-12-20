@@ -39,7 +39,7 @@ export class InputTouch {
   }
 
   onTap = (position: THREE.Vector2) => {
-    this.mouse.onMouseClick(position)
+    this.mouse.onMouseClick(position, false)
   }
 
   onTouchStart = (event: any) => {
@@ -64,7 +64,7 @@ export class InputTouch {
   }
 
   onDoubleDrag = (delta: THREE.Vector2) => {
-    this.camera.TruckPedestalCameraBy(delta)
+    this.camera.truckPedestalCameraBy(delta)
   }
 
   onPinchOrSpread = (delta: number) => {

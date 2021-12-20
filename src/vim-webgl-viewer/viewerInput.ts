@@ -39,6 +39,7 @@ export class ViewerInput {
     this.reg(this.canvas, 'mousemove', this.mouse.onMouseMove)
     this.reg(this.canvas, 'mouseup', this.mouse.onMouseUp)
     this.reg(this.canvas, 'mouseout', this.mouse.onMouseOut)
+    this.reg(this.canvas, 'dblclick', this.mouse.onDoubleClick)
 
     // touch
     this.reg(this.canvas, 'touchstart', this.touch.onTouchStart)

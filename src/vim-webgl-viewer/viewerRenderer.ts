@@ -69,9 +69,19 @@ export class ViewerRenderer {
     this.camera.updateProjectionMatrix()
   }
 
-  addToScene (meshes: THREE.Object3D[]) {
+  addToScene (mesh: THREE.Object3D) {
+    this.scene.add(mesh)
+  }
+
+  remove (mesh: THREE.Object3D) {
+    this.scene.remove(mesh)
+    const i = this.meshes.indexOf(mesh)
+    if (i > 0) this.meshes.splice(i, 1)
+  }
+
+  addManyToScene (meshes: THREE.Object3D[]) {
     meshes.forEach((m) => {
-      this.scene.add(m)
+      this.addToScene(m)
     })
   }
 

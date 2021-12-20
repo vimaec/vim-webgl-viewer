@@ -50,10 +50,10 @@ export class Viewer {
     const canvas = Viewer.getOrCreateCanvas(this.settings.raw.canvasId)
     this.render = new ViewerRenderer(canvas, this.settings)
 
-    this.cameraController = new ViewerCamera(this.render.camera, this.settings)
+    this.cameraController = new ViewerCamera(this.render, this.settings)
 
     this.environment = ViewerEnvironment.createDefault()
-    this.render.addToScene(this.environment.getElements())
+    this.render.addManyToScene(this.environment.getElements())
 
     // Input and Selection
     this.controls = new ViewerInput(
@@ -342,7 +342,7 @@ export class Viewer {
     })
     const line = new THREE.LineSegments(wireframe, material)
 
-    this.render.addToScene([line])
+    this.render.addManyToScene([line])
 
     // returns disposer
     return () => {

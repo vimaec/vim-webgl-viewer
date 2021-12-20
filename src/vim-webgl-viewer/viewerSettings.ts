@@ -112,6 +112,7 @@ export class ViewerSettings {
   getSunlightPosition = () => toVec(this.raw.sunLight.position)
   getSunlightIntensity = () => this.raw.sunLight.intensity
 
+  getCameraFOV = () => this.raw.camera.fov
   getCameraMoveSpeed = () => this.raw.camera.controls.moveSpeed
   getCameraRotateSpeed = () => this.raw.camera.controls.rotateSpeed
   getCameraReferenceModelSize = () =>

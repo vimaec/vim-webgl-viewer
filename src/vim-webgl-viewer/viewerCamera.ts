@@ -4,6 +4,8 @@
 
 import * as THREE from 'three'
 import { MathUtils } from 'three'
+import { CameraGizmo } from './CameraGizmo'
+import { ViewerRenderer } from './viewerRenderer'
 import { ViewerSettings } from './viewerSettings'
 
 const direction = {
@@ -16,49 +18,41 @@ const direction = {
 }
 
 class ViewerCamera {
-  MinOrbitalDistance: number = 1.0
+  gizmo: CameraGizmo
 
-  camera: THREE.PerspectiveCamera
+  private MinOrbitalDistance: number = 1.0
 
-  Rotation: THREE.Vector2
-  InputVelocity: THREE.Vector3
-  Velocity: THREE.Vector3
-  Impulse: THREE.Vector3
-  SpeedMultiplier: number
+  public camera: THREE.PerspectiveCamera
 
-  Orbit: boolean
-  CenterOfInterest: THREE.Vector3
-  OrbitalTarget: THREE.Vector3
-  // OrbitalTargetSize: number
-  CurrentOrbitalDistance: number
-  TargetOrbitalDistance: number
+  private InputVelocity: THREE.Vector3
+  private Velocity: THREE.Vector3
+  private Impulse: THREE.Vector3
+  public SpeedMultiplier: number
 
-  MouseRotate: Boolean = false
-  MouseOrbit: Boolean = false
-  MouseMoveDolly: Boolean = false
-  MouseMovePan: Boolean = false
+  public OrbitalTarget: THREE.Vector3
+  public CurrentOrbitalDistance: number
+  public TargetOrbitalDistance: number
+  public MouseOrbit: Boolean = false
 
   // Settings
+  private VelocityBlendFactor: number = 0.0001
+  private ModelSizeMultiplier: number = 1
+  private MoveSpeed: number = 1
+  private RotateSpeed: number = 1
 
-  VelocityBlendFactor: number = 0.0001
-  ModelSizeMultiplier: number = 1
-  MoveSpeed: number = 1
-  RotateSpeed: number = 1
+  constructor (render: ViewerRenderer, settings: ViewerSettings) {
+    this.gizmo = new CameraGizmo(this, render)
 
-  constructor (camera: THREE.PerspectiveCamera, settings: ViewerSettings) {
-    this.camera = camera
+    this.camera = render.camera
     this.applySettings(settings)
 
-    this.Rotation = new THREE.Vector2(0, 0)
     this.InputVelocity = new THREE.Vector3(0, 0, 0)
     this.Velocity = new THREE.Vector3(0, 0, 0)
     this.Impulse = new THREE.Vector3(0, 0, 0)
     this.SpeedMultiplier = 0
     this.ModelSizeMultiplier = 1
-    this.Orbit = false
-    this.CenterOfInterest = new THREE.Vector3(0, 0, 0)
     this.OrbitalTarget = new THREE.Vector3(0, 0, 0)
-    this.CurrentOrbitalDistance = camera.position
+    this.CurrentOrbitalDistance = this.camera.position
       .clone()
       .sub(this.OrbitalTarget)
       .length()
@@ -118,6 +112,9 @@ class ViewerCamera {
     }
     this.MoveSpeed = newSettings.getCameraMoveSpeed()
     this.RotateSpeed = newSettings.getCameraRotateSpeed()
+
+    // Gizmo
+    this.gizmo.applySettings(newSettings, this.ModelSizeMultiplier)
   }
 
   applyLocalImpulse (impulse: THREE.Vector3) {
@@ -128,22 +125,18 @@ class ViewerCamera {
     this.Impulse.add(localImpulse)
   }
 
-  moveCameraBy (
-    dir: THREE.Vector3 = direction.forward,
-    speed: number = 1,
-    onlyHoriz: boolean = false
-  ) {
+  moveCameraBy (dir: THREE.Vector3 = direction.forward, speed: number = 1) {
     const vector = new THREE.Vector3()
     vector.copy(dir)
     if (speed) vector.multiplyScalar(speed)
     vector.applyQuaternion(this.camera.quaternion)
-    const y = this.camera.position.y
     this.camera.position.add(vector)
     this.OrbitalTarget.add(vector)
-    if (onlyHoriz) this.camera.position.y = y
+
+    if (this.MouseOrbit) this.gizmo.show()
   }
 
-  TruckPedestalCameraBy (pt: THREE.Vector2) {
+  truckPedestalCameraBy (pt: THREE.Vector2) {
     this.moveCameraBy(
       new THREE.Vector3(-pt.x, pt.y, 0),
       this.MoveSpeed * this.getSpeedMultiplier()
@@ -155,6 +148,14 @@ class ViewerCamera {
       new THREE.Vector3(0, 0, amount),
       this.MoveSpeed * this.getSpeedMultiplier()
     )
+  }
+
+  setCameraLocalVelocity (vector: THREE.Vector3) {
+    const move = vector.clone()
+    move.setZ(-move.z)
+    move.applyQuaternion(this.camera.quaternion)
+    move.multiplyScalar(this.getSpeedMultiplier())
+    this.InputVelocity.copy(move)
   }
 
   rotateCameraBy (pt: THREE.Vector2) {
@@ -200,13 +201,7 @@ class ViewerCamera {
   }
 
   frameUpdate (deltaTime: number) {
-    const targetVelocity = this.GetInputVelocity()
-
-    // Multiply the speed
-    targetVelocity.multiplyScalar(this.getSpeedMultiplier())
-
-    // Orient the velocity vector to the camera location
-    targetVelocity.applyQuaternion(this.camera.quaternion)
+    const targetVelocity = this.InputVelocity.clone()
 
     // Update the camera velocity and position
     const invBlendFactor = Math.pow(this.VelocityBlendFactor, deltaTime)
@@ -226,24 +221,48 @@ class ViewerCamera {
     const impulse = this.Impulse.clone().multiplyScalar(blendFactor)
     positionDelta.add(impulse)
 
+    const orbitDelta = positionDelta.clone()
+    if (this.MouseOrbit) {
+      // compute local space forward component of movement
+      const inv = this.camera.quaternion.clone().invert()
+      const local = positionDelta.clone().applyQuaternion(inv)
+      // remove z component
+      orbitDelta.set(local.x, local.y, 0)
+      // compute back to world space
+      orbitDelta.applyQuaternion(this.camera.quaternion)
+
+      // apply local space z to orbit distance,
+      this.CurrentOrbitalDistance = Math.max(
+        this.CurrentOrbitalDistance + local.z,
+        this.MinOrbitalDistance * this.ModelSizeMultiplier
+      )
+      this.TargetOrbitalDistance = this.CurrentOrbitalDistance
+    }
+
     this.Impulse.multiplyScalar(invBlendFactor)
     this.camera.position.add(positionDelta)
-    this.OrbitalTarget.add(positionDelta)
-
-    if (positionDelta.length() > 0) {
-      this.GetInputVelocity()
-    }
+    this.OrbitalTarget.add(orbitDelta)
 
     if (this.MouseOrbit) {
       // this.Position = translation.applyQuaternion(this.Orientation).add(this.OrbitalTarget);
       this.camera.position.set(0.0, 0.0, this.CurrentOrbitalDistance)
       this.camera.position.applyQuaternion(this.camera.quaternion)
       this.camera.position.add(this.OrbitalTarget)
+
+      if (this.isSignificant(positionDelta)) this.gizmo.show()
     }
+
+    this.gizmo.update(this.OrbitalTarget)
   }
 
-  GetInputVelocity () {
-    return this.InputVelocity.clone()
+  isSignificant (vector: THREE.Vector3) {
+    // One hundreth of standard model size per frame
+    const min = (0.01 * this.ModelSizeMultiplier) / 60
+    return (
+      Math.abs(vector.x) > min ||
+      Math.abs(vector.y) > min ||
+      Math.abs(vector.z) > min
+    )
   }
 }
 
