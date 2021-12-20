@@ -20,7 +20,7 @@ const direction = {
 class ViewerCamera {
   gizmo: CameraGizmo
 
-  private MinOrbitalDistance: number = 1.0
+  private MinOrbitalDistance: number = 0.2
 
   public camera: THREE.PerspectiveCamera
 
