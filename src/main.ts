@@ -18,7 +18,7 @@ const viewer = new Viewer({
 
 viewer.loadModel(
   {
-    url: 'residence.vim',
+    url: url,
     rotation: { x: 270 }
   },
   (vim) => console.log('Callback: Viewer Ready!'),
