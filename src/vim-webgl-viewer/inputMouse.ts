@@ -2,6 +2,7 @@ import * as THREE from 'three'
 import { ViewerCamera } from './viewerCamera'
 import { Viewer } from './viewer'
 import { Mesh, Vector2 } from 'three'
+import { ViewerRenderer } from './viewerRenderer'
 
 type RaycastResult = [mesh: Mesh, index: number] | number | null
 
@@ -13,7 +14,7 @@ export class InputMouse {
 
   // Dependencies
   private camera: ViewerCamera
-  private canvas: HTMLCanvasElement
+  private renderer: ViewerRenderer
   private viewer: Viewer
 
   // State
@@ -21,9 +22,9 @@ export class InputMouse {
   private hasMouseMoved: Boolean = false
   private ctrlDown: Boolean = false
 
-  constructor (camera: ViewerCamera, canvas: HTMLCanvasElement, viewer: Viewer) {
+  constructor (camera: ViewerCamera, renderer: ViewerRenderer, viewer: Viewer) {
     this.camera = camera
-    this.canvas = canvas
+    this.renderer = renderer
     this.viewer = viewer
   }
 
@@ -52,10 +53,8 @@ export class InputMouse {
       event.movementX || event.mozMovementX || event.webkitMovementX || 0
     const deltaY =
       event.movementY || event.mozMovementY || event.webkitMovementY || 0
-    const delta = new THREE.Vector2(
-      deltaX / window.innerWidth,
-      deltaY / window.innerHeight
-    )
+    const [width, height] = this.renderer.getContainerSize()
+    const delta = new THREE.Vector2(deltaX / width, deltaY / height)
 
     if (event.buttons & 2) {
       this.camera.truckPedestalCameraBy(delta)
@@ -91,7 +90,7 @@ export class InputMouse {
 
     // Manually set the focus since calling preventDefault above
     // prevents the browser from setting it automatically.
-    this.canvas.focus ? this.canvas.focus() : window.focus()
+    this.renderer.canvas.focus()
   }
 
   onMouseUp = (event: any) => {
@@ -124,8 +123,9 @@ export class InputMouse {
   }
 
   mouseRaycast (position: THREE.Vector2) {
-    const x = (position.x / window.innerWidth) * 2 - 1
-    const y = -(position.y / window.innerHeight) * 2 + 1
+    const [width, height] = this.renderer.getContainerSize()
+    const x = (position.x / width) * 2 - 1
+    const y = -(position.y / height) * 2 + 1
     const mouse = new THREE.Vector2(x, y)
     const raycaster = new THREE.Raycaster()
     raycaster.setFromCamera(mouse, this.camera.camera)

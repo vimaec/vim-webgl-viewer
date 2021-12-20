@@ -61,11 +61,18 @@ export class ViewerRenderer {
     this.renderer.render(this.scene, this.camera)
   }
 
+  getContainerSize (): [width: number, height: number] {
+    return [
+      this.canvas.parentElement.clientWidth / window.devicePixelRatio,
+      this.canvas.parentElement.clientHeight / window.devicePixelRatio
+    ]
+  }
+
   fitToCanvas = () => {
-    const w = window.innerWidth / window.devicePixelRatio
-    const h = window.innerHeight / window.devicePixelRatio
-    this.renderer.setSize(w, h, false)
-    this.camera.aspect = this.canvas.width / this.canvas.height
+    const [width, height] = this.getContainerSize()
+
+    this.renderer.setSize(width, height)
+    this.camera.aspect = width / height
     this.camera.updateProjectionMatrix()
   }
 

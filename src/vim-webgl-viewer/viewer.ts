@@ -56,11 +56,7 @@ export class Viewer {
     this.render.addManyToScene(this.environment.getElements())
 
     // Input and Selection
-    this.controls = new ViewerInput(
-      this.render.canvas,
-      this.cameraController,
-      this
-    )
+    this.controls = new ViewerInput(this.render, this.cameraController, this)
     this.controls.register()
     this.selection = new Selection(this)
 

@@ -3,6 +3,7 @@ import { ViewerCamera } from './viewerCamera'
 import { InputKeyboard } from './inputKeyboard'
 import { InputTouch } from './inputTouch'
 import { InputMouse } from './inputMouse'
+import { ViewerRenderer } from './viewerRenderer'
 
 export class ViewerInput {
   // Dependencies
@@ -14,11 +15,11 @@ export class ViewerInput {
   private mouse: InputMouse
   private keyboard: InputKeyboard
 
-  constructor (canvas: HTMLCanvasElement, camera: ViewerCamera, viewer: Viewer) {
-    this.canvas = canvas
+  constructor (renderer: ViewerRenderer, camera: ViewerCamera, viewer: Viewer) {
+    this.canvas = renderer.canvas
     this.unregisters = []
-    this.mouse = new InputMouse(camera, canvas, viewer)
-    this.touch = new InputTouch(camera, viewer, this.mouse)
+    this.mouse = new InputMouse(camera, renderer, viewer)
+    this.touch = new InputTouch(camera, renderer, this.mouse)
     this.keyboard = new InputKeyboard(camera, viewer, this.mouse)
   }
 
