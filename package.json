@@ -33,7 +33,7 @@
     "release-dev": "npm run build && npm run bump-dev && git push && npm run publish-dev && npm run test-dev",
     "eslint": "eslint --ext .js,.ts src --fix",
     "documentation": "typedoc --out docs/api --excludePrivate ./src/vim-webgl-viewer/viewer.ts ./src/vim-webgl-viewer/viewersettings.ts",
-    "declarations": "tsc --declaration --emitDeclarationOnly --outfile ./dist/vim-webgl-viewer.d.ts"
+    "declarations": "tsc --declaration --emitDeclarationOnly --outdir ./dist/types"
   },
   "devDependencies": {
     "@types/three": "^0.133.0",
