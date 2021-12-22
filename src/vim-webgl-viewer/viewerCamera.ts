@@ -130,8 +130,8 @@ class ViewerCamera {
     if (speed) vector.multiplyScalar(speed)
     vector.applyQuaternion(this.camera.quaternion)
 
+    this.OrbitalTarget.add(vector)
     if (this.MouseOrbit) {
-      this.OrbitalTarget.add(vector)
       this.gizmo.show()
     } else {
       this.camera.position.add(vector)
