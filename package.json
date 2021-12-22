@@ -31,7 +31,7 @@
     "release-patch": "npm version patch && git push && npm publish && npm run test-latest",
     "release-dev": "npm run build && npm run bump-dev && git push && npm run publish-dev && npm run test-dev",
     "eslint": "eslint --ext .js,.ts src --fix",
-    "document": "typedoc --out docs/api --excludePrivate ./src/vim-webgl-viewer/viewer.ts"
+    "document": "typedoc --out docs/api --excludePrivate ./src/vim-webgl-viewer/viewer.ts ./src/vim-webgl-viewer/viewersettings.ts"
   },
   "devDependencies": {
     "@types/three": "^0.133.0",
