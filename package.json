@@ -1,6 +1,6 @@
 {
   "name": "vim-webgl-viewer",
-  "version": "1.1.12-dev.12",
+  "version": "1.1.14-dev.0",
   "description": "A high-performance 3D viewer and VIM file loader built on top of Three.JS.",
   "files": [
     "dist"
@@ -19,7 +19,7 @@
   },
   "scripts": {
     "dev": "vite",
-    "build": "vite build && npm run gen-index.html",
+    "build": "vite build && npm run gen-index.html && npm run declarations",
     "bump-dev": "npm version prerelease --preid=dev",
     "publish-dev": "npm publish --tag=dev",
     "serve-docs": "http-server ./docs -o",
@@ -31,7 +31,8 @@
     "release-patch": "npm version patch && git push && npm publish && npm run test-latest",
     "release-dev": "npm run build && npm run bump-dev && git push && npm run publish-dev && npm run test-dev",
     "eslint": "eslint --ext .js,.ts src --fix",
-    "document": "typedoc --out docs/api --excludePrivate ./src/vim-webgl-viewer/viewer.ts ./src/vim-webgl-viewer/viewersettings.ts"
+    "documentation": "typedoc --out docs/api --excludePrivate ./src/vim-webgl-viewer/viewer.ts ./src/vim-webgl-viewer/viewersettings.ts",
+    "declarations": "tsc --declaration --emitDeclarationOnly --outfile ./dist/vim-webgl-viewer.d.ts"
   },
   "devDependencies": {
     "@types/three": "^0.133.0",
