@@ -63,8 +63,8 @@ export class ViewerRenderer {
 
   getContainerSize (): [width: number, height: number] {
     return [
-      this.canvas.parentElement.clientWidth / window.devicePixelRatio,
-      this.canvas.parentElement.clientHeight / window.devicePixelRatio
+      this.canvas.parentElement.clientWidth,
+      this.canvas.parentElement.clientHeight
     ]
   }
 
