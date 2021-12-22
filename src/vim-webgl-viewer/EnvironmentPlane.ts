@@ -40,8 +40,10 @@ export class EnvironmentPlane {
     )
     this.mesh.position.copy(position)
     // Rotation
-    const rotation = modelSettings.getObjectRotation()
-    this.mesh.quaternion.copy(rotation)
+    // Face up, rotate by 270 degrees around x
+    this.mesh.quaternion.copy(
+      new THREE.Quaternion().setFromEuler(new THREE.Euler(1.5 * Math.PI, 0, 0))
+    )
 
     // Scale
     const sphere = box?.getBoundingSphere(new THREE.Sphere())
