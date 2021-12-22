@@ -125,15 +125,17 @@ class ViewerCamera {
     this.Impulse.add(localImpulse)
   }
 
-  moveCameraBy (dir: THREE.Vector3 = direction.forward, speed: number = 1) {
-    const vector = new THREE.Vector3()
-    vector.copy(dir)
+  moveCameraBy (dir: THREE.Vector3 = direction.forward, speed: number) {
+    const vector = dir.clone()
     if (speed) vector.multiplyScalar(speed)
     vector.applyQuaternion(this.camera.quaternion)
-    this.camera.position.add(vector)
-    this.OrbitalTarget.add(vector)
 
-    if (this.MouseOrbit) this.gizmo.show()
+    if (this.MouseOrbit) {
+      this.OrbitalTarget.add(vector)
+      this.gizmo.show()
+    } else {
+      this.camera.position.add(vector)
+    }
   }
 
   truckPedestalCameraBy (pt: THREE.Vector2) {
@@ -144,10 +146,14 @@ class ViewerCamera {
   }
 
   dollyCameraBy (amount: number) {
-    this.moveCameraBy(
-      new THREE.Vector3(0, 0, amount),
-      this.MoveSpeed * this.getSpeedMultiplier()
-    )
+    if (this.MouseOrbit) {
+      this.CurrentOrbitalDistance += amount
+    } else {
+      this.moveCameraBy(
+        new THREE.Vector3(0, 0, amount),
+        this.MoveSpeed * this.getSpeedMultiplier()
+      )
+    }
   }
 
   setCameraLocalVelocity (vector: THREE.Vector3) {
