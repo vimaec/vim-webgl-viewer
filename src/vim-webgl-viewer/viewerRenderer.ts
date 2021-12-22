@@ -61,17 +61,34 @@ export class ViewerRenderer {
     this.renderer.render(this.scene, this.camera)
   }
 
+  getContainerSize (): [width: number, height: number] {
+    return [
+      this.canvas.parentElement.clientWidth,
+      this.canvas.parentElement.clientHeight
+    ]
+  }
+
   fitToCanvas = () => {
-    const w = window.innerWidth / window.devicePixelRatio
-    const h = window.innerHeight / window.devicePixelRatio
-    this.renderer.setSize(w, h, false)
-    this.camera.aspect = this.canvas.width / this.canvas.height
+    const [width, height] = this.getContainerSize()
+
+    this.renderer.setSize(width, height)
+    this.camera.aspect = width / height
     this.camera.updateProjectionMatrix()
   }
 
-  addToScene (meshes: THREE.Object3D[]) {
+  addToScene (mesh: THREE.Object3D) {
+    this.scene.add(mesh)
+  }
+
+  remove (mesh: THREE.Object3D) {
+    this.scene.remove(mesh)
+    const i = this.meshes.indexOf(mesh)
+    if (i > 0) this.meshes.splice(i, 1)
+  }
+
+  addManyToScene (meshes: THREE.Object3D[]) {
     meshes.forEach((m) => {
-      this.scene.add(m)
+      this.addToScene(m)
     })
   }
 

@@ -8,7 +8,12 @@ import * as THREE from 'three'
 import * as BufferGeometryUtils from 'three/examples/jsm/utils/BufferGeometryUtils'
 
 // internal
-import { ModelSettings, ViewerSettings } from './viewerSettings'
+import {
+  ModelSettings,
+  ViewerSettings,
+  ModelOptions,
+  ViewerOptions
+} from './viewerSettings'
 import { ViewerCamera } from './viewerCamera'
 import { ViewerInput } from './viewerInput'
 import { VIMLoader, BufferGeometryBuilder } from '../vim-loader/VIMLoader'
@@ -44,23 +49,19 @@ export class Viewer {
   state: ViewerState = 'Uninitialized'
   static stateChangeEvent = 'viewerStateChangedEvent'
 
-  constructor (options: Record<string, unknown>) {
+  constructor (options?: Partial<ViewerOptions>) {
     this.settings = new ViewerSettings(options)
 
-    const canvas = Viewer.getOrCreateCanvas(this.settings.raw.canvasId)
+    const canvas = Viewer.getOrCreateCanvas(this.settings.getCanvasId())
     this.render = new ViewerRenderer(canvas, this.settings)
 
-    this.cameraController = new ViewerCamera(this.render.camera, this.settings)
+    this.cameraController = new ViewerCamera(this.render, this.settings)
 
     this.environment = ViewerEnvironment.createDefault()
-    this.render.addToScene(this.environment.getElements())
+    this.render.addManyToScene(this.environment.getElements())
 
     // Input and Selection
-    this.controls = new ViewerInput(
-      this.render.canvas,
-      this.cameraController,
-      this
-    )
+    this.controls = new ViewerInput(this.render, this.cameraController, this)
     this.controls.register()
     this.selection = new Selection(this)
 
@@ -78,7 +79,6 @@ export class Viewer {
     this.cameraController.frameUpdate(timeDelta)
 
     // Model
-    if (this.settings.raw.autoResize) this.render.fitToCanvas()
     this.render.render()
   }
 
@@ -90,7 +90,7 @@ export class Viewer {
    * @param onError callback on error
    */
   public loadModel (
-    options: any,
+    options?: Partial<ModelOptions>,
     onLoad?: (response: VimScene) => void,
     onProgress?: (request: ProgressEvent | 'processing') => void,
     onError?: (event: ErrorEvent) => void
@@ -342,7 +342,7 @@ export class Viewer {
     })
     const line = new THREE.LineSegments(wireframe, material)
 
-    this.render.addToScene([line])
+    this.render.addManyToScene([line])
 
     // returns disposer
     return () => {

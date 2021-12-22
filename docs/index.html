@@ -13,6 +13,7 @@
     /*Makes full screen and remove scrollbars*/
     html,
     body {
+      height: 100%;
       margin: 0;
       padding: 0;
       overflow: hidden;
@@ -24,7 +25,7 @@
 </head>
 <body>
     <script src="https://unpkg.com/three@0.133.1/build/three.min.js"></script>
-    <script src="https://unpkg.com/vim-webgl-viewer@1.1.12"></script>
+    <script src="https://unpkg.com/vim-webgl-viewer"></script>
     <script>
         const params = new URLSearchParams(window.location.search);
         const url = params.has('model')

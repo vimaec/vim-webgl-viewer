@@ -5,69 +5,192 @@
 import * as THREE from 'three'
 import deepmerge from 'deepmerge'
 
-export const defaultViewerSettings = {
-  canvas: {
-    resizeDelay: 200
-  },
-  camera: {
-    near: 0.01,
-    far: 15000,
-    fov: 50,
-    zoom: 1,
-    rotate: 1.0,
-    controls: {
-      modelReferenceSize: 1,
-      rotateSpeed: 1,
-      moveSpeed: 1
-    }
-  },
-  background: {
-    color: { r: 0x72, g: 0x64, b: 0x5b }
-  },
-  plane: {
-    show: true,
-    texture: null,
-    opacity: 1,
-    color: { r: 0xff, g: 0xff, b: 0xff },
-    size: 3
-  },
-  skylight: {
-    color: { h: 0.6, s: 1, l: 0.6 },
-    groundColor: { h: 0.095, s: 1, l: 0.75 },
-    intensity: 0.6
-  },
-  sunLight: {
-    position: { x: -47.0, y: 22, z: -45 },
-    color: { h: 0.1, s: 1, l: 0.95 },
-    intensity: 1
-  }
+export type Vector3 = {
+  x: number
+  y: number
+  z: number
 }
 
-export const defaultModelSettings = {
-  scale: 0.01,
-  position: { x: 0, y: 0, z: 0 },
-  rotation: { x: 0, y: 0, z: 0 },
-  material: {
-    color: { r: 0x00, g: 0x55, b: 0xff },
-    emissive: { r: 0x00, g: 0x00, b: 0x00 },
-    specular: { r: 0x11, g: 0x11, b: 0x11 },
-    flatShading: true,
-    shininess: 30,
-    wireframe: false
-  }
+export type ColorRGB = {
+  r: number
+  g: number
+  b: number
 }
 
+export type ColorHSL = {
+  h: number
+  s: number
+  l: number
+}
+
+/**
+ * Plane under model related options
+ */
+export type PlaneOptions = {
+  /** Enables/Disables plane under model */
+  show: boolean
+  /** Local or remote texture url for plane */
+  texture: string
+  /** Opacity of the plane */
+  opacity: number
+  /** Color of the plane */
+  color: ColorRGB
+  /** Actual size is ModelRadius*size */
+  size: number
+}
+
+/** Dom canvas related options */
+export type CanvasOptions = {
+  /** Canvas dom model id. If none provided a new canvas will be created */
+  id: string
+  /** Limits how often canvas will be resized if window is resized. */
+  resizeDelay: number
+}
+
+/** Camera controls related options */
+export type CameraControlsOptions = {
+  /**
+   * <p>Set true to start in orbit mode.</p>
+   * <p>Camera has two modes: First person and orbit</p>
+   * <p>First person allows to moves the camera around freely</p>
+   * <p>Orbit rotates the camera around a focus point</p>
+   */
+  orbit: boolean
+  /** Camera speed is scaled according to modelRadius/modelReferenceSize */
+  modelReferenceSize: number
+  /** Camera rotation speed factor */
+  rotateSpeed: number
+  /** Camera movement speed factor */
+  moveSpeed: number
+}
+
+/** Camera related options */
+export type CameraOptions = {
+  /** Near clipping plane distance */
+  near: number
+  /** Far clipping plane distance */
+  far: number
+  /** Fov angle in degrees */
+  fov: number
+  /** Zoom level */
+  zoom: number
+  /** See ControlOptions */
+  controls: Partial<CameraControlsOptions>
+}
+
+/*
+type BackgroundOptions = {
+  color: ColorRGB
+}
+*/
+
+export type SunLightOptions = {
+  position: Vector3
+  color: ColorHSL
+  intensity: number
+}
+
+export type SkyLightOptions = {
+  skyColor: ColorHSL
+  groundColor: ColorHSL
+  intensity: number
+}
+
+/** Viewer related options independant from models */
+export type ViewerOptions = {
+  /**
+   * Webgl canvas related options
+   */
+  canvas: Partial<CanvasOptions>
+  /**
+   * Three.js camera related options
+   */
+  camera: Partial<CameraOptions>
+  // background: Partial<BackgroundOptions>
+  /**
+   * Plane under model related options
+   */
+  plane: Partial<PlaneOptions>
+  /**
+   * Skylight (hemisphere light) options
+   */
+  skylight: Partial<SkyLightOptions>
+  /**
+   * Sunlight (directional light) options
+   */
+  sunLight: Partial<SunLightOptions>
+}
+
+/*
+Not implemented
+type MaterialOptions = {
+  color: ColorRGB
+  emissive: ColorRGB
+  specular: ColorRGB
+  flatShading: boolean
+  shininess: number
+}
+*/
+
+/**
+ * Config object for loading a model
+ */
+export type ModelOptions = {
+  /**
+   * Local or remote url of model to load
+   */
+  url: string
+  /**
+   * Position offset for the model
+   */
+  position: Vector3
+  /**
+   * Rotation for the model
+   */
+  rotation: Vector3
+  /**
+   * Scale factor for the model
+   */
+  scale: number
+
+  // Not implement
+  // material: Partial<MaterialOptions>
+}
+
+/**
+ * <p>Wrapper around Model Options.</p>
+ * <p>Casts options values into related THREE.js type</p>
+ * <p>Provides default values for options</p>
+ */
 export class ModelSettings {
-  data: any
+  private options: ModelOptions
 
-  constructor (options: any) {
-    this.data = deepmerge(defaultModelSettings, options, undefined)
+  constructor (options: Partial<ModelOptions>) {
+    const fallback: ModelOptions = {
+      url: 'https://vim.azureedge.net/samples/residence.vim',
+      position: { x: 0, y: 0, z: 0 },
+      rotation: { x: 0, y: 0, z: 0 },
+      scale: 0.01
+      /*
+      material: {
+        color: { r: 0x00, g: 0x55, b: 0xff },
+        emissive: { r: 0x00, g: 0x00, b: 0x00 },
+        specular: { r: 0x11, g: 0x11, b: 0x11 },
+        flatShading: true,
+        shininess: 30
+      }
+      */
+    }
+
+    this.options = options ? deepmerge(fallback, options, undefined) : fallback
   }
 
-  getURL = () => this.data.url
-  getObjectPosition = () => toVec(this.data.position)
-  getObjectRotation = () => toQuaternion(this.data.rotation)
-  getObjectScale = () => scalarToVec(this.data.scale)
+  getURL = () => this.options.url
+
+  // Model
+  getObjectPosition = () => toVec(this.options.position)
+  getObjectRotation = () => toQuaternion(this.options.rotation)
+  getObjectScale = () => scalarToVec(this.options.scale)
   getObjectMatrix = () =>
     new THREE.Matrix4().compose(
       this.getObjectPosition(),
@@ -75,81 +198,127 @@ export class ModelSettings {
       this.getObjectScale()
     )
 
-  getColor = () => toRGBColor(this.data.material.color)
-  getFlatShading = () => this.data.material.flatShading
-  getEmissive = () => toRGBColor(this.data.material.emissive)
-  getSpecular = () => toRGBColor(this.data.material.specular)
-  getWireframe = () => this.data.material.wireframe
-  getShininess = () => this.data.material.shininess
+  // Material
+  /*
+  getMaterialColor = () => toRGBColor(this.options.material.color)
+  getMaterialFlatShading = () => this.options.material.flatShading
+  getMaterialEmissive = () => toRGBColor(this.options.material.emissive)
+  getMaterialSpecular = () => toRGBColor(this.options.material.specular)
+  getMaterialShininess = () => this.options.material.shininess
 
   updateMaterial (material: THREE.MeshPhongMaterial) {
-    material.color = this.getColor() ?? material.color
-    material.flatShading = this.getFlatShading() ?? material.flatShading
+    material.color = this.getMaterialColor() ?? material.color
+    material.flatShading = this.getMaterialFlatShading() ?? material.flatShading
 
-    material.emissive = this.getEmissive() ?? material.emissive
-    material.specular = this.getSpecular() ?? material.specular
+    material.emissive = this.getMaterialEmissive() ?? material.emissive
+    material.specular = this.getMaterialSpecular() ?? material.specular
 
-    material.wireframe = this.getWireframe() ?? material.wireframe
-    material.shininess = this.getShininess() ?? material.shininess
+    material.shininess = this.getMaterialShininess() ?? material.shininess
   }
+  */
 }
 
+/**
+ * <p>Wrapper around Viewer Options</p>
+ * <p>Casts options values into related THREE.js type</p>
+ * <p>Provides default values for options</p>
+ */
 export class ViewerSettings {
-  raw: any
+  private options: ViewerOptions
 
-  constructor (raw: any) {
-    this.raw = deepmerge(defaultViewerSettings, raw, undefined)
+  constructor (options: Partial<ViewerOptions>) {
+    const fallback: ViewerOptions = {
+      canvas: {
+        id: undefined,
+        resizeDelay: 200
+      },
+      camera: {
+        near: 0.01,
+        far: 15000,
+        fov: 50,
+        zoom: 1,
+        controls: {
+          orbit: true,
+          modelReferenceSize: 1,
+          rotateSpeed: 1,
+          moveSpeed: 1
+        }
+      },
+      /*
+      background: {
+        color: { r: 0x72, g: 0x64, b: 0x5b }
+      },
+      */
+      plane: {
+        show: true,
+        texture: null,
+        opacity: 1,
+        color: { r: 0xff, g: 0xff, b: 0xff },
+        size: 3
+      },
+      skylight: {
+        skyColor: { h: 0.6, s: 1, l: 0.6 },
+        groundColor: { h: 0.095, s: 1, l: 0.75 },
+        intensity: 0.6
+      },
+      sunLight: {
+        position: { x: -47.0, y: 22, z: -45 },
+        color: { h: 0.1, s: 1, l: 0.95 },
+        intensity: 1
+      }
+    }
+
+    this.options = options ? deepmerge(fallback, options, undefined) : fallback
   }
 
-  getPlaneColor = () => toRGBColor(this.raw.plane.color)
-  getBackgroundColor = () => toRGBColor(this.raw.background.color)
+  // Canvas
+  getCanvasResizeDelay = () => this.options.canvas.resizeDelay
+  getCanvasId = () => this.options.canvas.id
 
-  getSkylightColor = () => toHSLColor(this.raw.skylight.color)
-  getSkylightGroundColor = () => toHSLColor(this.raw.skylight.groundColor)
-  getSkylightIntensity = () => this.raw.skylight.intensity
+  // Plane
+  getPlaneShow = () => this.options.plane.show
+  getPlaneColor = () => toRGBColor(this.options.plane.color)
+  getPlaneTextureUrl = () => this.options.plane.texture
+  getPlaneOpacity = () => this.options.plane.opacity
+  getPlaneSize = () => this.options.plane.size
 
-  getSunlightColor = () => toHSLColor(this.raw.sunLight.color)
-  getSunlightPosition = () => toVec(this.raw.sunLight.position)
-  getSunlightIntensity = () => this.raw.sunLight.intensity
+  // Background
+  // Not implemented
+  // getBackgroundColor = () => toRGBColor(this.options.background.color)
 
-  getCameraMoveSpeed = () => this.raw.camera.controls.moveSpeed
-  getCameraRotateSpeed = () => this.raw.camera.controls.rotateSpeed
+  // Skylight
+  getSkylightColor = () => toHSLColor(this.options.skylight.skyColor)
+  getSkylightGroundColor = () => toHSLColor(this.options.skylight.groundColor)
+  getSkylightIntensity = () => this.options.skylight.intensity
+
+  // Sunlight
+  getSunlightColor = () => toHSLColor(this.options.sunLight.color)
+  getSunlightPosition = () => toVec(this.options.sunLight.position)
+  getSunlightIntensity = () => this.options.sunLight.intensity
+
+  // Camera
+  getCameraNear = () => this.options.camera.near
+  getCameraFar = () => this.options.camera.far
+  getCameraFov = () => this.options.camera.fov
+  getCameraZoom = () => this.options.camera.zoom
+
+  // Camera Controls
+  getCameraIsOrbit = () => this.options.camera.controls.orbit
+  getCameraMoveSpeed = () => this.options.camera.controls.moveSpeed
+  getCameraRotateSpeed = () => this.options.camera.controls.rotateSpeed
   getCameraReferenceModelSize = () =>
-    this.raw.camera.controls.modelReferenceSize
-
-  getCanvasResizeDelay = () => this.raw.canvas.resizeDelay
+    this.options.camera.controls.modelReferenceSize
 }
 
-function isRGBColor (obj: any): boolean {
-  return typeof obj === 'object' && 'r' in obj && 'g' in obj && 'b' in obj
-}
-
-function toRGBColor (c: any): THREE.Color {
-  if (!isRGBColor(c)) {
-    throw new Error('Not a RGB color')
-  }
+function toRGBColor (c: ColorRGB): THREE.Color {
   return new THREE.Color(c.r / 255, c.g / 255, c.b / 255)
-}
-function isHSLColor (obj: any): boolean {
-  return typeof obj === 'object' && 'h' in obj && 's' in obj && 'l' in obj
 }
 
 function toHSLColor (obj: any): THREE.Color {
-  if (!isHSLColor(obj)) {
-    throw new Error('Not a HSL color')
-  }
-  const color = new THREE.Color()
-  color.setHSL(obj.h, obj.s, obj.l)
-  return color
+  return new THREE.Color().setHSL(obj.h, obj.s, obj.l)
 }
 
-function isVector (obj: any): boolean {
-  return typeof obj === 'object' && 'x' in obj && 'y' in obj && 'z' in obj
-}
-export function toVec (obj: any): THREE.Vector3 {
-  if (!isVector(obj)) {
-    throw new Error('Not a vector')
-  }
+function toVec (obj: Vector3): THREE.Vector3 {
   return new THREE.Vector3(obj.x, obj.y, obj.z)
 }
 
@@ -165,8 +334,6 @@ function toEuler (rot: THREE.Vector3): THREE.Euler {
   )
 }
 
-function toQuaternion (rot: THREE.Vector3): THREE.Quaternion {
-  const q = new THREE.Quaternion()
-  q.setFromEuler(toEuler(rot))
-  return q
+function toQuaternion (rot: Vector3): THREE.Quaternion {
+  return new THREE.Quaternion().setFromEuler(toEuler(toVec(rot)))
 }

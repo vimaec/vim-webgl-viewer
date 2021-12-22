@@ -6,7 +6,6 @@ const url = params.has('model')
   : 'https://vim.azureedge.net/samples/residence.vim'
 
 const viewer = new Viewer({
-  mouseOrbit: false,
   plane: {
     show: true,
     texture:
@@ -19,7 +18,7 @@ const viewer = new Viewer({
 viewer.loadModel(
   {
     url: url,
-    rotation: { x: 270 }
+    rotation: { x: 270, y: 0, z: 0 }
   },
   (vim) => console.log('Callback: Viewer Ready!'),
   (progress) => {

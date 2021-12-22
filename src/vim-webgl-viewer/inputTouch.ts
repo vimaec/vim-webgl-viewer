@@ -1,17 +1,14 @@
 import * as THREE from 'three'
 import { ViewerCamera } from './viewerCamera'
 import { InputMouse } from './inputMouse'
-import { Viewer } from './viewer'
+import { ViewerRenderer } from './viewerRenderer'
 
 export class InputTouch {
-  // Consts
-  // TouchMoveSensitivity: number
-  // TouchRotateSensitivity: number
   TapDurationMs: number = 500
 
   // Dependencies
   private camera: ViewerCamera
-  private viewer: Viewer
+  private renderer: ViewerRenderer
   private mouse: InputMouse
 
   // State
@@ -20,14 +17,14 @@ export class InputTouch {
   private touchStart2: THREE.Vector2 | undefined = undefined // The second touch when multiple touches occur, otherwise left undefined
   private touchStartTime: number | undefined = undefined // In ms since epoch
 
-  constructor (camera: ViewerCamera, viewer: Viewer, mouse: InputMouse) {
+  constructor (
+    camera: ViewerCamera,
+    renderer: ViewerRenderer,
+    mouse: InputMouse
+  ) {
     this.camera = camera
-    this.viewer = viewer
+    this.renderer = renderer
     this.mouse = mouse
-
-    // TODO: Move to settings
-    // this.TouchMoveSensitivity = this.mouse.MouseMoveSensitivity * 20
-    // this.TouchRotateSensitivity = this.mouse.MouseRotateSensitivity
   }
 
   reset = () => {
@@ -39,7 +36,7 @@ export class InputTouch {
   }
 
   onTap = (position: THREE.Vector2) => {
-    this.mouse.onMouseClick(position)
+    this.mouse.onMouseClick(position, false)
   }
 
   onTouchStart = (event: any) => {
@@ -64,7 +61,7 @@ export class InputTouch {
   }
 
   onDoubleDrag = (delta: THREE.Vector2) => {
-    this.camera.TruckPedestalCameraBy(delta)
+    this.camera.truckPedestalCameraBy(delta)
   }
 
   onPinchOrSpread = (delta: number) => {
@@ -78,12 +75,11 @@ export class InputTouch {
 
     if (event.touches.length === 1) {
       const pos = this.touchToVector(event.touches[0])
+      const [width, height] = this.renderer.getContainerSize()
       const delta = pos
         .clone()
         .sub(this.touchStart)
-        .multiply(
-          new THREE.Vector2(1 / window.innerWidth, 1 / window.innerHeight)
-        )
+        .multiply(new THREE.Vector2(1 / width, 1 / height))
 
       this.touchStart = pos
       this.onDrag(delta)
@@ -95,18 +91,18 @@ export class InputTouch {
       const p1 = this.touchToVector(event.touches[0])
       const p2 = this.touchToVector(event.touches[1])
       const p = this.average(p1, p2)
-
+      const [width, height] = this.renderer.getContainerSize()
       const moveDelta = this.touchStart
         .clone()
         .sub(p)
         .multiply(
           // -1 to invert movement
-          new THREE.Vector2(-1 / window.innerWidth, -1 / window.innerHeight)
+          new THREE.Vector2(-1 / width, -1 / height)
         )
 
       const zoom = p1.distanceTo(p2)
       const prevZoom = this.touchStart1.distanceTo(this.touchStart2)
-      const min = Math.min(window.innerWidth, window.innerHeight)
+      const min = Math.min(width, height)
       // -1 to invert movement
       const zoomDelta = (zoom - prevZoom) / -min
 
