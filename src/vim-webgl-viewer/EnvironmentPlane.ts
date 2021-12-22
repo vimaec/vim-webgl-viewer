@@ -22,12 +22,12 @@ export class EnvironmentPlane {
     box?: THREE.Box3
   ) {
     // Visibily
-    this.mesh.visible = settings.raw.plane.show
+    this.mesh.visible = settings.getPlaneShow()
 
     // Looks
-    this.applyTexture(settings.raw.plane.texture)
+    this.applyTexture(settings.getPlaneTextureUrl())
     this.material.color.copy(settings.getPlaneColor())
-    this.material.opacity = settings.raw.plane.opacity
+    this.material.opacity = settings.getPlaneOpacity()
 
     if (!box || !modelSettings) return
 
@@ -45,7 +45,7 @@ export class EnvironmentPlane {
 
     // Scale
     const sphere = box?.getBoundingSphere(new THREE.Sphere())
-    const size = (sphere?.radius ?? 1) * settings.raw.plane.size
+    const size = (sphere?.radius ?? 1) * settings.getPlaneSize()
     const scale = new THREE.Vector3(1, 1, 1).multiplyScalar(size)
     this.mesh.scale.copy(scale)
   }

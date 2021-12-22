@@ -96,13 +96,13 @@ class ViewerCamera {
 
   applySettings (newSettings: ViewerSettings, modelSphere?: THREE.Sphere) {
     // Mode
-    this.MouseOrbit = newSettings.raw.mouseOrbit
+    this.MouseOrbit = newSettings.getCameraIsOrbit()
 
     // Camera
-    this.camera.fov = newSettings.raw.camera.fov
-    this.camera.zoom = newSettings.raw.camera.zoom
-    this.camera.near = newSettings.raw.camera.near
-    this.camera.far = newSettings.raw.camera.far
+    this.camera.fov = newSettings.getCameraFov()
+    this.camera.zoom = newSettings.getCameraZoom()
+    this.camera.near = newSettings.getCameraNear()
+    this.camera.far = newSettings.getCameraFar()
     this.camera.updateProjectionMatrix()
 
     // Controls
