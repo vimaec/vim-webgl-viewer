@@ -7,11 +7,6 @@ import { ViewerRenderer } from './viewerRenderer'
 type RaycastResult = [mesh: Mesh, index: number] | number | null
 
 export class InputMouse {
-  // Consts
-  // MouseMoveSensitivity: number = 0.05
-  // MouseRotateSensitivity: number = 0.2
-  // MouseScrollSensitivity: number = 0.02
-
   // Dependencies
   private camera: ViewerCamera
   private renderer: ViewerRenderer

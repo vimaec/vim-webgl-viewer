@@ -4,9 +4,6 @@ import { InputMouse } from './inputMouse'
 import { ViewerRenderer } from './viewerRenderer'
 
 export class InputTouch {
-  // Consts
-  // TouchMoveSensitivity: number
-  // TouchRotateSensitivity: number
   TapDurationMs: number = 500
 
   // Dependencies
