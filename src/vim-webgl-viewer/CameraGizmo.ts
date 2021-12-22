@@ -45,7 +45,7 @@ export class CameraGizmo {
 
   applySettings (settings: ViewerSettings, factor: number) {
     this.setScale(
-      (Math.tan((DEG2RAD * settings.getCameraFOV()) / 2) * factor) / 10
+      (Math.tan((DEG2RAD * settings.getCameraFov()) / 2) * factor) / 10
     )
   }
 
