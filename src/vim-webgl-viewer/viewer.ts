@@ -362,7 +362,7 @@ export class Viewer {
     const geometries: THREE.BufferGeometry[] = []
     nodeIndices.forEach((nodeIndex) => {
       const builder = new BufferGeometryBuilder(scene.vim.g3d)
-      const g = builder.createBufferGeometryFromInstanceIndex(nodeIndex)
+      const g = builder.createGeometryFromInstanceIndex(nodeIndex)
       if (g) geometries.push(g)
     })
 
