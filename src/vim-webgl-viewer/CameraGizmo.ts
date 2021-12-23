@@ -21,7 +21,7 @@ export class CameraGizmo {
   gizmos: THREE.Group
 
   // State
-  timeout: number
+  timeout: ReturnType<typeof setTimeout>
 
   constructor (camera: ViewerCamera, render: ViewerRenderer) {
     this.camera = camera
