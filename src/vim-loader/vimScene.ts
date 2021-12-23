@@ -1,23 +1,16 @@
 import * as THREE from 'three'
-import { BufferGeometryBuilder } from './VIMLoader'
 import { Vim } from './vim'
-import { VimSceneGeometry } from './vimSceneGeometry'
+import { VimThree } from './vimThree'
 
 export class VimScene {
   vim: Vim
-  geometry: VimSceneGeometry
-  geometryBuilder: BufferGeometryBuilder
+  geometry: VimThree
   elementIndexToNodeIndices: Map<number, number[]>
   elementIdToIndex: Map<number, number>
 
-  constructor (
-    vim: Vim,
-    geometry: VimSceneGeometry,
-    geometryBuilder: BufferGeometryBuilder
-  ) {
+  constructor (vim: Vim, geometry: VimThree) {
     this.vim = vim
     this.geometry = geometry
-    this.geometryBuilder = geometryBuilder
     this.elementIndexToNodeIndices = this.mapElementIndexToNodeIndices()
     this.elementIdToIndex = this.mapElementIdToIndex()
   }
@@ -72,7 +65,8 @@ export class VimScene {
     table?.get(`index:${tableName}:${fieldName}`)
 
   getDataColumn = (table: any, typePrefix, colNameNoPrefix) =>
-    table?.get(typePrefix + colNameNoPrefix) ?? table?.get('numeric:' + colNameNoPrefix) // Backwards compatible call with vim0.9
+    table?.get(typePrefix + colNameNoPrefix) ??
+    table?.get('numeric:' + colNameNoPrefix) // Backwards compatible call with vim0.9
 
   getIntColumn = (table: any, colNameNoPrefix: string) =>
     this.getDataColumn(table, 'int:', colNameNoPrefix)
@@ -87,10 +81,12 @@ export class VimScene {
     this.getDataColumn(table, 'double:', colNameNoPrefix)
 
   getElementIndices = (table: any) =>
-    this.getIndexColumn(table, Vim.tableElement, 'Element') ?? table?.get(Vim.tableElementLegacy) // Backwards compatible call with vim0.9
+    this.getIndexColumn(table, Vim.tableElement, 'Element') ??
+    table?.get(Vim.tableElementLegacy) // Backwards compatible call with vim0.9
 
   getElementTable = () =>
-    this.vim.bim?.get(Vim.tableElement) ?? this.vim.bim?.get(Vim.tableElementLegacy)
+    this.vim.bim?.get(Vim.tableElement) ??
+    this.vim.bim?.get(Vim.tableElementLegacy)
 
   getNodeTable = () => this.vim.bim.get(Vim.tableNode)
 

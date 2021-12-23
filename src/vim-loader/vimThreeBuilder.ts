@@ -1,95 +1,12 @@
-/**
- @author VIM / https://vimaec.com
-*/
-
-import * as BufferGeometryUtils from 'three/examples/jsm/utils/BufferGeometryUtils'
+/*
 import * as THREE from 'three'
-
-import { VimScene } from './vimScene'
-import { Vim } from './vim'
-import { BFastParser } from './bfast'
-import { VimParser } from './vimParser'
-import { Logger } from './logger'
 import { VimG3d } from './g3d'
 import { VimThree } from './vimThree'
-
-export class VIMLoader {
-  logger: Logger | undefined
-
-  constructor () {
-    this.logger = new Logger('VIM Loader')
-  }
-
-  // Loads the VIM from a URL
-  load (
-    url: string,
-    onLoad?: (response: VimScene) => void,
-    onProgress?: (progress: ProgressEvent | 'processing') => void,
-    onError?: (event: ErrorEvent) => void
-  ) {
-    const loader = new THREE.FileLoader()
-    loader.setResponseType('arraybuffer')
-    loader.setRequestHeader({
-      'Content-Encoding': 'gzip'
-    })
-
-    this.logger?.logStart()
-    loader.load(
-      url,
-      (data: string | ArrayBuffer) => {
-        if (typeof data === 'string') {
-          onError?.(new ErrorEvent('Unsupported string loader response'))
-          return
-        }
-        onProgress?.('processing')
-
-        // Try parse vim file
-        let scene: VimScene
-        try {
-          const vim = this.parse(data)
-          scene = this.loadAsThree(vim)
-        } catch (exception) {
-          onError?.(new ErrorEvent('Loading Error', exception as Error))
-          return
-        }
-        this.logger?.logEnd()
-        // Don't catch exceptions in callback.
-        onLoad?.(scene)
-      },
-      onProgress,
-      (error) => {
-        this.logger?.logEnd()
-        onError?.(error)
-      }
-    )
-  }
-
-  parse (data: ArrayBuffer): Vim {
-    // Parse Bfast from Bytes
-    const bfastParser = new BFastParser(this.logger)
-    const bfast = this.logger?.timeAction('Parsing BFast', () =>
-      bfastParser.parseFromBuffer(data)
-    )
-
-    // Parse Vim from BFast
-    const vimParser = new VimParser(this.logger)
-    const vim = this.logger?.timeAction('Creating VIM', () =>
-      vimParser.parseFromBFast(bfast)
-    )
-
-    return vim
-  }
-
-  loadAsThree (vim: Vim) {
-    const threeBuilder = new VimThreeBuilder(undefined, this.logger)
-    const vimThree = threeBuilder.buildFromG3d(vim.g3d)
-
-    this.logger?.log('Loading Completed')
-    return new VimScene(vim, vimThree)
-  }
-}
+import * as BufferGeometryUtils from 'three/examples/jsm/utils/BufferGeometryUtils'
+import { Logger } from './logger'
 
 type Mesh = THREE.InstancedMesh<THREE.BufferGeometry, THREE.Material>
+
 export class VimThreeBuilder {
   private logger: Logger | undefined
   private material: THREE.Material
@@ -302,7 +219,7 @@ export class BufferGeometryBuilder {
     const resultMeshes: (THREE.BufferGeometry | null)[] = []
 
     for (let mesh = 0; mesh < meshCount; mesh++) {
-      const result = this.createGeometryFromMeshIndex(mesh)
+      const result = this.createBufferGeometryFromMeshIndex(mesh)
       result?.computeBoundingBox()
       resultMeshes.push(result)
     }
@@ -310,21 +227,23 @@ export class BufferGeometryBuilder {
     return resultMeshes
   }
 
-  createGeometryFromInstanceIndex (
+  createBufferGeometryFromInstanceIndex (
     instanceIndex: number
   ): THREE.BufferGeometry | null {
     if (instanceIndex < 0) throw new Error('Invalid negative index.')
 
     const meshIndex = this.g3d.instanceMeshes[instanceIndex]
     if (meshIndex < 0) return null
-    const geometry = this.createGeometryFromMeshIndex(meshIndex)
+    const geometry = this.createBufferGeometryFromMeshIndex(meshIndex)
     if (!geometry) return null
     const matrix = getMatrixFromNodeIndex(this.g3d, instanceIndex)
     geometry.applyMatrix4(matrix)
     return geometry
   }
 
-  createGeometryFromMeshIndex (meshIndex: number): THREE.BufferGeometry | null {
+  createBufferGeometryFromMeshIndex (
+    meshIndex: number
+  ): THREE.BufferGeometry | null {
     // min and max indices accumulated to slice into the vertex buffer
     let min: number = Number.MAX_SAFE_INTEGER
     let max: number = 0
@@ -365,7 +284,7 @@ export class BufferGeometryBuilder {
     )
   }
 
-  private getSubmeshColor (g3d: VimG3d, submesh: number) {
+  getSubmeshColor (g3d: VimG3d, submesh: number) {
     const material = g3d.submeshMaterial[submesh]
     if (material < 0) {
       return this.defaultColor
@@ -408,3 +327,4 @@ function createBufferGeometryFromArrays (
 
   return geometry
 }
+*/

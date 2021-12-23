@@ -1,6 +1,6 @@
 import * as THREE from 'three'
 
-export class VimSceneGeometry {
+export class VimThree {
   meshes: THREE.Mesh[]
   boundingBox: THREE.Box3
   nodeIndexToMeshInstance: Map<number, [THREE.Mesh, number]>

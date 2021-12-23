@@ -1,15 +1,17 @@
-import { BFast } from './bfast'
+import { BFast, BFastParser } from './bfast'
 import { G3d, VimG3d, Attribute } from './g3d'
 import { Vim } from './vim'
-import { BFastParser } from './bfastParser'
+import { Logger } from './logger'
 
 export class VimParser {
-  private static log (msg: string) {
-    console.timeLog('VimParser', msg)
+  logger: Logger | undefined
+  constructor (logger: Logger) {
+    this.logger = logger
   }
 
   // Given a BFAST container (header/names/buffers) constructs a VIM data structure
-  public static parseFromBFast = (bfast: BFast): Vim => {
+  public parseFromBFast = (bfast: BFast): Vim => {
+    const bFastParser = new BFastParser()
     if (bfast.buffers.length < 5) {
       throw new Error('VIM requires at least five BFast buffers')
     }
@@ -25,47 +27,48 @@ export class VimParser {
     const entityData = lookup.get('entities')
     const stringData = lookup.get('strings')
 
-    this.log(`Parsing header: ${headerData.length} bytes`)
+    this.logger?.log(`Parsing header: ${headerData.length} bytes`)
     const header = new TextDecoder('utf-8').decode(headerData)
 
-    this.log(`Constructing G3D: ${g3dData.length} bytes`)
-    const g3d = new VimG3d(this.parseG3d(BFastParser.parseFromArray(g3dData)))
-    this.log('Validating G3D')
+    this.logger?.log(`Constructing G3D: ${g3dData.length} bytes`)
+    const g3d = new VimG3d(this.parseG3d(bFastParser.parseFromArray(g3dData)))
+    this.logger?.log('Validating G3D')
     g3d.validate()
 
-    this.log(`Retrieving assets: ${assetData.length} bytes`)
-    const assets = BFastParser.parseFromArray(assetData)
-    this.log(`Found ${assets.buffers.length} assets`)
+    this.logger?.log(`Retrieving assets: ${assetData.length} bytes`)
+    const assets = bFastParser.parseFromArray(assetData)
+    this.logger?.log(`Found ${assets.buffers.length} assets`)
 
-    this.log(`Constructing entity tables: ${entityData.length} bytes`)
+    this.logger?.log(`Constructing entity tables: ${entityData.length} bytes`)
     const entities = this.parseEntityTables(
-      BFastParser.parseFromArray(entityData)
+      bFastParser,
+      bFastParser.parseFromArray(entityData)
     )
-    this.log(`Found ${entities.size} entity tables`)
+    this.logger?.log(`Found ${entities.size} entity tables`)
 
-    this.log(`Decoding strings: ${stringData.length} bytes`)
+    this.logger?.log(`Decoding strings: ${stringData.length} bytes`)
     const strings = new TextDecoder('utf-8').decode(stringData).split('\0')
-    this.log(`Found ${strings.length} strings`)
+    this.logger?.log(`Found ${strings.length} strings`)
 
     return new Vim(header, assets, g3d, entities, strings)
   }
 
-  private static parseEntityTables (bfast: BFast) {
+  private parseEntityTables (parser: BFastParser, bfast: BFast) {
     const result = new Map<string, any>()
     for (let i = 0; i < bfast.buffers.length; ++i) {
       const current = bfast.names[i]
       const tableName = current.substring(current.indexOf(':') + 1)
       const buffer = bfast.buffers[i]
-      this.log(
+      this.logger?.log(
         `Constructing entity table ${current} which is ${buffer.length} size`
       )
-      const next = this.parseEntityTable(BFastParser.parseFromArray(buffer))
+      const next = this.parseEntityTable(parser.parseFromArray(buffer))
       result.set(tableName, next)
     }
     return result
   }
 
-  private static parseEntityTable (bfast: BFast) {
+  private parseEntityTable (bfast: BFast) {
     const result = new Map<string, any>()
     for (let i = 0; i < bfast.buffers.length; ++i) {
       const columnName = bfast.names[i]
@@ -108,8 +111,8 @@ export class VimParser {
   }
 
   // Given a BFAST container (header/names/buffers) constructs a G3D data structure
-  private static parseG3d (bfast: BFast): G3d {
-    console.log('Constructing G3D')
+  private parseG3d (bfast: BFast): G3d {
+    this.logger?.log('Constructing G3D')
 
     if (bfast.buffers.length < 2) {
       throw new Error('G3D requires at least two BFast buffers')
@@ -134,7 +137,7 @@ export class VimParser {
         bfast.buffers[i + 1]
       )
       attributes.push(attribute)
-      console.log(`Attribute ${i} = ${attribute.descriptor.description}`)
+      this.logger?.log(`Attribute ${i} = ${attribute.descriptor.description}`)
     }
 
     return new G3d(meta, attributes)
