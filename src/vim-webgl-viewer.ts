@@ -1,3 +1,4 @@
+// Links all files to generate root type declaration
 export * from './vim-webgl-viewer/cameraGizmo'
 export * from './vim-webgl-viewer/environmentPlane'
 export * from './vim-webgl-viewer/inputKeyboard'
