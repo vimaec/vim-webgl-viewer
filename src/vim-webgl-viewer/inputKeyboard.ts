@@ -1,7 +1,7 @@
 import * as THREE from 'three'
 
 import { ViewerCamera } from './viewerCamera'
-import { CameraGizmo } from './CameraGizmo'
+import { CameraGizmo } from './cameraGizmo'
 import { Viewer } from './viewer'
 import { InputMouse } from './inputMouse'
 

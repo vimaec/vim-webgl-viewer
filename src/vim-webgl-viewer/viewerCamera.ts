@@ -4,7 +4,7 @@
 
 import * as THREE from 'three'
 import { MathUtils } from 'three'
-import { CameraGizmo } from './CameraGizmo'
+import { CameraGizmo } from './cameraGizmo'
 import { ViewerRenderer } from './viewerRenderer'
 import { ViewerSettings } from './viewerSettings'
 

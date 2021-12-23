@@ -1,6 +1,6 @@
 import * as THREE from 'three'
 import { ModelSettings, ViewerSettings } from './viewerSettings'
-import { EnvironmentPlane } from './EnvironmentPlane'
+import { EnvironmentPlane } from './environmentPlane'
 
 /*
 Vim Viewer
