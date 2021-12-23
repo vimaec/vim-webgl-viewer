@@ -4,12 +4,12 @@
 
 import * as THREE from 'three'
 import * as BufferGeometryUtils from 'three/examples/jsm/utils/BufferGeometryUtils'
-import { G3d, VimG3d, Attribute } from './g3d'
-import { BFast, BFastHeader } from './bfast'
-import { Vim } from './vim'
+import { VimG3d } from './g3d'
 import { VimSceneGeometry } from './vimSceneGeometry'
 import { VimScene } from './vimScene'
 import { createBufferGeometryFromArrays } from './threeHelpers'
+import { BFastParser } from './bfastParser'
+import { VimParser } from './vimParser'
 
 type Mesh = THREE.InstancedMesh<THREE.BufferGeometry, THREE.Material>
 
@@ -96,215 +96,18 @@ export class VIMLoader {
     )
   }
 
-  parseBFastFromArray (bytes: Uint8Array) {
-    return this.parseBFast(bytes.buffer, bytes.byteOffset, bytes.byteLength)
-  }
-
-  // BFAST is the container format for an array of binary arrays
-  parseBFast (
-    arrayBuffer: ArrayBuffer,
-    byteOffset: number = 0,
-    byteLength: number = arrayBuffer.byteLength - byteOffset
-  ): BFast {
-    // Cast the input data to 32-bit integers
-    // Note that according to the spec they are 64 bit numbers. In JavaScript you can't have 64 bit integers,
-    // and it would bust the amount of memory we can work with in most browsers and low-power devices
-    const data = new Int32Array(arrayBuffer, byteOffset, byteLength / 4)
-
-    // Parse the header
-    const header = BFastHeader.fromArray(data, byteLength)
-
-    // Compute each buffer
-    const buffers: Uint8Array[] = []
-    let pos = 8
-    for (let i = 0; i < header.numArrays; ++i) {
-      const begin = data[pos + 0]
-      const end = data[pos + 2]
-
-      // Check validity of data
-      if (data[pos + 1] !== 0) {
-        throw new Error('Expected 0 in position ' + (pos + 1) * 4)
-      }
-      if (data[pos + 3] !== 0) {
-        throw new Error('Expected 0 in position ' + (pos + 3) * 4)
-      }
-      if (begin < header.dataStart || begin > header.dataEnd) {
-        throw new Error('Buffer start is out of range')
-      }
-      if (end < begin || end > header.dataEnd) {
-        throw new Error('Buffer end is out of range')
-      }
-
-      pos += 4
-      const buffer = new Uint8Array(
-        arrayBuffer,
-        begin + byteOffset,
-        end - begin
-      )
-      buffers.push(buffer)
-    }
-
-    if (buffers.length < 0) {
-      throw new Error('Expected at least one buffer containing the names')
-    }
-
-    // break the first one up into names
-    const joinedNames = new TextDecoder('utf-8').decode(buffers[0])
-
-    // Removing the trailing '\0' before spliting the names
-    let names = joinedNames.slice(0, -1).split('\0')
-    if (joinedNames.length === 0) names = []
-
-    // Validate the number of names
-    if (names.length !== buffers.length - 1) {
-      throw new Error(
-        'Expected number of names to be equal to the number of buffers - 1'
-      )
-    }
-
-    return new BFast(header, names, buffers.slice(1))
-  }
-
-  constructEntityTable (bfast: BFast) {
-    const result = new Map<string, any>()
-    for (let i = 0; i < bfast.buffers.length; ++i) {
-      const columnName = bfast.names[i]
-      // eslint-disable-next-line no-unused-vars
-      const [columnType, ..._] = columnName.split(':')
-      const buffer = bfast.buffers[i]
-
-      let length
-      let ctor
-      switch (columnType) {
-        case 'byte':
-          length = buffer.byteLength
-          ctor = Int8Array
-          break
-        case 'float':
-          length = buffer.byteLength / 4
-          ctor = Float32Array
-          break
-        case 'double':
-        case 'numeric': // legacy (vim0.9)
-          length = buffer.byteLength / 8
-          ctor = Float64Array
-          break
-        case 'string': // i.e. indices into the string table
-        case 'index':
-        case 'int':
-        case 'properties': // legacy (vim0.9)
-          length = buffer.byteLength / 4
-          ctor = Int32Array
-          break
-        default:
-          throw new Error('Unrecognized column type ' + columnType)
-      }
-
-      // eslint-disable-next-line new-cap
-      const columnData = new ctor(buffer.buffer, buffer.byteOffset, length)
-      result.set(columnName, columnData)
-    }
-    return result
-  }
-
-  constructEntityTables (bfast: BFast): any {
-    const result = new Map<string, any>()
-    for (let i = 0; i < bfast.buffers.length; ++i) {
-      const current = bfast.names[i]
-      const tableName = current.substring(current.indexOf(':') + 1)
-      const buffer = bfast.buffers[i]
-      this.log(
-        `Constructing entity table ${current} which is ${buffer.length} size`
-      )
-      const next = this.constructEntityTable(this.parseBFastFromArray(buffer))
-      result.set(tableName, next)
-    }
-    return result
-  }
-
-  // Given a BFAST container (header/names/buffers) constructs a VIM data structure
-  constructVIM = (bfast: any): Vim => {
-    if (bfast.buffers.length < 5) {
-      throw new Error('VIM requires at least five BFast buffers')
-    }
-
-    const lookup = new Map<string, any>()
-    for (let i = 0; i < bfast.buffers.length; ++i) {
-      lookup.set(bfast.names[i], bfast.buffers[i])
-    }
-
-    const assetData = lookup.get('assets')
-    const g3dData = lookup.get('geometry')
-    const headerData = lookup.get('header')
-    const entityData = lookup.get('entities')
-    const stringData = lookup.get('strings')
-
-    this.log(`Parsing header: ${headerData.length} bytes`)
-    const header = new TextDecoder('utf-8').decode(headerData)
-
-    this.log(`Constructing G3D: ${g3dData.length} bytes`)
-    const g3d = new VimG3d(this.constructG3D(this.parseBFastFromArray(g3dData)))
-    this.log('Validating G3D')
-    g3d.validate()
-
-    this.log(`Retrieving assets: ${assetData.length} bytes`)
-    const assets = this.parseBFastFromArray(assetData)
-    this.log(`Found ${assets.buffers.length} assets`)
-
-    this.log(`Constructing entity tables: ${entityData.length} bytes`)
-    const entities = this.constructEntityTables(
-      this.parseBFastFromArray(entityData)
-    )
-    this.log(`Found ${entities.length} entity tables`)
-
-    this.log(`Decoding strings: ${stringData.length} bytes`)
-    const strings = new TextDecoder('utf-8').decode(stringData).split('\0')
-    this.log(`Found ${strings.length} strings`)
-
-    return new Vim(header, assets, g3d, entities, strings)
-  }
-
-  // Given a BFAST container (header/names/buffers) constructs a G3D data structure
-  constructG3D (bfast: BFast): G3d {
-    console.log('Constructing G3D')
-
-    if (bfast.buffers.length < 2) {
-      throw new Error('G3D requires at least two BFast buffers')
-    }
-
-    // Parse first buffer as Meta
-    const metaBuffer = bfast.buffers[0]
-    if (bfast.names[0] !== 'meta') {
-      throw new Error(
-        "First G3D buffer must be named 'meta', but was named: " +
-          bfast.names[0]
-      )
-    }
-    const meta = new TextDecoder('utf-8').decode(metaBuffer)
-
-    // Parse remaining buffers as Attributes
-    const attributes: Attribute[] = []
-    const nDescriptors = bfast.buffers.length - 1
-    for (let i = 0; i < nDescriptors; ++i) {
-      const attribute = Attribute.fromString(
-        bfast.names[i + 1],
-        bfast.buffers[i + 1]
-      )
-      attributes.push(attribute)
-      console.log(`Attribute ${i} = ${attribute.descriptor.description}`)
-    }
-
-    return new G3d(meta, attributes)
-  }
-
   // Main
   parse (data: ArrayBuffer): VimScene {
-    const bfast = this.timeAction('Parsing Vim', () => this.parseBFast(data))
+    const bfast = this.timeAction('Parsing BFast', () =>
+      BFastParser.parseFromBuffer(data)
+    )
 
     console.log(`found: ${bfast.buffers.length} buffers`)
     console.log(bfast.names.join(', '))
 
-    const vim = this.timeAction('Creating VIM', () => this.constructVIM(bfast))
+    const vim = this.timeAction('Creating VIM', () =>
+      VimParser.parseFromBFast(bfast)
+    )
 
     const geometryBuilder = new BufferGeometryBuilder(vim.g3d)
     const geometry = this.timeAction('Allocating Geometry', () =>
