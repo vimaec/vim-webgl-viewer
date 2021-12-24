@@ -85,7 +85,7 @@ export const loadAny = function (
       break
     }
     case 'vim': {
-      new VIMLoader().load(fileName, onFileLoaded, onProgress, onError)
+      new VIMLoader().loadFromUrl(fileName, onFileLoaded, onProgress, onError)
       break
     }
     default:

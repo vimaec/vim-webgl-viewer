@@ -21,7 +21,7 @@ export class Selection {
     return this.elementIndex !== null
   }
 
-  reset () {
+  clear () {
     this.elementIndex = null
     this.boundingSphere = null
     this.disposeResources()

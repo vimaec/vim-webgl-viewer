@@ -1,15 +1,18 @@
 import * as THREE from 'three'
+import { VimThree } from '../vim-webgl-viewer'
 import { ViewerSettings } from './viewerSettings'
 
 export class ViewerRenderer {
   camera: THREE.PerspectiveCamera
   renderer: THREE.WebGLRenderer
-  scene: THREE.Scene
   clock = new THREE.Clock()
   canvas: HTMLCanvasElement
 
-  boundingBox: THREE.Box3
+  // state
+  scene: THREE.Scene
   meshes: THREE.Object3D[] = []
+  private localBoundingBox: THREE.Box3
+  private worldBoundingBox: THREE.Box3
 
   constructor (canvas: HTMLCanvasElement, settings: ViewerSettings) {
     this.renderer = new THREE.WebGLRenderer({
@@ -28,7 +31,7 @@ export class ViewerRenderer {
 
     this.camera = new THREE.PerspectiveCamera()
     this.scene = new THREE.Scene()
-    this.boundingBox = new THREE.Box3()
+    this.localBoundingBox = new THREE.Box3()
     this.fitToCanvas()
     this.setOnResize(this.fitToCanvas, settings.getCanvasResizeDelay())
   }
@@ -54,7 +57,11 @@ export class ViewerRenderer {
   }
 
   getBoundingSphere () {
-    return this.boundingBox.getBoundingSphere(new THREE.Sphere())
+    return this.worldBoundingBox?.getBoundingSphere(new THREE.Sphere())
+  }
+
+  getBoundingBox () {
+    return this.worldBoundingBox?.clone()
   }
 
   render () {
@@ -76,39 +83,53 @@ export class ViewerRenderer {
     this.camera.updateProjectionMatrix()
   }
 
-  addToScene (mesh: THREE.Object3D) {
+  clearModels () {
+    this.meshes.forEach((m) => this.scene.remove(m))
+    this.meshes = []
+    this.localBoundingBox = undefined
+    this.worldBoundingBox = undefined
+  }
+
+  addObjects (meshes: THREE.Object3D[]) {
+    meshes.forEach((m) => {
+      this.addObject(m)
+    })
+  }
+
+  addObject (mesh: THREE.Object3D) {
     this.scene.add(mesh)
   }
 
-  remove (mesh: THREE.Object3D) {
+  removeObject (mesh: THREE.Object3D) {
     this.scene.remove(mesh)
     const i = this.meshes.indexOf(mesh)
     if (i > 0) this.meshes.splice(i, 1)
   }
 
-  addManyToScene (meshes: THREE.Object3D[]) {
-    meshes.forEach((m) => {
-      this.addToScene(m)
-    })
-  }
-
-  addToModel (meshes: THREE.Object3D[]) {
-    meshes.forEach((m) => {
+  addModel (model: VimThree) {
+    model.meshes.forEach((m) => {
       this.scene.add(m)
       this.meshes.push(m)
     })
+
+    this.localBoundingBox = this.localBoundingBox
+      ? this.localBoundingBox.union(model.boundingBox)
+      : model.boundingBox.clone()
+
+    this.worldBoundingBox = this.worldBoundingBox ?? this.localBoundingBox
   }
 
-  updateModel (matrix: THREE.Matrix4) {
+  applyMatrix4 (matrix: THREE.Matrix4) {
     for (let i = 0; i < this.meshes.length; i++) {
       this.meshes[i].matrixAutoUpdate = false
       this.meshes[i].matrix.copy(matrix)
     }
+    this.worldBoundingBox = this.localBoundingBox.clone().applyMatrix4(matrix)
   }
 
   computeBoundingBox (matrix: THREE.Matrix4) {
-    this.boundingBox = this._computeBoundingBox(this.scene)
-    this.boundingBox.applyMatrix4(matrix)
+    this.localBoundingBox = this._computeBoundingBox(this.scene)
+    this.worldBoundingBox = this.localBoundingBox.clone().applyMatrix4(matrix)
   }
 
   _computeBoundingBox (scene: THREE.Scene): THREE.Box3 {

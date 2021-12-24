@@ -4,6 +4,7 @@
 
 import * as THREE from 'three'
 import deepmerge from 'deepmerge'
+import { clone, cloneDeep } from 'lodash'
 
 export type Vector3 = {
   x: number
@@ -152,6 +153,10 @@ export type ModelOptions = {
    * Scale factor for the model
    */
   scale: number
+  /**
+   * elements to include
+   */
+  elements?: number[]
 
   // Not implement
   // material: Partial<MaterialOptions>
@@ -165,12 +170,13 @@ export type ModelOptions = {
 export class ModelSettings {
   private options: ModelOptions
 
-  constructor (options: Partial<ModelOptions>) {
+  constructor (options?: Partial<ModelOptions>) {
     const fallback: ModelOptions = {
       url: 'https://vim.azureedge.net/samples/residence.vim',
       position: { x: 0, y: 0, z: 0 },
       rotation: { x: 0, y: 0, z: 0 },
-      scale: 0.01
+      scale: 0.01,
+      elements: undefined
       /*
       material: {
         color: { r: 0x00, g: 0x55, b: 0xff },
@@ -185,6 +191,7 @@ export class ModelSettings {
     this.options = options ? deepmerge(fallback, options, undefined) : fallback
   }
 
+  getOptions = () => cloneDeep(this.options) as ModelOptions
   getURL = () => this.options.url
 
   // Model
@@ -198,6 +205,7 @@ export class ModelSettings {
       this.getObjectScale()
     )
 
+  getElementFilter = () => clone(this.options.elements)
   // Material
   /*
   getMaterialColor = () => toRGBColor(this.options.material.color)
@@ -226,7 +234,7 @@ export class ModelSettings {
 export class ViewerSettings {
   private options: ViewerOptions
 
-  constructor (options: Partial<ViewerOptions>) {
+  constructor (options?: Partial<ViewerOptions>) {
     const fallback: ViewerOptions = {
       canvas: {
         id: undefined,
