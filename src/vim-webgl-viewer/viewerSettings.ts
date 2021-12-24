@@ -156,7 +156,7 @@ export type ModelOptions = {
   /**
    * elements to include
    */
-  elements?: number[]
+  elementIds?: number[]
 
   // Not implement
   // material: Partial<MaterialOptions>
@@ -176,7 +176,7 @@ export class ModelSettings {
       position: { x: 0, y: 0, z: 0 },
       rotation: { x: 0, y: 0, z: 0 },
       scale: 0.01,
-      elements: undefined
+      elementIds: undefined
       /*
       material: {
         color: { r: 0x00, g: 0x55, b: 0xff },
@@ -205,7 +205,7 @@ export class ModelSettings {
       this.getObjectScale()
     )
 
-  getElementFilter = () => clone(this.options.elements)
+  getElementIdsFilter = () => clone(this.options.elementIds)
   // Material
   /*
   getMaterialColor = () => toRGBColor(this.options.material.color)

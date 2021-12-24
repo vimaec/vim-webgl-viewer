@@ -184,7 +184,7 @@ export class Viewer {
 
     const settings = new ModelSettings(options)
     // Go from Element Ids -> Node Indices
-    const elementIds = settings.getElementFilter()
+    const elementIds = settings.getElementIdsFilter()
     const nodeIndices = elementIds
       ? new Set(this.vimScene.getNodeIndicesFromElementIds(elementIds))
       : undefined
@@ -197,12 +197,12 @@ export class Viewer {
 
   /**
    * Reloads the current model with the same settings except it applies a new element filter
-   * @param includedElementIndices array of element ids to keep, passing undefined will load the whole model
+   * @param includedElementIds array of element ids to keep, passing undefined will load the whole model
    */
-  filter (includedElementIndices: number[] | undefined) {
+  filter (includedElementIds: number[] | undefined) {
     if (!this.modelSettings) throw new Error(NO_SCENE_LOADED)
     const options = this.modelSettings.getOptions()
-    options.elements = includedElementIndices
+    options.elementIds = includedElementIds
     this.reloadModel(options)
   }
 
