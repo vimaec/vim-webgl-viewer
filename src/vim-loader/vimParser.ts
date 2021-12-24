@@ -53,7 +53,7 @@ export class VimParser {
     return new Vim(header, assets, g3d, entities, strings)
   }
 
-  private parseEntityTables (parser: BFastParser, bfast: BFast) {
+  private parseEntityTables (parser: BFastParser, bfast: BFast): Map<string, any> {
     const result = new Map<string, any>()
     for (let i = 0; i < bfast.buffers.length; ++i) {
       const current = bfast.names[i]
@@ -68,7 +68,7 @@ export class VimParser {
     return result
   }
 
-  private parseEntityTable (bfast: BFast) {
+  private parseEntityTable (bfast: BFast): Map<string, any> {
     const result = new Map<string, any>()
     for (let i = 0; i < bfast.buffers.length; ++i) {
       const columnName = bfast.names[i]
@@ -76,8 +76,8 @@ export class VimParser {
       const [columnType, ..._] = columnName.split(':')
       const buffer = bfast.buffers[i]
 
-      let length
-      let ctor
+      let length: number
+      let ctor: Int8ArrayConstructor | Float32ArrayConstructor | Float64ArrayConstructor | Int32ArrayConstructor;
       switch (columnType) {
         case 'byte':
           length = buffer.byteLength

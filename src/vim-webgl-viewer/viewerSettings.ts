@@ -119,6 +119,11 @@ export type ViewerOptions = {
    * Sunlight (directional light) options
    */
   sunLight: Partial<SunLightOptions>
+
+  /**
+   * On click call-back
+   */
+  onClick: Partial<() => void>
 }
 
 /*
@@ -224,7 +229,7 @@ export class ModelSettings {
  * <p>Provides default values for options</p>
  */
 export class ViewerSettings {
-  private options: ViewerOptions
+  public options: ViewerOptions
 
   constructor (options: Partial<ViewerOptions>) {
     const fallback: ViewerOptions = {
@@ -265,9 +270,10 @@ export class ViewerSettings {
         position: { x: -47.0, y: 22, z: -45 },
         color: { h: 0.1, s: 1, l: 0.95 },
         intensity: 1
-      }
+      },
+      onClick: undefined
     }
-
+ 
     this.options = options ? deepmerge(fallback, options, undefined) : fallback
   }
 

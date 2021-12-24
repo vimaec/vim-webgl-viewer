@@ -38,7 +38,7 @@ export class Selection {
     this.highlightDisposer = this.viewer.highlightElementByIndex(elementIndex)
     this.boundingSphere =
       this.viewer
-        .getBoudingBoxForElementIndex(elementIndex)
+        .getBoundingBoxForElementIndex(elementIndex)
         ?.getBoundingSphere(new THREE.Sphere()) ?? null
   }
 }

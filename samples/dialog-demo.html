@@ -1,0 +1,71 @@
+<!--
+    Do not edit: Auto-generated from index.mustache
+-->
+<!-- 
+    Copyright (c) 2021 VIMaec LLC 
+    This code is licensed under MIT license 
+    This is a demonstration of the VIM 3D Model viewer and VIM file loader built using Three.JS  
+    For more information and the latest version see: http://www.github.com/vimaec/vim-webgl-viewer
+-->
+<html>
+<head>
+  <style>
+    /*Makes full screen and remove scrollbars*/
+    html,
+    body {
+      height: 100%;
+      margin: 0;
+      padding: 0;
+      overflow: hidden;
+      background: radial-gradient(circle at center, #F0F0FF, #999999);
+    }
+  </style>
+    <title>VIM 3D Model Viewer</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <link rel="stylesheet" href="//code.jquery.com/ui/1.13.0/themes/base/jquery-ui.css">
+    <script src="https://unpkg.com/three@0.133.1/build/three.min.js"></script>
+    <script src="../dist/vim-webgl-viewer.iife.js"></script>
+    <script src="https://code.jquery.com/jquery-3.6.0.js"></script>
+    <script src="https://code.jquery.com/ui/1.13.0/jquery-ui.js"></script>    
+    <script>
+        $( function() {
+          $( "#dialog" ).dialog();
+        } );
+    </script>
+</head>
+<body>
+    <script>
+        const params = new URLSearchParams(window.location.search);
+        const url = params.has('model')
+            ? params.get('model')
+            : '../models/residence.vim';
+
+        const viewer = new vim.Viewer({
+          plane: {
+            show: true,
+            opacity: 1,
+            size: 5
+          }
+        })
+
+        viewer.loadModel(
+          {
+            url: url,
+            rotation: { x: 270 }
+          },
+          (vim) => console.log('Callback: Viewer Ready!'),
+          (progress) => {
+            if (progress === 'processing') console.log('Callback: Processing')
+            else {
+              console.log(`Callback: Downloading: ${progress.loaded / 1000000} MB`)
+            }
+          },
+          (error) => console.error('Callback: Error: ' + error.message)
+        )
+
+        viewer
+    </script> 
+    <div id="dialog" title="VIM Data" style="display: none">
+    </div>
+</body>
+</html>

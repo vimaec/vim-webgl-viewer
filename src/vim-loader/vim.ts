@@ -9,7 +9,7 @@ export class Vim {
   header: string
   assets: BFast
   g3d: VimG3d
-  bim: any
+  entities: any
   strings: string[]
 
   constructor (
@@ -22,7 +22,7 @@ export class Vim {
     this.header = header
     this.assets = assets
     this.g3d = g3d
-    this.bim = entities
+    this.entities = entities
     this.strings = strings
   }
 }

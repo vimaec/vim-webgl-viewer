@@ -25,6 +25,7 @@
     "publish-dev": "npm publish --tag=dev",
     "serve-docs": "http-server ./docs -o",
     "serve-dist": "http-server ./dist -o --host",
+    "serve-sample": "http-server -o",
     "gen-index.html": "node docs/genDocs.js",
     "test-dist": "npm run build && npm run serve-dist",
     "test-latest": "opener https://vimaec.github.io/vim-webgl-viewer/?model=https%3A%2F%2Fvim.azureedge.net%2Fsamples%2Fskanska.vim",
