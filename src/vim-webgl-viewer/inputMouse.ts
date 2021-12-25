@@ -7,34 +7,35 @@ import { HitTester } from './hitTester'
 
 export class InputMouse {
   // Dependencies
-  private camera: ViewerCamera
-  private renderer: ViewerRenderer
-  private hitTester: HitTester;
+  viewer: Viewer
+  hitTester: HitTester
+
+  get camera() { return this.viewer.camera }
+  get renderer() { return this.viewer.renderer }
 
   // State
-  private isMouseDown: Boolean = false
-  private hasMouseMoved: Boolean = false
-  private ctrlDown: Boolean = false
+  isMouseDown: Boolean = false
+  hasMouseMoved: Boolean = false
+   ctrlDown: Boolean = false
 
   constructor (viewer: Viewer) {
-    this.camera = viewer.camera
-    this.renderer = viewer.renderer
+    this.viewer = viewer
     this.hitTester = new HitTester(viewer)
   }
 
-  reset() {
+  reset = () => {
     this.isMouseDown = this.hasMouseMoved = this.ctrlDown = false
   }
 
-  setCtrl(value: Boolean) {
+  setCtrl = (value: Boolean) => {
     this.ctrlDown = value
   }
 
-  onMouseOut(_: any) {
+  onMouseOut = (_: any) => {
     this.isMouseDown = this.hasMouseMoved = false
   }
 
-  onMouseMove(event: any) {
+  onMouseMove = (event: any) => {
     if (!this.isMouseDown) {
       return
     }
@@ -58,7 +59,7 @@ export class InputMouse {
     }
   }
 
-  onMouseWheel(event: any) {
+  onMouseWheel = (event: any) => {
     event.preventDefault()
     event.stopPropagation()
 
@@ -77,7 +78,7 @@ export class InputMouse {
     }
   }
 
-  onMouseDown(event: any) {
+  onMouseDown = (event: any) => {
     event.preventDefault()
     this.isMouseDown = true
     this.hasMouseMoved = false
@@ -87,7 +88,7 @@ export class InputMouse {
     this.renderer.canvas.focus()
   }
 
-  onMouseUp(event: any) {
+  onMouseUp = (event: any) => {
     if (this.isMouseDown && !this.hasMouseMoved) {
       this.onMouseClick(new THREE.Vector2(event.x, event.y), false)
     }
@@ -95,11 +96,16 @@ export class InputMouse {
     event.preventDefault()
   }
 
-  onDoubleClick(event: any) {
+  onDoubleClick = (event: any) => {
     this.onMouseClick(new THREE.Vector2(event.x, event.y), true)
   }
 
-  onMouseClick(position: Vector2, doubleClick: boolean) {
+  onMouseClick = (position: Vector2, doubleClick: boolean) => {
     const result = this.hitTester.onMouseClick(position, doubleClick)
+    const  onClick = this.viewer.settings.options.onClick
+    if (onClick) 
+    {
+      onClick(this.viewer, result);
+    }
   }
 }

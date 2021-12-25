@@ -7,7 +7,7 @@ export class Selection {
   viewer: Viewer
 
   // State
-  elementIndex: number | null = null
+  elementIndex: number = -1
   boundingSphere: THREE.Sphere | null = null
 
   // Disposable State
@@ -18,11 +18,11 @@ export class Selection {
   }
 
   hasSelection () {
-    return this.elementIndex !== null
+    return this.elementIndex >= 0
   }
 
   reset () {
-    this.elementIndex = null
+    this.elementIndex = -1
     this.boundingSphere = null
     this.disposeResources()
   }
@@ -33,7 +33,11 @@ export class Selection {
   }
 
   select (elementIndex: number) {
-    this.disposeResources()
+    this.reset()
+    if (elementIndex < 0)
+    {
+      return
+    }
     this.elementIndex = elementIndex
     this.highlightDisposer = this.viewer.highlightElementByIndex(elementIndex)
     this.boundingSphere =

@@ -1,9 +1,11 @@
+import { HitTestResult } from './vim-webgl-viewer/hitTester';
 import { Viewer, ViewerState } from './vim-webgl-viewer/viewer'
 
 const params = new URLSearchParams(window.location.search)
 const url = params.has('model')
   ? params.get('model')
   : 'https://vim.azureedge.net/samples/residence.vim'
+
 
 const viewer = new Viewer({
   plane: {
@@ -12,6 +14,10 @@ const viewer = new Viewer({
       'https://vimdevelopment01storage.blob.core.windows.net/textures/vim-floor-soft.png',
     opacity: 1,
     size: 5
+  },
+  onClick: (viewer: Viewer, x: HitTestResult) => {
+    console.log(x)
+    viewer.selectByElementIndex(x.elementIndex)
   }
 })
 

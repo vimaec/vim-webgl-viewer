@@ -4,6 +4,8 @@
 
 import * as THREE from 'three'
 import deepmerge from 'deepmerge'
+import { Viewer } from './viewer'
+import { HitTestResult } from './hitTester'
 
 export type Vector3 = {
   x: number
@@ -78,12 +80,6 @@ export type CameraOptions = {
   controls: Partial<CameraControlsOptions>
 }
 
-/*
-type BackgroundOptions = {
-  color: ColorRGB
-}
-*/
-
 export type SunLightOptions = {
   position: Vector3
   color: ColorHSL
@@ -123,19 +119,8 @@ export type ViewerOptions = {
   /**
    * On click call-back
    */
-  onClick: Partial<() => void>
+  onClick: (viewer: Viewer, hit: HitTestResult) => void
 }
-
-/*
-Not implemented
-type MaterialOptions = {
-  color: ColorRGB
-  emissive: ColorRGB
-  specular: ColorRGB
-  flatShading: boolean
-  shininess: number
-}
-*/
 
 /**
  * Config object for loading a model
@@ -157,9 +142,6 @@ export type ModelOptions = {
    * Scale factor for the model
    */
   scale: number
-
-  // Not implement
-  // material: Partial<MaterialOptions>
 }
 
 /**
@@ -176,15 +158,6 @@ export class ModelSettings {
       position: { x: 0, y: 0, z: 0 },
       rotation: { x: 0, y: 0, z: 0 },
       scale: 0.01
-      /*
-      material: {
-        color: { r: 0x00, g: 0x55, b: 0xff },
-        emissive: { r: 0x00, g: 0x00, b: 0x00 },
-        specular: { r: 0x11, g: 0x11, b: 0x11 },
-        flatShading: true,
-        shininess: 30
-      }
-      */
     }
 
     this.options = options ? deepmerge(fallback, options, undefined) : fallback
@@ -202,25 +175,6 @@ export class ModelSettings {
       this.getObjectRotation(),
       this.getObjectScale()
     )
-
-  // Material
-  /*
-  getMaterialColor = () => toRGBColor(this.options.material.color)
-  getMaterialFlatShading = () => this.options.material.flatShading
-  getMaterialEmissive = () => toRGBColor(this.options.material.emissive)
-  getMaterialSpecular = () => toRGBColor(this.options.material.specular)
-  getMaterialShininess = () => this.options.material.shininess
-
-  updateMaterial (material: THREE.MeshPhongMaterial) {
-    material.color = this.getMaterialColor() ?? material.color
-    material.flatShading = this.getMaterialFlatShading() ?? material.flatShading
-
-    material.emissive = this.getMaterialEmissive() ?? material.emissive
-    material.specular = this.getMaterialSpecular() ?? material.specular
-
-    material.shininess = this.getMaterialShininess() ?? material.shininess
-  }
-  */
 }
 
 /**
@@ -249,11 +203,6 @@ export class ViewerSettings {
           moveSpeed: 1
         }
       },
-      /*
-      background: {
-        color: { r: 0x72, g: 0x64, b: 0x5b }
-      },
-      */
       plane: {
         show: true,
         texture: null,
@@ -288,10 +237,6 @@ export class ViewerSettings {
   getPlaneOpacity = () => this.options.plane.opacity
   getPlaneSize = () => this.options.plane.size
 
-  // Background
-  // Not implemented
-  // getBackgroundColor = () => toRGBColor(this.options.background.color)
-
   // Skylight
   getSkylightColor = () => toHSLColor(this.options.skylight.skyColor)
   getSkylightGroundColor = () => toHSLColor(this.options.skylight.groundColor)
@@ -312,8 +257,7 @@ export class ViewerSettings {
   getCameraIsOrbit = () => this.options.camera.controls.orbit
   getCameraMoveSpeed = () => this.options.camera.controls.moveSpeed
   getCameraRotateSpeed = () => this.options.camera.controls.rotateSpeed
-  getCameraReferenceModelSize = () =>
-    this.options.camera.controls.modelReferenceSize
+  getCameraReferenceModelSize = () => this.options.camera.controls.modelReferenceSize
 }
 
 function toRGBColor (c: ColorRGB): THREE.Color {
