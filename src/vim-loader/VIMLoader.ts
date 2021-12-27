@@ -7,7 +7,7 @@ import * as THREE from 'three'
 
 import { VimScene } from './vimScene'
 import { Vim } from './vim'
-import { BFastParser } from './bfast'
+import { BFast } from './bfast'
 import { VimParser } from './vimParser'
 import { Logger } from './logger'
 import { VimG3d } from './g3d'
@@ -66,9 +66,8 @@ export class VIMLoader {
 
   parse (data: ArrayBuffer): Vim {
     // Parse Bfast from Bytes
-    const bfastParser = new BFastParser(this.logger)
     const bfast = this.logger?.timeAction('Parsing BFast', () =>
-      bfastParser.parseFromBuffer(data)
+      BFast.parseFromBuffer(data)
     )
 
     // Parse Vim from BFast

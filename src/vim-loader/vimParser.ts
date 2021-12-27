@@ -1,6 +1,6 @@
-import { BFast, BFastParser } from './bfast'
+import { BFast } from './bfast'
 import { G3d, VimG3d, Attribute } from './g3d'
-import { Vim } from './vim'
+import { Vim, EntityTable } from './vim'
 import { Logger } from './logger'
 
 export class VimParser {
@@ -11,7 +11,6 @@ export class VimParser {
 
   // Given a BFAST container (header/names/buffers) constructs a VIM data structure
   public parseFromBFast = (bfast: BFast): Vim => {
-    const bFastParser = new BFastParser()
     if (bfast.buffers.length < 5) {
       throw new Error('VIM requires at least five BFast buffers')
     }
@@ -31,19 +30,16 @@ export class VimParser {
     const header = new TextDecoder('utf-8').decode(headerData)
 
     this.logger?.log(`Constructing G3D: ${g3dData.length} bytes`)
-    const g3d = new VimG3d(this.parseG3d(bFastParser.parseFromArray(g3dData)))
+    const g3d = new VimG3d(this.parseG3d(BFast.parseFromArray(g3dData)))
     this.logger?.log('Validating G3D')
     g3d.validate()
 
     this.logger?.log(`Retrieving assets: ${assetData.length} bytes`)
-    const assets = bFastParser.parseFromArray(assetData)
+    const assets = BFast.parseFromArray(assetData)
     this.logger?.log(`Found ${assets.buffers.length} assets`)
 
     this.logger?.log(`Constructing entity tables: ${entityData.length} bytes`)
-    const entities = this.parseEntityTables(
-      bFastParser,
-      bFastParser.parseFromArray(entityData)
-    )
+    const entities = VimParser.parseEntityTables(BFast.parseFromArray(entityData))
     this.logger?.log(`Found ${entities.size} entity tables`)
 
     this.logger?.log(`Decoding strings: ${stringData.length} bytes`)
@@ -53,22 +49,19 @@ export class VimParser {
     return new Vim(header, assets, g3d, entities, strings)
   }
 
-  private parseEntityTables (parser: BFastParser, bfast: BFast): Map<string, any> {
+  static parseEntityTables (bfast: BFast): Map<string, EntityTable> {
     const result = new Map<string, any>()
     for (let i = 0; i < bfast.buffers.length; ++i) {
       const current = bfast.names[i]
       const tableName = current.substring(current.indexOf(':') + 1)
       const buffer = bfast.buffers[i]
-      this.logger?.log(
-        `Constructing entity table ${current} which is ${buffer.length} size`
-      )
-      const next = this.parseEntityTable(parser.parseFromArray(buffer))
+      const next = VimParser.parseEntityTable(BFast.parseFromArray(buffer))
       result.set(tableName, next)
     }
     return result
   }
 
-  private parseEntityTable (bfast: BFast): Map<string, any> {
+  static parseEntityTable (bfast: BFast): EntityTable {
     const result = new Map<string, any>()
     for (let i = 0; i < bfast.buffers.length; ++i) {
       const columnName = bfast.names[i]

@@ -19,7 +19,18 @@
       overflow: hidden;
       background: radial-gradient(circle at center, #F0F0FF, #999999);
     }
-  </style>
+
+    .parameter-row {
+      display: flex;
+    }
+
+    .parameter-name,
+    .parameter-value {
+      flex: 50%;
+      border-style: outset;
+      padding: 2px;      
+    }  
+</style>
     <title>VIM 3D Model Viewer</title>
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <link rel="stylesheet" href="//code.jquery.com/ui/1.13.0/themes/base/jquery-ui.css">
@@ -40,12 +51,29 @@
             ? params.get('model')
             : '../models/residence.vim';
 
+        function parameterRowDiv(name, value) {
+          return `<div class="parameter-row"><div class="parameter-name">${name}</div><div class="parameter-value">${value}</div></div>`
+        }
+
+        function onClick(viewer, hit) {
+          console.log(hit)
+          let entity = viewer.vimScene.vim.getEntity('Vim.Element', hit.elementIndex)
+          viewer.selectByElementIndex(hit.elementIndex)
+          html = ''
+          for (const k in entity) {
+            html += parameterRowDiv(k, entity[k])
+          }
+          $( ".parameter-table" ).html(html)
+          text(hit.elementIndex)
+        }
+
         const viewer = new vim.Viewer({
           plane: {
             show: true,
             opacity: 1,
             size: 5
-          }
+          },
+          onClick
         })
 
         viewer.loadModel(
@@ -62,10 +90,10 @@
           },
           (error) => console.error('Callback: Error: ' + error.message)
         )
-
-        viewer
-    </script> 
+  </script> 
     <div id="dialog" title="VIM Data" style="display: none">
+      <div class="parameter-table">
+      </div>  
     </div>
 </body>
 </html>

@@ -55,16 +55,8 @@ export class BFast {
     this.names = names
     this.buffers = buffers
   }
-}
 
-export class BFastParser {
-  logger: Logger | undefined
-
-  constructor (logger?: Logger) {
-    this.logger = logger
-  }
-
-  parseFromArray (bytes: Uint8Array) {
+  static parseFromArray (bytes: Uint8Array) : BFast {
     return this.parseFromBuffer(
       bytes.buffer,
       bytes.byteOffset,
@@ -73,11 +65,11 @@ export class BFastParser {
   }
 
   // BFAST is the container format for an array of binary arrays
-  parseFromBuffer (
+  static parseFromBuffer (
     arrayBuffer: ArrayBuffer,
     byteOffset: number = 0,
-    byteLength: number = arrayBuffer.byteLength - byteOffset
-  ): BFast {
+    byteLength: number = arrayBuffer.byteLength - byteOffset) : BFast 
+  {
     // Cast the input data to 32-bit integers
     // Note that according to the spec they are 64 bit numbers. In JavaScript you can't have 64 bit integers,
     // and it would bust the amount of memory we can work with in most browsers and low-power devices
@@ -134,11 +126,6 @@ export class BFastParser {
       )
     }
 
-    const bfast = new BFast(header, names, buffers.slice(1))
-
-    this.logger?.log(`found: ${bfast.buffers.length} buffers`)
-    this.logger?.log(bfast.names.join(', '))
-
-    return bfast
+    return new BFast(header, names, buffers.slice(1))
   }
 }
