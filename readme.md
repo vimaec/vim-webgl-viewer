@@ -23,6 +23,8 @@ other relational or non-relation data sets.
 
 Unlike IFC the VIM format is already tessellated, and ready to render. This results in very fast load times. Unlike glTF the VIM format is faster to load, scales better, and has a consistent structure for relational BIM data.
 
+More information on the vim format can be found here: https://github.com/vimaec/vim
+
 # Using the Viewer from a Web Page
 
 Virtually the simplest usage of the VIM viewer is the following example:
