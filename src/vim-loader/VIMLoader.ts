@@ -21,7 +21,8 @@ export class VIMLoader {
   }
 
   // Loads the VIM from a URL
-  load (
+  // Download should be handled without three for Parser and Loader to be divided properly
+  loadFromUrl (
     url: string,
     onLoad?: (response: VimScene) => void,
     onProgress?: (progress: ProgressEvent | 'processing') => void,
@@ -47,7 +48,7 @@ export class VIMLoader {
         let scene: VimScene
         try {
           const vim = this.parse(data)
-          scene = this.loadAsThree(vim)
+          scene = this.loadFromVim(vim)
         } catch (exception) {
           onError?.(new ErrorEvent('Loading Error', exception as Error))
           return
@@ -79,9 +80,9 @@ export class VIMLoader {
     return vim
   }
 
-  loadAsThree (vim: Vim) {
+  loadFromVim (vim: Vim, nodeIndices?: Set<number>): VimScene {
     const threeBuilder = new VimThreeBuilder(undefined, this.logger)
-    const vimThree = threeBuilder.buildFromG3d(vim.g3d)
+    const vimThree = threeBuilder.buildFromG3d(vim.g3d, nodeIndices)
 
     this.logger?.log('Loading Completed')
     return new VimScene(vim, vimThree)
@@ -108,10 +109,15 @@ export class VimThreeBuilder {
       shininess: 70
     })
 
-  buildFromG3d (g3d: VimG3d): VimThree {
+  buildFromG3d (g3d: VimG3d, instances?: Set<number>): VimThree {
     const geometryBuilder = new BufferGeometryBuilder(g3d)
+
+    const includedMeshes = instances
+      ? this.computeMeshFilter(g3d, instances)
+      : undefined
+
     const geometry = this.logger?.timeAction('Allocating Geometry', () =>
-      geometryBuilder.createAllGeometry()
+      geometryBuilder.createSomeGeometry(includedMeshes)
     )
     this.logger?.log('Found # meshes ' + geometry.length)
 
@@ -131,24 +137,38 @@ export class VimThreeBuilder {
     const merge = this.logger?.timeAction('Merging Unique Geometry', () =>
       this.mergeUniqueGeometry(g3d, geometry, nodesByMeshes)
     )
-    if (merge !== null) {
+    if (merge) {
       const [mesh, nodes] = merge
       vimThree.addMesh(mesh, nodes)
     }
     return vimThree
   }
 
+  /**
+   * Given a set of instances computes the set of required meshes to build the scene
+   */
+  computeMeshFilter (g3d: VimG3d, instances?: Set<number>): Set<number> {
+    const includedNodes = new Set(instances)
+    const nodesPerMesh = g3d.getNodesByMeshes()
+    const meshes = nodesPerMesh
+      .map((nodes, i) =>
+        nodes.filter((n) => includedNodes.has(n)).length > 0 ? i : -1
+      )
+      .filter((m) => m >= 0)
+    return new Set(meshes)
+  }
+
   mergeUniqueGeometry (
     g3d: VimG3d,
-    geometry: (THREE.BufferGeometry | null)[],
+    geometry: (THREE.BufferGeometry | undefined)[],
     nodesByMesh: number[][]
-  ): [THREE.Mesh, number[]] | null {
+  ): [THREE.Mesh, number[]] | undefined {
     const [uniques, nodes] = this.getTransformedUniqueGeometry(
       g3d,
       geometry,
       nodesByMesh
     )
-    if (uniques.length === 0) return null
+    if (uniques.length === 0) return
 
     const result = this.createMergedMesh(uniques)
     uniques.forEach((u) => u.dispose())
@@ -157,7 +177,7 @@ export class VimThreeBuilder {
 
   getTransformedUniqueGeometry (
     g3d: VimG3d,
-    geometry: (THREE.BufferGeometry | null)[],
+    geometry: (THREE.BufferGeometry | undefined)[],
     nodesByMesh: number[][]
   ): [THREE.BufferGeometry[], number[]] {
     const result: THREE.BufferGeometry[] = []
@@ -212,11 +232,11 @@ export class VimThreeBuilder {
   }
 
   allocateMeshes (
-    geometries: (THREE.BufferGeometry | null)[],
+    geometries: (THREE.BufferGeometry | undefined)[],
     nodesByMesh: number[][]
-  ): (Mesh | null)[] {
+  ): (Mesh | undefined)[] {
     const meshCount = geometries.length
-    const meshes: (Mesh | null)[] = new Array(meshCount)
+    const meshes: (Mesh | undefined)[] = new Array(meshCount)
 
     for (let i = 0; i < meshCount; ++i) {
       const count = nodesByMesh[i]?.length ?? 0
@@ -225,7 +245,7 @@ export class VimThreeBuilder {
       }
 
       const geometry = geometries[i]
-      if (geometry === null) {
+      if (!geometry) {
         continue
       }
 
@@ -235,9 +255,12 @@ export class VimThreeBuilder {
     return meshes
   }
 
-  instantiateSharedGeometry (meshes: (Mesh | null)[], g3d: VimG3d): VimThree {
+  instantiateSharedGeometry (
+    meshes: (Mesh | undefined)[],
+    g3d: VimG3d
+  ): VimThree {
     const instanceCounters = new Int32Array(meshes.length)
-    let boundingBox: THREE.Box3 | null = null
+    let boundingBox: THREE.Box3 | undefined
     const nodeIndexToMeshInstance = new Map<number, [Mesh, number]>()
     const meshIdToNodeIndex = new Map<number, number[]>()
     const resultMeshes: Mesh[] = []
@@ -296,12 +319,22 @@ export class BufferGeometryBuilder {
     this.g3d = g3d
   }
 
-  createAllGeometry = (): (THREE.BufferGeometry | null)[] => {
+  createSomeGeometry = (instanceIndices: Set<number>) =>
+    instanceIndices
+      ? this.createAllGeometry((i) => instanceIndices.has(i))
+      : this.createAllGeometry()
+
+  createAllGeometry = (
+    includeCondition?: (n: number) => boolean
+  ): (THREE.BufferGeometry | undefined)[] => {
     const meshCount = this.g3d.meshSubmeshes.length
-    const resultMeshes: (THREE.BufferGeometry | null)[] = []
+    const resultMeshes: (THREE.BufferGeometry | undefined)[] = []
+    const condition = includeCondition ?? ((_) => true)
 
     for (let mesh = 0; mesh < meshCount; mesh++) {
-      const result = this.createGeometryFromMeshIndex(mesh)
+      const result = condition(mesh)
+        ? this.createGeometryFromMeshIndex(mesh)
+        : undefined
       result?.computeBoundingBox()
       resultMeshes.push(result)
     }
@@ -311,19 +344,21 @@ export class BufferGeometryBuilder {
 
   createGeometryFromInstanceIndex (
     instanceIndex: number
-  ): THREE.BufferGeometry | null {
+  ): THREE.BufferGeometry | undefined {
     if (instanceIndex < 0) throw new Error('Invalid negative index.')
 
     const meshIndex = this.g3d.instanceMeshes[instanceIndex]
-    if (meshIndex < 0) return null
+    if (meshIndex < 0) return
     const geometry = this.createGeometryFromMeshIndex(meshIndex)
-    if (!geometry) return null
+    if (!geometry) return
     const matrix = getMatrixFromNodeIndex(this.g3d, instanceIndex)
     geometry.applyMatrix4(matrix)
     return geometry
   }
 
-  createGeometryFromMeshIndex (meshIndex: number): THREE.BufferGeometry | null {
+  createGeometryFromMeshIndex (
+    meshIndex: number
+  ): THREE.BufferGeometry | undefined {
     // min and max indices accumulated to slice into the vertex buffer
     let min: number = Number.MAX_SAFE_INTEGER
     let max: number = 0
@@ -345,8 +380,8 @@ export class BufferGeometryBuilder {
       }
     }
 
-    // If all submesh are transparent, we push null to keep results aligned
-    if (indexCount === 0) return null
+    // If all submesh are transparent, we push undefined to keep results aligned
+    if (indexCount === 0) return
 
     // 3 is both the arity of the vertex buffer and of THREE.color
     const sliceStart = min * 3

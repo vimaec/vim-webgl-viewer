@@ -55,7 +55,7 @@ export class VimScene {
     return map
   }
 
-  getElementIndexFromElementId = (elementId: number) =>
+  getElementIndexFromElementId = (elementId: number): number | undefined =>
     this.elementIdToIndex.get(elementId)
 
   getStringColumn = (table: any, colNameNoPrefix: string): number[] =>
@@ -90,8 +90,42 @@ export class VimScene {
 
   getNodeTable = () => this.vim.entities.get(Vim.tableNode)
 
+  /**
+   * Get Node/Instance Indices for given element index
+   * @param elementIndex element index for which to get node indices
+   * @returns array of node indices or undefined if no corresponding nodes
+   */
   getNodeIndicesFromElementIndex (elementIndex: number): number[] | undefined {
     return this.elementIndexToNodeIndices.get(elementIndex)
+  }
+
+  /**
+   * Get Node/Instance Indices for given element indices
+   * @param elementIndex element indices for which to get node indices
+   * @returns array of node indices, can be empty if no matching nodes
+   */
+  getNodeIndicesFromElementIndices (elementIndices: number[]): number[] {
+    return elementIndices
+      .flatMap((e) => this.getNodeIndicesFromElementIndex(e))
+      .filter((n) => n)
+  }
+
+  /**
+   * Get Node/Instance Indices for given element ids
+   * Throws error if argument is undefined
+   * @param elementIds element ids for which to get node indices
+   * @returns array of node indices, can be empty if no matching nodes
+   */
+  getNodeIndicesFromElementIds (elementIds: number[]): number[] {
+    if (!elementIds) throw new Error('undefined argument')
+
+    // element ids -> element indices
+    const elementIndices = elementIds
+      .map((id) => this.getElementIndexFromElementId(id))
+      .filter((i) => i)
+
+    // element indices -> nodes indices
+    return this.getNodeIndicesFromElementIndices(elementIndices)
   }
 
   getMeshesFromElementIndex (

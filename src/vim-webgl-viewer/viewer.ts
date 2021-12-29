@@ -46,7 +46,7 @@ export class Viewer {
   controls: ViewerInput  
 
   // State
-  modelSettings: ModelSettings
+  modelSettings: ModelSettings | undefined
   vimScene: VimScene | undefined
   state: ViewerState = 'Uninitialized'
   static stateChangeEvent = 'viewerStateChangedEvent'
@@ -101,12 +101,16 @@ export class Viewer {
       throw new Error('There is already a model loaded or loading')
     }
 
-    this.modelSettings = new ModelSettings(options)
+    const settings = new ModelSettings(options)
 
-    new VIMLoader().load(
-      this.modelSettings.getURL(),
+    new VIMLoader().loadFromUrl(
+      settings.getURL(),
       (vim) => {
-        this.onVimLoaded(vim)
+        // Hack to support element filter on first load
+        // This is required because the vimscene required to map elements <-> nodes does not exist on first load
+        this.modelSettings = settings
+        this.vimScene = vim
+        this.reloadModel(settings.getOptions())
         this.setState('Ready')
         onLoad?.(vim)
       },
@@ -119,15 +123,17 @@ export class Viewer {
         onProgress?.(progress)
       },
       (error) => {
-        this.modelSettings = null
+        this.modelSettings = undefined
+        this.vimScene = undefined
         this.setState(['Error', error])
         onError?.(error)
       }
     )
   }
 
-  private onVimLoaded (vim: VimScene) {
+  private onVimLoaded (vim: VimScene, settings: ModelSettings) {
     this.vimScene = vim
+    this.modelSettings = settings
 
     const matrix = this.modelSettings.getObjectMatrix()
 
@@ -154,8 +160,10 @@ export class Viewer {
     this.renderer.canvas.dispatchEvent(event)
   }
 
-  private static getOrCreateCanvas (canvasId: string) {
-    let canvas = document.getElementById(canvasId) as HTMLCanvasElement
+  private static getOrCreateCanvas (canvasId?: string) {
+    let canvas = canvasId
+      ? (document.getElementById(canvasId) as HTMLCanvasElement)
+      : undefined
 
     if (!canvas) {
       canvas = document.createElement('canvas')
@@ -164,8 +172,46 @@ export class Viewer {
     return canvas
   }
 
-  getModelMatrix = () => {
-    return this.modelSettings?.getObjectMatrix()
+  /**
+   * Unload existing model to get ready to load a new model
+   */
+  unloadModel () {
+    this.vimScene = undefined
+    this.modelSettings = undefined
+    this.render.clearModels()
+    this.selection.clear()
+    this.setState('Uninitialized')
+  }
+
+  /**
+   * Unload existing model and reloads it without redownloading it
+   * @param options full model options, same as for loadModel
+   */
+  reloadModel (options: ModelOptions) {
+    if (!this.vimScene) throw new Error(NO_SCENE_LOADED)
+
+    const settings = new ModelSettings(options)
+    // Go from Element Ids -> Node Indices
+    const elementIds = settings.getElementIdsFilter()
+    const nodeIndices = elementIds
+      ? new Set(this.vimScene.getNodeIndicesFromElementIds(elementIds))
+      : undefined
+
+    const scene = new VIMLoader().loadFromVim(this.vimScene.vim, nodeIndices)
+    this.unloadModel()
+    this.onVimLoaded(scene, settings)
+    this.setState('Ready')
+  }
+
+  /**
+   * Reloads the current model with the same settings except it applies a new element filter
+   * @param includedElementIds array of element ids to keep, passing undefined will load the whole model
+   */
+  filter (includedElementIds: number[] | undefined) {
+    if (!this.modelSettings) throw new Error(NO_SCENE_LOADED)
+    const options = this.modelSettings.getOptions()
+    options.elementIds = includedElementIds
+    this.reloadModel(options)
   }
 
   // TODO: Handle case where an element Id is not unique
@@ -269,7 +315,7 @@ export class Viewer {
    * Clear current selection
    */
   clearSelection () {
-    this.selection.reset()
+    this.selection.clear()
     console.log('Cleared Selection')
   }
 
@@ -348,7 +394,7 @@ export class Viewer {
   private createBufferGeometryFromNodeIndices (
     nodeIndices: number[]
   ): THREE.BufferGeometry | null {
-    if (!this.vimScene) throw new Error(NO_SCENE_LOADED)
+    if (!this.vimScene || !this.modelSettings) throw new Error(NO_SCENE_LOADED)
     const scene = this.vimScene
 
     // Create geometry for every node

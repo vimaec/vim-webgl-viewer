@@ -4,8 +4,12 @@
 
 import * as THREE from 'three'
 import deepmerge from 'deepmerge'
+<<<<<<< HEAD
 import { Viewer } from './viewer'
 import { HitTestResult } from './hitTester'
+=======
+import { clone, cloneDeep } from 'lodash'
+>>>>>>> main
 
 export type Vector3 = {
   x: number
@@ -142,6 +146,13 @@ export type ModelOptions = {
    * Scale factor for the model
    */
   scale: number
+  /**
+   * elements to include
+   */
+  elementIds?: number[]
+
+  // Not implement
+  // material: Partial<MaterialOptions>
 }
 
 /**
@@ -152,17 +163,32 @@ export type ModelOptions = {
 export class ModelSettings {
   private options: ModelOptions
 
-  constructor (options: Partial<ModelOptions>) {
+  constructor (options?: Partial<ModelOptions>) {
     const fallback: ModelOptions = {
       url: 'https://vim.azureedge.net/samples/residence.vim',
       position: { x: 0, y: 0, z: 0 },
       rotation: { x: 0, y: 0, z: 0 },
+<<<<<<< HEAD
       scale: 0.01
+=======
+      scale: 0.01,
+      elementIds: undefined
+      /*
+      material: {
+        color: { r: 0x00, g: 0x55, b: 0xff },
+        emissive: { r: 0x00, g: 0x00, b: 0x00 },
+        specular: { r: 0x11, g: 0x11, b: 0x11 },
+        flatShading: true,
+        shininess: 30
+      }
+      */
+>>>>>>> main
     }
 
     this.options = options ? deepmerge(fallback, options, undefined) : fallback
   }
 
+  getOptions = () => cloneDeep(this.options) as ModelOptions
   getURL = () => this.options.url
 
   // Model
@@ -175,6 +201,29 @@ export class ModelSettings {
       this.getObjectRotation(),
       this.getObjectScale()
     )
+<<<<<<< HEAD
+=======
+
+  getElementIdsFilter = () => clone(this.options.elementIds)
+  // Material
+  /*
+  getMaterialColor = () => toRGBColor(this.options.material.color)
+  getMaterialFlatShading = () => this.options.material.flatShading
+  getMaterialEmissive = () => toRGBColor(this.options.material.emissive)
+  getMaterialSpecular = () => toRGBColor(this.options.material.specular)
+  getMaterialShininess = () => this.options.material.shininess
+
+  updateMaterial (material: THREE.MeshPhongMaterial) {
+    material.color = this.getMaterialColor() ?? material.color
+    material.flatShading = this.getMaterialFlatShading() ?? material.flatShading
+
+    material.emissive = this.getMaterialEmissive() ?? material.emissive
+    material.specular = this.getMaterialSpecular() ?? material.specular
+
+    material.shininess = this.getMaterialShininess() ?? material.shininess
+  }
+  */
+>>>>>>> main
 }
 
 /**
@@ -185,7 +234,7 @@ export class ModelSettings {
 export class ViewerSettings {
   public options: ViewerOptions
 
-  constructor (options: Partial<ViewerOptions>) {
+  constructor (options?: Partial<ViewerOptions>) {
     const fallback: ViewerOptions = {
       canvas: {
         id: undefined,
