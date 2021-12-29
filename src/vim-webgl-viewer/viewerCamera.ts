@@ -32,7 +32,7 @@ class ViewerCamera {
   public OrbitalTarget: THREE.Vector3
   public CurrentOrbitalDistance: number
   public TargetOrbitalDistance: number
-  public MouseOrbit: Boolean = false
+  public MouseOrbit: boolean = false
 
   // Settings
   private VelocityBlendFactor: number = 0.0001
@@ -64,6 +64,8 @@ class ViewerCamera {
   }
 
   lookAtSphere (sphere: THREE.Sphere, setY: boolean = false) {
+    if (!sphere) return
+
     if (setY) {
       this.camera.position.setY(sphere.center.y)
     }
@@ -80,7 +82,25 @@ class ViewerCamera {
     this.TargetOrbitalDistance = this.CurrentOrbitalDistance
   }
 
-  frameScene (sphere: THREE.Sphere) {
+  reset () {
+    this.camera.position.set(0, 0, -5)
+    this.camera.lookAt(0, 0, 1)
+
+    this.InputVelocity.set(0, 0, 0)
+    this.Velocity.set(0, 0, 0)
+    this.Impulse.set(0, 0, 0)
+
+    this.CurrentOrbitalDistance = 5
+    this.OrbitalTarget.set(0, 0, 0)
+    this.TargetOrbitalDistance = this.CurrentOrbitalDistance
+  }
+
+  frameScene (sphere?: THREE.Sphere) {
+    if (!sphere) {
+      this.reset()
+      return
+    }
+
     this.camera.position.copy(
       sphere.center
         .clone()

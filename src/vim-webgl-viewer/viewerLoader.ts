@@ -18,16 +18,6 @@ import { PCDLoader } from 'three/examples/jsm/loaders/PCDLoader'
 import { PLYLoader } from 'three/examples/jsm/loaders/PLYLoader'
 import { STLLoader } from 'three/examples/jsm/loaders/STLLoader'
 
-// Material
-const defaultMaterial = new THREE.MeshPhongMaterial({
-  color: 0x999999,
-  vertexColors: true,
-  flatShading: true,
-  // TODO: experiment without being double-sided
-  side: THREE.DoubleSide,
-  shininess: 70
-})
-
 function getExt (fileName: string): string {
   const indexOfQueryParams = fileName.lastIndexOf('?')
   if (indexOfQueryParams >= 0) {
@@ -95,12 +85,7 @@ export const loadAny = function (
       break
     }
     case 'vim': {
-      new VIMLoader(defaultMaterial).load(
-        fileName,
-        onFileLoaded,
-        onProgress,
-        onError
-      )
+      new VIMLoader().loadFromUrl(fileName, onFileLoaded, onProgress, onError)
       break
     }
     default:

@@ -21,7 +21,7 @@ export class CameraGizmo {
   gizmos: THREE.Group
 
   // State
-  timeout: number
+  timeout: ReturnType<typeof setTimeout>
 
   constructor (camera: ViewerCamera, render: ViewerRenderer) {
     this.camera = camera
@@ -75,7 +75,7 @@ export class CameraGizmo {
     this.gizmos = new THREE.Group()
     this.gizmos.add(new THREE.LineSegments(this.wireframe, this.material))
     this.gizmos.add(new THREE.LineSegments(this.wireframe, this.materialAlways))
-    this.render.addToScene(this.gizmos)
+    this.render.addObject(this.gizmos)
 
     this.setScale(this.scale)
   }
@@ -90,7 +90,7 @@ export class CameraGizmo {
     this.material = null
     this.materialAlways = null
 
-    this.render.remove(this.gizmos)
+    this.render.removeObject(this.gizmos)
     this.gizmos = null
   }
 }
