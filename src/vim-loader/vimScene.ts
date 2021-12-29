@@ -144,7 +144,7 @@ export class VimScene {
 
   getMeshFromNodeIndex (nodeIndex: number): [THREE.Mesh, number] {
     if (nodeIndex < 0) throw new Error('Invalid negative index')
-    return this.geometry.nodeIndexToMeshInstance.get(nodeIndex)
+    return this.geometry.nodeIndexToMeshInstance.get(nodeIndex)[0]
   }
 
   getNodeIndexFromMesh (mesh: THREE.Mesh, instance: number): number {

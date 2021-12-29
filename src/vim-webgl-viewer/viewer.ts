@@ -134,7 +134,7 @@ export class Viewer {
     this.vimScene = vim
     this.modelSettings = settings
 
-    const matrix = this.modelSettings.getObjectMatrix()
+    const matrix = this.modelSettings.getModelMatrix()
 
     // Model
     this.renderer.addModel(vim.geometry)
@@ -191,7 +191,12 @@ export class Viewer {
       ? new Set(this.vimScene.getNodeIndicesFromElementIds(elementIds))
       : undefined
 
-    const scene = new VIMLoader().loadFromVim(this.vimScene.vim, nodeIndices)
+    const scene = new VIMLoader().loadFromVim(
+      this.vimScene.vim,
+      settings.getDrawTransparency(),
+      settings.getDrawTransparencyAsOpaque(),
+      nodeIndices
+    )
     this.unloadModel()
     this.onVimLoaded(scene, settings)
     this.setState('Ready')
@@ -396,10 +401,12 @@ export class Viewer {
 
     // Create geometry for every node
     const geometries: THREE.BufferGeometry[] = []
+    // TODO not create builder for every node, this is awful
     nodeIndices.forEach((nodeIndex) => {
-      const builder = new BufferGeometryBuilder(scene.vim.g3d)
-      const g = builder.createGeometryFromInstanceIndex(nodeIndex)
-      if (g) geometries.push(g)
+      // Build Opaque geometry
+      const builder = new BufferGeometryBuilder(scene.vim.g3d, true, true)
+      const all = builder.createGeometryFromInstanceIndex(nodeIndex)
+      if (all) geometries.push(all)
     })
 
     // bail if none of the node had geometry
@@ -407,7 +414,7 @@ export class Viewer {
 
     // Merge all geometry
     const geometry = BufferGeometryUtils.mergeBufferGeometries(geometries)
-    geometry.applyMatrix4(this.modelSettings.getObjectMatrix())
+    geometry.applyMatrix4(this.modelSettings.getModelMatrix())
 
     // Dispose intermediate geometries
     geometries.forEach((b) => b.dispose)

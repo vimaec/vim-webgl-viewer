@@ -148,8 +148,8 @@ export type ModelOptions = {
    */
   elementIds?: number[]
 
-  // Not implement
-  // material: Partial<MaterialOptions>
+  drawTransparency: boolean
+  drawTransparencyAsOpaque: boolean
 }
 
 /**
@@ -166,7 +166,9 @@ export class ModelSettings {
       position: { x: 0, y: 0, z: 0 },
       rotation: { x: 0, y: 0, z: 0 },
       scale: 0.01,
-      elementIds: undefined
+      elementIds: undefined,
+      drawTransparency: true,
+      drawTransparencyAsOpaque: false
     }
 
     this.options = options ? deepmerge(fallback, options, undefined) : fallback
@@ -176,17 +178,19 @@ export class ModelSettings {
   getURL = () => this.options.url
 
   // Model
-  getObjectPosition = () => toVec(this.options.position)
-  getObjectRotation = () => toQuaternion(this.options.rotation)
-  getObjectScale = () => scalarToVec(this.options.scale)
-  getObjectMatrix = () =>
+  getModelPosition = () => toVec(this.options.position)
+  getModelRotation = () => toQuaternion(this.options.rotation)
+  getModelScale = () => scalarToVec(this.options.scale)
+  getModelMatrix = () =>
     new THREE.Matrix4().compose(
-      this.getObjectPosition(),
-      this.getObjectRotation(),
-      this.getObjectScale()
+      this.getModelPosition(),
+      this.getModelRotation(),
+      this.getModelScale()
     )
 
   getElementIdsFilter = () => clone(this.options.elementIds)
+  getDrawTransparency = () => this.options.drawTransparency
+  getDrawTransparencyAsOpaque = () => this.options.drawTransparencyAsOpaque
 }
 
 /**

@@ -28,8 +28,9 @@ const viewer = new Viewer({
 
 viewer.loadModel(
   {
-    url: url,
-    rotation: { x: 270, y: 0, z: 0 }
+    rotation: { x: 270, y: 0, z: 0 },
+    drawTransparency: true,
+    drawTransparencyAsOpaque: false
   },
   (vim) => console.log('Callback: Viewer Ready!'),
   (progress) => {

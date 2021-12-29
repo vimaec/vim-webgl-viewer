@@ -12,6 +12,7 @@ import { VimParser } from './vimParser'
 import { Logger } from './logger'
 import { VimG3d } from './g3d'
 import { VimThree } from './vimThree'
+import { Material } from 'three'
 
 export class VIMLoader {
   logger: Logger | undefined
@@ -48,7 +49,7 @@ export class VIMLoader {
         let scene: VimScene
         try {
           const vim = this.parse(data)
-          scene = this.loadFromVim(vim)
+          scene = this.loadFromVim(vim, false, false)
         } catch (exception) {
           onError?.(new ErrorEvent('Loading Error', exception as Error))
           return
@@ -80,8 +81,20 @@ export class VIMLoader {
     return vim
   }
 
-  loadFromVim (vim: Vim, nodeIndices?: Set<number>): VimScene {
-    const threeBuilder = new VimThreeBuilder(undefined, this.logger)
+  loadFromVim (
+    vim: Vim,
+    drawTransparent: boolean,
+    TransparentAsOpaque: boolean,
+    nodeIndices?: Set<number>
+  ): VimScene {
+    const threeBuilder = new VimThreeBuilder(
+      vim.g3d,
+      drawTransparent,
+      TransparentAsOpaque,
+      undefined,
+      undefined,
+      this.logger
+    )
     const vimThree = threeBuilder.buildFromG3d(vim.g3d, nodeIndices)
 
     this.logger?.log('Loading Completed')
@@ -92,14 +105,32 @@ export class VIMLoader {
 type Mesh = THREE.InstancedMesh<THREE.BufferGeometry, THREE.Material>
 export class VimThreeBuilder {
   private logger: Logger | undefined
-  private material: THREE.Material
+  private g3d: VimG3d
+  private materialOpaque: THREE.Material
+  private materialTransparent: THREE.Material
+  private drawTransparent: boolean
+  private transparentAsOpaque: boolean
 
-  constructor (material?: THREE.Material, logger?: Logger) {
-    this.material = material ?? this.createDefaultMaterial()
+  constructor (
+    g3d: VimG3d,
+    drawTransparent: boolean,
+    transparentAsOpaque: boolean,
+    materialOpaque?: THREE.Material,
+    materialTransparent?: THREE.Material,
+    logger?: Logger
+  ) {
+    this.g3d = g3d
+    this.drawTransparent = drawTransparent
+    this.transparentAsOpaque = transparentAsOpaque
+    this.materialOpaque = materialOpaque ?? this.createDefaultOpaqueMaterial()
+    this.materialTransparent =
+      drawTransparent && !transparentAsOpaque
+        ? materialTransparent ?? this.createDefaultTransparentMaterial()
+        : undefined
     this.logger = logger
   }
 
-  createDefaultMaterial = () =>
+  createDefaultOpaqueMaterial = () =>
     new THREE.MeshPhongMaterial({
       color: 0x999999,
       vertexColors: true,
@@ -109,38 +140,86 @@ export class VimThreeBuilder {
       shininess: 70
     })
 
-  buildFromG3d (g3d: VimG3d, instances?: Set<number>): VimThree {
-    const geometryBuilder = new BufferGeometryBuilder(g3d)
+  createDefaultTransparentMaterial = () => {
+    const material = this.createDefaultOpaqueMaterial()
+    material.transparent = true
+    material.opacity = 0.3
+    return material
+  }
 
+  buildFromG3d (g3d: VimG3d, instances?: Set<number>): VimThree {
     const includedMeshes = instances
       ? this.computeMeshFilter(g3d, instances)
       : undefined
-
-    const geometry = this.logger?.timeAction('Allocating Geometry', () =>
-      geometryBuilder.createSomeGeometry(includedMeshes)
-    )
-    this.logger?.log('Found # meshes ' + geometry.length)
 
     const nodesByMeshes = this.logger?.timeAction('Counting references', () =>
       g3d.getNodesByMeshes()
     )
 
-    const rawMeshes = this.logger?.timeAction('Allocating Meshes', () =>
-      this.allocateMeshes(geometry, nodesByMeshes)
+    const opaque = this.buildByAlpha(
+      g3d,
+      true,
+      this.drawTransparent && this.transparentAsOpaque,
+      this.materialOpaque,
+      nodesByMeshes,
+      includedMeshes
+    )
+
+    if (this.drawTransparent && !this.transparentAsOpaque) {
+      const alpha = this.buildByAlpha(
+        g3d,
+        false,
+        true,
+        this.materialTransparent,
+        nodesByMeshes,
+        includedMeshes
+      )
+      opaque.merge(alpha)
+    }
+
+    return opaque
+  }
+
+  buildByAlpha (
+    g3d: VimG3d,
+    drawOpaque: boolean,
+    drawTransparent: boolean,
+    material: Material,
+    nodesByMeshes: number[][],
+    includedMeshes?: Set<number>
+  ) {
+    const builder = new BufferGeometryBuilder(g3d, drawOpaque, drawTransparent)
+    const type =
+      drawTransparent && drawOpaque
+        ? 'All'
+        : drawOpaque
+          ? 'Opaque'
+          : 'Transparent'
+
+    const geometry = this.logger?.timeAction(
+      `Allocating ${type} Geometry`,
+      () => builder.createSomeGeometry(includedMeshes)
+    )
+
+    const meshes = this.logger?.timeAction(`Allocating ${type} Meshes`, () =>
+      this.allocateMeshes(geometry, nodesByMeshes, material)
     )
 
     const vimThree = this.logger?.timeAction(
-      'Instantiating Shared Geometry',
-      () => this.instantiateSharedGeometry(rawMeshes, g3d)
+      `Instantiating Shared ${type} Geometry`,
+      () => this.instantiateSharedGeometry(meshes, g3d)
     )
 
-    const merge = this.logger?.timeAction('Merging Unique Geometry', () =>
-      this.mergeUniqueGeometry(g3d, geometry, nodesByMeshes)
+    const merged = this.logger?.timeAction(
+      `Merging Unique ${type} Geometry`,
+      () => this.mergeUniqueGeometry(g3d, geometry, nodesByMeshes, material)
     )
-    if (merge) {
-      const [mesh, nodes] = merge
+
+    if (merged) {
+      const [mesh, nodes] = merged
       vimThree.addMesh(mesh, nodes)
     }
+
     return vimThree
   }
 
@@ -161,7 +240,8 @@ export class VimThreeBuilder {
   mergeUniqueGeometry (
     g3d: VimG3d,
     geometry: (THREE.BufferGeometry | undefined)[],
-    nodesByMesh: number[][]
+    nodesByMesh: number[][],
+    material: THREE.Material
   ): [THREE.Mesh, number[]] | undefined {
     const [uniques, nodes] = this.getTransformedUniqueGeometry(
       g3d,
@@ -170,7 +250,7 @@ export class VimThreeBuilder {
     )
     if (uniques.length === 0) return
 
-    const result = this.createMergedMesh(uniques)
+    const result = this.createMergedMesh(uniques, material)
     uniques.forEach((u) => u.dispose())
     return [result, nodes]
   }
@@ -206,14 +286,15 @@ export class VimThreeBuilder {
 
   // TODO Use and support a simple THREE.Mesh
   createMergedMesh (
-    bufferGeometry: THREE.BufferGeometry[]
+    bufferGeometry: THREE.BufferGeometry[],
+    material: THREE.Material
   ): THREE.InstancedMesh {
     const mergedbufferGeometry: THREE.BufferGeometry =
       BufferGeometryUtils.mergeBufferGeometries(bufferGeometry)
 
     const mergedMesh = new THREE.InstancedMesh(
       mergedbufferGeometry,
-      this.material,
+      material,
       1
     )
     mergedMesh.setMatrixAt(0, new THREE.Matrix4())
@@ -233,7 +314,8 @@ export class VimThreeBuilder {
 
   allocateMeshes (
     geometries: (THREE.BufferGeometry | undefined)[],
-    nodesByMesh: number[][]
+    nodesByMesh: number[][],
+    material: THREE.Material
   ): (Mesh | undefined)[] {
     const meshCount = geometries.length
     const meshes: (Mesh | undefined)[] = new Array(meshCount)
@@ -249,7 +331,7 @@ export class VimThreeBuilder {
         continue
       }
 
-      meshes[i] = new THREE.InstancedMesh(geometry, this.material, count)
+      meshes[i] = new THREE.InstancedMesh(geometry, material, count)
     }
 
     return meshes
@@ -311,12 +393,16 @@ export class BufferGeometryBuilder {
   colorBuffer: Float32Array
 
   g3d: VimG3d
+  drawOpaque: boolean
+  drawTransparent: boolean
 
-  constructor (g3d: VimG3d) {
+  constructor (g3d: VimG3d, drawOpaque: boolean, drawTransparent: boolean) {
     this.vertexBuffer = Float32Array.from(g3d.positions)
     this.colorBuffer = new Float32Array(g3d.positions.length)
     this.indexBuffer = new Int32Array(g3d.indices.length)
     this.g3d = g3d
+    this.drawOpaque = drawOpaque
+    this.drawTransparent = drawTransparent
   }
 
   createSomeGeometry = (instanceIndices: Set<number>) =>
@@ -324,19 +410,26 @@ export class BufferGeometryBuilder {
       ? this.createAllGeometry((i) => instanceIndices.has(i))
       : this.createAllGeometry()
 
+  /**
+   * Concatenates all g3d.submeshes of each g3d.mesh into newly created Three.GeometryBuffers
+   * @param includeCondition condition for which to include mesh at index i
+   * @returns an array of BufferGeometry of length g3d.meshCount where mesh can be undefined
+   */
   createAllGeometry = (
-    includeCondition?: (n: number) => boolean
+    includeCondition?: (i: number) => boolean
   ): (THREE.BufferGeometry | undefined)[] => {
     const meshCount = this.g3d.meshSubmeshes.length
-    const resultMeshes: (THREE.BufferGeometry | undefined)[] = []
+    const resultMeshes: (THREE.BufferGeometry | undefined)[] = Array(meshCount)
     const condition = includeCondition ?? ((_) => true)
 
     for (let mesh = 0; mesh < meshCount; mesh++) {
       const result = condition(mesh)
         ? this.createGeometryFromMeshIndex(mesh)
         : undefined
-      result?.computeBoundingBox()
-      resultMeshes.push(result)
+      if (result) {
+        result?.computeBoundingBox()
+        resultMeshes[mesh] = result
+      }
     }
 
     return resultMeshes
@@ -366,21 +459,22 @@ export class BufferGeometryBuilder {
 
     const [meshStart, meshEnd] = this.g3d.getMeshSubmeshRange(meshIndex)
     for (let submesh = meshStart; submesh < meshEnd; submesh++) {
-      // transparent submeshes are skipped
-      const submeshColor = this.getSubmeshColor(this.g3d, submesh)
-      if (!submeshColor) continue
-
-      const [submeshStart, submeshEnd] = this.g3d.getSubmeshIndexRange(submesh)
-      for (let index = submeshStart; index < submeshEnd; index++) {
-        const vertex = this.g3d.indices[index]
-        this.indexBuffer[indexCount++] = vertex
-        min = Math.min(min, vertex)
-        max = Math.max(max, vertex)
-        submeshColor.toArray(this.colorBuffer, vertex * 3)
+      // submeshes not matching transparency are skipped
+      const [submeshColor, alpha] = this.getSubmeshColor(this.g3d, submesh)
+      if (alpha < 0.9 ? this.drawTransparent : this.drawOpaque) {
+        const [submeshStart, submeshEnd] =
+          this.g3d.getSubmeshIndexRange(submesh)
+        for (let index = submeshStart; index < submeshEnd; index++) {
+          const vertex = this.g3d.indices[index]
+          this.indexBuffer[indexCount++] = vertex
+          min = Math.min(min, vertex)
+          max = Math.max(max, vertex)
+          submeshColor.toArray(this.colorBuffer, vertex * 3)
+        }
       }
     }
 
-    // If all submesh are transparent, we push undefined to keep results aligned
+    // if all meshes are transparent we abort here
     if (indexCount === 0) return
 
     // 3 is both the arity of the vertex buffer and of THREE.color
@@ -399,19 +493,19 @@ export class BufferGeometryBuilder {
     )
   }
 
-  private getSubmeshColor (g3d: VimG3d, submesh: number) {
+  private getSubmeshColor (
+    g3d: VimG3d,
+    submesh: number
+  ): [color: THREE.Color, alpha: number] {
     const material = g3d.submeshMaterial[submesh]
     if (material < 0) {
-      return this.defaultColor
+      return [this.defaultColor, 1]
     }
 
     const colorIndex = material * g3d.colorArity
     const alpha = g3d.materialColors[colorIndex + 3]
-    if (alpha < 0.9) {
-      return // to skip transparent materials
-    }
-
-    return new THREE.Color().fromArray(g3d.materialColors, colorIndex)
+    const color = new THREE.Color().fromArray(g3d.materialColors, colorIndex)
+    return [color, alpha]
   }
 }
 
