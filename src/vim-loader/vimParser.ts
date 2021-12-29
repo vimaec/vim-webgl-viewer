@@ -39,7 +39,9 @@ export class VimParser {
     this.logger?.log(`Found ${assets.buffers.length} assets`)
 
     this.logger?.log(`Constructing entity tables: ${entityData.length} bytes`)
-    const entities = VimParser.parseEntityTables(BFast.parseFromArray(entityData))
+    const entities = VimParser.parseEntityTables(
+      BFast.parseFromArray(entityData)
+    )
     this.logger?.log(`Found ${entities.size} entity tables`)
 
     this.logger?.log(`Decoding strings: ${stringData.length} bytes`)
@@ -70,7 +72,11 @@ export class VimParser {
       const buffer = bfast.buffers[i]
 
       let length: number
-      let ctor: Int8ArrayConstructor | Float32ArrayConstructor | Float64ArrayConstructor | Int32ArrayConstructor;
+      let ctor:
+        | Int8ArrayConstructor
+        | Float32ArrayConstructor
+        | Float64ArrayConstructor
+        | Int32ArrayConstructor
       switch (columnType) {
         case 'byte':
           length = buffer.byteLength

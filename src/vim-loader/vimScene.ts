@@ -80,7 +80,7 @@ export class VimScene {
   getDoubleColumn = (table: any, colNameNoPrefix: string) =>
     this.getDataColumn(table, 'double:', colNameNoPrefix)
 
-  getElementIndices = (table: any) : number[] =>
+  getElementIndices = (table: any): number[] =>
     this.getIndexColumn(table, Vim.tableElement, 'Element') ??
     table?.get(Vim.tableElementLegacy) // Backwards compatible call with vim0.9
 
@@ -147,7 +147,7 @@ export class VimScene {
     return this.geometry.nodeIndexToMeshInstance.get(nodeIndex)
   }
 
-  getNodeIndexFromMesh (mesh: THREE.Mesh, instance: number): number  {
+  getNodeIndexFromMesh (mesh: THREE.Mesh, instance: number): number {
     if (!mesh || instance < 0) return -1
     const nodes = this.geometry.meshIdToNodeIndex.get(mesh.id)
     if (!nodes) return -1
@@ -169,7 +169,7 @@ export class VimScene {
     return elements[nodeIndex]
   }
 
-  getElementIdFromNodeIndex (nodeIndex: number): number  {
+  getElementIdFromNodeIndex (nodeIndex: number): number {
     if (nodeIndex < 0) return -1
     const elementIndex = this.getElementIndexFromNodeIndex(nodeIndex)
     if (elementIndex < 0) return -1
@@ -180,14 +180,14 @@ export class VimScene {
 
   // TODO add better ways to access bim
   getElementName (elementIndex: number): string {
-    if (elementIndex < 0) return ""
+    if (elementIndex < 0) return ''
     const names = this.getStringColumn(this.getElementTable(), 'Name')
-    if (!names) return ""
+    if (!names) return ''
     const nameIndex = names[elementIndex] as number
     return this.getStringFromIndex(nameIndex)
   }
 
   getStringFromIndex (stringIndex: number): string {
-    return stringIndex < 0 ? "" : this.vim.strings[stringIndex]  
+    return stringIndex < 0 ? '' : this.vim.strings[stringIndex]
   }
 }

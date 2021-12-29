@@ -1,7 +1,7 @@
 import { BFast } from './bfast'
 import { VimG3d } from './g3d'
 
-export type EntityTable = Map<string, ArrayLike<number>>;
+export type EntityTable = Map<string, ArrayLike<number>>
 
 export class Vim {
   static tableElement = 'Vim.Element'
@@ -20,8 +20,7 @@ export class Vim {
     g3d: VimG3d,
     entities: Map<string, EntityTable>,
     strings: string[]
-  ) 
-  {
+  ) {
     this.header = header
     this.assets = assets
     this.g3d = g3d
@@ -29,20 +28,19 @@ export class Vim {
     this.strings = strings
   }
 
-  getEntity(type: string, index: number): any {
+  getEntity (type: string, index: number): any {
     const r = {}
-    if (index < 0)
-      return {}
+    if (index < 0) return {}
     const table = this.entities?.get(type)
     for (const k of table.keys()) {
       const parts = k.split(':')
       let val: number | string = table.get(k)[index]
-      if (parts[0] == 'string') {
+      if (parts[0] === 'string') {
         val = this.strings[val]
-      }      
-      let name = parts[parts.length-1]
-      r[name] = val;
+      }
+      const name = parts[parts.length - 1]
+      r[name] = val
     }
-    return r;
+    return r
   }
 }

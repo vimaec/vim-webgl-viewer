@@ -1,5 +1,3 @@
-import { Logger } from './logger'
-
 export class BFastHeader {
   magic: number
   dataStart: number
@@ -56,7 +54,7 @@ export class BFast {
     this.buffers = buffers
   }
 
-  static parseFromArray (bytes: Uint8Array) : BFast {
+  static parseFromArray (bytes: Uint8Array): BFast {
     return this.parseFromBuffer(
       bytes.buffer,
       bytes.byteOffset,
@@ -68,8 +66,8 @@ export class BFast {
   static parseFromBuffer (
     arrayBuffer: ArrayBuffer,
     byteOffset: number = 0,
-    byteLength: number = arrayBuffer.byteLength - byteOffset) : BFast 
-  {
+    byteLength: number = arrayBuffer.byteLength - byteOffset
+  ): BFast {
     // Cast the input data to 32-bit integers
     // Note that according to the spec they are 64 bit numbers. In JavaScript you can't have 64 bit integers,
     // and it would bust the amount of memory we can work with in most browsers and low-power devices

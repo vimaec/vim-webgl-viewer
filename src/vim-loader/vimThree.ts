@@ -1,7 +1,6 @@
 import * as THREE from 'three'
 
-export class VimThree 
-{
+export class VimThree {
   meshes: THREE.Mesh[]
   boundingBox: THREE.Box3
   nodeIndexToMeshInstance: Map<number, [THREE.Mesh, number]>
@@ -12,16 +11,14 @@ export class VimThree
     boundingBox: THREE.Box3,
     nodeIndexToMeshInstance: Map<number, [THREE.Mesh, number]>,
     meshIdToNodeIndex: Map<number, number[]>
-  ) 
-  {
+  ) {
     this.meshes = meshes
     this.boundingBox = boundingBox
     this.nodeIndexToMeshInstance = nodeIndexToMeshInstance
     this.meshIdToNodeIndex = meshIdToNodeIndex
   }
 
-  addMesh (mesh: THREE.Mesh, nodes: number[]) 
-  {
+  addMesh (mesh: THREE.Mesh, nodes: number[]) {
     this.meshes.push(mesh)
     nodes.forEach((node) => {
       this.nodeIndexToMeshInstance.set(node, [mesh, 0])

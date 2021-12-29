@@ -34,8 +34,7 @@ export class Selection {
 
   select (elementIndex: number) {
     this.clear()
-    if (elementIndex < 0)
-    {
+    if (elementIndex < 0) {
       return
     }
     this.elementIndex = elementIndex

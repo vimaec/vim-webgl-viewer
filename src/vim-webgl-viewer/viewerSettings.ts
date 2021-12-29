@@ -234,7 +234,7 @@ export class ViewerSettings {
       },
       onClick: undefined
     }
- 
+
     this.options = options ? deepmerge(fallback, options, undefined) : fallback
   }
 
@@ -269,7 +269,8 @@ export class ViewerSettings {
   getCameraIsOrbit = () => this.options.camera.controls.orbit
   getCameraMoveSpeed = () => this.options.camera.controls.moveSpeed
   getCameraRotateSpeed = () => this.options.camera.controls.rotateSpeed
-  getCameraReferenceModelSize = () => this.options.camera.controls.modelReferenceSize
+  getCameraReferenceModelSize = () =>
+    this.options.camera.controls.modelReferenceSize
 }
 
 function toRGBColor (c: ColorRGB): THREE.Color {

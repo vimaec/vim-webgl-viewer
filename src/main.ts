@@ -1,12 +1,11 @@
-import { Vim } from './vim-loader/vim';
-import { HitTestResult } from './vim-webgl-viewer/hitTester';
+import { Vim } from './vim-loader/vim'
+import { HitTestResult } from './vim-webgl-viewer/hitTester'
 import { Viewer, ViewerState } from './vim-webgl-viewer/viewer'
 
 const params = new URLSearchParams(window.location.search)
 const url = params.has('model')
   ? params.get('model')
   : 'https://vim.azureedge.net/samples/residence.vim'
-
 
 const viewer = new Viewer({
   plane: {
@@ -19,7 +18,10 @@ const viewer = new Viewer({
   onClick: (viewer: Viewer, x: HitTestResult) => {
     console.log(x)
     viewer.selectByElementIndex(x.elementIndex)
-    let entity = viewer.vimScene.vim.getEntity(Vim.tableElement, x.elementIndex)
+    const entity = viewer.vimScene.vim.getEntity(
+      Vim.tableElement,
+      x.elementIndex
+    )
     console.log(entity)
   }
 })

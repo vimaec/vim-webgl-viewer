@@ -23,9 +23,8 @@ import { ViewerRenderer } from './viewerRenderer'
 
 // loader
 import { VimScene } from '../vim-loader/vimScene'
-import { VimParser } from '../vim-loader/vimParser'
 
-export { VimParser} from '../vim-loader/vimParser';
+export { VimParser } from '../vim-loader/vimParser'
 
 export type ViewerState =
   | 'Uninitialized'
@@ -43,7 +42,7 @@ export class Viewer {
   renderer: ViewerRenderer
   selection: Selection
   camera: ViewerCamera
-  controls: ViewerInput  
+  controls: ViewerInput
 
   // State
   modelSettings: ModelSettings | undefined
@@ -225,7 +224,7 @@ export class Viewer {
    * @param nodeIndex index of node
    * @returns index of element
    */
-  getElementIndexFromNodeIndex(nodeIndex: number) : number {
+  getElementIndexFromNodeIndex (nodeIndex: number): number {
     if (!this.vimScene) throw new Error(NO_SCENE_LOADED)
     return this.vimScene.getElementIndexFromNodeIndex(nodeIndex)
   }
@@ -236,7 +235,7 @@ export class Viewer {
    * @param index index into the instanced mesh
    * @returns index of element
    */
-  getElementIndexFromMeshInstance(mesh: THREE.Mesh, index: number) : number {
+  getElementIndexFromMeshInstance (mesh: THREE.Mesh, index: number): number {
     if (!this.vimScene) throw new Error(NO_SCENE_LOADED)
     const nodeIndex = this.vimScene.getNodeIndexFromMesh(mesh, index)
     return this.vimScene.getElementIndexFromNodeIndex(nodeIndex)
@@ -251,13 +250,17 @@ export class Viewer {
     if (!this.vimScene) throw new Error(NO_SCENE_LOADED)
     const nodes = this.vimScene.getNodeIndicesFromElementIndex(elementIndex)
     if (!nodes) {
-      console.error('Could not find nodes geometry for element index: ' + elementIndex)
+      console.error(
+        'Could not find nodes geometry for element index: ' + elementIndex
+      )
       return () => {}
     }
 
     const geometry = this.createBufferGeometryFromNodeIndices(nodes)
     if (!geometry) {
-      console.error('Could not create geometry for element index: ' + elementIndex)
+      console.error(
+        'Could not create geometry for element index: ' + elementIndex
+      )
       return () => {}
     }
 
@@ -302,7 +305,9 @@ export class Viewer {
   selectByElementIndex (elementIndex: number) {
     if (!this.vimScene) throw new Error(NO_SCENE_LOADED)
     console.log('Selecting element with index: ' + elementIndex)
-    console.log('Bim Element Name: ' + this.vimScene.getElementName(elementIndex))
+    console.log(
+      'Bim Element Name: ' + this.vimScene.getElementName(elementIndex)
+    )
     this.selection.select(elementIndex)
   }
 
@@ -358,10 +363,7 @@ export class Viewer {
       this.modelSettings,
       this.renderer.getBoundingBox()
     )
-    this.camera.applySettings(
-      this.settings,
-      this.renderer.getBoundingSphere()
-    )
+    this.camera.applySettings(this.settings, this.renderer.getBoundingSphere())
   }
 
   // TODO: Move to geometry layer
@@ -413,5 +415,3 @@ export class Viewer {
     return geometry
   }
 }
-
-

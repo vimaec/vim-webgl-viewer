@@ -1,8 +1,5 @@
 import * as THREE from 'three'
-import { ViewerCamera } from './viewerCamera'
 import { Viewer } from './viewer'
-import { Mesh, Vector2 } from 'three'
-import { ViewerRenderer } from './viewerRenderer'
 import { HitTester } from './hitTester'
 
 export class InputMouse {
@@ -10,13 +7,18 @@ export class InputMouse {
   viewer: Viewer
   hitTester: HitTester
 
-  get camera() { return this.viewer.camera }
-  get renderer() { return this.viewer.renderer }
+  get camera () {
+    return this.viewer.camera
+  }
+
+  get renderer () {
+    return this.viewer.renderer
+  }
 
   // State
   isMouseDown: Boolean = false
   hasMouseMoved: Boolean = false
-   ctrlDown: Boolean = false
+  ctrlDown: Boolean = false
 
   constructor (viewer: Viewer) {
     this.viewer = viewer
@@ -100,12 +102,11 @@ export class InputMouse {
     this.onMouseClick(new THREE.Vector2(event.x, event.y), true)
   }
 
-  onMouseClick = (position: Vector2, doubleClick: boolean) => {
+  onMouseClick = (position: THREE.Vector2, doubleClick: boolean) => {
     const result = this.hitTester.onMouseClick(position, doubleClick)
-    const  onClick = this.viewer.settings.options.onClick
-    if (onClick) 
-    {
-      onClick(this.viewer, result);
+    const onClick = this.viewer.settings.options.onClick
+    if (onClick) {
+      onClick(this.viewer, result)
     }
   }
 }
