@@ -8,7 +8,7 @@ import { DEG2RAD } from 'three/src/math/MathUtils'
 export class CameraGizmo {
   // Dependencies
   camera: ViewerCamera
-  render: ViewerRenderer
+  renderer: ViewerRenderer
 
   // Settings
   scale: number
@@ -23,9 +23,9 @@ export class CameraGizmo {
   // State
   timeout: ReturnType<typeof setTimeout>
 
-  constructor (camera: ViewerCamera, render: ViewerRenderer) {
+  constructor (camera: ViewerCamera, renderer: ViewerRenderer) {
     this.camera = camera
-    this.render = render
+    this.renderer = renderer
   }
 
   show () {
@@ -75,7 +75,7 @@ export class CameraGizmo {
     this.gizmos = new THREE.Group()
     this.gizmos.add(new THREE.LineSegments(this.wireframe, this.material))
     this.gizmos.add(new THREE.LineSegments(this.wireframe, this.materialAlways))
-    this.render.addObject(this.gizmos)
+    this.renderer.addObject(this.gizmos)
 
     this.setScale(this.scale)
   }
@@ -90,7 +90,7 @@ export class CameraGizmo {
     this.material = null
     this.materialAlways = null
 
-    this.render.removeObject(this.gizmos)
+    this.renderer.removeObject(this.gizmos)
     this.gizmos = null
   }
 }

@@ -60,7 +60,7 @@ export class Viewer {
     this.camera = new ViewerCamera(this.renderer, this.settings)
 
     this.environment = ViewerEnvironment.createDefault()
-    this.renderer.addManyToScene(this.environment.getElements())
+    this.renderer.addObjects(this.environment.getElements())
 
     // Input and Selection
     this.controls = new ViewerInput(this)
@@ -137,14 +137,9 @@ export class Viewer {
 
     const matrix = this.modelSettings.getObjectMatrix()
 
-    // Bounding Box
-    const box = vim.geometry.boundingBox.clone()
-    box.applyMatrix4(matrix)
-    this.renderer.boundingBox = box
-
     // Model
-    this.renderer.addToModel(vim.geometry.meshes)
-    this.renderer.updateModel(matrix)
+    this.renderer.addModel(vim.geometry)
+    this.renderer.applyMatrix4(matrix)
     this.renderer.render()
 
     this.lookAtModel()
@@ -178,7 +173,7 @@ export class Viewer {
   unloadModel () {
     this.vimScene = undefined
     this.modelSettings = undefined
-    this.render.clearModels()
+    this.renderer.clearModels()
     this.selection.clear()
     this.setState('Uninitialized')
   }
@@ -361,7 +356,7 @@ export class Viewer {
     this.environment.applySettings(
       this.settings,
       this.modelSettings,
-      this.renderer.boundingBox
+      this.renderer.getBoundingBox()
     )
     this.camera.applySettings(
       this.settings,
@@ -380,7 +375,7 @@ export class Viewer {
     })
     const line = new THREE.LineSegments(wireframe, material)
 
-    this.renderer.addManyToScene([line])
+    this.renderer.addObjects([line])
 
     // returns disposer
     return () => {

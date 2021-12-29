@@ -21,7 +21,7 @@ export class Selection {
     return this.elementIndex >= 0
   }
 
-  reset () {
+  clear () {
     this.elementIndex = -1
     this.boundingSphere = null
     this.disposeResources()
@@ -33,7 +33,7 @@ export class Selection {
   }
 
   select (elementIndex: number) {
-    this.reset()
+    this.clear()
     if (elementIndex < 0)
     {
       return

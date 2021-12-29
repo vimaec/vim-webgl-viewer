@@ -40,10 +40,10 @@ class ViewerCamera {
   private MoveSpeed: number = 1
   private RotateSpeed: number = 1
 
-  constructor (render: ViewerRenderer, settings: ViewerSettings) {
-    this.gizmo = new CameraGizmo(this, render)
+  constructor (renderer: ViewerRenderer, settings: ViewerSettings) {
+    this.gizmo = new CameraGizmo(this, renderer)
 
-    this.camera = render.camera
+    this.camera = renderer.camera
     this.applySettings(settings)
 
     this.InputVelocity = new THREE.Vector3(0, 0, 0)

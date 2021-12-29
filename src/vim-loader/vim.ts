@@ -1,7 +1,7 @@
 import { BFast } from './bfast'
 import { VimG3d } from './g3d'
 
-export type EntityTable = Map<string, RelativeIndexable<number>>;
+export type EntityTable = Map<string, ArrayLike<number>>;
 
 export class Vim {
   static tableElement = 'Vim.Element'
