@@ -64,6 +64,7 @@ export class HitTester {
         r.elementIndex = this.viewer.getElementIndexFromNodeIndex(r.nodeIndex)
       } else if (hit.instanceId !== undefined) {
         r.isInstanced = true
+        r.instanceId = hit.instanceId
         r.elementIndex = this.viewer.getElementIndexFromMeshInstance(
           hit.object as THREE.InstancedMesh,
           r.instanceId
