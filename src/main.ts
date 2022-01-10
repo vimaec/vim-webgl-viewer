@@ -2,11 +2,21 @@ import { Vim } from './vim-loader/vim'
 import { HitTestResult } from './vim-webgl-viewer/hitTester'
 import { Viewer, ViewerState } from './vim-webgl-viewer/viewer'
 
+// Parse URL
 const params = new URLSearchParams(window.location.search)
 const url = params.has('model')
   ? params.get('model')
   : 'https://vim.azureedge.net/samples/residence.vim'
 
+let drawTransparency = true
+let transparencyAsOpaque = true
+if (params.has('transparency')) {
+  const t = params.get('transparency')
+  drawTransparency = t !== 'false'
+  transparencyAsOpaque = t === 'opaque'
+}
+
+// Create Viewer
 const viewer = new Viewer({
   camera: { showGizmo: true },
   plane: {
@@ -27,11 +37,12 @@ const viewer = new Viewer({
   }
 })
 
+// Load Model
 viewer.loadModel(
   {
     rotation: { x: 270, y: 0, z: 0 },
-    drawTransparency: true,
-    drawTransparencyAsOpaque: false
+    drawTransparency: drawTransparency,
+    drawTransparencyAsOpaque: transparencyAsOpaque
   },
   (vim) => console.log('Callback: Viewer Ready!'),
   (progress) => {
