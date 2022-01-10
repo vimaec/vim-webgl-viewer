@@ -54,9 +54,13 @@ export class InputMouse {
     const delta = new THREE.Vector2(deltaX / width, deltaY / height)
 
     if (event.buttons & 2) {
+      // right button
       this.camera.truckPedestalCameraBy(delta)
+    } else if (event.buttons & 4) {
+      // Midle button
+      this.camera.truckDollyCameraBy(delta)
     } else {
-      // delta.multiplyScalar(this.MouseRotateSensitivity)
+      // left button
       this.camera.rotateCameraBy(delta)
     }
   }
