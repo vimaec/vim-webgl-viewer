@@ -22,6 +22,7 @@ export class CameraGizmo {
 
   // State
   timeout: ReturnType<typeof setTimeout>
+  active: boolean
 
   constructor (camera: ViewerCamera, renderer: ViewerRenderer) {
     this.camera = camera
@@ -29,6 +30,8 @@ export class CameraGizmo {
   }
 
   show () {
+    if (!this.active) return
+
     if (!this.gizmos) {
       this.createGizmo()
     }
@@ -44,6 +47,7 @@ export class CameraGizmo {
   }
 
   applySettings (settings: ViewerSettings, factor: number) {
+    this.active = settings.getCameraShowGizmo()
     this.setScale(
       (Math.tan((DEG2RAD * settings.getCameraFov()) / 2) * factor) / 10
     )

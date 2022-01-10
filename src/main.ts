@@ -8,6 +8,7 @@ const url = params.has('model')
   : 'https://vim.azureedge.net/samples/residence.vim'
 
 const viewer = new Viewer({
+  camera: { showGizmo: true },
   plane: {
     show: true,
     texture:

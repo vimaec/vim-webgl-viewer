@@ -79,6 +79,7 @@ export type CameraOptions = {
   zoom: number
   /** See ControlOptions */
   controls: Partial<CameraControlsOptions>
+  showGizmo: boolean
 }
 
 export type SunLightOptions = {
@@ -217,7 +218,8 @@ export class ViewerSettings {
           modelReferenceSize: 1,
           rotateSpeed: 1,
           moveSpeed: 1
-        }
+        },
+        showGizmo: true
       },
       plane: {
         show: true,
@@ -268,6 +270,7 @@ export class ViewerSettings {
   getCameraFar = () => this.options.camera.far
   getCameraFov = () => this.options.camera.fov
   getCameraZoom = () => this.options.camera.zoom
+  getCameraShowGizmo = () => this.options.camera.showGizmo
 
   // Camera Controls
   getCameraIsOrbit = () => this.options.camera.controls.orbit

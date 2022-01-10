@@ -152,8 +152,7 @@ class ViewerCamera {
 
     this.OrbitalTarget.add(vector)
     if (this.MouseOrbit) {
-      // TODO: figure out a better place for this. Should be optional.
-      // this.gizmo.show()
+      this.gizmo.show()
     } else {
       this.camera.position.add(vector)
     }
@@ -276,8 +275,7 @@ class ViewerCamera {
       this.camera.position.applyQuaternion(this.camera.quaternion)
       this.camera.position.add(this.OrbitalTarget)
 
-      // TODO: figure out a better place for this. Should be optional.
-      // if (this.isSignificant(positionDelta)) this.gizmo.show()
+      if (this.isSignificant(positionDelta)) this.gizmo.show()
     }
 
     this.gizmo.update(this.OrbitalTarget)
