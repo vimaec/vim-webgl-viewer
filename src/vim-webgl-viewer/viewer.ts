@@ -24,6 +24,8 @@ import { ViewerRenderer } from './viewerRenderer'
 // loader
 import { VimScene } from '../vim-loader/vimScene'
 
+export { VimParser } from '../vim-loader/vimParser'
+
 export type ViewerState =
   | 'Uninitialized'
   | [state: 'Downloading', progress: number]
@@ -37,9 +39,9 @@ export class Viewer {
   settings: ViewerSettings
 
   environment: ViewerEnvironment
-  render: ViewerRenderer
+  renderer: ViewerRenderer
   selection: Selection
-  cameraController: ViewerCamera
+  camera: ViewerCamera
   controls: ViewerInput
 
   // State
@@ -52,15 +54,15 @@ export class Viewer {
     this.settings = new ViewerSettings(options)
 
     const canvas = Viewer.getOrCreateCanvas(this.settings.getCanvasId())
-    this.render = new ViewerRenderer(canvas, this.settings)
+    this.renderer = new ViewerRenderer(canvas, this.settings)
 
-    this.cameraController = new ViewerCamera(this.render, this.settings)
+    this.camera = new ViewerCamera(this.renderer, this.settings)
 
     this.environment = ViewerEnvironment.createDefault()
-    this.render.addObjects(this.environment.getElements())
+    this.renderer.addObjects(this.environment.getElements())
 
     // Input and Selection
-    this.controls = new ViewerInput(this.render, this.cameraController, this)
+    this.controls = new ViewerInput(this)
     this.controls.register()
     this.selection = new Selection(this)
 
@@ -74,11 +76,11 @@ export class Viewer {
     requestAnimationFrame(() => this.animate())
 
     // Camera
-    const timeDelta = this.render.clock.getDelta()
-    this.cameraController.frameUpdate(timeDelta)
+    const timeDelta = this.renderer.clock.getDelta()
+    this.camera.frameUpdate(timeDelta)
 
     // Model
-    this.render.render()
+    this.renderer.render()
   }
 
   /**
@@ -132,12 +134,12 @@ export class Viewer {
     this.vimScene = vim
     this.modelSettings = settings
 
-    const matrix = this.modelSettings.getObjectMatrix()
+    const matrix = this.modelSettings.getModelMatrix()
 
     // Model
-    this.render.addModel(vim.geometry)
-    this.render.applyMatrix4(matrix)
-    this.render.render()
+    this.renderer.addModel(vim.geometry)
+    this.renderer.applyMatrix4(matrix)
+    this.renderer.render()
 
     this.lookAtModel()
     this.ApplySettings()
@@ -149,7 +151,7 @@ export class Viewer {
       detail: this.state,
       bubbles: true
     })
-    this.render.canvas.dispatchEvent(event)
+    this.renderer.canvas.dispatchEvent(event)
   }
 
   private static getOrCreateCanvas (canvasId?: string) {
@@ -170,7 +172,7 @@ export class Viewer {
   unloadModel () {
     this.vimScene = undefined
     this.modelSettings = undefined
-    this.render.clearModels()
+    this.renderer.clearModels()
     this.selection.clear()
     this.setState('Uninitialized')
   }
@@ -189,7 +191,12 @@ export class Viewer {
       ? new Set(this.vimScene.getNodeIndicesFromElementIds(elementIds))
       : undefined
 
-    const scene = new VIMLoader().loadFromVim(this.vimScene.vim, nodeIndices)
+    const scene = new VIMLoader().loadFromVim(
+      this.vimScene.vim,
+      settings.getDrawTransparency(),
+      settings.getDrawTransparencyAsOpaque(),
+      nodeIndices
+    )
     this.unloadModel()
     this.onVimLoaded(scene, settings)
     this.setState('Ready')
@@ -222,7 +229,7 @@ export class Viewer {
    * @param nodeIndex index of node
    * @returns index of element
    */
-  getElementIndexFromNodeIndex = (nodeIndex: number) => {
+  getElementIndexFromNodeIndex (nodeIndex: number): number {
     if (!this.vimScene) throw new Error(NO_SCENE_LOADED)
     return this.vimScene.getElementIndexFromNodeIndex(nodeIndex)
   }
@@ -233,13 +240,9 @@ export class Viewer {
    * @param index index into the instanced mesh
    * @returns index of element
    */
-  getElementIndexFromMeshInstance = (mesh: THREE.Mesh, index: number) => {
+  getElementIndexFromMeshInstance (mesh: THREE.Mesh, index: number): number {
     if (!this.vimScene) throw new Error(NO_SCENE_LOADED)
     const nodeIndex = this.vimScene.getNodeIndexFromMesh(mesh, index)
-    if (nodeIndex === undefined) {
-      console.error(`Could not find nodeIndex for mesh:${mesh}, index:${index}`)
-      return undefined
-    }
     return this.vimScene.getElementIndexFromNodeIndex(nodeIndex)
   }
 
@@ -279,7 +282,7 @@ export class Viewer {
    * @param elementIndex index of element
    * @returns THREE bounding
    */
-  getBoudingBoxForElementIndex (elementIndex: number): THREE.Box3 | null {
+  getBoundingBoxForElementIndex (elementIndex: number): THREE.Box3 | null {
     if (!this.vimScene) throw new Error(NO_SCENE_LOADED)
     const nodes = this.vimScene.getNodeIndicesFromElementIndex(elementIndex)
     if (!nodes) {
@@ -310,7 +313,6 @@ export class Viewer {
     console.log(
       'Bim Element Name: ' + this.vimScene.getElementName(elementIndex)
     )
-    console.log('Bim Element Id: ' + this.vimScene.getElementId(elementIndex))
     this.selection.select(elementIndex)
   }
 
@@ -327,7 +329,7 @@ export class Viewer {
    * @param elementIndex index of element
    */
   lookAtElementIndex (elementIndex: number) {
-    const box = this.getBoudingBoxForElementIndex(elementIndex)
+    const box = this.getBoundingBoxForElementIndex(elementIndex)
     if (!box) {
       console.error(
         'Could not create geometry for element index: ' + elementIndex
@@ -336,7 +338,7 @@ export class Viewer {
     }
 
     const sphere = box.getBoundingSphere(new THREE.Sphere())
-    this.cameraController.lookAtSphere(sphere, true)
+    this.camera.lookAtSphere(sphere, true)
   }
 
   /**
@@ -344,9 +346,9 @@ export class Viewer {
    */
   lookAtSelection () {
     if (this.selection.hasSelection()) {
-      this.cameraController.lookAtSphere(this.selection.boundingSphere!)
+      this.camera.lookAtSphere(this.selection.boundingSphere!)
     } else {
-      this.cameraController.frameScene(this.render.getBoundingSphere())
+      this.camera.frameScene(this.renderer.getBoundingSphere())
     }
   }
 
@@ -354,7 +356,7 @@ export class Viewer {
    * Move the camera to frame the whole model
    */
   lookAtModel () {
-    this.cameraController.frameScene(this.render.getBoundingSphere())
+    this.camera.frameScene(this.renderer.getBoundingSphere())
   }
 
   /**
@@ -364,12 +366,9 @@ export class Viewer {
     this.environment.applySettings(
       this.settings,
       this.modelSettings,
-      this.render.getBoundingBox()
+      this.renderer.getBoundingBox()
     )
-    this.cameraController.applySettings(
-      this.settings,
-      this.render.getBoundingSphere()
-    )
+    this.camera.applySettings(this.settings, this.renderer.getBoundingSphere())
   }
 
   // TODO: Move to geometry layer
@@ -383,11 +382,11 @@ export class Viewer {
     })
     const line = new THREE.LineSegments(wireframe, material)
 
-    this.render.addObjects([line])
+    this.renderer.addObjects([line])
 
     // returns disposer
     return () => {
-      this.render.scene.remove(line)
+      this.renderer.scene.remove(line)
       wireframe.dispose()
       material.dispose()
     }
@@ -402,10 +401,12 @@ export class Viewer {
 
     // Create geometry for every node
     const geometries: THREE.BufferGeometry[] = []
+    // TODO not create builder for every node, this is awful
     nodeIndices.forEach((nodeIndex) => {
-      const builder = new BufferGeometryBuilder(scene.vim.g3d)
-      const g = builder.createGeometryFromInstanceIndex(nodeIndex)
-      if (g) geometries.push(g)
+      // Build Opaque geometry
+      const builder = new BufferGeometryBuilder(scene.vim.g3d, true, true)
+      const all = builder.createGeometryFromInstanceIndex(nodeIndex)
+      if (all) geometries.push(all)
     })
 
     // bail if none of the node had geometry
@@ -413,7 +414,7 @@ export class Viewer {
 
     // Merge all geometry
     const geometry = BufferGeometryUtils.mergeBufferGeometries(geometries)
-    geometry.applyMatrix4(this.modelSettings.getObjectMatrix())
+    geometry.applyMatrix4(this.modelSettings.getModelMatrix())
 
     // Dispose intermediate geometries
     geometries.forEach((b) => b.dispose)

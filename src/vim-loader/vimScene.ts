@@ -58,7 +58,7 @@ export class VimScene {
   getElementIndexFromElementId = (elementId: number): number | undefined =>
     this.elementIdToIndex.get(elementId)
 
-  getStringColumn = (table: any, colNameNoPrefix: string) =>
+  getStringColumn = (table: any, colNameNoPrefix: string): number[] =>
     table?.get('string:' + colNameNoPrefix)
 
   getIndexColumn = (table: any, tableName: string, fieldName: string) =>
@@ -80,15 +80,15 @@ export class VimScene {
   getDoubleColumn = (table: any, colNameNoPrefix: string) =>
     this.getDataColumn(table, 'double:', colNameNoPrefix)
 
-  getElementIndices = (table: any) =>
+  getElementIndices = (table: any): number[] =>
     this.getIndexColumn(table, Vim.tableElement, 'Element') ??
     table?.get(Vim.tableElementLegacy) // Backwards compatible call with vim0.9
 
   getElementTable = () =>
-    this.vim.bim?.get(Vim.tableElement) ??
-    this.vim.bim?.get(Vim.tableElementLegacy)
+    this.vim.entities?.get(Vim.tableElement) ??
+    this.vim.entities?.get(Vim.tableElementLegacy)
 
-  getNodeTable = () => this.vim.bim.get(Vim.tableNode)
+  getNodeTable = () => this.vim.entities.get(Vim.tableNode)
 
   /**
    * Get Node/Instance Indices for given element index
@@ -142,78 +142,52 @@ export class VimScene {
     return result
   }
 
-  getMeshFromNodeIndex (nodeIndex: number): [THREE.Mesh, number] | undefined {
+  getMeshFromNodeIndex (nodeIndex: number): [THREE.Mesh, number] {
     if (nodeIndex < 0) throw new Error('Invalid negative index')
-
-    return this.geometry.nodeIndexToMeshInstance.get(nodeIndex)
+    return this.geometry.nodeIndexToMeshInstance.get(nodeIndex)[0]
   }
 
-  getNodeIndexFromMesh (mesh: THREE.Mesh, instance: number): number | undefined {
-    if (instance < 0) throw new Error('Invalid negative index')
-    if (!mesh) throw new Error('Invalid null mesh')
-
+  getNodeIndexFromMesh (mesh: THREE.Mesh, instance: number): number {
+    if (!mesh || instance < 0) return -1
     const nodes = this.geometry.meshIdToNodeIndex.get(mesh.id)
-    if (!nodes) return
-
+    if (!nodes) return -1
     return nodes[instance]
   }
 
-  getElementIdFromMesh (mesh: THREE.Mesh, instance: number): number | undefined {
-    if (instance < 0) throw new Error('Invalid negative index')
-    if (!mesh) throw new Error('Invalid null mesh')
-
+  getElementIdFromMesh (mesh: THREE.Mesh, instance: number): number {
+    if (!mesh || instance < 0) return -1
     const nodeIndex = this.getNodeIndexFromMesh(mesh, instance)
-    if (nodeIndex === undefined) return
-
     return this.getElementIndexFromNodeIndex(nodeIndex)
   }
 
-  getElementIndexFromNodeIndex (nodeIndex: number): number | undefined {
-    if (nodeIndex < 0) throw new Error('Invalid negative index')
-
+  getElementIndexFromNodeIndex (nodeIndex: number): number {
+    if (nodeIndex < 0) return -1
     const node = this.getNodeTable()
-    if (!node) return
-
+    if (!node) return -1
     const elements = this.getElementIndices(node)
-    if (!elements) return
-
+    if (!elements) return -1
     return elements[nodeIndex]
   }
 
-  getElementIdFromNodeIndex (nodeIndex: number): number | undefined {
-    if (nodeIndex < 0) throw new Error('Invalid negative node index')
-
+  getElementIdFromNodeIndex (nodeIndex: number): number {
+    if (nodeIndex < 0) return -1
     const elementIndex = this.getElementIndexFromNodeIndex(nodeIndex)
-    if (elementIndex === undefined) return
-
+    if (elementIndex < 0) return -1
     const ids = this.getIntColumn(this.getElementTable(), 'Id')
-    if (!ids) return
-
+    if (!ids) return -1
     return ids[elementIndex]
   }
 
   // TODO add better ways to access bim
-  getElementName (elementIndex: number): string | undefined {
-    if (elementIndex < 0) throw new Error('Invalid negative index.')
-
+  getElementName (elementIndex: number): string {
+    if (elementIndex < 0) return ''
     const names = this.getStringColumn(this.getElementTable(), 'Name')
-    if (!names) return
-
+    if (!names) return ''
     const nameIndex = names[elementIndex] as number
-
     return this.getStringFromIndex(nameIndex)
   }
 
-  getElementId (elementIndex: number): number | undefined {
-    if (elementIndex < 0) throw new Error('Invalid negative index.')
-    const ids = this.getIntColumn(this.getElementTable(), 'Id')
-    if (!ids) return
-    return ids[elementIndex]
-  }
-
-  getStringFromIndex (stringIndex: number): string | undefined {
-    if (stringIndex < 0) throw new Error('Invalid negative string index')
-
-    return this.vim.strings[stringIndex]
+  getStringFromIndex (stringIndex: number): string {
+    return stringIndex < 0 ? '' : this.vim.strings[stringIndex]
   }
 }

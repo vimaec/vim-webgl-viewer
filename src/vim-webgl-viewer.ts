@@ -11,6 +11,7 @@ export * from './vim-webgl-viewer/viewerInput'
 export * from './vim-webgl-viewer/viewerLoader'
 export * from './vim-webgl-viewer/viewerRenderer'
 export * from './vim-webgl-viewer/viewerSettings'
+export * from './vim-webgl-viewer/hitTester'
 
 export * from './vim-loader/bfast'
 export * from './vim-loader/g3d'

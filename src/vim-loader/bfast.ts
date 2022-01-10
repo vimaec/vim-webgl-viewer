@@ -1,5 +1,3 @@
-import { Logger } from './logger'
-
 export class BFastHeader {
   magic: number
   dataStart: number
@@ -55,16 +53,8 @@ export class BFast {
     this.names = names
     this.buffers = buffers
   }
-}
 
-export class BFastParser {
-  logger: Logger | undefined
-
-  constructor (logger?: Logger) {
-    this.logger = logger
-  }
-
-  parseFromArray (bytes: Uint8Array) {
+  static parseFromArray (bytes: Uint8Array): BFast {
     return this.parseFromBuffer(
       bytes.buffer,
       bytes.byteOffset,
@@ -73,7 +63,7 @@ export class BFastParser {
   }
 
   // BFAST is the container format for an array of binary arrays
-  parseFromBuffer (
+  static parseFromBuffer (
     arrayBuffer: ArrayBuffer,
     byteOffset: number = 0,
     byteLength: number = arrayBuffer.byteLength - byteOffset
@@ -134,11 +124,6 @@ export class BFastParser {
       )
     }
 
-    const bfast = new BFast(header, names, buffers.slice(1))
-
-    this.logger?.log(`found: ${bfast.buffers.length} buffers`)
-    this.logger?.log(bfast.names.join(', '))
-
-    return bfast
+    return new BFast(header, names, buffers.slice(1))
   }
 }

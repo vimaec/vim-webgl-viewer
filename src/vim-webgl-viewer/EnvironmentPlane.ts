@@ -35,7 +35,7 @@ export class EnvironmentPlane {
     const center = box.getCenter(new THREE.Vector3())
     const position = new THREE.Vector3(
       center.x,
-      box.min.y - modelSettings.getObjectScale().y,
+      box.min.y - modelSettings.getModelScale().y,
       center.z
     )
     this.mesh.position.copy(position)

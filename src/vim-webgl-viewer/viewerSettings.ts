@@ -4,6 +4,8 @@
 
 import * as THREE from 'three'
 import deepmerge from 'deepmerge'
+import { Viewer } from './viewer'
+import { HitTestResult } from './hitTester'
 import { clone, cloneDeep } from 'lodash'
 
 export type Vector3 = {
@@ -77,13 +79,8 @@ export type CameraOptions = {
   zoom: number
   /** See ControlOptions */
   controls: Partial<CameraControlsOptions>
+  showGizmo: boolean
 }
-
-/*
-type BackgroundOptions = {
-  color: ColorRGB
-}
-*/
 
 export type SunLightOptions = {
   position: Vector3
@@ -120,18 +117,12 @@ export type ViewerOptions = {
    * Sunlight (directional light) options
    */
   sunLight: Partial<SunLightOptions>
-}
 
-/*
-Not implemented
-type MaterialOptions = {
-  color: ColorRGB
-  emissive: ColorRGB
-  specular: ColorRGB
-  flatShading: boolean
-  shininess: number
+  /**
+   * On click call-back
+   */
+  onClick: (viewer: Viewer, hit: HitTestResult) => void
 }
-*/
 
 /**
  * Config object for loading a model
@@ -158,8 +149,8 @@ export type ModelOptions = {
    */
   elementIds?: number[]
 
-  // Not implement
-  // material: Partial<MaterialOptions>
+  drawTransparency: boolean
+  drawTransparencyAsOpaque: boolean
 }
 
 /**
@@ -176,16 +167,9 @@ export class ModelSettings {
       position: { x: 0, y: 0, z: 0 },
       rotation: { x: 0, y: 0, z: 0 },
       scale: 0.01,
-      elementIds: undefined
-      /*
-      material: {
-        color: { r: 0x00, g: 0x55, b: 0xff },
-        emissive: { r: 0x00, g: 0x00, b: 0x00 },
-        specular: { r: 0x11, g: 0x11, b: 0x11 },
-        flatShading: true,
-        shininess: 30
-      }
-      */
+      elementIds: undefined,
+      drawTransparency: true,
+      drawTransparencyAsOpaque: false
     }
 
     this.options = options ? deepmerge(fallback, options, undefined) : fallback
@@ -195,35 +179,19 @@ export class ModelSettings {
   getURL = () => this.options.url
 
   // Model
-  getObjectPosition = () => toVec(this.options.position)
-  getObjectRotation = () => toQuaternion(this.options.rotation)
-  getObjectScale = () => scalarToVec(this.options.scale)
-  getObjectMatrix = () =>
+  getModelPosition = () => toVec(this.options.position)
+  getModelRotation = () => toQuaternion(this.options.rotation)
+  getModelScale = () => scalarToVec(this.options.scale)
+  getModelMatrix = () =>
     new THREE.Matrix4().compose(
-      this.getObjectPosition(),
-      this.getObjectRotation(),
-      this.getObjectScale()
+      this.getModelPosition(),
+      this.getModelRotation(),
+      this.getModelScale()
     )
 
   getElementIdsFilter = () => clone(this.options.elementIds)
-  // Material
-  /*
-  getMaterialColor = () => toRGBColor(this.options.material.color)
-  getMaterialFlatShading = () => this.options.material.flatShading
-  getMaterialEmissive = () => toRGBColor(this.options.material.emissive)
-  getMaterialSpecular = () => toRGBColor(this.options.material.specular)
-  getMaterialShininess = () => this.options.material.shininess
-
-  updateMaterial (material: THREE.MeshPhongMaterial) {
-    material.color = this.getMaterialColor() ?? material.color
-    material.flatShading = this.getMaterialFlatShading() ?? material.flatShading
-
-    material.emissive = this.getMaterialEmissive() ?? material.emissive
-    material.specular = this.getMaterialSpecular() ?? material.specular
-
-    material.shininess = this.getMaterialShininess() ?? material.shininess
-  }
-  */
+  getDrawTransparency = () => this.options.drawTransparency
+  getDrawTransparencyAsOpaque = () => this.options.drawTransparencyAsOpaque
 }
 
 /**
@@ -232,7 +200,7 @@ export class ModelSettings {
  * <p>Provides default values for options</p>
  */
 export class ViewerSettings {
-  private options: ViewerOptions
+  public options: ViewerOptions
 
   constructor (options?: Partial<ViewerOptions>) {
     const fallback: ViewerOptions = {
@@ -250,13 +218,9 @@ export class ViewerSettings {
           modelReferenceSize: 1,
           rotateSpeed: 1,
           moveSpeed: 1
-        }
+        },
+        showGizmo: true
       },
-      /*
-      background: {
-        color: { r: 0x72, g: 0x64, b: 0x5b }
-      },
-      */
       plane: {
         show: true,
         texture: null,
@@ -273,7 +237,8 @@ export class ViewerSettings {
         position: { x: -47.0, y: 22, z: -45 },
         color: { h: 0.1, s: 1, l: 0.95 },
         intensity: 1
-      }
+      },
+      onClick: undefined
     }
 
     this.options = options ? deepmerge(fallback, options, undefined) : fallback
@@ -290,10 +255,6 @@ export class ViewerSettings {
   getPlaneOpacity = () => this.options.plane.opacity
   getPlaneSize = () => this.options.plane.size
 
-  // Background
-  // Not implemented
-  // getBackgroundColor = () => toRGBColor(this.options.background.color)
-
   // Skylight
   getSkylightColor = () => toHSLColor(this.options.skylight.skyColor)
   getSkylightGroundColor = () => toHSLColor(this.options.skylight.groundColor)
@@ -309,6 +270,7 @@ export class ViewerSettings {
   getCameraFar = () => this.options.camera.far
   getCameraFov = () => this.options.camera.fov
   getCameraZoom = () => this.options.camera.zoom
+  getCameraShowGizmo = () => this.options.camera.showGizmo
 
   // Camera Controls
   getCameraIsOrbit = () => this.options.camera.controls.orbit

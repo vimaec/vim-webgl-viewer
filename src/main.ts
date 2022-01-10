@@ -1,24 +1,48 @@
+import { Vim } from './vim-loader/vim'
+import { HitTestResult } from './vim-webgl-viewer/hitTester'
 import { Viewer, ViewerState } from './vim-webgl-viewer/viewer'
 
+// Parse URL
 const params = new URLSearchParams(window.location.search)
 const url = params.has('model')
   ? params.get('model')
   : 'https://vim.azureedge.net/samples/residence.vim'
 
+let drawTransparency = true
+let transparencyAsOpaque = true
+if (params.has('transparency')) {
+  const t = params.get('transparency')
+  drawTransparency = t !== 'false'
+  transparencyAsOpaque = t === 'opaque'
+}
+
+// Create Viewer
 const viewer = new Viewer({
+  camera: { showGizmo: true },
   plane: {
     show: true,
     texture:
       'https://vimdevelopment01storage.blob.core.windows.net/textures/vim-floor-soft.png',
     opacity: 1,
     size: 5
+  },
+  onClick: (viewer: Viewer, x: HitTestResult) => {
+    console.log(x)
+    viewer.selectByElementIndex(x.elementIndex)
+    const entity = viewer.vimScene.vim.getEntity(
+      Vim.tableElement,
+      x.elementIndex
+    )
+    console.log(entity)
   }
 })
 
+// Load Model
 viewer.loadModel(
   {
-    url: url,
-    rotation: { x: 270, y: 0, z: 0 }
+    rotation: { x: 270, y: 0, z: 0 },
+    drawTransparency: drawTransparency,
+    drawTransparencyAsOpaque: transparencyAsOpaque
   },
   (vim) => console.log('Callback: Viewer Ready!'),
   (progress) => {

@@ -8,7 +8,7 @@ import { DEG2RAD } from 'three/src/math/MathUtils'
 export class CameraGizmo {
   // Dependencies
   camera: ViewerCamera
-  render: ViewerRenderer
+  renderer: ViewerRenderer
 
   // Settings
   scale: number
@@ -22,13 +22,16 @@ export class CameraGizmo {
 
   // State
   timeout: ReturnType<typeof setTimeout>
+  active: boolean
 
-  constructor (camera: ViewerCamera, render: ViewerRenderer) {
+  constructor (camera: ViewerCamera, renderer: ViewerRenderer) {
     this.camera = camera
-    this.render = render
+    this.renderer = renderer
   }
 
   show () {
+    if (!this.active) return
+
     if (!this.gizmos) {
       this.createGizmo()
     }
@@ -44,6 +47,7 @@ export class CameraGizmo {
   }
 
   applySettings (settings: ViewerSettings, factor: number) {
+    this.active = settings.getCameraShowGizmo()
     this.setScale(
       (Math.tan((DEG2RAD * settings.getCameraFov()) / 2) * factor) / 10
     )
@@ -75,7 +79,7 @@ export class CameraGizmo {
     this.gizmos = new THREE.Group()
     this.gizmos.add(new THREE.LineSegments(this.wireframe, this.material))
     this.gizmos.add(new THREE.LineSegments(this.wireframe, this.materialAlways))
-    this.render.addObject(this.gizmos)
+    this.renderer.addObject(this.gizmos)
 
     this.setScale(this.scale)
   }
@@ -90,7 +94,7 @@ export class CameraGizmo {
     this.material = null
     this.materialAlways = null
 
-    this.render.removeObject(this.gizmos)
+    this.renderer.removeObject(this.gizmos)
     this.gizmos = null
   }
 }
