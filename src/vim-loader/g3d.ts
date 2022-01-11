@@ -223,16 +223,31 @@ class VimG3d {
     return meshRefCounts
   }
 
-  getNodesByMeshes = (): number[][] => {
-    const nodesByMeshes: number[][] = []
-    for (let node = 0; node < this.instanceMeshes.length; node++) {
-      const mesh = this.instanceMeshes[node]
-      if (mesh < 0) continue
-      const nodes = nodesByMeshes[mesh]
-      if (nodes) nodes.push(node)
-      else nodesByMeshes[mesh] = [node]
+  /**
+   * Creates a map to go from mesh index to instance indices.
+   * Note: many instances can share the same mesh.
+   * @param instances if defined, return array will only contain values for given instances.
+   * @returns a two dimensional such that array[meshIndex] = {instanceIndex1, instanceIndex2, ... }.
+   */
+  buildMeshIndexToInstanceIndicesMap = (instances?: number[]): number[][] => {
+    const meshIndexToInstanceIndices: number[][] = []
+    const getOrAdd = (instance) => {
+      const mesh = this.instanceMeshes[instance]
+      if (mesh < 0) return
+      const instanceIndices = meshIndexToInstanceIndices[mesh]
+      if (instanceIndices) instanceIndices.push(instance)
+      else meshIndexToInstanceIndices[mesh] = [instance]
     }
-    return nodesByMeshes
+
+    if (instances) {
+      instances.forEach(getOrAdd)
+    } else {
+      for (let i = 0; i < this.instanceMeshes.length; i++) {
+        getOrAdd(i)
+      }
+    }
+
+    return meshIndexToInstanceIndices
   }
 
   validate () {

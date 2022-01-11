@@ -33,7 +33,7 @@ export type ViewerState =
   | [state: 'Error', error: ErrorEvent]
   | 'Ready'
 
-const NO_SCENE_LOADED = 'No loaded in viewer. Ignoring'
+const NO_SCENE_LOADED = 'No model loaded in viewer. Ignoring'
 
 export class Viewer {
   settings: ViewerSettings
@@ -187,15 +187,14 @@ export class Viewer {
     const settings = new ModelSettings(options)
     // Go from Element Ids -> Node Indices
     const elementIds = settings.getElementIdsFilter()
-    const nodeIndices = elementIds
-      ? new Set(this.vimScene.getNodeIndicesFromElementIds(elementIds))
+    const instanceIndices = elementIds
+      ? this.vimScene.getInstanceIndicesFromElementIds(elementIds)
       : undefined
 
     const scene = new VIMLoader().loadFromVim(
       this.vimScene.vim,
-      settings.getDrawTransparency(),
-      settings.getDrawTransparencyAsOpaque(),
-      nodeIndices
+      settings.getTransparency(),
+      instanceIndices
     )
     this.unloadModel()
     this.onVimLoaded(scene, settings)
@@ -404,7 +403,7 @@ export class Viewer {
     // TODO not create builder for every node, this is awful
     nodeIndices.forEach((nodeIndex) => {
       // Build Opaque geometry
-      const builder = new BufferGeometryBuilder(scene.vim.g3d, true, true)
+      const builder = new BufferGeometryBuilder(scene.vim.g3d, 'all')
       const all = builder.createGeometryFromInstanceIndex(nodeIndex)
       if (all) geometries.push(all)
     })

@@ -7,6 +7,7 @@ import deepmerge from 'deepmerge'
 import { Viewer } from './viewer'
 import { HitTestResult } from './hitTester'
 import { clone, cloneDeep } from 'lodash'
+import { TransparencyMode } from '../vim-webgl-viewer'
 
 export type Vector3 = {
   x: number
@@ -149,8 +150,7 @@ export type ModelOptions = {
    */
   elementIds?: number[]
 
-  drawTransparency: boolean
-  drawTransparencyAsOpaque: boolean
+  transparency?: TransparencyMode
 }
 
 /**
@@ -168,8 +168,7 @@ export class ModelSettings {
       rotation: { x: 0, y: 0, z: 0 },
       scale: 0.01,
       elementIds: undefined,
-      drawTransparency: true,
-      drawTransparencyAsOpaque: false
+      transparency: true
     }
 
     this.options = options ? deepmerge(fallback, options, undefined) : fallback
@@ -190,8 +189,7 @@ export class ModelSettings {
     )
 
   getElementIdsFilter = () => clone(this.options.elementIds)
-  getDrawTransparency = () => this.options.drawTransparency
-  getDrawTransparencyAsOpaque = () => this.options.drawTransparencyAsOpaque
+  getTransparency = () => this.options.transparency
 }
 
 /**
