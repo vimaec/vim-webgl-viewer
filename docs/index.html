@@ -32,6 +32,15 @@
             ? params.get('model')
             : 'https://vim.azureedge.net/samples/residence.vim';
 
+        let transparency
+        if (params.has('transparency')) {
+          const t = params.get('transparency')
+          if (t === 'true') transparency = true
+          if (t === 'opaque') transparency = 'opaque'
+          if (t === 'false') transparency = false
+          throw new Error('transparency argument must be one of {true, opaque, false}')
+        }
+
         const viewer = new vim.Viewer({
           plane: {
             show: true,
@@ -45,7 +54,17 @@
         viewer.loadModel(
           {
             url: url,
-            rotation: { x: 270 }
+            rotation: { x: 270 },
+            onClick: (viewer, hit) => {
+              console.log(hit)
+              viewer.selectByElementIndex(x.elementIndex)
+              const entity = viewer.vimScene.vim.getEntity(
+                Vim.tableElement,
+                hit.elementIndex
+              )
+              console.log(entity)
+            },
+            transparency: transparency
           },
           (vim) => console.log('Callback: Viewer Ready!'),
           (progress) => {
