@@ -32,7 +32,7 @@
             ? params.get('model')
             : 'https://vim.azureedge.net/samples/residence.vim';
 
-        let transparency
+        let transparency = true
         if (params.has('transparency')) {
           const t = params.get('transparency')
           if (t === 'true') transparency = true
@@ -48,14 +48,8 @@
               'https://vimdevelopment01storage.blob.core.windows.net/textures/vim-floor-soft.png',
             opacity: 1,
             size: 5
-          }
-        })
-
-        viewer.loadModel(
-          {
-            url: url,
-            rotation: { x: 270 },
-            onClick: (viewer, hit) => {
+          },
+          onClick: (viewer, hit) => {
               console.log(hit)
               viewer.selectByElementIndex(x.elementIndex)
               const entity = viewer.vimScene.vim.getEntity(
@@ -63,7 +57,13 @@
                 hit.elementIndex
               )
               console.log(entity)
-            },
+            }
+        })
+
+        viewer.loadModel(
+          {
+            url: url,
+            rotation: { x: 270 },
             transparency: transparency
           },
           (vim) => console.log('Callback: Viewer Ready!'),
