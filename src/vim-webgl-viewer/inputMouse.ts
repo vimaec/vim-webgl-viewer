@@ -1,11 +1,13 @@
 import * as THREE from 'three'
 import { Viewer } from './viewer'
 import { HitTester } from './hitTester'
+import { InputKeyboard } from './inputKeyboard'
 
 export class InputMouse {
   // Dependencies
   viewer: Viewer
   hitTester: HitTester
+  inputKeyboard: InputKeyboard
 
   get camera () {
     return this.viewer.camera
@@ -18,19 +20,15 @@ export class InputMouse {
   // State
   isMouseDown: Boolean = false
   hasMouseMoved: Boolean = false
-  ctrlDown: Boolean = false
 
-  constructor (viewer: Viewer) {
+  constructor (viewer: Viewer, keyboard: InputKeyboard) {
     this.viewer = viewer
     this.hitTester = new HitTester(viewer)
+    this.inputKeyboard = keyboard
   }
 
   reset = () => {
-    this.isMouseDown = this.hasMouseMoved = this.ctrlDown = false
-  }
-
-  setCtrl = (value: Boolean) => {
-    this.ctrlDown = value
+    this.isMouseDown = this.hasMouseMoved = false
   }
 
   onMouseOut = (_: any) => {
@@ -74,7 +72,7 @@ export class InputMouse {
     // Thus we only use the direction of the value
     const scrollValue = Math.sign(event.deltaY)
 
-    if (this.ctrlDown) {
+    if (this.inputKeyboard.isCtrlPressed) {
       this.camera.SpeedMultiplier -= scrollValue
     } else if (this.camera.MouseOrbit) {
       this.camera.updateOrbitalDistance(-scrollValue)

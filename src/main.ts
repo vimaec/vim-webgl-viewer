@@ -28,13 +28,14 @@ const viewer = new Viewer({
     opacity: 1,
     size: 5
   },
-  onClick: (viewer: Viewer, x: HitTestResult) => {
-    console.log(x)
-    viewer.selectByElementIndex(x.elementIndex)
+  onClick: (viewer: Viewer, hit: HitTestResult) => {
+    console.log(hit)
+    viewer.selectByElementIndex(hit.elementIndex)
     const entity = viewer.vimScene.vim.getEntity(
       Vim.tableElement,
-      x.elementIndex
+      hit.elementIndex
     )
+    if (hit.doubleClick) viewer.lookAtSelection()
     console.log(entity)
   }
 })
@@ -42,7 +43,7 @@ const viewer = new Viewer({
 // Load Model
 viewer.loadModel(
   {
-    url: 'skanska.vim',
+    url: 'residence.vim',
     rotation: { x: 270, y: 0, z: 0 },
     transparency: transparency
   },

@@ -35,10 +35,11 @@ class ViewerCamera {
   public MouseOrbit: boolean = false
 
   // Settings
-  private VelocityBlendFactor: number = 0.0001
-  private ModelSizeMultiplier: number = 1
-  private MoveSpeed: number = 1
-  private RotateSpeed: number = 1
+  private velocityBlendFactor: number = 0.0001
+  private modelSizeMultiplier: number = 1
+  private moveSpeed: number = 1
+  private rotateSpeed: number = 1
+  private orbitSpeed: number = 1
 
   constructor (renderer: ViewerRenderer, settings: ViewerSettings) {
     this.gizmo = new CameraGizmo(this, renderer)
@@ -50,7 +51,7 @@ class ViewerCamera {
     this.Velocity = new THREE.Vector3(0, 0, 0)
     this.Impulse = new THREE.Vector3(0, 0, 0)
     this.SpeedMultiplier = 0
-    this.ModelSizeMultiplier = 1
+    this.modelSizeMultiplier = 1
     this.OrbitalTarget = new THREE.Vector3(0, 0, 0)
     this.CurrentOrbitalDistance = this.camera.position
       .clone()
@@ -127,14 +128,15 @@ class ViewerCamera {
 
     // Controls
     if (modelSphere) {
-      this.ModelSizeMultiplier =
+      this.modelSizeMultiplier =
         modelSphere.radius / newSettings.getCameraReferenceModelSize()
     }
-    this.MoveSpeed = newSettings.getCameraMoveSpeed()
-    this.RotateSpeed = newSettings.getCameraRotateSpeed()
+    this.moveSpeed = newSettings.getCameraMoveSpeed()
+    this.rotateSpeed = newSettings.getCameraRotateSpeed()
+    this.orbitSpeed = newSettings.getCameraOrbitSpeed()
 
     // Gizmo
-    this.gizmo.applySettings(newSettings, this.ModelSizeMultiplier)
+    this.gizmo.applySettings(newSettings, this.modelSizeMultiplier)
   }
 
   applyLocalImpulse (impulse: THREE.Vector3) {
@@ -161,14 +163,14 @@ class ViewerCamera {
   truckPedestalCameraBy (pt: THREE.Vector2) {
     this.moveCameraBy(
       new THREE.Vector3(-pt.x, pt.y, 0),
-      this.MoveSpeed * this.getSpeedMultiplier()
+      this.moveSpeed * this.getSpeedMultiplier()
     )
   }
 
   truckDollyCameraBy (pt: THREE.Vector2) {
     this.moveCameraBy(
       new THREE.Vector3(-pt.x, 0, pt.y),
-      this.MoveSpeed * this.getSpeedMultiplier()
+      this.moveSpeed * this.getSpeedMultiplier()
     )
   }
 
@@ -178,7 +180,7 @@ class ViewerCamera {
     } else {
       this.moveCameraBy(
         new THREE.Vector3(0, 0, amount),
-        this.MoveSpeed * this.getSpeedMultiplier()
+        this.moveSpeed * this.getSpeedMultiplier()
       )
     }
   }
@@ -191,19 +193,23 @@ class ViewerCamera {
     this.InputVelocity.copy(move)
   }
 
-  rotateCameraBy (pt: THREE.Vector2) {
+  /**
+   * Rotates the camera around the X or Y axis or both
+   * @param delta where coordinates are in relative screen size. ie [-1, 1]
+   */
+  rotateCameraBy (delta: THREE.Vector2) {
     const euler = new THREE.Euler(0, 0, 0, 'YXZ')
     euler.setFromQuaternion(this.camera.quaternion)
 
     // When moving the mouse one full sreen
     // Orbit will rotate 180 degree around the model
-    // Basic will rotate camera by one full FOV
-    const ratio = this.MouseOrbit
-      ? Math.PI
-      : MathUtils.DEG2RAD * this.camera.fov
+    // Basic will rotate camera by two full FOV, so that moving mouse from center to side is one full pov rotation
+    const factor = this.MouseOrbit
+      ? Math.PI * this.orbitSpeed
+      : MathUtils.DEG2RAD * 2 * this.camera.fov * this.rotateSpeed
 
-    euler.y -= pt.x * ratio * this.RotateSpeed
-    euler.x -= pt.y * ratio * this.RotateSpeed
+    euler.y -= delta.x * factor
+    euler.x -= delta.y * factor
     euler.z = 0
 
     // Clamp X rotation to prevent performing a loop.
@@ -222,7 +228,7 @@ class ViewerCamera {
   }
 
   getSpeedMultiplier () {
-    return Math.pow(1.1, this.SpeedMultiplier) * this.ModelSizeMultiplier
+    return Math.pow(1.25, this.SpeedMultiplier) * this.modelSizeMultiplier
   }
 
   updateOrbitalDistance (diff: number) {
@@ -237,7 +243,7 @@ class ViewerCamera {
     const targetVelocity = this.InputVelocity.clone()
 
     // Update the camera velocity and position
-    const invBlendFactor = Math.pow(this.VelocityBlendFactor, deltaTime)
+    const invBlendFactor = Math.pow(this.velocityBlendFactor, deltaTime)
     const blendFactor = 1.0 - invBlendFactor
 
     // this.Velocity = this.Velocity.multiplyScalar(invBlendFactor).add(targetVelocity.multiplyScalar(blendFactor));
@@ -267,7 +273,7 @@ class ViewerCamera {
       // apply local space z to orbit distance,
       this.CurrentOrbitalDistance = Math.max(
         this.CurrentOrbitalDistance + local.z,
-        this.MinOrbitalDistance * this.ModelSizeMultiplier
+        this.MinOrbitalDistance * this.modelSizeMultiplier
       )
       this.TargetOrbitalDistance = this.CurrentOrbitalDistance
     }
@@ -290,7 +296,7 @@ class ViewerCamera {
 
   isSignificant (vector: THREE.Vector3) {
     // One hundreth of standard model size per frame
-    const min = (0.01 * this.ModelSizeMultiplier) / 60
+    const min = (0.01 * this.modelSizeMultiplier) / 60
     return (
       Math.abs(vector.x) > min ||
       Math.abs(vector.y) > min ||
