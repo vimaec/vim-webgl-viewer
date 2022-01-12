@@ -23,6 +23,8 @@ import { ViewerRenderer } from './viewerRenderer'
 
 // loader
 import { VimScene } from '../vim-loader/vimScene'
+import { HitTestResult } from './hitTester'
+import { Vim } from '../vim-webgl-viewer'
 
 // Module Exports
 export { VimParser } from '../vim-loader/vimParser'
@@ -51,6 +53,7 @@ export class Viewer {
   vimScene: VimScene | undefined
   state: ViewerState = 'Uninitialized'
   static stateChangeEvent = 'viewerStateChangedEvent'
+  public onMouseClick: (hit: HitTestResult) => void
 
   constructor (options?: Partial<ViewerOptions>) {
     this.settings = new ViewerSettings(options)
@@ -62,6 +65,9 @@ export class Viewer {
 
     this.environment = ViewerEnvironment.createDefault()
     this.renderer.addObjects(this.environment.getElements())
+
+    // Default mouse click behaviour, can be overriden
+    this.onMouseClick = this.defaultOnClick
 
     // Input and Selection
     this.controls = new ViewerInput(this)
@@ -370,6 +376,17 @@ export class Viewer {
       this.renderer.getBoundingBox()
     )
     this.camera.applySettings(this.settings, this.renderer.getBoundingSphere())
+  }
+
+  private defaultOnClick (hit: HitTestResult) {
+    console.log(hit)
+    this.selectByElementIndex(hit.elementIndex)
+    const entity = this.vimScene.vim.getEntity(
+      Vim.tableElement,
+      hit.elementIndex
+    )
+    if (hit.doubleClick) this.lookAtSelection()
+    console.log(entity)
   }
 
   // TODO: Move to geometry layer

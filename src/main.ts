@@ -1,6 +1,4 @@
-import { Vim } from './vim-loader/vim'
 import { TransparencyMode } from './vim-webgl-viewer'
-import { HitTestResult } from './vim-webgl-viewer/hitTester'
 import { Viewer, ViewerState } from './vim-webgl-viewer/viewer'
 
 // Parse URL
@@ -27,23 +25,13 @@ const viewer = new Viewer({
       'https://vimdevelopment01storage.blob.core.windows.net/textures/vim-floor-soft.png',
     opacity: 1,
     size: 5
-  },
-  onClick: (viewer: Viewer, hit: HitTestResult) => {
-    console.log(hit)
-    viewer.selectByElementIndex(hit.elementIndex)
-    const entity = viewer.vimScene.vim.getEntity(
-      Vim.tableElement,
-      hit.elementIndex
-    )
-    if (hit.doubleClick) viewer.lookAtSelection()
-    console.log(entity)
   }
 })
 
 // Load Model
 viewer.loadModel(
   {
-    url: 'residence.vim',
+    url: 'skanska.vim',
     rotation: { x: 270, y: 0, z: 0 },
     transparency: transparency
   },

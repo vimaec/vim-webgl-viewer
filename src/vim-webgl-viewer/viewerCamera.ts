@@ -3,7 +3,6 @@
 */
 
 import * as THREE from 'three'
-import { MathUtils } from 'three'
 import { CameraGizmo } from './cameraGizmo'
 import { ViewerRenderer } from './viewerRenderer'
 import { ViewerSettings } from './viewerSettings'
@@ -20,7 +19,7 @@ const direction = {
 class ViewerCamera {
   gizmo: CameraGizmo
 
-  private MinOrbitalDistance: number = 0.2
+  private MinOrbitalDistance: number = 0.02
 
   public camera: THREE.PerspectiveCamera
 
@@ -37,9 +36,10 @@ class ViewerCamera {
   // Settings
   private velocityBlendFactor: number = 0.0001
   private modelSizeMultiplier: number = 1
-  private moveSpeed: number = 1
+  private moveSpeed: number = 0.8
   private rotateSpeed: number = 1
   private orbitSpeed: number = 1
+  private wheelSpeed: number = 0.2
 
   constructor (renderer: ViewerRenderer, settings: ViewerSettings) {
     this.gizmo = new CameraGizmo(this, renderer)
@@ -142,7 +142,7 @@ class ViewerCamera {
   applyLocalImpulse (impulse: THREE.Vector3) {
     const localImpulse = impulse
       .clone()
-      .multiplyScalar(this.getSpeedMultiplier())
+      .multiplyScalar(this.getSpeedMultiplier() * this.wheelSpeed)
     localImpulse.applyQuaternion(this.camera.quaternion)
     this.Impulse.add(localImpulse)
   }
@@ -163,14 +163,14 @@ class ViewerCamera {
   truckPedestalCameraBy (pt: THREE.Vector2) {
     this.moveCameraBy(
       new THREE.Vector3(-pt.x, pt.y, 0),
-      this.moveSpeed * this.getSpeedMultiplier()
+      this.getSpeedMultiplier()
     )
   }
 
   truckDollyCameraBy (pt: THREE.Vector2) {
     this.moveCameraBy(
       new THREE.Vector3(-pt.x, 0, pt.y),
-      this.moveSpeed * this.getSpeedMultiplier()
+      this.getSpeedMultiplier()
     )
   }
 
@@ -180,7 +180,7 @@ class ViewerCamera {
     } else {
       this.moveCameraBy(
         new THREE.Vector3(0, 0, amount),
-        this.moveSpeed * this.getSpeedMultiplier()
+        this.getSpeedMultiplier()
       )
     }
   }
@@ -203,10 +203,10 @@ class ViewerCamera {
 
     // When moving the mouse one full sreen
     // Orbit will rotate 180 degree around the model
-    // Basic will rotate camera by two full FOV, so that moving mouse from center to side is one full pov rotation
+    // Basic will rotate 180 degrees on itself
     const factor = this.MouseOrbit
       ? Math.PI * this.orbitSpeed
-      : MathUtils.DEG2RAD * 2 * this.camera.fov * this.rotateSpeed
+      : Math.PI * this.rotateSpeed
 
     euler.y -= delta.x * factor
     euler.x -= delta.y * factor
@@ -228,7 +228,11 @@ class ViewerCamera {
   }
 
   getSpeedMultiplier () {
-    return Math.pow(1.25, this.SpeedMultiplier) * this.modelSizeMultiplier
+    return (
+      Math.pow(1.25, this.SpeedMultiplier) *
+      this.modelSizeMultiplier *
+      this.moveSpeed
+    )
   }
 
   updateOrbitalDistance (diff: number) {

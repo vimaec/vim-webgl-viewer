@@ -75,7 +75,9 @@ export class InputMouse {
     if (this.inputKeyboard.isCtrlPressed) {
       this.camera.SpeedMultiplier -= scrollValue
     } else if (this.camera.MouseOrbit) {
-      this.camera.updateOrbitalDistance(-scrollValue)
+      const impulse = new THREE.Vector3(0, 0, scrollValue)
+      this.camera.applyLocalImpulse(impulse)
+      // this.camera.updateOrbitalDistance(-scrollValue)
     } else {
       const impulse = new THREE.Vector3(0, 0, scrollValue)
       this.camera.applyLocalImpulse(impulse)
@@ -106,9 +108,6 @@ export class InputMouse {
 
   onMouseClick = (position: THREE.Vector2, doubleClick: boolean) => {
     const result = this.hitTester.onMouseClick(position, doubleClick)
-    const onClick = this.viewer.settings.options.onClick
-    if (onClick) {
-      onClick(this.viewer, result)
-    }
+    this.viewer.onMouseClick(result)
   }
 }
