@@ -24,7 +24,9 @@ import { ViewerRenderer } from './viewerRenderer'
 // loader
 import { VimScene } from '../vim-loader/vimScene'
 
+// Module Exports
 export { VimParser } from '../vim-loader/vimParser'
+export { Vim } from '../vim-loader/vim'
 
 export type ViewerState =
   | 'Uninitialized'
