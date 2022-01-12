@@ -116,7 +116,7 @@ export class VimScene {
    * @param elementIds element ids for which to get node indices
    * @returns array of node indices, can be empty if no matching nodes
    */
-  getNodeIndicesFromElementIds (elementIds: number[]): number[] {
+  getInstanceIndicesFromElementIds (elementIds: number[]): number[] {
     if (!elementIds) throw new Error('undefined argument')
 
     // element ids -> element indices

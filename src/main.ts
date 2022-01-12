@@ -1,4 +1,5 @@
 import { Vim } from './vim-loader/vim'
+import { TransparencyMode } from './vim-webgl-viewer'
 import { HitTestResult } from './vim-webgl-viewer/hitTester'
 import { Viewer, ViewerState } from './vim-webgl-viewer/viewer'
 
@@ -8,12 +9,13 @@ const url = params.has('model')
   ? params.get('model')
   : 'https://vim.azureedge.net/samples/residence.vim'
 
-let drawTransparency = true
-let transparencyAsOpaque = true
+let transparency: TransparencyMode = true
 if (params.has('transparency')) {
   const t = params.get('transparency')
-  drawTransparency = t !== 'false'
-  transparencyAsOpaque = t === 'opaque'
+  if (t === 'true') transparency = true
+  if (t === 'opaque') transparency = 'opaque'
+  if (t === 'false') transparency = false
+  throw new Error('transparency argument must be one of {true, opaque, false}')
 }
 
 // Create Viewer
@@ -40,9 +42,9 @@ const viewer = new Viewer({
 // Load Model
 viewer.loadModel(
   {
+    url: 'skanska.vim',
     rotation: { x: 270, y: 0, z: 0 },
-    drawTransparency: drawTransparency,
-    drawTransparencyAsOpaque: transparencyAsOpaque
+    transparency: transparency
   },
   (vim) => console.log('Callback: Viewer Ready!'),
   (progress) => {

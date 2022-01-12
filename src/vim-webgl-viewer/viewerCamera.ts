@@ -165,6 +165,13 @@ class ViewerCamera {
     )
   }
 
+  truckDollyCameraBy (pt: THREE.Vector2) {
+    this.moveCameraBy(
+      new THREE.Vector3(-pt.x, 0, pt.y),
+      this.MoveSpeed * this.getSpeedMultiplier()
+    )
+  }
+
   dollyCameraBy (amount: number) {
     if (this.MouseOrbit) {
       this.CurrentOrbitalDistance += amount
