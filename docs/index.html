@@ -51,7 +51,7 @@
           },
           onClick: (viewer, hit) => {
               console.log(hit)
-              viewer.selectByElementIndex(x.elementIndex)
+              viewer.selectByElementIndex(hit.elementIndex)
               const entity = viewer.vimScene.vim.getEntity(
                 Vim.tableElement,
                 hit.elementIndex
