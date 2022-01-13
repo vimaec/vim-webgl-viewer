@@ -18,10 +18,9 @@ const direction = {
 
 class ViewerCamera {
   gizmo: CameraGizmo
+  public camera: THREE.PerspectiveCamera
 
   private MinOrbitalDistance: number = 0.02
-
-  public camera: THREE.PerspectiveCamera
 
   private InputVelocity: THREE.Vector3
   private Velocity: THREE.Vector3
@@ -291,6 +290,7 @@ class ViewerCamera {
     this.CurrentOrbitalDistance =
       this.CurrentOrbitalDistance * invBlendFactor +
       this.OrbitalTargetDistance * blendFactor
+
     const positionDelta = this.Velocity.clone().multiplyScalar(deltaTime)
     const impulse = this.Impulse.clone().multiplyScalar(blendFactor)
     positionDelta.add(impulse)
@@ -322,10 +322,17 @@ class ViewerCamera {
       target.applyQuaternion(this.camera.quaternion)
       target.add(this.OrbitalTarget)
 
-      const frames = this.lerpSecondsDuration / deltaTime
-      const alpha = 1 - Math.pow(0.01, 1 / frames)
-      this.camera.position.lerp(target, this.isLerping() ? alpha : 1)
-      if (this.isSignificant(positionDelta)) this.gizmo.show()
+      if (this.isLerping()) {
+        const frames = this.lerpSecondsDuration / deltaTime
+        const alpha = 1 - Math.pow(0.01, 1 / frames)
+        this.camera.position.lerp(target, alpha)
+        this.gizmo.show(false)
+      } else {
+        this.camera.position.copy(target)
+        if (this.isSignificant(positionDelta)) {
+          this.gizmo.show()
+        }
+      }
     }
 
     this.gizmo.update(this.OrbitalTarget)
