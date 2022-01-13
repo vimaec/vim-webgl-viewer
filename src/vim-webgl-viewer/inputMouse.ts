@@ -50,7 +50,8 @@ export class InputMouse {
     const [width, height] = this.renderer.getContainerSize()
     const delta = new THREE.Vector2(deltaX / width, deltaY / height)
 
-    this.hasMouseMoved = Math.abs(deltaX) + Math.abs(deltaY) > 3
+    this.hasMouseMoved =
+      this.hasMouseMoved || Math.abs(deltaX) + Math.abs(deltaY) > 3
 
     if (event.buttons & 2) {
       // right button
