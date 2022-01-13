@@ -383,11 +383,14 @@ export class Viewer {
 
   private defaultOnClick (hit: HitTestResult) {
     console.log(hit)
+    if (!hit.isHit) return
+
     this.selectByElementIndex(hit.elementIndex)
     const entity = this.vimScene.vim.getEntity(
       Vim.tableElement,
       hit.elementIndex
     )
+    this.camera.setTarget(hit.position)
     if (hit.doubleClick) this.lookAtSelection()
     console.log(entity)
   }

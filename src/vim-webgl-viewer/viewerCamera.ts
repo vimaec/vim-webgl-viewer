@@ -30,9 +30,11 @@ class ViewerCamera {
 
   public OrbitalTarget: THREE.Vector3
   public CurrentOrbitalDistance: number
-  public TargetOrbitalDistance: number
+  public OrbitalTargetDistance: number
 
-  // Mouse Orbit
+  private lerpSecondsDuration: number
+  private lerpMsEndtime: number
+
   private _isMouseOrbit: boolean = false
 
   public get IsMouseOrbit () {
@@ -68,7 +70,7 @@ class ViewerCamera {
       .clone()
       .sub(this.OrbitalTarget)
       .length()
-    this.TargetOrbitalDistance = this.CurrentOrbitalDistance
+    this.OrbitalTargetDistance = this.CurrentOrbitalDistance
   }
 
   lookAt (position: THREE.Vector3) {
@@ -91,7 +93,7 @@ class ViewerCamera {
     this.camera.position.copy(pos)
     this.OrbitalTarget = sphere.center
     this.CurrentOrbitalDistance = this.OrbitalTarget.clone().sub(pos).length()
-    this.TargetOrbitalDistance = this.CurrentOrbitalDistance
+    this.OrbitalTargetDistance = this.CurrentOrbitalDistance
   }
 
   reset () {
@@ -104,7 +106,7 @@ class ViewerCamera {
 
     this.CurrentOrbitalDistance = 5
     this.OrbitalTarget.set(0, 0, 0)
-    this.TargetOrbitalDistance = this.CurrentOrbitalDistance
+    this.OrbitalTargetDistance = this.CurrentOrbitalDistance
   }
 
   frameScene (sphere?: THREE.Sphere) {
@@ -123,7 +125,7 @@ class ViewerCamera {
     this.CurrentOrbitalDistance = this.OrbitalTarget.clone()
       .sub(this.camera.position)
       .length()
-    this.TargetOrbitalDistance = this.CurrentOrbitalDistance
+    this.OrbitalTargetDistance = this.CurrentOrbitalDistance
   }
 
   applyViewerSettings (settings: ViewerSettings) {
@@ -214,6 +216,7 @@ class ViewerCamera {
    * @param delta where coordinates are in relative screen size. ie [-1, 1]
    */
   rotateCameraBy (delta: THREE.Vector2) {
+    if (this.isLerping()) return
     const euler = new THREE.Euler(0, 0, 0, 'YXZ')
     euler.setFromQuaternion(this.camera.quaternion)
 
@@ -243,6 +246,21 @@ class ViewerCamera {
     }
   }
 
+  isLerping () {
+    return new Date().getTime() < this.lerpMsEndtime
+  }
+
+  startLerp (seconds: number) {
+    this.lerpMsEndtime = new Date().getTime() + seconds * 1000
+    this.lerpSecondsDuration = seconds
+  }
+
+  setTarget (position: THREE.Vector3) {
+    this.OrbitalTarget = position
+    this.OrbitalTargetDistance = this.camera.position.distanceTo(position)
+    this.startLerp(0.4)
+  }
+
   getSpeedMultiplier () {
     return (
       Math.pow(1.25, this.SpeedMultiplier) *
@@ -252,9 +270,9 @@ class ViewerCamera {
   }
 
   updateOrbitalDistance (diff: number) {
-    this.TargetOrbitalDistance -= diff * this.getSpeedMultiplier()
-    this.TargetOrbitalDistance = Math.max(
-      this.TargetOrbitalDistance,
+    this.OrbitalTargetDistance -= diff * this.getSpeedMultiplier()
+    this.OrbitalTargetDistance = Math.max(
+      this.OrbitalTargetDistance,
       this.MinOrbitalDistance
     )
   }
@@ -266,16 +284,13 @@ class ViewerCamera {
     const invBlendFactor = Math.pow(this.velocityBlendFactor, deltaTime)
     const blendFactor = 1.0 - invBlendFactor
 
-    // this.Velocity = this.Velocity.multiplyScalar(invBlendFactor).add(targetVelocity.multiplyScalar(blendFactor));
     this.Velocity.multiplyScalar(invBlendFactor)
     targetVelocity.multiplyScalar(blendFactor)
     this.Velocity.add(targetVelocity)
 
     this.CurrentOrbitalDistance =
       this.CurrentOrbitalDistance * invBlendFactor +
-      this.TargetOrbitalDistance * blendFactor
-
-    // var positionDelta = this.Velocity.multiplyScalar(deltaTime).add(this.Impulse.multiplyScalar(blendFactor));
+      this.OrbitalTargetDistance * blendFactor
     const positionDelta = this.Velocity.clone().multiplyScalar(deltaTime)
     const impulse = this.Impulse.clone().multiplyScalar(blendFactor)
     positionDelta.add(impulse)
@@ -295,7 +310,7 @@ class ViewerCamera {
         this.CurrentOrbitalDistance + local.z,
         this.MinOrbitalDistance * this.modelSizeMultiplier
       )
-      this.TargetOrbitalDistance = this.CurrentOrbitalDistance
+      this.OrbitalTargetDistance = this.CurrentOrbitalDistance
     }
 
     this.Impulse.multiplyScalar(invBlendFactor)
@@ -303,11 +318,13 @@ class ViewerCamera {
     this.OrbitalTarget.add(orbitDelta)
 
     if (this._isMouseOrbit) {
-      // this.Position = translation.applyQuaternion(this.Orientation).add(this.OrbitalTarget);
-      this.camera.position.set(0.0, 0.0, this.CurrentOrbitalDistance)
-      this.camera.position.applyQuaternion(this.camera.quaternion)
-      this.camera.position.add(this.OrbitalTarget)
+      const target = new THREE.Vector3(0, 0, this.CurrentOrbitalDistance)
+      target.applyQuaternion(this.camera.quaternion)
+      target.add(this.OrbitalTarget)
 
+      const frames = this.lerpSecondsDuration / deltaTime
+      const alpha = 1 - Math.pow(0.01, 1 / frames)
+      this.camera.position.lerp(target, this.isLerping() ? alpha : 1)
       if (this.isSignificant(positionDelta)) this.gizmo.show()
     }
 

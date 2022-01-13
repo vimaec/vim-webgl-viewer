@@ -39,7 +39,6 @@ export class InputMouse {
     if (!this.isMouseDown) {
       return
     }
-    this.hasMouseMoved = true
 
     event.preventDefault()
 
@@ -50,6 +49,8 @@ export class InputMouse {
       event.movementY || event.mozMovementY || event.webkitMovementY || 0
     const [width, height] = this.renderer.getContainerSize()
     const delta = new THREE.Vector2(deltaX / width, deltaY / height)
+
+    this.hasMouseMoved = Math.abs(deltaX) + Math.abs(deltaY) > 3
 
     if (event.buttons & 2) {
       // right button
@@ -74,7 +75,7 @@ export class InputMouse {
 
     if (this.inputKeyboard.isCtrlPressed) {
       this.camera.SpeedMultiplier -= scrollValue
-    } else if (this.camera.MouseOrbit) {
+    } else if (this.camera.IsMouseOrbit) {
       const impulse = new THREE.Vector3(0, 0, scrollValue)
       this.camera.applyLocalImpulse(impulse)
       // this.camera.updateOrbitalDistance(-scrollValue)
