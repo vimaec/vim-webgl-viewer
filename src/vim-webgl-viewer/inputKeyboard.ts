@@ -153,15 +153,8 @@ export class InputKeyboard {
           event.preventDefault()
           break
         case KEYS.KEY_F8:
-          this.camera.MouseOrbit = !this.camera.MouseOrbit
-          if (this.camera.MouseOrbit) {
-            this.camera.CurrentOrbitalDistance =
-              this.camera.OrbitalTarget.clone()
-                .sub(this.camera.camera.position)
-                .length()
-            this.camera.TargetOrbitalDistance =
-              this.camera.CurrentOrbitalDistance
-          }
+        case KEYS.KEY_SPACE:
+          this.camera.IsMouseOrbit = !this.camera.IsMouseOrbit
           event.preventDefault()
           break
         case KEYS.KEY_HOME:
@@ -177,10 +170,6 @@ export class InputKeyboard {
         case KEYS.KEY_F:
           this.viewer.lookAtSelection()
           event.preventDefault()
-          break
-
-        case KEYS.KEY_SPACE:
-          this.camera.MouseOrbit = !this.camera.MouseOrbit
           break
       }
     }

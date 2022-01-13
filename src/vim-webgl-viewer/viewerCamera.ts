@@ -31,11 +31,23 @@ class ViewerCamera {
   public OrbitalTarget: THREE.Vector3
   public CurrentOrbitalDistance: number
   public TargetOrbitalDistance: number
-  public MouseOrbit: boolean = false
+
+  // Mouse Orbit
+  private _isMouseOrbit: boolean = false
+
+  public get IsMouseOrbit () {
+    return this._isMouseOrbit
+  }
+
+  public set IsMouseOrbit (value: boolean) {
+    this._isMouseOrbit = value
+    this.gizmo.show(value)
+  }
 
   // Settings
-  private velocityBlendFactor: number = 0.0001
+  private modelReferenceSize: number
   private modelSizeMultiplier: number = 1
+  private velocityBlendFactor: number = 0.0001
   private moveSpeed: number = 0.8
   private rotateSpeed: number = 1
   private orbitSpeed: number = 1
@@ -43,9 +55,8 @@ class ViewerCamera {
 
   constructor (renderer: ViewerRenderer, settings: ViewerSettings) {
     this.gizmo = new CameraGizmo(this, renderer)
-
     this.camera = renderer.camera
-    this.applySettings(settings)
+    this.applyViewerSettings(settings)
 
     this.InputVelocity = new THREE.Vector3(0, 0, 0)
     this.Velocity = new THREE.Vector3(0, 0, 0)
@@ -115,28 +126,34 @@ class ViewerCamera {
     this.TargetOrbitalDistance = this.CurrentOrbitalDistance
   }
 
-  applySettings (newSettings: ViewerSettings, modelSphere?: THREE.Sphere) {
+  applyViewerSettings (settings: ViewerSettings) {
     // Mode
-    this.MouseOrbit = newSettings.getCameraIsOrbit()
+    this.IsMouseOrbit = settings.getCameraIsOrbit()
 
     // Camera
-    this.camera.fov = newSettings.getCameraFov()
-    this.camera.zoom = newSettings.getCameraZoom()
-    this.camera.near = newSettings.getCameraNear()
-    this.camera.far = newSettings.getCameraFar()
+    this.camera.fov = settings.getCameraFov()
+    this.camera.zoom = settings.getCameraZoom()
+    this.camera.near = settings.getCameraNear()
+    this.camera.far = settings.getCameraFar()
     this.camera.updateProjectionMatrix()
 
     // Controls
-    if (modelSphere) {
-      this.modelSizeMultiplier =
-        modelSphere.radius / newSettings.getCameraReferenceModelSize()
-    }
-    this.moveSpeed = newSettings.getCameraMoveSpeed()
-    this.rotateSpeed = newSettings.getCameraRotateSpeed()
-    this.orbitSpeed = newSettings.getCameraOrbitSpeed()
+    this.moveSpeed = settings.getCameraMoveSpeed()
+    this.rotateSpeed = settings.getCameraRotateSpeed()
+    this.orbitSpeed = settings.getCameraOrbitSpeed()
 
     // Gizmo
-    this.gizmo.applySettings(newSettings, this.modelSizeMultiplier)
+    this.gizmo.applyViewerSettings(settings)
+
+    // Values
+    this.modelReferenceSize = settings.getCameraReferenceModelSize()
+  }
+
+  applyModelSettings (modelSphere?: THREE.Sphere) {
+    this.modelSizeMultiplier = modelSphere.radius / this.modelReferenceSize
+    // Gizmo
+    this.gizmo.applyModelSettings(this.modelSizeMultiplier)
+    this.gizmo.show(this.IsMouseOrbit)
   }
 
   applyLocalImpulse (impulse: THREE.Vector3) {
@@ -153,9 +170,8 @@ class ViewerCamera {
     vector.applyQuaternion(this.camera.quaternion)
 
     this.OrbitalTarget.add(vector)
-    if (this.MouseOrbit) {
-      this.gizmo.show()
-    } else {
+    this.gizmo.show()
+    if (!this._isMouseOrbit) {
       this.camera.position.add(vector)
     }
   }
@@ -175,7 +191,7 @@ class ViewerCamera {
   }
 
   dollyCameraBy (amount: number) {
-    if (this.MouseOrbit) {
+    if (this._isMouseOrbit) {
       this.CurrentOrbitalDistance += amount
     } else {
       this.moveCameraBy(
@@ -204,7 +220,7 @@ class ViewerCamera {
     // When moving the mouse one full sreen
     // Orbit will rotate 180 degree around the model
     // Basic will rotate 180 degrees on itself
-    const factor = this.MouseOrbit
+    const factor = this._isMouseOrbit
       ? Math.PI * this.orbitSpeed
       : Math.PI * this.rotateSpeed
 
@@ -218,7 +234,7 @@ class ViewerCamera {
 
     this.camera.quaternion.setFromEuler(euler)
 
-    if (!this.MouseOrbit) {
+    if (!this._isMouseOrbit) {
       const offset = new THREE.Vector3(0, 0, 1)
         .applyQuaternion(this.camera.quaternion)
         .multiplyScalar(this.CurrentOrbitalDistance)
@@ -265,7 +281,7 @@ class ViewerCamera {
     positionDelta.add(impulse)
 
     const orbitDelta = positionDelta.clone()
-    if (this.MouseOrbit) {
+    if (this._isMouseOrbit) {
       // compute local space forward component of movement
       const inv = this.camera.quaternion.clone().invert()
       const local = positionDelta.clone().applyQuaternion(inv)
@@ -286,7 +302,7 @@ class ViewerCamera {
     this.camera.position.add(positionDelta)
     this.OrbitalTarget.add(orbitDelta)
 
-    if (this.MouseOrbit) {
+    if (this._isMouseOrbit) {
       // this.Position = translation.applyQuaternion(this.Orientation).add(this.OrbitalTarget);
       this.camera.position.set(0.0, 0.0, this.CurrentOrbitalDistance)
       this.camera.position.applyQuaternion(this.camera.quaternion)
