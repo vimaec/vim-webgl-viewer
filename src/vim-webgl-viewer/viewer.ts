@@ -428,8 +428,11 @@ export class Viewer {
     // TODO not create builder for every node, this is awful
     nodeIndices.forEach((nodeIndex) => {
       // Build Opaque geometry
-      const builder = new BufferGeometryBuilder(scene.vim.g3d, 'all')
-      const all = builder.createGeometryFromInstanceIndex(nodeIndex)
+      const builder = new BufferGeometryBuilder(
+        scene.vim.g3d,
+        scene.vim.g3d.buildMeshIndexToInstanceIndicesMap()
+      )
+      const all = builder.createGeometryFromInstanceIndex(nodeIndex, 'all')
       if (all) geometries.push(all)
     })
 

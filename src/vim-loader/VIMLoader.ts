@@ -12,7 +12,6 @@ import { VimParser } from './vimParser'
 import { Logger } from './logger'
 import { VimG3d } from './g3d'
 import { VimThree } from './vimThree'
-import { Material } from 'three'
 
 export type TransparencyMode = boolean | 'opaque'
 type BuildMode = 'opaque' | 'transparent' | 'all'
@@ -142,7 +141,9 @@ export class VimThreeBuilder {
   createDefaultTransparentMaterial = () => {
     const material = this.createDefaultOpaqueMaterial()
     material.transparent = true
-    material.opacity = 0.3
+    material.depthTest = true
+    material.depthWrite = true
+    // material.opacity = 0.3
     return material
   }
 
@@ -157,25 +158,29 @@ export class VimThreeBuilder {
       () => g3d.buildMeshIndexToInstanceIndicesMap(instanceIndices)
     )
 
+    // Allocate memory used for building scene
+    const builder = new BufferGeometryBuilder(g3d, meshIndexToInstanceIndices)
+
     // Create opaque objects
     const opaque = this.buildByOpacity(
       g3d,
-      this.transparency === 'opaque' ? 'all' : 'opaque',
-      this.materialOpaque,
+      builder,
       meshIndexToInstanceIndices
+      // []
     )
-
+    /*
     // Create transparent objects
     if (this.transparency === true) {
       const alpha = this.buildByOpacity(
         g3d,
+        builder,
         'transparent',
         this.materialTransparent,
         meshIndexToInstanceIndices
       )
       opaque.merge(alpha)
     }
-
+    */
     return opaque
   }
 
@@ -189,37 +194,28 @@ export class VimThreeBuilder {
    */
   buildByOpacity (
     g3d: VimG3d,
-    mode: BuildMode,
-    material: Material,
+    builder: BufferGeometryBuilder,
     meshIndexToInstanceIndices: number[][]
   ) {
-    // Allocate memory used for building scene
-    const builder = new BufferGeometryBuilder(g3d, mode)
-
     // Allocate all relevent buffer geometry
-    const bufferGeometry = this.logger?.timeAction(
-      `Allocating ${mode} Geometry`,
-      () => builder.createBufferGeometry(meshIndexToInstanceIndices)
+    const bufferGeometry = this.logger?.timeAction('Allocating Geometry', () =>
+      builder.createBufferGeometry()
     )
 
     // Instantiate Three meshes for all shared geometry
-    const meshes = this.logger?.timeAction(`Allocating ${mode} Meshes`, () =>
-      this.allocateSharedMeshes(
-        bufferGeometry,
-        meshIndexToInstanceIndices,
-        material
-      )
+    const meshes = this.logger?.timeAction('Allocating Meshes', () =>
+      this.allocateSharedMeshes(bufferGeometry, meshIndexToInstanceIndices)
     )
 
     // Apply matrices and create instance maps for shared geometry
     const vimThree = this.logger?.timeAction(
-      `Instantiating Shared ${mode} Geometry`,
+      'Instantiating Shared Geometry',
       () => this.setupSharedMeshes(meshes, meshIndexToInstanceIndices, g3d)
     )
-
+    /*
     // Create one big merged geometry for unique meshes
     const [mergedMesh, mergedInstances] = this.logger?.timeAction(
-      `Merging Unique ${mode} Geometry`,
+      'Merging Unique  Geometry',
       () =>
         this.mergeUniqueGeometry(
           g3d,
@@ -233,7 +229,7 @@ export class VimThreeBuilder {
     if (mergedMesh) {
       vimThree.addMesh(mergedMesh, mergedInstances)
     }
-
+*/
     return vimThree
   }
 
@@ -317,8 +313,7 @@ export class VimThreeBuilder {
 
   allocateSharedMeshes (
     geometries: (THREE.BufferGeometry | undefined)[],
-    meshIndexToInstanceIndices: number[][],
-    material: THREE.Material
+    meshIndexToInstanceIndices: number[][]
   ): (Mesh | undefined)[] {
     const meshCount = geometries.length
     const meshes: (Mesh | undefined)[] = new Array(meshCount)
@@ -327,7 +322,7 @@ export class VimThreeBuilder {
       // Unique geometry are not allocated a mesh here.
       // They will all be merged later.
       const count = meshIndexToInstanceIndices[m]?.length ?? 0
-      if (count <= 1) {
+      if (count <= 0) {
         continue
       }
 
@@ -335,7 +330,10 @@ export class VimThreeBuilder {
       if (!geometry) {
         continue
       }
-
+      const material =
+        geometry.getAttribute('color').itemSize === 4
+          ? this.materialTransparent
+          : this.materialOpaque
       meshes[m] = new THREE.InstancedMesh(geometry, material, count)
     }
 
@@ -387,21 +385,15 @@ export class VimThreeBuilder {
 
 export class BufferGeometryBuilder {
   defaultColor = new THREE.Color(0.5, 0.5, 0.5)
-  indexBuffer: Int32Array
-  vertexBuffer: Float32Array
   colorBuffer: Float32Array
 
   g3d: VimG3d
-  buildOpaque: boolean
-  buildTransparent: boolean
+  meshIndexToInstanceIndices: number[][]
 
-  constructor (g3d: VimG3d, buildMode: BuildMode) {
-    this.vertexBuffer = Float32Array.from(g3d.positions)
-    this.colorBuffer = new Float32Array(g3d.positions.length)
-    this.indexBuffer = new Int32Array(g3d.indices.length)
+  constructor (g3d: VimG3d, meshIndexToInstanceIndices: number[][]) {
+    this.colorBuffer = new Float32Array(g3d.getVertexCount() * 4)
     this.g3d = g3d
-    this.buildOpaque = buildMode === 'opaque' || buildMode === 'all'
-    this.buildTransparent = buildMode === 'transparent' || buildMode === 'all'
+    this.meshIndexToInstanceIndices = meshIndexToInstanceIndices
   }
 
   /**
@@ -409,14 +401,12 @@ export class BufferGeometryBuilder {
    * @param meshIndexToInstanceIndices only meshes for which there are instances will be created
    * @returns an array where array[meshIndex] = BufferGeometry. Array can be undefined if empty. Values can be undefined
    */
-  createBufferGeometry = (
-    meshIndexToInstanceIndices: number[][]
-  ): (THREE.BufferGeometry | undefined)[] => {
+  createBufferGeometry = (): (THREE.BufferGeometry | undefined)[] => {
     const meshCount = this.g3d.meshSubmeshes.length
     const resultMeshes: (THREE.BufferGeometry | undefined)[] = Array(meshCount)
 
-    for (let m = 0; m < meshIndexToInstanceIndices.length; m++) {
-      if (!meshIndexToInstanceIndices[m]) continue
+    for (let m = 0; m < this.meshIndexToInstanceIndices.length; m++) {
+      if (!this.meshIndexToInstanceIndices[m]) continue
 
       const result = this.createGeometryFromMeshIndex(m)
       if (result) {
@@ -429,7 +419,8 @@ export class BufferGeometryBuilder {
   }
 
   createGeometryFromInstanceIndex (
-    instanceIndex: number
+    instanceIndex: number,
+    buildMode: BuildMode
   ): THREE.BufferGeometry | undefined {
     if (instanceIndex < 0) throw new Error('Invalid negative index.')
 
@@ -445,44 +436,27 @@ export class BufferGeometryBuilder {
   createGeometryFromMeshIndex (
     meshIndex: number
   ): THREE.BufferGeometry | undefined {
-    // min and max indices accumulated to slice into the vertex buffer
-    let min: number = Number.MAX_SAFE_INTEGER
-    let max: number = 0
-    let indexCount = 0
-
-    const [meshStart, meshEnd] = this.g3d.getMeshSubmeshRange(meshIndex)
-    for (let submesh = meshStart; submesh < meshEnd; submesh++) {
-      // submeshes not matching transparency are skipped
+    const [subStart, subEnd] = this.g3d.getMeshSubmeshRange(meshIndex)
+    for (let submesh = subStart; submesh < subEnd; submesh++) {
       const [submeshColor, alpha] = this.getSubmeshColor(this.g3d, submesh)
-      if (alpha < 0.9 ? this.buildTransparent : this.buildOpaque) {
-        const [submeshStart, submeshEnd] =
-          this.g3d.getSubmeshIndexRange(submesh)
-        for (let index = submeshStart; index < submeshEnd; index++) {
-          const vertex = this.g3d.indices[index]
-          this.indexBuffer[indexCount++] = vertex
-          min = Math.min(min, vertex)
-          max = Math.max(max, vertex)
-          submeshColor.toArray(this.colorBuffer, vertex * 3)
-        }
+      const [start, end] = this.g3d.getSubmeshIndexRange(submesh)
+      for (let i = start; i < end; i++) {
+        const v = this.g3d.indices[i]
+        submeshColor.toArray(this.colorBuffer, v * 4)
+        this.colorBuffer[v * 4 + 3] = alpha
       }
     }
 
-    // if all meshes are transparent we abort here
-    if (indexCount === 0) return
-
-    // 3 is both the arity of the vertex buffer and of THREE.color
-    const sliceStart = min * 3
-    const sliceEnd = (max + 1) * 3
-
-    // Rebase indices in mesh space
-    for (let i = 0; i < indexCount; i++) {
-      this.indexBuffer[i] -= min
-    }
-
+    const [vertexStart, vertexEnd] = this.g3d.getMeshVertexRange(meshIndex)
+    const [indexStart, indexEnd] = this.g3d.getMeshIndexRange(meshIndex)
     return createBufferGeometryFromArrays(
-      this.vertexBuffer.subarray(sliceStart, sliceEnd),
-      this.indexBuffer.subarray(0, indexCount),
-      this.colorBuffer.subarray(sliceStart, sliceEnd)
+      new Float32Array(
+        this.g3d.positions.subarray(vertexStart * 3, vertexEnd * 3)
+      ),
+      new Int32Array(this.g3d.indicesRelative.subarray(indexStart, indexEnd)),
+      new Float32Array(
+        this.colorBuffer.subarray(vertexStart * 4, vertexEnd * 4)
+      )
     )
   }
 
@@ -522,9 +496,9 @@ function createBufferGeometryFromArrays (
   // Indices
   geometry.setIndex(new THREE.Uint32BufferAttribute(indices, 1))
 
-  // Colors
+  // Colors with alp
   if (vertexColors) {
-    geometry.setAttribute('color', new THREE.BufferAttribute(vertexColors, 3))
+    geometry.setAttribute('color', new THREE.BufferAttribute(vertexColors, 4))
   }
 
   return geometry

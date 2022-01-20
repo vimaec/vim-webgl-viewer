@@ -143,12 +143,18 @@ class VimAttributes {
 class VimG3d {
   positions: Float32Array
   indices: Int32Array
+
   instanceMeshes: Int32Array
   instanceTransforms: Float32Array
   meshSubmeshes: Int32Array
   submeshIndexOffset: Int32Array
   submeshMaterial: Int32Array
   materialColors: Float32Array
+
+  // computed fields
+  indicesRelative: Int32Array
+  meshVertexOffsets: Int32Array
+
   rawG3d: G3d
 
   matrixArity = 16
@@ -182,10 +188,64 @@ class VimG3d {
     this.instanceTransforms = g3d.findAttribute(
       VimAttributes.instanceTransforms
     )?.data as Float32Array
+
+    this.meshVertexOffsets = this.computeMeshVertexOffsets()
+    this.indicesRelative = this.computeIndicesRelative()
+
+    for (let m = 0; m < this.getMeshCount(); m++) {
+      const [start, end] = this.getMeshIndexRange(m)
+      for (let i = start; i < end; i++) {
+        const index = this.indices[i]
+        const relative = this.indicesRelative[i] + this.meshVertexOffsets[m]
+        if (index !== relative) throw new Error()
+        if (relative < 0) throw new Error()
+      }
+    }
+    this.printMeshInfo(0)
+
+    console.log('!')
+  }
+
+  private printMeshInfo (meshIndex: number) {
+    console.log('MeshIndex:' + meshIndex)
+    const submeshRange = this.getMeshSubmeshRange(meshIndex)
+    console.log('SubmeshRange: ' + submeshRange)
+    for (let i = submeshRange[0]; i < submeshRange[1]; i++) {
+      console.log('Submesh ' + i + ' : ' + this.getSubmeshIndexRange(i))
+    }
+
+    console.log('Mesh IndexRange: ' + this.getMeshIndexRange(meshIndex))
+    console.log('Mesh VertexRange: ' + this.getMeshVertexRange(meshIndex))
+  }
+
+  computeMeshVertexOffsets (): Int32Array {
+    const result = Int32Array.from(this.indices)
+    for (let m = 0; m < this.getMeshCount(); m++) {
+      let min = Number.MAX_SAFE_INTEGER
+      const [start, end] = this.getMeshIndexRange(m)
+      for (let i = start; i < end; i++) {
+        min = Math.min(min, this.indices[i])
+      }
+      result[m] = min
+    }
+    return result
+  }
+
+  computeIndicesRelative (): Int32Array {
+    const result = Int32Array.from(this.indices)
+    for (let m = 0; m < this.getMeshCount(); m++) {
+      const offset = this.meshVertexOffsets[m]
+      const [start, end] = this.getMeshIndexRange(m)
+      for (let i = start; i < end; i++) {
+        result[i] -= offset
+      }
+    }
+    return result
   }
 
   getInstanceCount = () => this.instanceMeshes.length
   getMeshCount = () => this.meshSubmeshes.length
+  getVertexCount = () => this.positions.length / this.positionArity
 
   getMeshSubmeshRange (mesh: number): [number, number] {
     const start = this.meshSubmeshes[mesh]
@@ -202,6 +262,25 @@ class VimG3d {
       submesh < this.submeshIndexOffset.length - 1
         ? this.submeshIndexOffset[submesh + 1]
         : this.indices.length
+
+    return [start, end]
+  }
+
+  getMeshIndexRange (mesh: number): [number, number] {
+    const [subStart, subEnd] = this.getMeshSubmeshRange(mesh)
+    // eslint-disable-next-line no-unused-vars
+    const [firstStart, firstEnd] = this.getSubmeshIndexRange(subStart)
+    // eslint-disable-next-line no-unused-vars
+    const [lastStart, lastEnd] = this.getSubmeshIndexRange(subEnd - 1)
+    return [firstStart, lastEnd]
+  }
+
+  getMeshVertexRange (mesh: number): [number, number] {
+    const start = this.meshVertexOffsets[mesh]
+    const end =
+      mesh < this.meshVertexOffsets.length - 1
+        ? this.meshVertexOffsets[mesh + 1]
+        : this.positions.length
 
     return [start, end]
   }
