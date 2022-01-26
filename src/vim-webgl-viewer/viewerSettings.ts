@@ -5,7 +5,10 @@
 import * as THREE from 'three'
 import deepmerge from 'deepmerge'
 import { clone, cloneDeep } from 'lodash'
-import { TransparencyMode } from '../vim-webgl-viewer'
+import {
+  transparencyIsValid,
+  TransparencyMode
+} from '../vim-loader/geometry'
 
 export type Vector3 = {
   x: number
@@ -162,10 +165,13 @@ export class ModelSettings {
       rotation: { x: 0, y: 0, z: 0 },
       scale: 0.01,
       elementIds: undefined,
-      transparency: true
+      transparency: 'all'
     }
 
     this.options = options ? deepmerge(fallback, options, undefined) : fallback
+    this.options.transparency = transparencyIsValid(this.options.transparency)
+      ? this.options.transparency
+      : 'all'
   }
 
   getOptions = () => cloneDeep(this.options) as ModelOptions

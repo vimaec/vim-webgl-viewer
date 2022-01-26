@@ -1,21 +1,26 @@
 import * as THREE from 'three'
 import { Vim } from './vim'
-import { VimThree } from './vimThree'
+import { Model } from './model'
 
-export class VimScene {
+/**
+ * Container for the built three meshes and the vim data from which it was built.
+ * Maps between BIM data and Three objects
+ * Provides an interface to access BIM data.
+ */
+export class BimModel {
   vim: Vim
-  geometry: VimThree
-  elementIndexToNodeIndices: Map<number, number[]>
-  elementIdToIndex: Map<number, number>
+  model: Model
+  elementIndexToInstanceIndices: Map<number, number[]>
+  elementIdToElementIndex: Map<number, number>
 
-  constructor (vim: Vim, geometry: VimThree) {
+  constructor (vim: Vim, model: Model) {
     this.vim = vim
-    this.geometry = geometry
-    this.elementIndexToNodeIndices = this.mapElementIndexToNodeIndices()
-    this.elementIdToIndex = this.mapElementIdToIndex()
+    this.model = model
+    this.elementIndexToInstanceIndices = this.mapElementIndexToInstanceIndices()
+    this.elementIdToElementIndex = this.mapElementIdToIndex()
   }
 
-  private mapElementIndexToNodeIndices (): Map<number, number[]> {
+  private mapElementIndexToInstanceIndices (): Map<number, number[]> {
     const map = new Map<number, number[]>()
     const nodeElements = this.getElementIndices(this.getNodeTable())
     const nodeCount = nodeElements.length
@@ -38,16 +43,25 @@ export class VimScene {
     const map = new Map<number, number>()
     const elementIds = this.getIntColumn(this.getElementTable(), 'Id')
 
+    let negativeReported = false
+    let duplicateReported = false
     for (let element = 0; element < elementIds.length; element++) {
       const id = elementIds[element]
 
       if (id < 0) {
-        console.log('ignoring element with negative id')
+        if (!negativeReported) {
+          console.error('Ignoring negative element ids. Check source data.')
+          negativeReported = true
+        }
+
         continue
       }
       if (map.has(id)) {
-        console.error('duplicate id: ' + id)
-        continue
+        if (!duplicateReported) {
+          console.error('Ignoring duplicate element ids. Check source data.')
+          duplicateReported = true
+          continue
+        }
       }
 
       map.set(id, element)
@@ -56,7 +70,7 @@ export class VimScene {
   }
 
   getElementIndexFromElementId = (elementId: number): number | undefined =>
-    this.elementIdToIndex.get(elementId)
+    this.elementIdToElementIndex.get(elementId)
 
   getStringColumn = (table: any, colNameNoPrefix: string): number[] =>
     table?.get('string:' + colNameNoPrefix)
@@ -64,7 +78,7 @@ export class VimScene {
   getIndexColumn = (table: any, tableName: string, fieldName: string) =>
     table?.get(`index:${tableName}:${fieldName}`)
 
-  getDataColumn = (table: any, typePrefix, colNameNoPrefix) =>
+  getDataColumn = (table: any, typePrefix: any, colNameNoPrefix: any) =>
     table?.get(typePrefix + colNameNoPrefix) ??
     table?.get('numeric:' + colNameNoPrefix) // Backwards compatible call with vim0.9
 
@@ -96,7 +110,7 @@ export class VimScene {
    * @returns array of node indices or undefined if no corresponding nodes
    */
   getNodeIndicesFromElementIndex (elementIndex: number): number[] | undefined {
-    return this.elementIndexToNodeIndices.get(elementIndex)
+    return this.elementIndexToInstanceIndices.get(elementIndex)
   }
 
   /**
@@ -107,11 +121,11 @@ export class VimScene {
   getNodeIndicesFromElementIndices (elementIndices: number[]): number[] {
     return elementIndices
       .flatMap((e) => this.getNodeIndicesFromElementIndex(e))
-      .filter((n) => n)
+      .filter((n): n is number => n !== undefined)
   }
 
   /**
-   * Get Node/Instance Indices for given element ids
+   * Get Instance Indices for given element ids
    * Throws error if argument is undefined
    * @param elementIds element ids for which to get node indices
    * @returns array of node indices, can be empty if no matching nodes
@@ -122,7 +136,7 @@ export class VimScene {
     // element ids -> element indices
     const elementIndices = elementIds
       .map((id) => this.getElementIndexFromElementId(id))
-      .filter((i) => i)
+      .filter((i): i is number => i !== undefined)
 
     // element indices -> nodes indices
     return this.getNodeIndicesFromElementIndices(elementIndices)
@@ -142,19 +156,20 @@ export class VimScene {
     return result
   }
 
-  getMeshFromNodeIndex (nodeIndex: number): [THREE.Mesh, number] {
+  getMeshFromNodeIndex (nodeIndex: number): [THREE.Mesh, number] | undefined {
     if (nodeIndex < 0) throw new Error('Invalid negative index')
-    return this.geometry.nodeIndexToMeshInstance.get(nodeIndex)[0]
+    const array = this.model.InstanceIndexToThreeMesh.get(nodeIndex)
+    return array ? array[0] : undefined
   }
 
   getNodeIndexFromMesh (mesh: THREE.Mesh, instance: number): number {
     if (!mesh || instance < 0) return -1
-    const nodes = this.geometry.meshIdToNodeIndex.get(mesh.id)
+    const nodes = this.model.ThreeMeshIdToInstance.get(mesh.id)
     if (!nodes) return -1
     return nodes[instance]
   }
 
-  getElementIdFromMesh (mesh: THREE.Mesh, instance: number): number {
+  getElementIndexFromMesh (mesh: THREE.Mesh, instance: number): number {
     if (!mesh || instance < 0) return -1
     const nodeIndex = this.getNodeIndexFromMesh(mesh, instance)
     return this.getElementIndexFromNodeIndex(nodeIndex)

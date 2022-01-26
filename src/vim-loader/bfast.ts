@@ -1,3 +1,9 @@
+/**
+ * BFAST is a data format for simple, efficient, and reliable serialization
+ * and deserialization of collections of binary data with optional names as a single block of data.
+ * See https://github.com/vimaec/bfast
+ */
+
 export class BFastHeader {
   magic: number
   dataStart: number
@@ -43,6 +49,11 @@ export class BFastHeader {
   }
 }
 
+/**
+ * BFAST is a data format for simple, efficient, and reliable serialization
+ * and deserialization of collections of binary data with optional names as a single block of data.
+ * See https://github.com/vimaec/bfast
+ */
 export class BFast {
   header: BFastHeader
   names: string[]
@@ -54,16 +65,22 @@ export class BFast {
     this.buffers = buffers
   }
 
-  static parseFromArray (bytes: Uint8Array): BFast {
-    return this.parseFromBuffer(
+  static fromArray (bytes: Uint8Array): BFast {
+    return this.fromArrayBuffer(
       bytes.buffer,
       bytes.byteOffset,
       bytes.byteLength
     )
   }
 
-  // BFAST is the container format for an array of binary arrays
-  static parseFromBuffer (
+  /**
+   * Returns a newly constructed bfast instance from parsing the data of arrayBuffer
+   * @param arrayBuffer an array of bytes from which to construct the bfast
+   * @param byteOffset where to start parsing the array
+   * @param byteLength how many bytes to parse from the array
+   * @returns a bfast instance
+   */
+  static fromArrayBuffer (
     arrayBuffer: ArrayBuffer,
     byteOffset: number = 0,
     byteLength: number = arrayBuffer.byteLength - byteOffset

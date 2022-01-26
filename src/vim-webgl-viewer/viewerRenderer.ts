@@ -1,5 +1,5 @@
 import * as THREE from 'three'
-import { VimThree } from '../vim-webgl-viewer'
+import { Model } from '../vim-webgl-viewer'
 import { ViewerSettings } from './viewerSettings'
 
 export class ViewerRenderer {
@@ -21,7 +21,8 @@ export class ViewerRenderer {
       precision: 'highp', // 'lowp', 'mediump', 'highp'
       alpha: true,
       stencil: false,
-      powerPreference: 'high-performance'
+      powerPreference: 'high-performance',
+      logarithmicDepthBuffer: true
     })
     this.canvas = this.renderer.domElement
 
@@ -105,7 +106,7 @@ export class ViewerRenderer {
     if (i > 0) this.meshes.splice(i, 1)
   }
 
-  addModel (model: VimThree) {
+  addModel (model: Model) {
     model.meshes.forEach((m) => {
       this.scene.add(m)
       this.meshes.push(m)
