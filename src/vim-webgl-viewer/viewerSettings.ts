@@ -4,8 +4,6 @@
 
 import * as THREE from 'three'
 import deepmerge from 'deepmerge'
-import { Viewer } from './viewer'
-import { HitTestResult } from './hitTester'
 import { clone, cloneDeep } from 'lodash'
 import { TransparencyMode } from '../vim-webgl-viewer'
 
@@ -64,6 +62,7 @@ export type CameraControlsOptions = {
   modelReferenceSize: number
   /** Camera rotation speed factor */
   rotateSpeed: number
+  orbitSpeed: number
   /** Camera movement speed factor */
   moveSpeed: number
 }
@@ -118,11 +117,6 @@ export type ViewerOptions = {
    * Sunlight (directional light) options
    */
   sunLight: Partial<SunLightOptions>
-
-  /**
-   * On click call-back
-   */
-  onClick: (viewer: Viewer, hit: HitTestResult) => void
 }
 
 /**
@@ -215,6 +209,7 @@ export class ViewerSettings {
           orbit: true,
           modelReferenceSize: 1,
           rotateSpeed: 1,
+          orbitSpeed: 1,
           moveSpeed: 1
         },
         showGizmo: true
@@ -235,8 +230,7 @@ export class ViewerSettings {
         position: { x: -47.0, y: 22, z: -45 },
         color: { h: 0.1, s: 1, l: 0.95 },
         intensity: 1
-      },
-      onClick: undefined
+      }
     }
 
     this.options = options ? deepmerge(fallback, options, undefined) : fallback
@@ -274,6 +268,7 @@ export class ViewerSettings {
   getCameraIsOrbit = () => this.options.camera.controls.orbit
   getCameraMoveSpeed = () => this.options.camera.controls.moveSpeed
   getCameraRotateSpeed = () => this.options.camera.controls.rotateSpeed
+  getCameraOrbitSpeed = () => this.options.camera.controls.orbitSpeed
   getCameraReferenceModelSize = () =>
     this.options.camera.controls.modelReferenceSize
 }

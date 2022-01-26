@@ -23,6 +23,8 @@ import { ViewerRenderer } from './viewerRenderer'
 
 // loader
 import { VimScene } from '../vim-loader/vimScene'
+import { HitTestResult } from './hitTester'
+import { Vim } from '../vim-webgl-viewer'
 
 // Module Exports
 export { VimParser } from '../vim-loader/vimParser'
@@ -51,6 +53,7 @@ export class Viewer {
   vimScene: VimScene | undefined
   state: ViewerState = 'Uninitialized'
   static stateChangeEvent = 'viewerStateChangedEvent'
+  public onMouseClick: (hit: HitTestResult) => void
 
   constructor (options?: Partial<ViewerOptions>) {
     this.settings = new ViewerSettings(options)
@@ -60,8 +63,11 @@ export class Viewer {
 
     this.camera = new ViewerCamera(this.renderer, this.settings)
 
-    this.environment = ViewerEnvironment.createDefault()
+    this.environment = new ViewerEnvironment(this.settings)
     this.renderer.addObjects(this.environment.getElements())
+
+    // Default mouse click behaviour, can be overriden
+    this.onMouseClick = this.defaultOnClick
 
     // Input and Selection
     this.controls = new ViewerInput(this)
@@ -69,7 +75,6 @@ export class Viewer {
     this.selection = new Selection(this)
 
     // Start Loop
-    this.ApplySettings()
     this.animate()
   }
 
@@ -144,7 +149,7 @@ export class Viewer {
     this.renderer.render()
 
     this.lookAtModel()
-    this.ApplySettings()
+    this.ApplyModelSettings()
   }
 
   private setState = (state: ViewerState) => {
@@ -363,13 +368,31 @@ export class Viewer {
   /**
    * Apply modified viewer settings
    */
-  public ApplySettings () {
-    this.environment.applySettings(
-      this.settings,
+  public ApplyViewerSettings () {
+    this.environment.applyViewerSettings(this.settings)
+    this.camera.applyViewerSettings(this.settings)
+  }
+
+  public ApplyModelSettings () {
+    this.environment.applyModelSettings(
       this.modelSettings,
       this.renderer.getBoundingBox()
     )
-    this.camera.applySettings(this.settings, this.renderer.getBoundingSphere())
+    this.camera.applyModelSettings(this.renderer.getBoundingSphere())
+  }
+
+  private defaultOnClick (hit: HitTestResult) {
+    console.log(hit)
+    if (!hit.isHit) return
+
+    this.selectByElementIndex(hit.elementIndex)
+    const entity = this.vimScene.vim.getEntity(
+      Vim.tableElement,
+      hit.elementIndex
+    )
+    this.camera.setTarget(hit.position)
+    if (hit.doubleClick) this.lookAtSelection()
+    console.log(entity)
   }
 
   // TODO: Move to geometry layer

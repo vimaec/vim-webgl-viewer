@@ -3,7 +3,6 @@ import * as THREE from 'three'
 import { ViewerCamera } from './viewerCamera'
 import { CameraGizmo } from './cameraGizmo'
 import { Viewer } from './viewer'
-import { InputMouse } from './inputMouse'
 
 export const KEYS = {
   KEY_0: 48,
@@ -103,26 +102,32 @@ export class InputKeyboard {
   // Dependencies
   camera: ViewerCamera
   viewer: Viewer
-  mouse: InputMouse
   gizmo: CameraGizmo
 
   // State
-  isShftPressed: boolean = false
   isUpPressed: boolean
   isDownPressed: boolean
   isLeftPressed: boolean
   isRightPressed: boolean
   isEPressed: boolean
   isQPressed: boolean
+  isShiftPressed: boolean = false
+  isCtrlPressed: boolean
 
-  constructor (camera: ViewerCamera, viewer: Viewer, mouse: InputMouse) {
+  constructor (camera: ViewerCamera, viewer: Viewer) {
     this.camera = camera
     this.viewer = viewer
-    this.mouse = mouse
   }
 
   reset = () => {
-    this.isShftPressed = false
+    this.isUpPressed = false
+    this.isDownPressed = false
+    this.isLeftPressed = false
+    this.isRightPressed = false
+    this.isEPressed = false
+    this.isQPressed = false
+    this.isShiftPressed = false
+    this.isCtrlPressed = false
   }
 
   onKeyUp = (event: any) => {
@@ -134,6 +139,7 @@ export class InputKeyboard {
   }
 
   onKey = (event: any, keyDown: boolean) => {
+    // Buttons that activate once on key up
     if (!keyDown) {
       switch (event.keyCode) {
         case KEYS.KEY_ADD:
@@ -147,15 +153,8 @@ export class InputKeyboard {
           event.preventDefault()
           break
         case KEYS.KEY_F8:
-          this.camera.MouseOrbit = !this.camera.MouseOrbit
-          if (this.camera.MouseOrbit) {
-            this.camera.CurrentOrbitalDistance =
-              this.camera.OrbitalTarget.clone()
-                .sub(this.camera.camera.position)
-                .length()
-            this.camera.TargetOrbitalDistance =
-              this.camera.CurrentOrbitalDistance
-          }
+        case KEYS.KEY_SPACE:
+          this.camera.IsMouseOrbit = !this.camera.IsMouseOrbit
           event.preventDefault()
           break
         case KEYS.KEY_HOME:
@@ -172,17 +171,10 @@ export class InputKeyboard {
           this.viewer.lookAtSelection()
           event.preventDefault()
           break
-        case KEYS.KEY_CTRL:
-          this.mouse.setCtrl(keyDown)
-          event.preventDefault()
-          break
-        case KEYS.KEY_SPACE:
-          this.camera.MouseOrbit = !this.camera.MouseOrbit
-          break
       }
     }
 
-    // Camera Movement
+    // Camera Movement, Buttons that need constant state refresh
     switch (event.keyCode) {
       case KEYS.KEY_W:
       case KEYS.KEY_UP:
@@ -219,8 +211,13 @@ export class InputKeyboard {
         event.preventDefault()
         break
       case KEYS.KEY_SHIFT:
-        this.isShftPressed = keyDown
+        this.isShiftPressed = keyDown
         this.applyMove()
+        event.preventDefault()
+        break
+      case KEYS.KEY_CTRL:
+        this.isCtrlPressed = keyDown
+        console.log('Control:' + keyDown)
         event.preventDefault()
         break
     }
@@ -232,7 +229,7 @@ export class InputKeyboard {
       (this.isEPressed ? 1 : 0) - (this.isQPressed ? 1 : 0),
       (this.isUpPressed ? 1 : 0) - (this.isDownPressed ? 1 : 0)
     )
-    const speed = this.isShftPressed ? this.ShiftMultiplier : 1
+    const speed = this.isShiftPressed ? this.ShiftMultiplier : 1
     move.multiplyScalar(speed)
     this.camera.setCameraLocalVelocity(move)
   }

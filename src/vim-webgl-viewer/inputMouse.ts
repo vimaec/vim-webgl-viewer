@@ -1,11 +1,13 @@
 import * as THREE from 'three'
 import { Viewer } from './viewer'
 import { HitTester } from './hitTester'
+import { InputKeyboard } from './inputKeyboard'
 
 export class InputMouse {
   // Dependencies
   viewer: Viewer
   hitTester: HitTester
+  inputKeyboard: InputKeyboard
 
   get camera () {
     return this.viewer.camera
@@ -18,19 +20,15 @@ export class InputMouse {
   // State
   isMouseDown: Boolean = false
   hasMouseMoved: Boolean = false
-  ctrlDown: Boolean = false
 
-  constructor (viewer: Viewer) {
+  constructor (viewer: Viewer, keyboard: InputKeyboard) {
     this.viewer = viewer
     this.hitTester = new HitTester(viewer)
+    this.inputKeyboard = keyboard
   }
 
   reset = () => {
-    this.isMouseDown = this.hasMouseMoved = this.ctrlDown = false
-  }
-
-  setCtrl = (value: Boolean) => {
-    this.ctrlDown = value
+    this.isMouseDown = this.hasMouseMoved = false
   }
 
   onMouseOut = (_: any) => {
@@ -41,7 +39,6 @@ export class InputMouse {
     if (!this.isMouseDown) {
       return
     }
-    this.hasMouseMoved = true
 
     event.preventDefault()
 
@@ -52,6 +49,9 @@ export class InputMouse {
       event.movementY || event.mozMovementY || event.webkitMovementY || 0
     const [width, height] = this.renderer.getContainerSize()
     const delta = new THREE.Vector2(deltaX / width, deltaY / height)
+
+    this.hasMouseMoved =
+      this.hasMouseMoved || Math.abs(deltaX) + Math.abs(deltaY) > 3
 
     if (event.buttons & 2) {
       // right button
@@ -74,10 +74,12 @@ export class InputMouse {
     // Thus we only use the direction of the value
     const scrollValue = Math.sign(event.deltaY)
 
-    if (this.ctrlDown) {
+    if (this.inputKeyboard.isCtrlPressed) {
       this.camera.SpeedMultiplier -= scrollValue
-    } else if (this.camera.MouseOrbit) {
-      this.camera.updateOrbitalDistance(-scrollValue)
+    } else if (this.camera.IsMouseOrbit) {
+      const impulse = new THREE.Vector3(0, 0, scrollValue)
+      this.camera.applyLocalImpulse(impulse)
+      // this.camera.updateOrbitalDistance(-scrollValue)
     } else {
       const impulse = new THREE.Vector3(0, 0, scrollValue)
       this.camera.applyLocalImpulse(impulse)
@@ -108,9 +110,6 @@ export class InputMouse {
 
   onMouseClick = (position: THREE.Vector2, doubleClick: boolean) => {
     const result = this.hitTester.onMouseClick(position, doubleClick)
-    const onClick = this.viewer.settings.options.onClick
-    if (onClick) {
-      onClick(this.viewer, result)
-    }
+    this.viewer.onMouseClick(result)
   }
 }

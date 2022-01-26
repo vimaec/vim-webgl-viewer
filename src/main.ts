@@ -1,6 +1,4 @@
-import { Vim } from './vim-loader/vim'
 import { TransparencyMode } from './vim-webgl-viewer'
-import { HitTestResult } from './vim-webgl-viewer/hitTester'
 import { Viewer, ViewerState } from './vim-webgl-viewer/viewer'
 
 // Parse URL
@@ -27,15 +25,6 @@ const viewer = new Viewer({
       'https://vimdevelopment01storage.blob.core.windows.net/textures/vim-floor-soft.png',
     opacity: 1,
     size: 5
-  },
-  onClick: (viewer: Viewer, x: HitTestResult) => {
-    console.log(x)
-    viewer.selectByElementIndex(x.elementIndex)
-    const entity = viewer.vimScene.vim.getEntity(
-      Vim.tableElement,
-      x.elementIndex
-    )
-    console.log(entity)
   }
 })
 

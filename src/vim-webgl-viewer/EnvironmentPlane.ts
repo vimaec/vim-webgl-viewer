@@ -4,6 +4,7 @@ import { ModelSettings, ViewerSettings } from './viewerSettings'
 export class EnvironmentPlane {
   source: string
   mesh: THREE.Mesh
+  size: number
 
   // disposable
   geometry: THREE.PlaneBufferGeometry
@@ -16,11 +17,8 @@ export class EnvironmentPlane {
     this.mesh = new THREE.Mesh(this.geometry, this.material)
   }
 
-  applySettings (
-    settings: ViewerSettings,
-    modelSettings?: ModelSettings,
-    box?: THREE.Box3
-  ) {
+  applyViewerSettings (settings: ViewerSettings) {
+    this.size = settings.getPlaneSize()
     // Visibily
     this.mesh.visible = settings.getPlaneShow()
 
@@ -28,14 +26,14 @@ export class EnvironmentPlane {
     this.applyTexture(settings.getPlaneTextureUrl())
     this.material.color.copy(settings.getPlaneColor())
     this.material.opacity = settings.getPlaneOpacity()
+  }
 
-    if (!box || !modelSettings) return
-
+  applyModelSettings (settings: ModelSettings, box: THREE.Box3) {
     // Position
     const center = box.getCenter(new THREE.Vector3())
     const position = new THREE.Vector3(
       center.x,
-      box.min.y - modelSettings.getModelScale().y,
+      box.min.y - settings.getModelScale().y,
       center.z
     )
     this.mesh.position.copy(position)
@@ -47,7 +45,7 @@ export class EnvironmentPlane {
 
     // Scale
     const sphere = box?.getBoundingSphere(new THREE.Sphere())
-    const size = (sphere?.radius ?? 1) * settings.getPlaneSize()
+    const size = (sphere?.radius ?? 1) * this.size
     const scale = new THREE.Vector3(1, 1, 1).multiplyScalar(size)
     this.mesh.scale.copy(scale)
   }

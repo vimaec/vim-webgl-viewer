@@ -16,9 +16,10 @@ export class ViewerInput {
   constructor (viewer: Viewer) {
     this.canvas = viewer.renderer.canvas
     this.unregisters = []
-    this.mouse = new InputMouse(viewer)
+
+    this.keyboard = new InputKeyboard(viewer.camera, viewer)
+    this.mouse = new InputMouse(viewer, this.keyboard)
     this.touch = new InputTouch(viewer.camera, viewer.renderer, this.mouse)
-    this.keyboard = new InputKeyboard(viewer.camera, viewer, this.mouse)
   }
 
   private reg = (

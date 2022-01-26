@@ -12,6 +12,7 @@ export class CameraGizmo {
 
   // Settings
   scale: number
+  fov: number
 
   // Resources
   box: THREE.BufferGeometry
@@ -29,28 +30,32 @@ export class CameraGizmo {
     this.renderer = renderer
   }
 
-  show () {
+  show (show: boolean = true) {
     if (!this.active) return
 
     if (!this.gizmos) {
       this.createGizmo()
     }
 
-    // Show for one second since last request
-    this.gizmos.visible = true
     clearTimeout(this.timeout)
-    this.timeout = setTimeout(() => (this.gizmos.visible = false), 1000)
+    this.gizmos.visible = show
+    // Hide after one second since last request
+    if (show) {
+      this.timeout = setTimeout(() => (this.gizmos.visible = false), 1000)
+    }
   }
 
   update (position: THREE.Vector3) {
     this.gizmos?.position.copy(position)
   }
 
-  applySettings (settings: ViewerSettings, factor: number) {
+  applyViewerSettings (settings: ViewerSettings) {
     this.active = settings.getCameraShowGizmo()
-    this.setScale(
-      (Math.tan((DEG2RAD * settings.getCameraFov()) / 2) * factor) / 10
-    )
+    this.fov = settings.getCameraFov()
+  }
+
+  applyModelSettings (factor: number) {
+    this.setScale((Math.tan((DEG2RAD * this.fov) / 2) * factor) / 10)
   }
 
   setScale (scale: number = 1) {
