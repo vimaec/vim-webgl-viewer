@@ -14,6 +14,7 @@ export class VIMLoader {
   // Download should be handled without three for Parser and Loader to be divided properly
   loadFromUrl (
     url: string,
+    transparency: TransparencyMode = 'all',
     onLoad?: (response: BimModel) => void,
     onProgress?: (progress: ProgressEvent | 'processing') => void,
     onError?: (event: ErrorEvent) => void
@@ -37,7 +38,7 @@ export class VIMLoader {
         }
         onProgress?.('processing')
         const vim = Vim.parseFromArrayBuffer(data)
-        const scene = this.loadFromVim(vim, 'all')
+        const scene = this.loadFromVim(vim, transparency)
         onLoad?.(scene)
       },
       onProgress,

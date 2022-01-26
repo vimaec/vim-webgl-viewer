@@ -1,5 +1,5 @@
 import * as geometry from './vim-loader/geometry'
-import { Viewer, ViewerState } from './vim-webgl-viewer/viewer'
+import { Viewer } from './vim-webgl-viewer/viewer'
 
 // Parse URL
 const params = new URLSearchParams(window.location.search)

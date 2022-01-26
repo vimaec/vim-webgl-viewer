@@ -112,6 +112,7 @@ export class Viewer {
 
     new VIMLoader().loadFromUrl(
       settings.getURL(),
+      settings.getTransparency(),
       (vim) => {
         // Hack to support element filter on first load
         // This is required because the vimscene required to map elements <-> nodes does not exist on first load
