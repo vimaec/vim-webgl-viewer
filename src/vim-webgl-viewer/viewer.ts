@@ -50,6 +50,11 @@ export class Viewer {
   vimScene: Vim | undefined
   state: ViewerState = 'Uninitialized'
   static stateChangeEvent = 'viewerStateChangedEvent'
+
+  /**
+   * Callback for on mouse click. Replace it to override or combine
+   * default behaviour with your custom logic.
+   */
   public onMouseClick: (hit: HitTestResult) => void
 
   constructor (options?: Partial<ViewerOptions>) {
