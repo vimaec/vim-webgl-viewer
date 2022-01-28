@@ -59,14 +59,17 @@ export function buildFromMesh (
   mesh: number,
   useAlpha: boolean
 ): THREE.BufferGeometry {
-  const [vertexStart, vertexEnd] = g3d.getMeshVertexRange(mesh)
-  const [indexStart, indexEnd] = g3d.getMeshIndexRange(mesh)
-
   const colors = buildVertexColors(g3d, mesh, useAlpha)
 
   return createBufferGeometryFromArrays(
-    g3d.positions.subarray(vertexStart * 3, vertexEnd * 3),
-    g3d.indicesRelative.subarray(indexStart, indexEnd),
+    g3d.positions.subarray(
+      g3d.getMeshVertexStart(mesh) * 3,
+      g3d.getMeshVertexEnd(mesh) * 3
+    ),
+    g3d.indices.subarray(
+      g3d.getMeshIndexStart(mesh),
+      g3d.getMeshIndexEnd(mesh)
+    ),
     colors,
     useAlpha ? 4 : 3
   )
@@ -83,12 +86,16 @@ function buildVertexColors (
     g3d.getMeshVertexCount(mesh) * (useAlpha ? 4 : 3)
   )
 
-  const [subStart, subEnd] = g3d.getMeshSubmeshRange(mesh)
+  const subStart = g3d.getMeshSubmeshStart(mesh)
+  const subEnd = g3d.getMeshSubmeshEnd(mesh)
+  // const [subStart, subEnd] = g3d.getMeshSubmeshRange(mesh)
 
   for (let submesh = subStart; submesh < subEnd; submesh++) {
     const color = g3d.getSubmeshColor(submesh)
 
-    const [start, end] = g3d.getSubmeshIndexRange(submesh)
+    const start = g3d.getSubmeshIndexStart(submesh)
+    const end = g3d.getSubmeshIndexEnd(submesh)
+    // const [start, end] = g3d.getSubmeshIndexRange(submesh)
     let v = 0
     for (let i = start; i < end; i++) {
       result[v++] = color[0]
@@ -143,7 +150,8 @@ export class Merger {
     const instances = []
     const meshes = []
 
-    for (let mesh = 0; mesh < g3d.getMeshCount(); mesh++) {
+    const meshCount = g3d.getMeshCount()
+    for (let mesh = 0; mesh < meshCount; mesh++) {
       const meshInstances = g3d.meshInstances[mesh]
       if (!meshInstances || meshInstances.length !== 1) continue
       if (!transparencyMatches(transparency, g3d.meshTransparent[mesh])) {
@@ -215,23 +223,34 @@ export class Merger {
     let uv = 0
     let offset = 0
 
+    // matrix and vector is reused to avoid needless allocations
+    const matrix = new THREE.Matrix4()
+    const vector = new THREE.Vector3()
+
     for (let i = 0; i < this.instances.length; i++) {
       const mesh = this.meshes[i]
       const instance = this.instances[i]
 
       // Copy all indices to merge array
-      const [indexStart, indexEnd] = this.g3d.getMeshIndexRange(mesh)
+      const indexStart = this.g3d.getMeshIndexStart(mesh)
+      const indexEnd = this.g3d.getMeshIndexEnd(mesh)
+      // const [indexStart, indexEnd] = this.g3d.getMeshIndexRange(mesh)
       for (let i = indexStart; i < indexEnd; i++) {
-        this.indices[index++] = this.g3d.indicesRelative[i] + offset
+        this.indices[index++] = this.g3d.indices[i] + offset
       }
 
       // Copy all colors to merged array
-      const [subStart, subEnd] = this.g3d.getMeshSubmeshRange(mesh)
+      const subStart = this.g3d.getMeshSubmeshStart(mesh)
+      const subEnd = this.g3d.getMeshSubmeshEnd(mesh)
+      // const [subStart, subEnd] = this.g3d.getMeshSubmeshRange(mesh)
       for (let sub = subStart; sub < subEnd; sub++) {
-        const [startIndex, endIndex] = this.g3d.getSubmeshIndexRange(sub)
+        const startIndex = this.g3d.getSubmeshIndexStart(sub)
+        const endIndex = this.g3d.getSubmeshIndexEnd(sub)
+        // const [startIndex, endIndex] = this.g3d.getSubmeshIndexRange(sub)
+
         const subColor = this.g3d.getSubmeshColor(sub)
         for (let i = startIndex; i < endIndex; i++) {
-          const v = (this.g3d.indicesRelative[i] + offset) * this.colorSize
+          const v = (this.g3d.indices[i] + offset) * this.colorSize
           this.colors[v] = subColor[0]
           this.colors[v + 1] = subColor[1]
           this.colors[v + 2] = subColor[2]
@@ -242,15 +261,15 @@ export class Merger {
       }
 
       // Apply Matrices and copy vertices to merged array
-      const [vertexStart, vertexEnd] = this.g3d.getMeshVertexRange(mesh)
+      getInstanceMatrix(this.g3d, instance, matrix)
+      const vertexStart = this.g3d.getMeshVertexStart(mesh)
+      const vertexEnd = this.g3d.getMeshVertexEnd(mesh)
+
       for (let p = vertexStart; p < vertexEnd; p++) {
-        const position = new THREE.Vector3().fromArray(
-          this.g3d.positions,
-          p * this.g3d.positionArity
-        )
-        const matrix = getInstanceMatrix(this.g3d, instance)
-        position.applyMatrix4(matrix)
-        position.toArray(this.vertices, vertex)
+        vector.fromArray(this.g3d.positions, p * this.g3d.positionArity)
+        vector.applyMatrix4(matrix)
+        vector.toArray(this.vertices, vertex)
+
         vertex += this.g3d.positionArity
 
         // Fill uvs with instances at the same time as vertices. Used for picking
@@ -286,7 +305,7 @@ export class Merger {
  * @param uvs uv data with 2 number per vertex (XY)
  * @returns a BufferGeometry
  */
-function createBufferGeometryFromArrays (
+export function createBufferGeometryFromArrays (
   vertices: Float32Array,
   indices: Uint32Array,
   vertexColors: Float32Array | undefined = undefined,
@@ -315,9 +334,12 @@ function createBufferGeometryFromArrays (
   return geometry
 }
 
-export function getInstanceMatrix (g3d: G3d, index: number): THREE.Matrix4 {
+export function getInstanceMatrix (
+  g3d: G3d,
+  index: number,
+  target: THREE.Matrix4 = new THREE.Matrix4()
+): THREE.Matrix4 {
   const matrixAsArray = g3d.getInstanceTransform(index)
-  const matrix = new THREE.Matrix4()
-  matrix.elements = Array.from(matrixAsArray)
-  return matrix
+  target.fromArray(matrixAsArray)
+  return target
 }

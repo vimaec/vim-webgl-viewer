@@ -192,7 +192,7 @@ class VimAttributes {
  */
 export class G3d {
   positions: Float32Array
-  indices: Int32Array
+  indices: Uint32Array
 
   instanceMeshes: Int32Array
   instanceTransforms: Float32Array
@@ -202,7 +202,6 @@ export class G3d {
   materialColors: Float32Array
 
   // computed fields
-  indicesRelative: Uint32Array
   meshVertexOffsets: Int32Array
   meshInstances: Array<Array<number>>
   meshTransparent: Array<boolean>
@@ -220,7 +219,8 @@ export class G3d {
     this.positions = g3d.findAttribute(VimAttributes.positions)
       ?.data as Float32Array
 
-    this.indices = g3d.findAttribute(VimAttributes.indices)?.data as Int32Array
+    const tmp = g3d.findAttribute(VimAttributes.indices)?.data
+    this.indices = new Uint32Array(tmp.buffer, tmp.byteOffset, tmp.length)
 
     this.meshSubmeshes = g3d.findAttribute(VimAttributes.meshSubmeshes)
       ?.data as Int32Array
@@ -243,16 +243,17 @@ export class G3d {
     )?.data as Float32Array
 
     this.meshVertexOffsets = this.computeMeshVertexOffsets()
-    this.indicesRelative = this.computeIndicesRelative()
+    this.rebaseIndices()
     this.meshInstances = this.computeMeshInstances()
     this.meshTransparent = this.computeMeshIsTransparent()
   }
 
   private computeMeshVertexOffsets (): Int32Array {
     const result = new Int32Array(this.getMeshCount())
-    for (let m = 0; m < this.getMeshCount(); m++) {
+    for (let m = 0; m < result.length; m++) {
       let min = Number.MAX_SAFE_INTEGER
-      const [start, end] = this.getMeshIndexRange(m)
+      const start = this.getMeshIndexStart(m)
+      const end = this.getMeshIndexEnd(m)
       for (let i = start; i < end; i++) {
         min = Math.min(min, this.indices[i])
       }
@@ -261,16 +262,16 @@ export class G3d {
     return result
   }
 
-  private computeIndicesRelative (): Uint32Array {
-    const result = Uint32Array.from(this.indices)
-    for (let m = 0; m < this.getMeshCount(); m++) {
+  private rebaseIndices () {
+    const count = this.getMeshCount()
+    for (let m = 0; m < count; m++) {
       const offset = this.meshVertexOffsets[m]
-      const [start, end] = this.getMeshIndexRange(m)
+      const start = this.getMeshIndexStart(m)
+      const end = this.getMeshIndexEnd(m)
       for (let i = start; i < end; i++) {
-        result[i] -= offset
+        this.indices[i] -= offset
       }
     }
-    return result
   }
 
   private computeMeshInstances = (): number[][] => {
@@ -289,11 +290,14 @@ export class G3d {
 
   private computeMeshIsTransparent (): Array<boolean> {
     const result = new Array<boolean>(this.getMeshCount())
-    for (let m = 0; m < this.getMeshCount(); m++) {
-      const [subStart, subEnd] = this.getMeshSubmeshRange(m)
+    for (let m = 0; m < result.length; m++) {
+      const subStart = this.getMeshSubmeshStart(m)
+      const subEnd = this.getMeshSubmeshEnd(m)
+      // const [subStart, subEnd] = this.getMeshSubmeshRange(m)
       for (let s = subStart; s < subEnd; s++) {
         const material = this.submeshMaterial[s]
-        const alpha = this.materialColors[material * 4 + 3]
+        const alpha =
+          this.materialColors[material * this.colorArity + this.colorArity - 1]
         result[m] = result[m] || alpha < 1
       }
     }
@@ -306,69 +310,66 @@ export class G3d {
   // ------------- Meshes -----------------
   getMeshCount = () => this.meshSubmeshes.length
 
-  getMeshIndexRange (mesh: number): [number, number] {
-    const [subStart, subEnd] = this.getMeshSubmeshRange(mesh)
-    // eslint-disable-next-line no-unused-vars
-    const [firstStart, firstEnd] = this.getSubmeshIndexRange(subStart)
-    // eslint-disable-next-line no-unused-vars
-    const [lastStart, lastEnd] = this.getSubmeshIndexRange(subEnd - 1)
-    return [firstStart, lastEnd]
+  getMeshIndexStart (mesh: number): number {
+    const subStart = this.getMeshSubmeshStart(mesh)
+    return this.getSubmeshIndexStart(subStart)
+  }
+
+  getMeshIndexEnd (mesh: number): number {
+    const subEnd = this.getMeshSubmeshEnd(mesh)
+    return this.getSubmeshIndexEnd(subEnd - 1)
   }
 
   getMeshIndexCount (mesh: number): number {
-    const [start, end] = this.getMeshIndexRange(mesh)
-    return end - start
+    return this.getMeshIndexEnd(mesh) - this.getMeshIndexStart(mesh)
   }
 
-  getMeshVertexRange (mesh: number): [number, number] {
-    const start = this.meshVertexOffsets[mesh]
-    const end =
-      mesh < this.meshVertexOffsets.length - 1
-        ? this.meshVertexOffsets[mesh + 1]
-        : this.getVertexCount()
+  getMeshVertexStart (mesh: number): number {
+    return this.meshVertexOffsets[mesh]
+  }
 
-    return [start, end]
+  getMeshVertexEnd (mesh: number): number {
+    return mesh < this.meshVertexOffsets.length - 1
+      ? this.meshVertexOffsets[mesh + 1]
+      : this.getVertexCount()
   }
 
   getMeshVertexCount (mesh: number): number {
-    const [start, end] = this.getMeshVertexRange(mesh)
-    return end - start
+    return this.getMeshVertexEnd(mesh) - this.getMeshVertexStart(mesh)
   }
 
-  getMeshSubmeshRange (mesh: number): [number, number] {
-    const start = this.meshSubmeshes[mesh]
-    const end =
-      mesh < this.meshSubmeshes.length - 1
-        ? this.meshSubmeshes[mesh + 1]
-        : this.submeshIndexOffset.length
-    return [start, end]
+  getMeshSubmeshStart (mesh: number): number {
+    return this.meshSubmeshes[mesh]
+  }
+
+  getMeshSubmeshEnd (mesh: number): number {
+    return mesh < this.meshSubmeshes.length - 1
+      ? this.meshSubmeshes[mesh + 1]
+      : this.submeshIndexOffset.length
   }
 
   getMeshSubmeshCount (mesh: number): number {
-    const [start, end] = this.getMeshSubmeshRange(mesh)
-    return end - start
+    return this.getMeshSubmeshEnd(mesh) - this.getMeshSubmeshStart(mesh)
   }
 
   // ------------- Submeshes -----------------
 
-  getSubmeshIndexRange (submesh: number): [number, number] {
-    const start = this.submeshIndexOffset[submesh]
-    const end =
-      submesh < this.submeshIndexOffset.length - 1
-        ? this.submeshIndexOffset[submesh + 1]
-        : this.indices.length
+  getSubmeshIndexStart (submesh: number): number {
+    return this.submeshIndexOffset[submesh]
+  }
 
-    return [start, end]
+  getSubmeshIndexEnd (submesh: number): number {
+    return submesh < this.submeshIndexOffset.length - 1
+      ? this.submeshIndexOffset[submesh + 1]
+      : this.indices.length
   }
 
   getSubmeshIndexCount (submesh: number): number {
-    const [start, end] = this.getSubmeshIndexRange(submesh)
-    return end - start
+    return this.getSubmeshIndexEnd(submesh) - this.getSubmeshIndexStart(submesh)
   }
 
   getSubmeshColor (submesh: number): Float32Array {
-    const material = this.submeshMaterial[submesh]
-    return this.getMaterialColor(material)
+    return this.getMaterialColor(this.submeshMaterial[submesh])
   }
 
   // ------------- Instances -----------------
