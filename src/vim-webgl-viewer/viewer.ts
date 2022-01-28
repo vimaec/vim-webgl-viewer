@@ -140,8 +140,6 @@ export class Viewer {
     }
   }
 
-  private loadFromBuffer () {}
-
   private onVimLoaded (vim: Vim, settings: VimSettings) {
     this.vimScene = vim
     this.vimSettings = settings
