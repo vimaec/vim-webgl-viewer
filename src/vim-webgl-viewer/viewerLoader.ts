@@ -1,3 +1,7 @@
+/**
+ * @module viw-webgl-viewer
+ */
+
 import * as THREE from 'three'
 
 // vim

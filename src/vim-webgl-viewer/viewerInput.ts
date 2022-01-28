@@ -1,3 +1,7 @@
+/**
+ * @module viw-webgl-viewer
+ */
+
 import { Viewer } from './viewer'
 import { InputKeyboard } from './inputKeyboard'
 import { InputTouch } from './inputTouch'

@@ -2,6 +2,7 @@
  * BFAST is a data format for simple, efficient, and reliable serialization
  * and deserialization of collections of binary data with optional names as a single block of data.
  * See https://github.com/vimaec/bfast
+ * @module vim-loader
  */
 
 export class BFastHeader {

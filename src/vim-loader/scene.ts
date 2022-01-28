@@ -1,3 +1,8 @@
+/**
+ * Scene is the highest level organization of three geometry of the vim loader.
+ * @module vim-loader
+ */
+
 import * as THREE from 'three'
 import { G3d } from './g3d'
 import * as vimGeometry from './geometry'

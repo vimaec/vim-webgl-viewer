@@ -2,6 +2,7 @@
  * G3D is a simple, efficient, generic binary format for storing and transmitting geometry.
  * The G3D format is designed to be used either as a serialization format or as an in-memory data structure.
  * See https://github.com/vimaec/g3d
+ * @module vim-loader
  */
 
 import { BFast } from './bfast'

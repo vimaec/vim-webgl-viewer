@@ -1,12 +1,11 @@
+/**
+ * @module viw-webgl-viewer
+ */
+
 import * as THREE from 'three'
 import { VimSettings, ViewerSettings } from './viewerSettings'
 import { EnvironmentPlane } from './environmentPlane'
 
-/*
-Vim Viewer
-Copyright VIMaec LLC, 2020
-Licensed under the terms of the MIT License
-*/
 export class ViewerEnvironment {
   plane: EnvironmentPlane
   skyLight: THREE.HemisphereLight

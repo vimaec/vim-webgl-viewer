@@ -1,3 +1,7 @@
+/**
+ * @module viw-webgl-viewer
+ */
+
 import * as THREE from 'three'
 import { SphereGeometry } from 'three'
 import { ViewerRenderer } from './viewerRenderer'

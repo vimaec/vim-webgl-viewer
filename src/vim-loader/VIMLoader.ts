@@ -1,6 +1,9 @@
 /**
- @author VIM / https://vimaec.com
-*/
+ * Loader for the Vim File format.
+ * See https://github.com/vimaec/vim
+ * @module vim-loader
+ * @author VIM / https://vimaec.com
+ */
 
 import * as THREE from 'three'
 

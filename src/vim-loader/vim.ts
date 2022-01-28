@@ -1,3 +1,8 @@
+/**
+ * Final result of loading a Vim.
+ * @module vim-loader
+ */
+
 import * as THREE from 'three'
 import { Document } from './document'
 import { Scene } from './scene'

@@ -1,5 +1,6 @@
 /**
  @author VIM / https://vimaec.com
+ @module viw-webgl-viewer
 */
 
 // external
@@ -257,7 +258,7 @@ export class Viewer {
       return () => {}
     }
 
-    const geometry = g3dToGeometry.buildFromInstances(
+    const geometry = g3dToGeometry.createFromInstances(
       this.vimScene.vim.g3d,
       nodes
     )
@@ -290,7 +291,7 @@ export class Viewer {
       return null
     }
 
-    const geometry = g3dToGeometry.buildFromInstances(
+    const geometry = g3dToGeometry.createFromInstances(
       this.vimScene.vim.g3d,
       nodes
     )

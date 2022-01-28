@@ -1,3 +1,8 @@
+/**
+ * Provides methods to create BufferGeometry from g3d geometry data.
+ * @module vim-loader
+ */
+
 import * as THREE from 'three'
 import { G3d } from './g3d'
 
@@ -44,8 +49,8 @@ export function transparencyMatches (
  * @param instances indices of the instances from the g3d to merge
  * @returns a BufferGeometry
  */
-export function buildFromInstances (g3d: G3d, instances: number[]) {
-  const merger = Merger.CreateForInstances(g3d, instances, 'all')
+export function createFromInstances (g3d: G3d, instances: number[]) {
+  const merger = MeshMerger.MergeInstances(g3d, instances, 'all')
   return merger.toBufferGeometry()
 }
 
@@ -54,12 +59,12 @@ export function buildFromInstances (g3d: G3d, instances: number[]) {
  * @param mesh mesh index in the g3d
  * @param useAlpha specify to use RGB or RGBA for colors
  */
-export function buildFromMesh (
+export function createFromMesh (
   g3d: G3d,
   mesh: number,
   useAlpha: boolean
 ): THREE.BufferGeometry {
-  const colors = buildVertexColors(g3d, mesh, useAlpha)
+  const colors = createVertexColors(g3d, mesh, useAlpha)
 
   return createBufferGeometryFromArrays(
     g3d.positions.subarray(
@@ -77,7 +82,7 @@ export function buildFromMesh (
 /**
  * Expands submesh colors into vertex colors as RGB or RGBA
  */
-function buildVertexColors (
+function createVertexColors (
   g3d: G3d,
   mesh: number,
   useAlpha: boolean
@@ -110,7 +115,7 @@ function buildVertexColors (
 /**
  * Helper to merge many instances/meshes from a g3d direcly into a BufferGeometry
  */
-export class Merger {
+export class MeshMerger {
   g3d: G3d
   colorSize: number
 
@@ -144,7 +149,7 @@ export class Merger {
   /**
    * Prepares a merge of all meshes referenced by only one instance.
    */
-  static CreateForUniqueMeshes (g3d: G3d, transparency: TransparencyMode) {
+  static MergeUniqueMeshes (g3d: G3d, transparency: TransparencyMode) {
     let vertexCount = 0
     let indexCount = 0
     const instances = []
@@ -163,7 +168,7 @@ export class Merger {
       instances.push(meshInstances[0])
       meshes.push(mesh)
     }
-    return new Merger(
+    return new MeshMerger(
       g3d,
       transparency,
       instances,
@@ -176,7 +181,7 @@ export class Merger {
   /**
    * Prepares a merge of all meshes referenced by given instances.
    */
-  static CreateForInstances (
+  static MergeInstances (
     g3d: G3d,
     instances: number[],
     transparency: TransparencyMode
@@ -199,7 +204,7 @@ export class Merger {
       meshes.push(mesh)
     }
 
-    return new Merger(
+    return new MeshMerger(
       g3d,
       transparency,
       instancesFiltered,

@@ -1,3 +1,8 @@
+/**
+ * Document is the parsed content of a vim, including geometry data, bim data and other meta data.
+ * @module vim-loader
+ */
+
 import { BFast } from './bfast'
 import { G3d } from './g3d'
 

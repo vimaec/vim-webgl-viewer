@@ -1,3 +1,8 @@
+/**
+ * Provides methods to create Three.Mesh from BufferGeometry and g3d geometry data.
+ * @module vim-loader
+ */
+
 import * as THREE from 'three'
 import { G3d } from './g3d'
 import * as vimGeometry from './geometry'
@@ -79,7 +84,7 @@ export class MeshBuilder {
       const useAlpha =
         vimGeometry.transparencyRequiresAlpha(transparency) &&
         g3d.meshTransparent[mesh]
-      const geometry = vimGeometry.buildFromMesh(g3d, mesh, useAlpha)
+      const geometry = vimGeometry.createFromMesh(g3d, mesh, useAlpha)
       const resultMesh = this.createInstancedMesh(
         geometry,
         g3d,
@@ -130,8 +135,8 @@ export class MeshBuilder {
     instances?: number[]
   ): THREE.Mesh {
     const merger = instances
-      ? vimGeometry.Merger.CreateForInstances(g3d, instances, transparency)
-      : vimGeometry.Merger.CreateForUniqueMeshes(g3d, transparency)
+      ? vimGeometry.MeshMerger.MergeInstances(g3d, instances, transparency)
+      : vimGeometry.MeshMerger.MergeUniqueMeshes(g3d, transparency)
 
     const geometry = merger.toBufferGeometry()
     const material = vimGeometry.transparencyRequiresAlpha(transparency)

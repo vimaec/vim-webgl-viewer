@@ -1,3 +1,7 @@
+/**
+ * @module viw-webgl-viewer
+ */
+
 import * as THREE from 'three'
 import { Scene } from '../vim-loader/scene'
 import { ViewerSettings } from './viewerSettings'
