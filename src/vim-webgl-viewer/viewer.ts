@@ -89,7 +89,7 @@ export class Viewer {
     this.camera.frameUpdate(timeDelta)
 
     // Rendering
-    this.renderer.render()
+    if (this.vimScene) this.renderer.render()
   }
 
   /**
@@ -158,6 +158,7 @@ export class Viewer {
 
     this.lookAtScene()
     this.ApplyVimSettings()
+    this.animate()
   }
 
   private static getOrCreateCanvas (canvasId?: string) {
