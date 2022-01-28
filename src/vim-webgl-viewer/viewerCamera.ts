@@ -46,8 +46,8 @@ class ViewerCamera {
   }
 
   // Settings
-  private modelReferenceSize: number
-  private modelSizeMultiplier: number = 1
+  private vimReferenceSize: number
+  private sceneSizeMultiplier: number = 1
   private velocityBlendFactor: number = 0.0001
   private moveSpeed: number = 0.8
   private rotateSpeed: number = 1
@@ -63,7 +63,7 @@ class ViewerCamera {
     this.Velocity = new THREE.Vector3(0, 0, 0)
     this.Impulse = new THREE.Vector3(0, 0, 0)
     this.SpeedMultiplier = 0
-    this.modelSizeMultiplier = 1
+    this.sceneSizeMultiplier = 1
     this.OrbitalTarget = new THREE.Vector3(0, 0, 0)
     this.CurrentOrbitalDistance = this.camera.position
       .clone()
@@ -147,13 +147,13 @@ class ViewerCamera {
     this.gizmo.applyViewerSettings(settings)
 
     // Values
-    this.modelReferenceSize = settings.getCameraReferenceModelSize()
+    this.vimReferenceSize = settings.getCameraReferenceVimSize()
   }
 
-  applyModelSettings (modelSphere?: THREE.Sphere) {
-    this.modelSizeMultiplier = modelSphere.radius / this.modelReferenceSize
+  applyVimSettings (boundingSphere?: THREE.Sphere) {
+    this.sceneSizeMultiplier = boundingSphere.radius / this.vimReferenceSize
     // Gizmo
-    this.gizmo.applyModelSettings(this.modelSizeMultiplier)
+    this.gizmo.applyVimSettings(this.sceneSizeMultiplier)
     this.gizmo.show(this.IsMouseOrbit)
   }
 
@@ -220,7 +220,7 @@ class ViewerCamera {
     euler.setFromQuaternion(this.camera.quaternion)
 
     // When moving the mouse one full sreen
-    // Orbit will rotate 180 degree around the model
+    // Orbit will rotate 180 degree around the scene
     // Basic will rotate 180 degrees on itself
     const factor = this._isMouseOrbit
       ? Math.PI * this.orbitSpeed
@@ -263,7 +263,7 @@ class ViewerCamera {
   getSpeedMultiplier () {
     return (
       Math.pow(1.25, this.SpeedMultiplier) *
-      this.modelSizeMultiplier *
+      this.sceneSizeMultiplier *
       this.moveSpeed
     )
   }
@@ -308,7 +308,7 @@ class ViewerCamera {
       // apply local space z to orbit distance,
       this.CurrentOrbitalDistance = Math.max(
         this.CurrentOrbitalDistance + local.z,
-        this.MinOrbitalDistance * this.modelSizeMultiplier
+        this.MinOrbitalDistance * this.sceneSizeMultiplier
       )
       this.OrbitalTargetDistance = this.CurrentOrbitalDistance
     }
@@ -339,8 +339,8 @@ class ViewerCamera {
   }
 
   isSignificant (vector: THREE.Vector3) {
-    // One hundreth of standard model size per frame
-    const min = (0.01 * this.modelSizeMultiplier) / 60
+    // One hundreth of standard scene size per frame
+    const min = (0.01 * this.sceneSizeMultiplier) / 60
     return (
       Math.abs(vector.x) > min ||
       Math.abs(vector.y) > min ||

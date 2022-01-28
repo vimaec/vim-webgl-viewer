@@ -1,8 +1,8 @@
 import * as THREE from 'three'
 
 // vim
-import { VIMLoader } from '../vim-loader/VIMLoader'
-import { BimModel } from '../vim-loader/bimModel'
+import { VimLoader } from '../vim-loader/vimLoader'
+import { Vim } from '../vim-loader/vim'
 
 // Other loaders
 import { TDSLoader } from 'three/examples/jsm/loaders/TDSLoader'
@@ -31,7 +31,7 @@ export const loadAny = function (
   fileName: string,
   onFileLoaded: (
     result:
-      | BimModel
+      | Vim
       | THREE.Scene
       | THREE.Group
       | THREE.Object3D
@@ -85,7 +85,7 @@ export const loadAny = function (
       break
     }
     case 'vim': {
-      new VIMLoader().loadFromUrl(
+      new VimLoader().loadFromUrl(
         fileName,
         'all',
         onFileLoaded,

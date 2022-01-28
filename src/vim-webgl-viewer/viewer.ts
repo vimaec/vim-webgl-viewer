@@ -7,29 +7,26 @@ import * as THREE from 'three'
 
 // internal
 import {
-  ModelSettings,
+  VimSettings,
   ViewerSettings,
-  ModelOptions,
+  VimOptions,
   ViewerOptions
 } from './viewerSettings'
 
 import { ViewerCamera } from './viewerCamera'
 import { ViewerInput } from './viewerInput'
-import { VIMLoader } from '../vim-loader/VIMLoader'
+import { VimLoader } from '../vim-loader/vimLoader'
 
 import { Selection } from './selection'
 import { ViewerEnvironment } from './viewerEnvironment'
 import { ViewerRenderer } from './viewerRenderer'
 
 // loader
-import { BimModel } from '../vim-loader/bimModel'
+import { Vim } from '../vim-loader/vim'
 import * as g3dToGeometry from '../vim-loader/geometry'
-import { Vim } from '../vim-webgl-viewer'
+import { Document } from '../vim-webgl-viewer'
 
 import { HitTestResult } from './hitTester'
-
-// Module Exports
-export { Vim } from '../vim-loader/vim'
 
 export type ViewerState =
   | 'Uninitialized'
@@ -38,7 +35,7 @@ export type ViewerState =
   | [state: 'Error', error: ErrorEvent]
   | 'Ready'
 
-const NO_SCENE_LOADED = 'No model loaded in viewer. Ignoring'
+const NO_SCENE_LOADED = 'No vim loaded in viewer. Ignoring'
 
 export class Viewer {
   settings: ViewerSettings
@@ -50,8 +47,8 @@ export class Viewer {
   controls: ViewerInput
 
   // State
-  modelSettings: ModelSettings | undefined
-  vimScene: BimModel | undefined
+  vimSettings: VimSettings | undefined
+  vimScene: Vim | undefined
   state: ViewerState = 'Uninitialized'
   static stateChangeEvent = 'viewerStateChangedEvent'
   public onMouseClick: (hit: HitTestResult) => void
@@ -87,30 +84,30 @@ export class Viewer {
     const timeDelta = this.renderer.clock.getDelta()
     this.camera.frameUpdate(timeDelta)
 
-    // Model
+    // Rendering
     this.renderer.render()
   }
 
   /**
-   * Load a vim model into the viewer from local or remote location
-   * @param options model options
-   * @param onLoad callback on model loaded
+   * Load a vim into the viewer from local or remote location
+   * @param options vim options
+   * @param onLoad callback on vim loaded
    * @param onProgress callback on download progresss and on processing started
    * @param onError callback on error
    */
-  public loadModel (
-    options?: Partial<ModelOptions>,
-    onLoad?: (response: BimModel) => void,
+  public loadVim (
+    options?: Partial<VimOptions>,
+    onLoad?: (response: Vim) => void,
     onProgress?: (request: ProgressEvent | 'processing') => void,
     onError?: (event: ErrorEvent) => void
   ) {
-    if (this.modelSettings) {
-      throw new Error('There is already a model loaded or loading')
+    if (this.vimSettings) {
+      throw new Error('There is already a vim loaded or loading')
     }
 
-    const settings = new ModelSettings(options)
+    const settings = new VimSettings(options)
 
-    new VIMLoader().loadFromUrl(
+    new VimLoader().loadFromUrl(
       settings.getURL(),
       settings.getTransparency(),
       (vim) => {
@@ -125,26 +122,26 @@ export class Viewer {
         onProgress?.(progress)
       },
       (error) => {
-        this.modelSettings = undefined
+        this.vimSettings = undefined
         this.vimScene = undefined
         onError?.(error)
       }
     )
   }
 
-  private onVimLoaded (vim: BimModel, settings: ModelSettings) {
+  private onVimLoaded (vim: Vim, settings: VimSettings) {
     this.vimScene = vim
-    this.modelSettings = settings
+    this.vimSettings = settings
 
-    const matrix = this.modelSettings.getModelMatrix()
+    const matrix = this.vimSettings.getMatrix()
 
-    // Model
-    this.renderer.addModel(vim.model)
+    // Scene
+    this.renderer.addScene(vim.scene)
     this.renderer.applyMatrix4(matrix)
     this.renderer.render()
 
-    this.lookAtModel()
-    this.ApplyModelSettings()
+    this.lookAtScene()
+    this.ApplyVimSettings()
   }
 
   private static getOrCreateCanvas (canvasId?: string) {
@@ -160,57 +157,57 @@ export class Viewer {
   }
 
   /**
-   * Unload existing model to get ready to load a new model
+   * Unload existing vim to get ready to load a new vim
    */
-  unloadModel () {
+  unloadVim () {
     this.vimScene = undefined
-    this.modelSettings = undefined
-    this.renderer.clearModels()
+    this.vimSettings = undefined
+    this.renderer.clearScene()
     this.selection.clear()
   }
 
   /**
-   * Unload existing model and reloads it without redownloading it
-   * @param options full model options, same as for loadModel
+   * Unload existing vim and reloads it without redownloading it
+   * @param options full vim options, same as for loadVim
    */
-  reloadModel (options: ModelOptions) {
+  reloadVim (options: VimOptions) {
     if (!this.vimScene) throw new Error(NO_SCENE_LOADED)
 
-    const settings = new ModelSettings(options)
+    const settings = new VimSettings(options)
     // Go from Element Ids -> Node Indices
     const elementIds = settings.getElementIdsFilter()
     const instanceIndices = elementIds
       ? this.vimScene.getInstanceIndicesFromElementIds(elementIds)
       : undefined
 
-    const scene = new VIMLoader().loadFromVim(
+    const scene = new VimLoader().loadFromVim(
       this.vimScene.vim,
       settings.getTransparency(),
       instanceIndices
     )
-    this.unloadModel()
+    this.unloadVim()
     this.onVimLoaded(scene, settings)
   }
 
   /**
-   * Reloads the current model with the same settings except it applies a new element filter
-   * @param includedElementIds array of element ids to keep, passing undefined will load the whole model
+   * Reloads the current vim with the same settings except it applies a new element filter
+   * @param includedElementIds array of element ids to keep, passing undefined will load the whole vim
    */
   filter (includedElementIds: number[] | undefined) {
-    if (!this.modelSettings) throw new Error(NO_SCENE_LOADED)
-    const options = this.modelSettings.getOptions()
+    if (!this.vimSettings) throw new Error(NO_SCENE_LOADED)
+    const options = this.vimSettings.getOptions()
     options.elementIds = includedElementIds
-    this.reloadModel(options)
+    this.reloadVim(options)
   }
 
   /**
-   * Reloads the current model with the same settings except it removes element filter
+   * Reloads the current vim with the same settings except it removes element filter
    */
   clearFilter () {
-    if (!this.modelSettings) throw new Error(NO_SCENE_LOADED)
-    const options = this.modelSettings.getOptions()
+    if (!this.vimSettings) throw new Error(NO_SCENE_LOADED)
+    const options = this.vimSettings.getOptions()
     options.elementIds = undefined
-    this.reloadModel(options)
+    this.reloadVim(options)
   }
 
   // TODO: Handle case where an element Id is not unique
@@ -264,7 +261,7 @@ export class Viewer {
       this.vimScene.vim.g3d,
       nodes
     )
-    geometry.applyMatrix4(this.modelSettings.getModelMatrix())
+    geometry.applyMatrix4(this.vimSettings.getMatrix())
     if (!geometry) {
       console.error(
         'Could not create geometry for element index: ' + elementIndex
@@ -359,9 +356,9 @@ export class Viewer {
   }
 
   /**
-   * Move the camera to frame the whole model
+   * Move the camera to frame the whole scene
    */
-  lookAtModel () {
+  lookAtScene () {
     this.camera.frameScene(this.renderer.getBoundingSphere())
   }
 
@@ -373,12 +370,12 @@ export class Viewer {
     this.camera.applyViewerSettings(this.settings)
   }
 
-  public ApplyModelSettings () {
-    this.environment.applyModelSettings(
-      this.modelSettings,
+  public ApplyVimSettings () {
+    this.environment.applyVimSettings(
+      this.vimSettings,
       this.renderer.getBoundingBox()
     )
-    this.camera.applyModelSettings(this.renderer.getBoundingSphere())
+    this.camera.applyVimSettings(this.renderer.getBoundingSphere())
   }
 
   private defaultOnClick (hit: HitTestResult) {
@@ -387,7 +384,7 @@ export class Viewer {
 
     this.selectByElementIndex(hit.elementIndex)
     const entity = this.vimScene.vim.getEntity(
-      Vim.tableElement,
+      Document.tableElement,
       hit.elementIndex
     )
     this.camera.setTarget(hit.position)

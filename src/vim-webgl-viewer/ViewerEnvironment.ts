@@ -1,5 +1,5 @@
 import * as THREE from 'three'
-import { ModelSettings, ViewerSettings } from './viewerSettings'
+import { VimSettings, ViewerSettings } from './viewerSettings'
 import { EnvironmentPlane } from './environmentPlane'
 
 /*
@@ -38,8 +38,8 @@ export class ViewerEnvironment {
     this.sunLight.intensity = settings.getSunlightIntensity()
   }
 
-  public applyModelSettings (settings: ModelSettings, box: THREE.Box3) {
+  public applyVimSettings (settings: VimSettings, box: THREE.Box3) {
     // Plane
-    this.plane.applyModelSettings(settings, box)
+    this.plane.applyVimSettings(settings, box)
   }
 }

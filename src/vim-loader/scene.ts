@@ -4,18 +4,18 @@ import * as vimGeometry from './geometry'
 import { MeshBuilder } from './mesh'
 
 /**
- * A model regroups many THREE.Meshes
+ * A Scene regroups many THREE.Meshes
  * It keep tracks of the global bounding box as Meshes are added
  * It keeps a map from g3d instance indices to THREE.Mesh and vice versa
  */
-export class Model {
+export class Scene {
   meshes: THREE.Mesh[] = []
   boundingBox: THREE.Box3 = new THREE.Box3()
-  InstanceIndexToThreeMesh: Map<number, [THREE.Mesh, number][]> = new Map()
-  ThreeMeshIdToInstance: Map<number, number[]> = new Map()
+  instanceToThreeMesh: Map<number, [THREE.Mesh, number][]> = new Map()
+  threeMeshIdToInstance: Map<number, number[]> = new Map()
 
   /**
-   * Add an instanced mesh to the model and recomputes fields as needed.
+   * Add an instanced mesh to the Scene and recomputes fields as needed.
    * @param mesh Is expected to have userData.instances = number[]
    * where numbers are the indices of the g3d instances that went into creating the mesh
    */
@@ -26,20 +26,20 @@ export class Model {
     }
 
     for (let i = 0; i < instances.length; i++) {
-      this.InstanceIndexToThreeMesh.set(instances[i], [[mesh, 0]])
+      this.instanceToThreeMesh.set(instances[i], [[mesh, 0]])
     }
 
     mesh.geometry.computeBoundingBox()
     const box = mesh.geometry.boundingBox!
     this.boundingBox = this.boundingBox?.union(box) ?? box.clone()
 
-    this.ThreeMeshIdToInstance.set(mesh.id, instances)
+    this.threeMeshIdToInstance.set(mesh.id, instances)
     this.meshes.push(mesh)
     return this
   }
 
   /**
-   * Add an instanced mesh to the model and recomputes fields as needed.
+   * Add an instanced mesh to the Scene and recomputes fields as needed.
    * @param mesh Is expected to have userData.instances = number[]
    * where numbers are the indices of the g3d instances that went into creating the mesh
    */
@@ -50,18 +50,18 @@ export class Model {
   }
 
   /**
-   * Creates a model from given mesh array. Keeps a reference to the array.
+   * Creates a Scene from given mesh array. Keeps a reference to the array.
    * @param meshes members are expected to have userData.instances = number[]
    * where numbers are the indices of the g3d instances that went into creating each mesh
    */
   static fromInstancedMeshes (meshes: THREE.InstancedMesh[]) {
-    const model = new Model()
+    const scene = new Scene()
 
     for (let m = 0; m < meshes.length; m++) {
-      model.registerInstancedMesh(meshes[m])
+      scene.registerInstancedMesh(meshes[m])
     }
-    model.meshes = meshes
-    return model
+    scene.meshes = meshes
+    return scene
   }
 
   private registerInstancedMesh (mesh: THREE.InstancedMesh) {
@@ -76,25 +76,25 @@ export class Model {
     }
 
     for (let i = 0; i < instances.length; i++) {
-      this.InstanceIndexToThreeMesh.set(instances[i], [[mesh, i]])
+      this.instanceToThreeMesh.set(instances[i], [[mesh, i]])
     }
     const box = this.computeIntancedMeshBoundingBox(mesh)!
     this.boundingBox = this.boundingBox?.union(box) ?? box.clone()
-    this.ThreeMeshIdToInstance.set(mesh.id, instances)
+    this.threeMeshIdToInstance.set(mesh.id, instances)
   }
 
   /**
-   * Adds the content of other model to this model and recomputes fields as needed.
+   * Adds the content of other Scene to this Scene and recomputes fields as needed.
    */
-  merge (other: Model) {
+  merge (other: Scene) {
     other.meshes.forEach((mesh) => this.meshes.push(mesh))
-    other.InstanceIndexToThreeMesh.forEach((value, key) => {
-      const values = this.InstanceIndexToThreeMesh.get(key) ?? []
+    other.instanceToThreeMesh.forEach((value, key) => {
+      const values = this.instanceToThreeMesh.get(key) ?? []
       value.forEach((pair) => values.push(pair))
-      this.InstanceIndexToThreeMesh.set(key, value)
+      this.instanceToThreeMesh.set(key, value)
     })
-    other.ThreeMeshIdToInstance.forEach((value, key) => {
-      this.ThreeMeshIdToInstance.set(key, value)
+    other.threeMeshIdToInstance.forEach((value, key) => {
+      this.threeMeshIdToInstance.set(key, value)
     })
     this.boundingBox =
       this.boundingBox?.union(other.boundingBox) ?? other.boundingBox.clone()
@@ -119,93 +119,93 @@ export class Model {
   }
 
   /**
-   * Creates a new Model from a g3d by merging mergeble meshes and instancing instantiable meshes
+   * Creates a new Scene from a g3d by merging mergeble meshes and instancing instantiable meshes
    * @param transparency Specify whether color is RBG or RGBA and whether material is opaque or transparent
-   * @param instances g3d instance indices to be included in the model. All if undefined.
+   * @param instances g3d instance indices to be included in the Scene. All if undefined.
    */
   static fromG3d (
     g3d: G3d,
     transparency: vimGeometry.TransparencyMode = 'all',
     instances: number[] | undefined = undefined
-  ): Model {
-    return createModelFromG3d(g3d, transparency, instances)
+  ): Scene {
+    return createSceneFromG3d(g3d, transparency, instances)
   }
 }
 
 /**
- * Creates a new Model from a g3d by merging mergeble meshes and instancing instantiable meshes
+ * Creates a new Scene from a g3d by merging mergeble meshes and instancing instantiable meshes
  * @param transparency Specify whether color is RBG or RGBA and whether material is opaque or transparent
- * @param instances g3d instance indices to be included in the model. All if undefined.
+ * @param instances g3d instance indices to be included in the Scene. All if undefined.
  */
-export function createModelFromG3d (
+export function createSceneFromG3d (
   g3d: G3d,
   transparency: vimGeometry.TransparencyMode = 'all',
   instances: number[] | undefined = undefined
-): Model {
-  const model = new Model()
+): Scene {
+  const scene = new Scene()
   const builder = new MeshBuilder()
 
   // Add shared geometry
-  const shared = createModelFromInstanciabledMeshes(
+  const shared = createSceneFromInstanciabledMeshes(
     g3d,
     transparency,
     instances,
     builder
   )
-  model.merge(shared)
+  scene.merge(shared)
 
   // Add opaque geometry
   if (transparency !== 'transparentOnly') {
-    const opaque = createModelFromMergeableMeshes(
+    const opaque = createSceneFromMergeableMeshes(
       g3d,
       transparency === 'allAsOpaque' ? 'allAsOpaque' : 'opaqueOnly',
       instances,
       builder
     )
-    model.merge(opaque)
+    scene.merge(opaque)
   }
 
   // Add transparent geometry
   if (vimGeometry.transparencyRequiresAlpha(transparency)) {
-    const transparent = createModelFromMergeableMeshes(
+    const transparent = createSceneFromMergeableMeshes(
       g3d,
       'transparentOnly',
       instances,
       builder
     )
-    model.merge(transparent)
+    scene.merge(transparent)
   }
 
-  return model
+  return scene
 }
 /**
- * Creates a Model from instantiable meshes from the g3d
+ * Creates a Scene from instantiable meshes from the g3d
  * @param transparency Specify whether color is RBG or RGBA and whether material is opaque or transparent
- * @param instances g3d instance indices to be included in the model. All if undefined.
+ * @param instances g3d instance indices to be included in the Scene. All if undefined.
  * @param builder optional builder to reuse the same materials
  */
-export function createModelFromInstanciabledMeshes (
+export function createSceneFromInstanciabledMeshes (
   g3d: G3d,
   transparency: vimGeometry.TransparencyMode,
   instances: number[] | undefined = undefined,
   builder: MeshBuilder = new MeshBuilder()
 ) {
   const meshes = builder.createInstancedMeshes(g3d, transparency, instances)
-  return Model.fromInstancedMeshes(meshes)
+  return Scene.fromInstancedMeshes(meshes)
 }
 // g3d instance indices to be included in the merged mesh. All mergeable meshes if undefined.
 /**
- * Creates a Model from mergeable meshes from the g3d
+ * Creates a Scene from mergeable meshes from the g3d
  * @param transparency Specify whether color is RBG or RGBA and whether material is opaque or transparent
- * @param instances g3d instance indices to be included in the model. All if undefined.
+ * @param instances g3d instance indices to be included in the Scene. All if undefined.
  * @param builder optional builder to reuse the same materials
  */
-export function createModelFromMergeableMeshes (
+export function createSceneFromMergeableMeshes (
   g3d: G3d,
   transparency: vimGeometry.TransparencyMode,
   instances: number[] | undefined = undefined,
   builder: MeshBuilder = new MeshBuilder()
 ) {
   const mesh = builder.createMergedMesh(g3d, transparency, instances)
-  return new Model().addMergedMesh(mesh)
+  return new Scene().addMergedMesh(mesh)
 }

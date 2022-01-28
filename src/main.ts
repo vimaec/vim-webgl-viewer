@@ -3,8 +3,8 @@ import { Viewer } from './vim-webgl-viewer/viewer'
 
 // Parse URL
 const params = new URLSearchParams(window.location.search)
-const url = params.has('model')
-  ? params.get('model')
+const url = params.has('vim')
+  ? params.get('vim')
   : 'https://vim.azureedge.net/samples/residence.vim'
 
 let transparency: geometry.TransparencyMode = 'all'
@@ -25,10 +25,9 @@ const viewer = new Viewer({
   }
 })
 
-// Load Model
-viewer.loadModel(
+viewer.loadVim(
   {
-    url: url,
+    url: 'skanska.vim',
     rotation: { x: 270, y: 0, z: 0 },
     transparency: transparency
   },

@@ -4,18 +4,18 @@
 
 import * as THREE from 'three'
 
-import { BimModel } from './bimModel'
 import { Vim } from './vim'
-import { Model } from './model'
+import { Document } from './document'
+import { Scene } from './scene'
 import { TransparencyMode } from './geometry'
 
-export class VIMLoader {
+export class VimLoader {
   // Loads the VIM from a URL
   // Download should be handled without three for Parser and Loader to be divided properly
   loadFromUrl (
     url: string,
     transparency: TransparencyMode = 'all',
-    onLoad?: (response: BimModel) => void,
+    onLoad?: (response: Vim) => void,
     onProgress?: (progress: ProgressEvent | 'processing') => void,
     onError?: (event: ErrorEvent) => void
   ) {
@@ -37,7 +37,7 @@ export class VIMLoader {
           return
         }
         onProgress?.('processing')
-        const vim = Vim.parseFromArrayBuffer(data)
+        const vim = Document.parseFromArrayBuffer(data)
         const scene = this.loadFromVim(vim, transparency)
         onLoad?.(scene)
       },
@@ -53,16 +53,16 @@ export class VIMLoader {
     transparency: TransparencyMode,
     instances?: number[]
   ) {
-    const vim = Vim.parseFromArrayBuffer(data)
+    const vim = Document.parseFromArrayBuffer(data)
     this.loadFromVim(vim, transparency, instances)
   }
 
   loadFromVim (
-    vim: Vim,
+    vim: Document,
     transparency: TransparencyMode,
     instances?: number[]
-  ): BimModel {
-    const model = Model.fromG3d(vim.g3d, transparency, instances)
-    return new BimModel(vim, model)
+  ): Vim {
+    const scene = Scene.fromG3d(vim.g3d, transparency, instances)
+    return new Vim(vim, scene)
   }
 }

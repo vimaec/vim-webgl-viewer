@@ -54,7 +54,7 @@ export class CameraGizmo {
     this.fov = settings.getCameraFov()
   }
 
-  applyModelSettings (factor: number) {
+  applyVimSettings (factor: number) {
     this.setScale((Math.tan((DEG2RAD * this.fov) / 2) * factor) / 10)
   }
 
