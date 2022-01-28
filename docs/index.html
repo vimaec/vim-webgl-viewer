@@ -1,6 +1,3 @@
-<!--
-    Do not edit: Auto-generated from index.mustache
--->
 <!-- 
     Copyright (c) 2021 VIMaec LLC 
     This code is licensed under MIT license 
@@ -27,54 +24,46 @@
     <script src="https://unpkg.com/three@0.133.1/build/three.min.js"></script>
     <script src="https://unpkg.com/vim-webgl-viewer"></script>
     <script>
-        const params = new URLSearchParams(window.location.search);
-        const url = params.has('model')
-            ? params.get('model')
-            : 'https://vim.azureedge.net/samples/residence.vim';
+      // Parse URL
+      const params = new URLSearchParams(window.location.search)
+      const url = params.has('vim')
+        ? params.get('vim')
+        : 'https://vim.azureedge.net/samples/residence.vim'
 
-        let transparency = true
-        if (params.has('transparency')) {
-          const t = params.get('transparency')
-          if (t === 'true') transparency = true
-          if (t === 'opaque') transparency = 'opaque'
-          if (t === 'false') transparency = false
-          throw new Error('transparency argument must be one of {true, opaque, false}')
+      let transparency = 'all'
+      if (params.has('transparency')) {
+        const t = params.get('transparency')
+        transparency = geometry.transparencyIsValid(t) ? t : 'all'
+      }
+
+      // Create Viewer
+      const viewer = new vim.Viewer({
+        camera: { showGizmo: true },
+        plane: {
+          show: true,
+          texture:
+            'https://vimdevelopment01storage.blob.core.windows.net/textures/vim-floor-soft.png',
+          opacity: 1,
+          size: 5
         }
+      })
 
-        const viewer = new vim.Viewer({
-          plane: {
-            show: true,
-            texture:
-              'https://vimdevelopment01storage.blob.core.windows.net/textures/vim-floor-soft.png',
-            opacity: 1,
-            size: 5
-          },
-          onClick: (viewer, hit) => {
-              console.log(hit)
-              viewer.selectByElementIndex(hit.elementIndex)
-              const entity = viewer.vimScene.vim.getEntity(
-                vim.Vim.tableElement,
-                hit.elementIndex
-              )
-              console.log(entity)
-            }
-        })
+      viewer.loadVim(
+        url,
+        {
+          rotation: { x: 270, y: 0, z: 0 },
+          transparency: transparency
+        },
+        (result) => {},
+        (progress) => {
+          if (progress === 'processing') console.log('Processing')
+          else console.log(`Downloading: ${(progress.loaded) / 1000000} MB`)
+        },
+        (error) => console.error(`Failed to load vim: ${error}`)
+      )
 
-        viewer.loadModel(
-          {
-            url: url,
-            rotation: { x: 270 },
-            transparency: transparency
-          },
-          (vim) => console.log('Callback: Viewer Ready!'),
-          (progress) => {
-            if (progress === 'processing') console.log('Callback: Processing')
-            else {
-              console.log(`Callback: Downloading: ${progress.loaded / 1000000} MB`)
-            }
-          },
-          (error) => console.error('Callback: Error: ' + error.message)
-        )
+      globalThis.viewer = viewer
+
     </script> 
 </body>
 </html>
