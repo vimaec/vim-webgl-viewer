@@ -88,13 +88,17 @@ export class Viewer {
   }
 
   /**
-   * Load a vim into the viewer from local or remote location
+   * Loads a vim into the viewer from local or remote location
+   * @param source if string downloads the vim from url then loads it, if ArrayBuffer directly loads the vim
    * @param options vim options
    * @param onLoad callback on vim loaded
    * @param onProgress callback on download progresss and on processing started
    * @param onError callback on error
    */
   public loadVim (
+    source:
+      | string
+      | ArrayBuffer = 'https://vim.azureedge.net/samples/residence.vim',
     options?: Partial<VimOptions>,
     onLoad?: (response: Vim) => void,
     onProgress?: (request: ProgressEvent | 'processing') => void,
@@ -106,27 +110,37 @@ export class Viewer {
 
     const settings = new VimSettings(options)
 
-    new VimLoader().loadFromUrl(
-      settings.getURL(),
-      settings.getTransparency(),
-      (vim) => {
-        // Hack to support element filter on first load
-        // This is required because the vimscene required to map elements <-> nodes does not exist on first load
-        const filter = settings.getElementIdsFilter()
-        if (filter) this.filter(filter)
-        else this.onVimLoaded(vim, settings)
-        onLoad?.(vim)
-      },
-      (progress) => {
-        onProgress?.(progress)
-      },
-      (error) => {
-        this.vimSettings = undefined
-        this.vimScene = undefined
-        onError?.(error)
-      }
-    )
+    const finish = (vim: Vim) => {
+      const filter = settings.getElementIdsFilter()
+      if (filter) this.filter(filter)
+      else this.onVimLoaded(vim, settings)
+      onLoad?.(vim)
+    }
+
+    if (typeof source === 'string') {
+      new VimLoader().loadFromUrl(
+        source,
+        settings.getTransparency(),
+        (vim) => finish(vim),
+        (progress) => {
+          onProgress?.(progress)
+        },
+        (error) => {
+          this.vimSettings = undefined
+          this.vimScene = undefined
+          onError?.(error)
+        }
+      )
+    } else {
+      const vim = new VimLoader().loadFromArrayBuffer(
+        source,
+        settings.getTransparency()
+      )
+      finish(vim)
+    }
   }
+
+  private loadFromBuffer () {}
 
   private onVimLoaded (vim: Vim, settings: VimSettings) {
     this.vimScene = vim

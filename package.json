@@ -23,7 +23,7 @@
     "build": "vite build && npm run declarations",
     "bump-dev": "npm version prerelease --preid=dev",
     "publish-dev": "npm publish --tag=dev",
-    "serve-docs": "http-server ./docs -o",
+    "serve-docs": "http-server ./docs -o --host",
     "serve-dist": "http-server ./dist -o --host",
     "serve-root": "http-server -o",
     "test-dist": "npm run build && npm run serve-dist",

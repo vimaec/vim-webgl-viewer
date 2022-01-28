@@ -26,8 +26,8 @@ const viewer = new Viewer({
 })
 
 viewer.loadVim(
+  url,
   {
-    url: url,
     rotation: { x: 270, y: 0, z: 0 },
     transparency: transparency
   },

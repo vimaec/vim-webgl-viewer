@@ -125,10 +125,6 @@ export type ViewerOptions = {
  */
 export type VimOptions = {
   /**
-   * Local or remote url of vim to load
-   */
-  url: string
-  /**
    * Position offset for the vim
    */
   position: Vector3
@@ -158,7 +154,6 @@ export class VimSettings {
 
   constructor (options?: Partial<VimOptions>) {
     const fallback: VimOptions = {
-      url: 'https://vim.azureedge.net/samples/residence.vim',
       position: { x: 0, y: 0, z: 0 },
       rotation: { x: 0, y: 0, z: 0 },
       scale: 0.01,
@@ -173,7 +168,6 @@ export class VimSettings {
   }
 
   getOptions = () => cloneDeep(this.options) as VimOptions
-  getURL = () => this.options.url
 
   getPosition = () => toVec(this.options.position)
   getRotation = () => toQuaternion(this.options.rotation)

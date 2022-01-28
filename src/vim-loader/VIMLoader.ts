@@ -57,7 +57,7 @@ export class VimLoader {
     instances?: number[]
   ) {
     const vim = Document.parseFromArrayBuffer(data)
-    this.loadFromVim(vim, transparency, instances)
+    return this.loadFromVim(vim, transparency, instances)
   }
 
   loadFromVim (
