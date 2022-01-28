@@ -37,7 +37,7 @@
       }
 
       // Create Viewer
-      const viewer = new Viewer({
+      const viewer = new vim.Viewer({
         camera: { showGizmo: true },
         plane: {
           show: true,
@@ -50,7 +50,7 @@
 
       viewer.loadVim(
         {
-          url: 'skanska.vim',
+          url: url,
           rotation: { x: 270, y: 0, z: 0 },
           transparency: transparency
         },
