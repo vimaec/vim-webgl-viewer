@@ -16,18 +16,16 @@ import {
 
 import { ViewerCamera } from './viewerCamera'
 import { ViewerInput } from './viewerInput'
-import { VimLoader } from '../vim-loader/vimLoader'
-
 import { Selection } from './selection'
 import { ViewerEnvironment } from './viewerEnvironment'
 import { ViewerRenderer } from './viewerRenderer'
+import { HitTestResult } from './hitTester'
 
 // loader
+import { VimLoader } from '../vim-loader/vimLoader'
 import { Vim } from '../vim-loader/vim'
 import * as g3dToGeometry from '../vim-loader/geometry'
 import { Document } from '../vim-webgl-viewer'
-
-import { HitTestResult } from './hitTester'
 
 export type ViewerState =
   | 'Uninitialized'
