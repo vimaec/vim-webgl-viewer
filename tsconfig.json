@@ -8,5 +8,6 @@
     "sourceMap": true,
     "lib": ["esnext", "dom"],
     "allowSyntheticDefaultImports": true
-  }
+  },
+  "exclude": ["src/main.ts, src/vim-webgl-viewer-public.ts"]
 }

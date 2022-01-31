@@ -1,12 +1,11 @@
+/**
+ * @module viw-webgl-viewer
+ */
+
 import * as THREE from 'three'
-import { ModelSettings, ViewerSettings } from './viewerSettings'
+import { VimSettings, ViewerSettings } from './viewerSettings'
 import { EnvironmentPlane } from './environmentPlane'
 
-/*
-Vim Viewer
-Copyright VIMaec LLC, 2020
-Licensed under the terms of the MIT License
-*/
 export class ViewerEnvironment {
   plane: EnvironmentPlane
   skyLight: THREE.HemisphereLight
@@ -38,8 +37,8 @@ export class ViewerEnvironment {
     this.sunLight.intensity = settings.getSunlightIntensity()
   }
 
-  public applyModelSettings (settings: ModelSettings, box: THREE.Box3) {
+  public applyVimSettings (settings: VimSettings, box: THREE.Box3) {
     // Plane
-    this.plane.applyModelSettings(settings, box)
+    this.plane.applyVimSettings(settings, box)
   }
 }

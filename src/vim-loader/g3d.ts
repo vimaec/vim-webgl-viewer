@@ -1,3 +1,12 @@
+/**
+ * G3D is a simple, efficient, generic binary format for storing and transmitting geometry.
+ * The G3D format is designed to be used either as a serialization format or as an in-memory data structure.
+ * See https://github.com/vimaec/g3d
+ * @module vim-loader
+ */
+
+import { BFast } from './bfast'
+
 class AttributeDescriptor {
   // original descriptor string
   description: string
@@ -110,7 +119,12 @@ class Attribute {
   }
 }
 
-class G3d {
+/**
+ * G3D is a simple, efficient, generic binary format for storing and transmitting geometry.
+ * The G3D format is designed to be used either as a serialization format or as an in-memory data structure.
+ * See https://github.com/vimaec/g3d
+ */
+class AbstractG3d {
   meta: string
   attributes: Attribute[]
 
@@ -127,10 +141,42 @@ class G3d {
     }
     return null
   }
-}
 
+  // Given a BFAST container (header/names/buffers) constructs a G3D data structure
+  static fromBfast (bfast: BFast): AbstractG3d {
+    if (bfast.buffers.length < 2) {
+      throw new Error('G3D requires at least two BFast buffers')
+    }
+
+    // Parse first buffer as Meta
+    const metaBuffer = bfast.buffers[0]
+    if (bfast.names[0] !== 'meta') {
+      throw new Error(
+        "First G3D buffer must be named 'meta', but was named: " +
+          bfast.names[0]
+      )
+    }
+    const meta = new TextDecoder('utf-8').decode(metaBuffer)
+
+    // Parse remaining buffers as Attributes
+    const attributes: Attribute[] = []
+    const nDescriptors = bfast.buffers.length - 1
+    for (let i = 0; i < nDescriptors; ++i) {
+      const attribute = Attribute.fromString(
+        bfast.names[i + 1],
+        bfast.buffers[i + 1]
+      )
+      attributes.push(attribute)
+    }
+
+    return new AbstractG3d(meta, attributes)
+  }
+}
+/**
+ * See https://github.com/vimaec/vim#vim-geometry-attributes
+ */
 class VimAttributes {
-  static position = 'g3d:vertex:position:0:float32:3'
+  static positions = 'g3d:vertex:position:0:float32:3'
   static indices = 'g3d:corner:index:0:int32:1'
   static instanceMeshes = 'g3d:instance:mesh:0:int32:1'
   static instanceTransforms = 'g3d:instance:transform:0:float32:16'
@@ -140,28 +186,42 @@ class VimAttributes {
   static materialColors = 'g3d:material:color:0:float32:4'
 }
 
-class VimG3d {
+/**
+ * A G3d with specific attributes according to the VIM format specification.
+ * See https://github.com/vimaec/vim#vim-geometry-attributes for the vim specification.
+ * See https://github.com/vimaec/g3d for the g3d specification.
+ */
+export class G3d {
   positions: Float32Array
-  indices: Int32Array
+  indices: Uint32Array
+
   instanceMeshes: Int32Array
   instanceTransforms: Float32Array
   meshSubmeshes: Int32Array
   submeshIndexOffset: Int32Array
   submeshMaterial: Int32Array
   materialColors: Float32Array
-  rawG3d: G3d
+
+  // computed fields
+  meshVertexOffsets: Int32Array
+  meshInstances: Array<Array<number>>
+  meshTransparent: Array<boolean>
+
+  rawG3d: AbstractG3d
 
   matrixArity = 16
   colorArity = 4
   positionArity = 3
+  defaultColor = new Float32Array([1, 1, 1, 1])
 
-  constructor (g3d: G3d) {
+  constructor (g3d: AbstractG3d) {
     this.rawG3d = g3d
 
-    this.positions = g3d.findAttribute(VimAttributes.position)
+    this.positions = g3d.findAttribute(VimAttributes.positions)
       ?.data as Float32Array
 
-    this.indices = g3d.findAttribute(VimAttributes.indices)?.data as Int32Array
+    const tmp = g3d.findAttribute(VimAttributes.indices)?.data
+    this.indices = new Uint32Array(tmp.buffer, tmp.byteOffset, tmp.length)
 
     this.meshSubmeshes = g3d.findAttribute(VimAttributes.meshSubmeshes)
       ?.data as Int32Array
@@ -182,72 +242,162 @@ class VimG3d {
     this.instanceTransforms = g3d.findAttribute(
       VimAttributes.instanceTransforms
     )?.data as Float32Array
+
+    this.meshVertexOffsets = this.computeMeshVertexOffsets()
+    this.rebaseIndices()
+    this.meshInstances = this.computeMeshInstances()
+    this.meshTransparent = this.computeMeshIsTransparent()
   }
 
-  getInstanceCount = () => this.instanceMeshes.length
+  private computeMeshVertexOffsets (): Int32Array {
+    const result = new Int32Array(this.getMeshCount())
+    for (let m = 0; m < result.length; m++) {
+      let min = Number.MAX_SAFE_INTEGER
+      const start = this.getMeshIndexStart(m)
+      const end = this.getMeshIndexEnd(m)
+      for (let i = start; i < end; i++) {
+        min = Math.min(min, this.indices[i])
+      }
+      result[m] = min
+    }
+    return result
+  }
+
+  private rebaseIndices () {
+    const count = this.getMeshCount()
+    for (let m = 0; m < count; m++) {
+      const offset = this.meshVertexOffsets[m]
+      const start = this.getMeshIndexStart(m)
+      const end = this.getMeshIndexEnd(m)
+      for (let i = start; i < end; i++) {
+        this.indices[i] -= offset
+      }
+    }
+  }
+
+  private computeMeshInstances = (): number[][] => {
+    const result: number[][] = []
+
+    for (let i = 0; i < this.instanceMeshes.length; i++) {
+      const mesh = this.instanceMeshes[i]
+      if (mesh < 0) continue
+      const instanceIndices = result[mesh]
+      if (instanceIndices) instanceIndices.push(i)
+      else result[mesh] = [i]
+    }
+
+    return result
+  }
+
+  private computeMeshIsTransparent (): Array<boolean> {
+    const result = new Array<boolean>(this.getMeshCount())
+    for (let m = 0; m < result.length; m++) {
+      const subStart = this.getMeshSubmeshStart(m)
+      const subEnd = this.getMeshSubmeshEnd(m)
+      // const [subStart, subEnd] = this.getMeshSubmeshRange(m)
+      for (let s = subStart; s < subEnd; s++) {
+        const material = this.submeshMaterial[s]
+        const alpha =
+          this.materialColors[material * this.colorArity + this.colorArity - 1]
+        result[m] = result[m] || alpha < 1
+      }
+    }
+    return result
+  }
+
+  // ------------- All -----------------
+  getVertexCount = () => this.positions.length / this.positionArity
+
+  // ------------- Meshes -----------------
   getMeshCount = () => this.meshSubmeshes.length
 
-  getMeshSubmeshRange (mesh: number): [number, number] {
-    const start = this.meshSubmeshes[mesh]
-    const end =
-      mesh < this.meshSubmeshes.length - 1
-        ? this.meshSubmeshes[mesh + 1]
-        : this.submeshIndexOffset.length
-    return [start, end]
+  getMeshIndexStart (mesh: number): number {
+    const subStart = this.getMeshSubmeshStart(mesh)
+    return this.getSubmeshIndexStart(subStart)
   }
 
-  getSubmeshIndexRange (submesh: number): [number, number] {
-    const start = this.submeshIndexOffset[submesh]
-    const end =
-      submesh < this.submeshIndexOffset.length - 1
-        ? this.submeshIndexOffset[submesh + 1]
-        : this.indices.length
-
-    return [start, end]
+  getMeshIndexEnd (mesh: number): number {
+    const subEnd = this.getMeshSubmeshEnd(mesh)
+    return this.getSubmeshIndexEnd(subEnd - 1)
   }
 
-  getTransformMatrixAsArray (tranformIndex: number): Float32Array {
+  getMeshIndexCount (mesh: number): number {
+    return this.getMeshIndexEnd(mesh) - this.getMeshIndexStart(mesh)
+  }
+
+  getMeshVertexStart (mesh: number): number {
+    return this.meshVertexOffsets[mesh]
+  }
+
+  getMeshVertexEnd (mesh: number): number {
+    return mesh < this.meshVertexOffsets.length - 1
+      ? this.meshVertexOffsets[mesh + 1]
+      : this.getVertexCount()
+  }
+
+  getMeshVertexCount (mesh: number): number {
+    return this.getMeshVertexEnd(mesh) - this.getMeshVertexStart(mesh)
+  }
+
+  getMeshSubmeshStart (mesh: number): number {
+    return this.meshSubmeshes[mesh]
+  }
+
+  getMeshSubmeshEnd (mesh: number): number {
+    return mesh < this.meshSubmeshes.length - 1
+      ? this.meshSubmeshes[mesh + 1]
+      : this.submeshIndexOffset.length
+  }
+
+  getMeshSubmeshCount (mesh: number): number {
+    return this.getMeshSubmeshEnd(mesh) - this.getMeshSubmeshStart(mesh)
+  }
+
+  // ------------- Submeshes -----------------
+
+  getSubmeshIndexStart (submesh: number): number {
+    return this.submeshIndexOffset[submesh]
+  }
+
+  getSubmeshIndexEnd (submesh: number): number {
+    return submesh < this.submeshIndexOffset.length - 1
+      ? this.submeshIndexOffset[submesh + 1]
+      : this.indices.length
+  }
+
+  getSubmeshIndexCount (submesh: number): number {
+    return this.getSubmeshIndexEnd(submesh) - this.getSubmeshIndexStart(submesh)
+  }
+
+  getSubmeshColor (submesh: number): Float32Array {
+    return this.getMaterialColor(this.submeshMaterial[submesh])
+  }
+
+  // ------------- Instances -----------------
+  getInstanceCount = () => this.instanceMeshes.length
+
+  getInstanceTransform (instance: number): Float32Array {
     return this.instanceTransforms.subarray(
-      tranformIndex * this.matrixArity,
-      (tranformIndex + 1) * this.matrixArity
+      instance * this.matrixArity,
+      (instance + 1) * this.matrixArity
     )
   }
 
-  getMeshReferenceCounts = (): Int32Array => {
-    const meshRefCounts = new Int32Array(this.getMeshCount())
-    for (let i = 0; i < this.instanceMeshes.length; ++i) {
-      const mesh = this.instanceMeshes[i]
-      if (mesh < 0) continue
-      meshRefCounts[mesh]++
-    }
-    return meshRefCounts
+  // ------------- Material -----------------
+
+  getMaterialCount = () => this.materialColors.length / this.colorArity
+
+  getMaterialColor (material: number): Float32Array {
+    if (material < 0) return this.defaultColor
+    return this.materialColors.subarray(
+      material * this.colorArity,
+      (material + 1) * this.colorArity
+    )
   }
 
-  /**
-   * Creates a map to go from mesh index to instance indices.
-   * Note: many instances can share the same mesh.
-   * @param instances if defined, return array will only contain values for given instances.
-   * @returns a two dimensional such that array[meshIndex] = {instanceIndex1, instanceIndex2, ... }.
-   */
-  buildMeshIndexToInstanceIndicesMap = (instances?: number[]): number[][] => {
-    const meshIndexToInstanceIndices: number[][] = []
-    const getOrAdd = (instance) => {
-      const mesh = this.instanceMeshes[instance]
-      if (mesh < 0) return
-      const instanceIndices = meshIndexToInstanceIndices[mesh]
-      if (instanceIndices) instanceIndices.push(instance)
-      else meshIndexToInstanceIndices[mesh] = [instance]
-    }
-
-    if (instances) {
-      instances.forEach(getOrAdd)
-    } else {
-      for (let i = 0; i < this.instanceMeshes.length; i++) {
-        getOrAdd(i)
-      }
-    }
-
-    return meshIndexToInstanceIndices
+  static fromBfast (bfast: BFast): G3d {
+    const base = AbstractG3d.fromBfast(bfast)
+    return new G3d(base)
   }
 
   validate () {
@@ -359,5 +509,3 @@ class VimG3d {
     }
   }
 }
-
-export { VimG3d, G3d, Attribute, AttributeDescriptor }

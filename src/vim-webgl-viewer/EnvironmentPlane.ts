@@ -1,5 +1,9 @@
+/**
+ * @module viw-webgl-viewer
+ */
+
 import * as THREE from 'three'
-import { ModelSettings, ViewerSettings } from './viewerSettings'
+import { VimSettings, ViewerSettings } from './viewerSettings'
 
 export class EnvironmentPlane {
   source: string
@@ -28,12 +32,12 @@ export class EnvironmentPlane {
     this.material.opacity = settings.getPlaneOpacity()
   }
 
-  applyModelSettings (settings: ModelSettings, box: THREE.Box3) {
+  applyVimSettings (settings: VimSettings, box: THREE.Box3) {
     // Position
     const center = box.getCenter(new THREE.Vector3())
     const position = new THREE.Vector3(
       center.x,
-      box.min.y - settings.getModelScale().y,
+      box.min.y - settings.getScale().y,
       center.z
     )
     this.mesh.position.copy(position)

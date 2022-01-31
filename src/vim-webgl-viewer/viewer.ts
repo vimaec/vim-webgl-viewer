@@ -1,34 +1,31 @@
 /**
  @author VIM / https://vimaec.com
+ @module viw-webgl-viewer
 */
 
 // external
 import * as THREE from 'three'
-import * as BufferGeometryUtils from 'three/examples/jsm/utils/BufferGeometryUtils'
 
 // internal
 import {
-  ModelSettings,
+  VimSettings,
   ViewerSettings,
-  ModelOptions,
+  VimOptions,
   ViewerOptions
 } from './viewerSettings'
+
 import { ViewerCamera } from './viewerCamera'
 import { ViewerInput } from './viewerInput'
-import { VIMLoader, BufferGeometryBuilder } from '../vim-loader/VIMLoader'
-
 import { Selection } from './selection'
 import { ViewerEnvironment } from './viewerEnvironment'
 import { ViewerRenderer } from './viewerRenderer'
+import { HitTestResult } from './hitTester'
 
 // loader
-import { VimScene } from '../vim-loader/vimScene'
-import { HitTestResult } from './hitTester'
-import { Vim } from '../vim-webgl-viewer'
-
-// Module Exports
-export { VimParser } from '../vim-loader/vimParser'
-export { Vim } from '../vim-loader/vim'
+import { VimLoader } from '../vim-loader/vimLoader'
+import { Vim } from '../vim-loader/vim'
+import * as g3dToGeometry from '../vim-loader/geometry'
+import { Document } from '../vim-webgl-viewer'
 
 export type ViewerState =
   | 'Uninitialized'
@@ -37,7 +34,7 @@ export type ViewerState =
   | [state: 'Error', error: ErrorEvent]
   | 'Ready'
 
-const NO_SCENE_LOADED = 'No model loaded in viewer. Ignoring'
+const NO_SCENE_LOADED = 'No vim loaded in viewer. Ignoring'
 
 export class Viewer {
   settings: ViewerSettings
@@ -49,10 +46,15 @@ export class Viewer {
   controls: ViewerInput
 
   // State
-  modelSettings: ModelSettings | undefined
-  vimScene: VimScene | undefined
+  vimSettings: VimSettings | undefined
+  vimScene: Vim | undefined
   state: ViewerState = 'Uninitialized'
   static stateChangeEvent = 'viewerStateChangedEvent'
+
+  /**
+   * Callback for on mouse click. Replace it to override or combine
+   * default behaviour with your custom logic.
+   */
   public onMouseClick: (hit: HitTestResult) => void
 
   constructor (options?: Partial<ViewerOptions>) {
@@ -86,79 +88,77 @@ export class Viewer {
     const timeDelta = this.renderer.clock.getDelta()
     this.camera.frameUpdate(timeDelta)
 
-    // Model
-    this.renderer.render()
+    // Rendering
+    if (this.vimScene) this.renderer.render()
   }
 
   /**
-   * Load a vim model into the viewer from local or remote location
-   * @param options model options
-   * @param onLoad callback on model loaded
+   * Loads a vim into the viewer from local or remote location
+   * @param source if string downloads the vim from url then loads it, if ArrayBuffer directly loads the vim
+   * @param options vim options
+   * @param onLoad callback on vim loaded
    * @param onProgress callback on download progresss and on processing started
    * @param onError callback on error
    */
-  public loadModel (
-    options?: Partial<ModelOptions>,
-    onLoad?: (response: VimScene) => void,
+  public loadVim (
+    source:
+      | string
+      | ArrayBuffer = 'https://vim.azureedge.net/samples/residence.vim',
+    options?: Partial<VimOptions>,
+    onLoad?: (response: Vim) => void,
     onProgress?: (request: ProgressEvent | 'processing') => void,
     onError?: (event: ErrorEvent) => void
   ) {
-    if (this.modelSettings) {
-      throw new Error('There is already a model loaded or loading')
+    if (this.vimSettings) {
+      throw new Error('There is already a vim loaded or loading')
     }
 
-    const settings = new ModelSettings(options)
+    const settings = new VimSettings(options)
 
-    new VIMLoader().loadFromUrl(
-      settings.getURL(),
-      (vim) => {
-        // Hack to support element filter on first load
-        // This is required because the vimscene required to map elements <-> nodes does not exist on first load
-        this.modelSettings = settings
-        this.vimScene = vim
-        this.reloadModel(settings.getOptions())
-        this.setState('Ready')
-        onLoad?.(vim)
-      },
-      (progress) => {
-        this.setState(
-          progress === 'processing'
-            ? 'Processing'
-            : ['Downloading', progress?.loaded ?? 0]
-        )
-        onProgress?.(progress)
-      },
-      (error) => {
-        this.modelSettings = undefined
-        this.vimScene = undefined
-        this.setState(['Error', error])
-        onError?.(error)
-      }
-    )
+    const finish = (vim: Vim) => {
+      const filter = settings.getElementIdsFilter()
+      if (filter) this.filter(filter)
+      else this.onVimLoaded(vim, settings)
+      onLoad?.(vim)
+    }
+
+    if (typeof source === 'string') {
+      new VimLoader().loadFromUrl(
+        source,
+        settings.getTransparency(),
+        (vim) => finish(vim),
+        (progress) => {
+          onProgress?.(progress)
+        },
+        (error) => {
+          this.vimSettings = undefined
+          this.vimScene = undefined
+          onError?.(error)
+        }
+      )
+    } else {
+      const vim = new VimLoader().loadFromArrayBuffer(
+        source,
+        settings.getTransparency()
+      )
+      finish(vim)
+    }
   }
 
-  private onVimLoaded (vim: VimScene, settings: ModelSettings) {
+  private onVimLoaded (vim: Vim, settings: VimSettings) {
     this.vimScene = vim
-    this.modelSettings = settings
+    this.vimSettings = settings
 
-    const matrix = this.modelSettings.getModelMatrix()
+    const matrix = this.vimSettings.getMatrix()
 
-    // Model
-    this.renderer.addModel(vim.geometry)
+    // Scene
+    this.renderer.addScene(vim.scene)
     this.renderer.applyMatrix4(matrix)
     this.renderer.render()
 
-    this.lookAtModel()
-    this.ApplyModelSettings()
-  }
-
-  private setState = (state: ViewerState) => {
-    this.state = state
-    const event = new CustomEvent(Viewer.stateChangeEvent, {
-      detail: this.state,
-      bubbles: true
-    })
-    this.renderer.canvas.dispatchEvent(event)
+    this.lookAtScene()
+    this.ApplyVimSettings()
+    this.animate()
   }
 
   private static getOrCreateCanvas (canvasId?: string) {
@@ -174,49 +174,57 @@ export class Viewer {
   }
 
   /**
-   * Unload existing model to get ready to load a new model
+   * Unload existing vim to get ready to load a new vim
    */
-  unloadModel () {
+  unloadVim () {
     this.vimScene = undefined
-    this.modelSettings = undefined
-    this.renderer.clearModels()
+    this.vimSettings = undefined
+    this.renderer.clearScene()
     this.selection.clear()
-    this.setState('Uninitialized')
   }
 
   /**
-   * Unload existing model and reloads it without redownloading it
-   * @param options full model options, same as for loadModel
+   * Unload existing vim and reloads it without redownloading it
+   * @param options full vim options, same as for loadVim
    */
-  reloadModel (options: ModelOptions) {
+  reloadVim (options: VimOptions) {
     if (!this.vimScene) throw new Error(NO_SCENE_LOADED)
 
-    const settings = new ModelSettings(options)
+    const settings = new VimSettings(options)
     // Go from Element Ids -> Node Indices
     const elementIds = settings.getElementIdsFilter()
     const instanceIndices = elementIds
       ? this.vimScene.getInstanceIndicesFromElementIds(elementIds)
       : undefined
 
-    const scene = new VIMLoader().loadFromVim(
+    const scene = new VimLoader().loadFromVim(
       this.vimScene.vim,
       settings.getTransparency(),
       instanceIndices
     )
-    this.unloadModel()
+    this.unloadVim()
     this.onVimLoaded(scene, settings)
-    this.setState('Ready')
   }
 
   /**
-   * Reloads the current model with the same settings except it applies a new element filter
-   * @param includedElementIds array of element ids to keep, passing undefined will load the whole model
+   * Reloads the current vim with the same settings except it applies a new element filter
+   * @param includedElementIds array of element ids to keep, passing undefined will load the whole vim
    */
   filter (includedElementIds: number[] | undefined) {
-    if (!this.modelSettings) throw new Error(NO_SCENE_LOADED)
-    const options = this.modelSettings.getOptions()
+    if (!this.vimSettings) throw new Error(NO_SCENE_LOADED)
+    const options = this.vimSettings.getOptions()
     options.elementIds = includedElementIds
-    this.reloadModel(options)
+    this.reloadVim(options)
+  }
+
+  /**
+   * Reloads the current vim with the same settings except it removes element filter
+   */
+  clearFilter () {
+    if (!this.vimSettings) throw new Error(NO_SCENE_LOADED)
+    const options = this.vimSettings.getOptions()
+    options.elementIds = undefined
+    this.reloadVim(options)
   }
 
   // TODO: Handle case where an element Id is not unique
@@ -248,8 +256,7 @@ export class Viewer {
    */
   getElementIndexFromMeshInstance (mesh: THREE.Mesh, index: number): number {
     if (!this.vimScene) throw new Error(NO_SCENE_LOADED)
-    const nodeIndex = this.vimScene.getNodeIndexFromMesh(mesh, index)
-    return this.vimScene.getElementIndexFromNodeIndex(nodeIndex)
+    return this.vimScene.getElementIndexFromMesh(mesh, index)
   }
 
   /**
@@ -267,7 +274,11 @@ export class Viewer {
       return () => {}
     }
 
-    const geometry = this.createBufferGeometryFromNodeIndices(nodes)
+    const geometry = g3dToGeometry.createFromInstances(
+      this.vimScene.vim.g3d,
+      nodes
+    )
+    geometry.applyMatrix4(this.vimSettings.getMatrix())
     if (!geometry) {
       console.error(
         'Could not create geometry for element index: ' + elementIndex
@@ -296,7 +307,10 @@ export class Viewer {
       return null
     }
 
-    const geometry = this.createBufferGeometryFromNodeIndices(nodes)
+    const geometry = g3dToGeometry.createFromInstances(
+      this.vimScene.vim.g3d,
+      nodes
+    )
     if (!geometry) {
       console.error(
         'Could not create geometry for element index: ' + elementIndex
@@ -359,9 +373,9 @@ export class Viewer {
   }
 
   /**
-   * Move the camera to frame the whole model
+   * Move the camera to frame the whole scene
    */
-  lookAtModel () {
+  lookAtScene () {
     this.camera.frameScene(this.renderer.getBoundingSphere())
   }
 
@@ -373,12 +387,12 @@ export class Viewer {
     this.camera.applyViewerSettings(this.settings)
   }
 
-  public ApplyModelSettings () {
-    this.environment.applyModelSettings(
-      this.modelSettings,
+  public ApplyVimSettings () {
+    this.environment.applyVimSettings(
+      this.vimSettings,
       this.renderer.getBoundingBox()
     )
-    this.camera.applyModelSettings(this.renderer.getBoundingSphere())
+    this.camera.applyVimSettings(this.renderer.getBoundingSphere())
   }
 
   private defaultOnClick (hit: HitTestResult) {
@@ -387,7 +401,7 @@ export class Viewer {
 
     this.selectByElementIndex(hit.elementIndex)
     const entity = this.vimScene.vim.getEntity(
-      Vim.tableElement,
+      Document.tableElement,
       hit.elementIndex
     )
     this.camera.setTarget(hit.position)
@@ -414,35 +428,5 @@ export class Viewer {
       wireframe.dispose()
       material.dispose()
     }
-  }
-
-  // TODO: Move Somewhere
-  private createBufferGeometryFromNodeIndices (
-    nodeIndices: number[]
-  ): THREE.BufferGeometry | null {
-    if (!this.vimScene || !this.modelSettings) throw new Error(NO_SCENE_LOADED)
-    const scene = this.vimScene
-
-    // Create geometry for every node
-    const geometries: THREE.BufferGeometry[] = []
-    // TODO not create builder for every node, this is awful
-    nodeIndices.forEach((nodeIndex) => {
-      // Build Opaque geometry
-      const builder = new BufferGeometryBuilder(scene.vim.g3d, 'all')
-      const all = builder.createGeometryFromInstanceIndex(nodeIndex)
-      if (all) geometries.push(all)
-    })
-
-    // bail if none of the node had geometry
-    if (geometries.length === 0) return null
-
-    // Merge all geometry
-    const geometry = BufferGeometryUtils.mergeBufferGeometries(geometries)
-    geometry.applyMatrix4(this.modelSettings.getModelMatrix())
-
-    // Dispose intermediate geometries
-    geometries.forEach((b) => b.dispose)
-
-    return geometry
   }
 }

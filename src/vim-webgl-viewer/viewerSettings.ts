@@ -1,11 +1,12 @@
 /**
  @author VIM / https://vimaec.com
+ @module viw-webgl-viewer
 */
 
 import * as THREE from 'three'
 import deepmerge from 'deepmerge'
 import { clone, cloneDeep } from 'lodash'
-import { TransparencyMode } from '../vim-webgl-viewer'
+import { transparencyIsValid, TransparencyMode } from '../vim-loader/geometry'
 
 export type Vector3 = {
   x: number
@@ -26,10 +27,10 @@ export type ColorHSL = {
 }
 
 /**
- * Plane under model related options
+ * Plane under Scene related options
  */
 export type PlaneOptions = {
-  /** Enables/Disables plane under model */
+  /** Enables/Disables plane under scene */
   show: boolean
   /** Local or remote texture url for plane */
   texture: string
@@ -37,7 +38,7 @@ export type PlaneOptions = {
   opacity: number
   /** Color of the plane */
   color: ColorRGB
-  /** Actual size is ModelRadius*size */
+  /** Actual size is SceneRadius*size */
   size: number
 }
 
@@ -58,8 +59,8 @@ export type CameraControlsOptions = {
    * <p>Orbit rotates the camera around a focus point</p>
    */
   orbit: boolean
-  /** Camera speed is scaled according to modelRadius/modelReferenceSize */
-  modelReferenceSize: number
+  /** Camera speed is scaled according to SceneRadius/sceneReferenceSize */
+  vimReferenceSize: number
   /** Camera rotation speed factor */
   rotateSpeed: number
   orbitSpeed: number
@@ -94,7 +95,7 @@ export type SkyLightOptions = {
   intensity: number
 }
 
-/** Viewer related options independant from models */
+/** Viewer related options independant from vims */
 export type ViewerOptions = {
   /**
    * Webgl canvas related options
@@ -106,7 +107,7 @@ export type ViewerOptions = {
   camera: Partial<CameraOptions>
   // background: Partial<BackgroundOptions>
   /**
-   * Plane under model related options
+   * Plane under scene related options
    */
   plane: Partial<PlaneOptions>
   /**
@@ -120,23 +121,19 @@ export type ViewerOptions = {
 }
 
 /**
- * Config object for loading a model
+ * Config object for loading a vim
  */
-export type ModelOptions = {
+export type VimOptions = {
   /**
-   * Local or remote url of model to load
-   */
-  url: string
-  /**
-   * Position offset for the model
+   * Position offset for the vim
    */
   position: Vector3
   /**
-   * Rotation for the model
+   * Rotation for the vim
    */
   rotation: Vector3
   /**
-   * Scale factor for the model
+   * Scale factor for the vim
    */
   scale: number
   /**
@@ -148,38 +145,38 @@ export type ModelOptions = {
 }
 
 /**
- * <p>Wrapper around Model Options.</p>
+ * <p>Wrapper around Vim Options.</p>
  * <p>Casts options values into related THREE.js type</p>
  * <p>Provides default values for options</p>
  */
-export class ModelSettings {
-  private options: ModelOptions
+export class VimSettings {
+  private options: VimOptions
 
-  constructor (options?: Partial<ModelOptions>) {
-    const fallback: ModelOptions = {
-      url: 'https://vim.azureedge.net/samples/residence.vim',
+  constructor (options?: Partial<VimOptions>) {
+    const fallback: VimOptions = {
       position: { x: 0, y: 0, z: 0 },
       rotation: { x: 0, y: 0, z: 0 },
       scale: 0.01,
       elementIds: undefined,
-      transparency: true
+      transparency: 'all'
     }
 
     this.options = options ? deepmerge(fallback, options, undefined) : fallback
+    this.options.transparency = transparencyIsValid(this.options.transparency)
+      ? this.options.transparency
+      : 'all'
   }
 
-  getOptions = () => cloneDeep(this.options) as ModelOptions
-  getURL = () => this.options.url
+  getOptions = () => cloneDeep(this.options) as VimOptions
 
-  // Model
-  getModelPosition = () => toVec(this.options.position)
-  getModelRotation = () => toQuaternion(this.options.rotation)
-  getModelScale = () => scalarToVec(this.options.scale)
-  getModelMatrix = () =>
+  getPosition = () => toVec(this.options.position)
+  getRotation = () => toQuaternion(this.options.rotation)
+  getScale = () => scalarToVec(this.options.scale)
+  getMatrix = () =>
     new THREE.Matrix4().compose(
-      this.getModelPosition(),
-      this.getModelRotation(),
-      this.getModelScale()
+      this.getPosition(),
+      this.getRotation(),
+      this.getScale()
     )
 
   getElementIdsFilter = () => clone(this.options.elementIds)
@@ -207,7 +204,7 @@ export class ViewerSettings {
         zoom: 1,
         controls: {
           orbit: true,
-          modelReferenceSize: 1,
+          vimReferenceSize: 1,
           rotateSpeed: 1,
           orbitSpeed: 1,
           moveSpeed: 1
@@ -269,8 +266,8 @@ export class ViewerSettings {
   getCameraMoveSpeed = () => this.options.camera.controls.moveSpeed
   getCameraRotateSpeed = () => this.options.camera.controls.rotateSpeed
   getCameraOrbitSpeed = () => this.options.camera.controls.orbitSpeed
-  getCameraReferenceModelSize = () =>
-    this.options.camera.controls.modelReferenceSize
+  getCameraReferenceVimSize = () =>
+    this.options.camera.controls.vimReferenceSize
 }
 
 function toRGBColor (c: ColorRGB): THREE.Color {

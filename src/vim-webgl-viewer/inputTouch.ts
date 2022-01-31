@@ -1,3 +1,7 @@
+/**
+ * @module viw-webgl-viewer
+ */
+
 import * as THREE from 'three'
 import { ViewerCamera } from './viewerCamera'
 import { InputMouse } from './inputMouse'

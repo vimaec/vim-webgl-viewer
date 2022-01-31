@@ -1,16 +1,64 @@
-import { BFast } from './bfast'
-import { G3d, VimG3d, Attribute } from './g3d'
-import { Vim, EntityTable } from './vim'
-import { Logger } from './logger'
+/**
+ * Document is the parsed content of a vim, including geometry data, bim data and other meta data.
+ * @module vim-loader
+ */
 
-export class VimParser {
-  logger: Logger | undefined
-  constructor (logger: Logger) {
-    this.logger = logger
+import { BFast } from './bfast'
+import { G3d } from './g3d'
+
+export type EntityTable = Map<string, ArrayLike<number>>
+
+export class Document {
+  static tableElement = 'Vim.Element'
+  static tableElementLegacy = 'Rvt.Element'
+  static tableNode = 'Vim.Node'
+
+  header: string
+  assets: BFast
+  g3d: G3d
+  entities: Map<string, EntityTable>
+  strings: string[]
+
+  constructor (
+    header: string,
+    assets: BFast,
+    g3d: G3d,
+    entities: Map<string, EntityTable>,
+    strings: string[]
+  ) {
+    this.header = header
+    this.assets = assets
+    this.g3d = g3d
+    this.entities = entities
+    this.strings = strings
+  }
+
+  getEntity (type: string, index: number): any {
+    const r = new Map<string, string | number>()
+    if (index < 0) return r
+    const table = this.entities?.get(type)
+    if (!table) return r
+    for (const k of table.keys()) {
+      const parts = k.split(':')
+      const values = table.get(k)
+      if (!values) continue
+
+      const value =
+        parts[0] === 'string' ? this.strings[values[index]] : values[index]
+
+      const name = parts[parts.length - 1]
+      r.set(name, value)
+    }
+    return r
+  }
+
+  static parseFromArrayBuffer (data: ArrayBuffer) {
+    const bfast = BFast.fromArrayBuffer(data)
+    return Document.parseFromBFast(bfast)
   }
 
   // Given a BFAST container (header/names/buffers) constructs a VIM data structure
-  public parseFromBFast = (bfast: BFast): Vim => {
+  static parseFromBFast (bfast: BFast): Document {
     if (bfast.buffers.length < 5) {
       throw new Error('VIM requires at least five BFast buffers')
     }
@@ -26,29 +74,15 @@ export class VimParser {
     const entityData = lookup.get('entities')
     const stringData = lookup.get('strings')
 
-    this.logger?.log(`Parsing header: ${headerData.length} bytes`)
     const header = new TextDecoder('utf-8').decode(headerData)
+    const g3d = G3d.fromBfast(BFast.fromArray(g3dData))
+    const assets = BFast.fromArray(assetData)
+    const entities = Document.parseEntityTables(BFast.fromArray(entityData))
+    const strings = new TextDecoder('utf-8').decode(stringData).split('\0')
 
-    this.logger?.log(`Constructing G3D: ${g3dData.length} bytes`)
-    const g3d = new VimG3d(this.parseG3d(BFast.parseFromArray(g3dData)))
-    this.logger?.log('Validating G3D')
     g3d.validate()
 
-    this.logger?.log(`Retrieving assets: ${assetData.length} bytes`)
-    const assets = BFast.parseFromArray(assetData)
-    this.logger?.log(`Found ${assets.buffers.length} assets`)
-
-    this.logger?.log(`Constructing entity tables: ${entityData.length} bytes`)
-    const entities = VimParser.parseEntityTables(
-      BFast.parseFromArray(entityData)
-    )
-    this.logger?.log(`Found ${entities.size} entity tables`)
-
-    this.logger?.log(`Decoding strings: ${stringData.length} bytes`)
-    const strings = new TextDecoder('utf-8').decode(stringData).split('\0')
-    this.logger?.log(`Found ${strings.length} strings`)
-
-    return new Vim(header, assets, g3d, entities, strings)
+    return new Document(header, assets, g3d, entities, strings)
   }
 
   static parseEntityTables (bfast: BFast): Map<string, EntityTable> {
@@ -57,7 +91,7 @@ export class VimParser {
       const current = bfast.names[i]
       const tableName = current.substring(current.indexOf(':') + 1)
       const buffer = bfast.buffers[i]
-      const next = VimParser.parseEntityTable(BFast.parseFromArray(buffer))
+      const next = Document.parseEntityTable(BFast.fromArray(buffer))
       result.set(tableName, next)
     }
     return result
@@ -107,38 +141,5 @@ export class VimParser {
       result.set(columnName, columnData)
     }
     return result
-  }
-
-  // Given a BFAST container (header/names/buffers) constructs a G3D data structure
-  private parseG3d (bfast: BFast): G3d {
-    this.logger?.log('Constructing G3D')
-
-    if (bfast.buffers.length < 2) {
-      throw new Error('G3D requires at least two BFast buffers')
-    }
-
-    // Parse first buffer as Meta
-    const metaBuffer = bfast.buffers[0]
-    if (bfast.names[0] !== 'meta') {
-      throw new Error(
-        "First G3D buffer must be named 'meta', but was named: " +
-          bfast.names[0]
-      )
-    }
-    const meta = new TextDecoder('utf-8').decode(metaBuffer)
-
-    // Parse remaining buffers as Attributes
-    const attributes: Attribute[] = []
-    const nDescriptors = bfast.buffers.length - 1
-    for (let i = 0; i < nDescriptors; ++i) {
-      const attribute = Attribute.fromString(
-        bfast.names[i + 1],
-        bfast.buffers[i + 1]
-      )
-      attributes.push(attribute)
-      this.logger?.log(`Attribute ${i} = ${attribute.descriptor.description}`)
-    }
-
-    return new G3d(meta, attributes)
   }
 }

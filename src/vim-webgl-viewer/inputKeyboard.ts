@@ -1,3 +1,7 @@
+/**
+ * @module viw-webgl-viewer
+ */
+
 import * as THREE from 'three'
 
 import { ViewerCamera } from './viewerCamera'
@@ -158,7 +162,7 @@ export class InputKeyboard {
           event.preventDefault()
           break
         case KEYS.KEY_HOME:
-          this.viewer.lookAtModel()
+          this.viewer.lookAtScene()
           event.preventDefault()
           break
         // Selection

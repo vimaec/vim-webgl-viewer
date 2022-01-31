@@ -1,19 +1,16 @@
-import { TransparencyMode } from './vim-webgl-viewer'
-import { Viewer, ViewerState } from './vim-webgl-viewer/viewer'
+import * as geometry from './vim-loader/geometry'
+import { Viewer } from './vim-webgl-viewer/viewer'
 
 // Parse URL
 const params = new URLSearchParams(window.location.search)
-const url = params.has('model')
-  ? params.get('model')
+const url = params.has('vim')
+  ? params.get('vim')
   : 'https://vim.azureedge.net/samples/residence.vim'
 
-let transparency: TransparencyMode = true
+let transparency: geometry.TransparencyMode = 'all'
 if (params.has('transparency')) {
   const t = params.get('transparency')
-  if (t === 'true') transparency = true
-  if (t === 'opaque') transparency = 'opaque'
-  if (t === 'false') transparency = false
-  throw new Error('transparency argument must be one of {true, opaque, false}')
+  transparency = geometry.transparencyIsValid(t) ? t : 'all'
 }
 
 // Create Viewer
@@ -28,33 +25,18 @@ const viewer = new Viewer({
   }
 })
 
-// Load Model
-viewer.loadModel(
+viewer.loadVim(
+  url,
   {
-    url: 'skanska.vim',
     rotation: { x: 270, y: 0, z: 0 },
     transparency: transparency
   },
-  (vim) => console.log('Callback: Viewer Ready!'),
+  (result) => {},
   (progress) => {
-    if (progress === 'processing') console.log('Callback: Processing')
-    else {
-      console.log(`Callback: Downloading: ${progress.loaded / 1000000} MB`)
-    }
+    if (progress === 'processing') console.log('Processing')
+    else console.log(`Downloading: ${(progress.loaded as number) / 1000000} MB`)
   },
-  (error) => console.error('Callback: Error: ' + error.message)
+  (error) => console.error(`Failed to load vim: ${error}`)
 )
-
-addEventListener(Viewer.stateChangeEvent, (event: CustomEvent<ViewerState>) => {
-  const state = event.detail
-  if (state[0] === 'Downloading') {
-    console.log(`Event: Downloading: ${(state[1] as number) / 1000000} MB`)
-  }
-  if (state[0] === 'Error') {
-    console.log('Event: Error : ' + (state[1] as ErrorEvent).message)
-  }
-  if (state === 'Processing') console.log('Event: Processing')
-  if (state === 'Ready') console.log('Event: Viewer Ready')
-})
 
 globalThis.viewer = viewer

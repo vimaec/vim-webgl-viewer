@@ -1,6 +1,6 @@
 {
   "name": "vim-webgl-viewer",
-  "version": "1.1.22-dev.2",
+  "version": "1.1.23",
   "description": "A high-performance 3D viewer and VIM file loader built on top of Three.JS.",
   "files": [
     "dist"
@@ -20,20 +20,19 @@
   },
   "scripts": {
     "dev": "vite",
-    "build": "vite build && npm run gen-index.html && npm run declarations",
+    "build": "vite build && npm run declarations",
     "bump-dev": "npm version prerelease --preid=dev",
     "publish-dev": "npm publish --tag=dev",
-    "serve-docs": "http-server ./docs -o",
+    "serve-docs": "http-server ./docs -o --host",
     "serve-dist": "http-server ./dist -o --host",
     "serve-root": "http-server -o",
-    "gen-index.html": "node docs/genDocs.js",
     "test-dist": "npm run build && npm run serve-dist",
-    "test-latest": "opener https://vimaec.github.io/vim-webgl-viewer/?model=https%3A%2F%2Fvim.azureedge.net%2Fsamples%2Fskanska.vim",
-    "test-dev": "opener https://vimaec.github.io/vim-webgl-viewer/index-dev.html?model=https%3A%2F%2Fvim.azureedge.net%2Fsamples%2Fskanska.vim",
+    "test-latest": "opener https://vimaec.github.io/vim-webgl-viewer/?vim=https%3A%2F%2Fvim.azureedge.net%2Fsamples%2Fskanska.vim",
+    "test-dev": "opener https://vimaec.github.io/vim-webgl-viewer/index-dev.html?vim=https%3A%2F%2Fvim.azureedge.net%2Fsamples%2Fskanska.vim",
     "release-patch": "npm version patch && git push && npm publish && npm run test-latest",
     "release-dev": "npm run build && npm run bump-dev && git push && npm run publish-dev && npm run test-dev",
     "eslint": "eslint --ext .js,.ts src --fix",
-    "documentation": "typedoc --out docs/api --excludePrivate ./src/vim-webgl-viewer/viewer.ts ./src/vim-webgl-viewer/viewersettings.ts",
+    "documentation": "typedoc --entryPointStrategy expand --mergeModulesMergeMode module --out docs/api --excludePrivate ./src/vim-webgl-viewer/ ./src/vim-loader/",
     "declarations": "tsc --declaration --emitDeclarationOnly --outdir ./dist/types"
   },
   "devDependencies": {
@@ -48,12 +47,12 @@
     "eslint-plugin-prettier": "^4.0.0",
     "eslint-plugin-promise": "^5.1.0",
     "http-server": "^14",
-    "mustache": "^4.2.0",
     "opener": "^1.5.2",
     "prettier": "^2.4.1",
+    "typedoc": "^0.22.9",
+    "typedoc-plugin-merge-modules": "^3.1.0",
     "typescript": "^4.4.3",
-    "vite": "^2.6.3",
-    "typedoc": "^0.22.9"
+    "vite": "^2.6.3"
   },
   "dependencies": {
     "deepmerge": "^4.2.2",

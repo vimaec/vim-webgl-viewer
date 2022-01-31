@@ -5,7 +5,7 @@ export default defineConfig({
     sourcemap: true,
     lib: {
       formats: ['iife', 'es'],
-      entry: './src/vim-webgl-viewer/viewer.ts',
+      entry: './src/vim-webgl-viewer-public.ts',
       name: 'vim'
     },
     // Minify set to true will break the IIFE output

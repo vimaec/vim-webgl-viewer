@@ -1,5 +1,9 @@
+/**
+ * @module viw-webgl-viewer
+ */
+
 import * as THREE from 'three'
-import { VimThree } from '../vim-webgl-viewer'
+import { Scene } from '../vim-loader/scene'
 import { ViewerSettings } from './viewerSettings'
 
 export class ViewerRenderer {
@@ -21,7 +25,8 @@ export class ViewerRenderer {
       precision: 'highp', // 'lowp', 'mediump', 'highp'
       alpha: true,
       stencil: false,
-      powerPreference: 'high-performance'
+      powerPreference: 'high-performance',
+      logarithmicDepthBuffer: true
     })
     this.canvas = this.renderer.domElement
 
@@ -82,7 +87,7 @@ export class ViewerRenderer {
     this.camera.updateProjectionMatrix()
   }
 
-  clearModels () {
+  clearScene () {
     this.meshes.forEach((m) => this.scene.remove(m))
     this.meshes = []
     this.localBoundingBox = undefined
@@ -105,15 +110,15 @@ export class ViewerRenderer {
     if (i > 0) this.meshes.splice(i, 1)
   }
 
-  addModel (model: VimThree) {
-    model.meshes.forEach((m) => {
+  addScene (scene: Scene) {
+    scene.meshes.forEach((m) => {
       this.scene.add(m)
       this.meshes.push(m)
     })
 
     this.localBoundingBox = this.localBoundingBox
-      ? this.localBoundingBox.union(model.boundingBox)
-      : model.boundingBox.clone()
+      ? this.localBoundingBox.union(scene.boundingBox)
+      : scene.boundingBox.clone()
 
     this.worldBoundingBox = this.worldBoundingBox ?? this.localBoundingBox
   }
