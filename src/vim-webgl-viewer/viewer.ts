@@ -119,6 +119,7 @@ export class Viewer {
       const filter = settings.getElementIdsFilter()
       if (filter) this.filter(filter)
       else this.onVimLoaded(vim, settings)
+      this.lookAtScene()
       onLoad?.(vim)
     }
 
@@ -156,9 +157,7 @@ export class Viewer {
     this.renderer.applyMatrix4(matrix)
     this.renderer.render()
 
-    this.lookAtScene()
     this.ApplyVimSettings()
-    this.animate()
   }
 
   private static getOrCreateCanvas (canvasId?: string) {
