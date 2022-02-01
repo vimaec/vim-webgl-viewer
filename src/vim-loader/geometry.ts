@@ -125,6 +125,7 @@ export class MeshMerger {
   colors: Float32Array
   uvs: Float32Array
   instances: number[]
+  submeshes: number[]
 
   constructor (
     g3d: G3d,
@@ -144,6 +145,7 @@ export class MeshMerger {
     this.vertices = new Float32Array(vertexCount * this.g3d.positionArity)
     this.colors = new Float32Array(vertexCount * this.colorSize)
     this.uvs = new Float32Array(vertexCount * 2)
+    this.submeshes = new Array(this.instances.length)
   }
 
   /**
@@ -235,11 +237,11 @@ export class MeshMerger {
     for (let i = 0; i < this.instances.length; i++) {
       const mesh = this.meshes[i]
       const instance = this.instances[i]
+      this.submeshes[i] = index
 
       // Copy all indices to merge array
       const indexStart = this.g3d.getMeshIndexStart(mesh)
       const indexEnd = this.g3d.getMeshIndexEnd(mesh)
-      // const [indexStart, indexEnd] = this.g3d.getMeshIndexRange(mesh)
       for (let i = indexStart; i < indexEnd; i++) {
         this.indices[index++] = this.g3d.indices[i] + offset
       }

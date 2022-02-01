@@ -6,6 +6,7 @@
 import * as THREE from 'three'
 import { Document } from './document'
 import { Scene } from './scene'
+import { VimObject } from './vimObject'
 
 /**
  * Container for the built three meshes and the vim data from which it was built.
@@ -74,6 +75,31 @@ export class Vim {
     return map
   }
 
+  getObjectFromElement (element: number) {
+    const instances = this.getInstanceIndicesFromElementIndex(element)
+    const merged: [THREE.Mesh, number, number][] = []
+    const instanced: [THREE.InstancedMesh, number][] = []
+    for (let i = 0; i < instances.length; i++) {
+      const instance = instances[i]
+      if (instance < 0) continue
+      const [mesh, index] = this.getMeshFromInstanceIndex(instance)
+      if (!mesh) continue
+      if (mesh.userData.merged) {
+        const start = mesh.userData.submeshes[index]
+        const end =
+          index + 1 < mesh.userData.submeshes.length
+            ? mesh.userData.submeshes[index + 1]
+            : mesh.geometry.getIndex().count
+
+        merged.push([mesh, start, end])
+      } else {
+        instanced.push([mesh as THREE.InstancedMesh, index])
+      }
+    }
+    const result = new VimObject(element, instances, merged, instanced)
+    return result
+  }
+
   getElementIndexFromElementId = (elementId: number): number | undefined =>
     this.elementIdToElementIndex.get(elementId)
 
@@ -114,7 +140,9 @@ export class Vim {
    * @param elementIndex element index for which to get node indices
    * @returns array of node indices or undefined if no corresponding nodes
    */
-  getNodeIndicesFromElementIndex (elementIndex: number): number[] | undefined {
+  getInstanceIndicesFromElementIndex (
+    elementIndex: number
+  ): number[] | undefined {
     return this.elementIndexToInstanceIndices.get(elementIndex)
   }
 
@@ -125,7 +153,7 @@ export class Vim {
    */
   getNodeIndicesFromElementIndices (elementIndices: number[]): number[] {
     return elementIndices
-      .flatMap((e) => this.getNodeIndicesFromElementIndex(e))
+      .flatMap((e) => this.getInstanceIndicesFromElementIndex(e))
       .filter((n): n is number => n !== undefined)
   }
 
@@ -147,24 +175,22 @@ export class Vim {
     return this.getNodeIndicesFromElementIndices(elementIndices)
   }
 
-  getMeshesFromElementIndex (
-    elementIndex: number
-  ): [THREE.Mesh, number][] | null {
-    const nodeIndices = this.getNodeIndicesFromElementIndex(elementIndex)
+  getMeshesFromElementIndex (elementIndex: number): [THREE.Mesh, number][] | [] {
+    const nodeIndices = this.getInstanceIndicesFromElementIndex(elementIndex)
     if (!nodeIndices || !nodeIndices.length) return null
 
     const result: [THREE.Mesh, number][] = []
     nodeIndices.forEach((i) => {
-      const mesh = this.getMeshFromNodeIndex(i)
-      if (mesh) result.push(mesh)
+      const mesh = this.getMeshFromInstanceIndex(i)
+      if (mesh.length) result.push(mesh)
     })
     return result
   }
 
-  getMeshFromNodeIndex (nodeIndex: number): [THREE.Mesh, number] | undefined {
+  getMeshFromInstanceIndex (nodeIndex: number): [THREE.Mesh, number] | [] {
     if (nodeIndex < 0) throw new Error('Invalid negative index')
     const array = this.scene.instanceToThreeMesh.get(nodeIndex)
-    return array ? array[0] : undefined
+    return array ? array[0] : []
   }
 
   getNodeIndexFromMesh (mesh: THREE.Mesh, instance: number): number {

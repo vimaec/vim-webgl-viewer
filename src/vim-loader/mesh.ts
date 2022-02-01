@@ -146,6 +146,7 @@ export class MeshBuilder {
     const mesh = new THREE.Mesh(geometry, material)
     mesh.userData.merged = true
     mesh.userData.instances = merger.instances
+    mesh.userData.submeshes = merger.submeshes
 
     return mesh
   }

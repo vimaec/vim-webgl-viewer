@@ -266,7 +266,7 @@ export class Viewer {
    */
   highlightElementByIndex (elementIndex: number): Function {
     if (!this.vimScene) throw new Error(NO_SCENE_LOADED)
-    const nodes = this.vimScene.getNodeIndicesFromElementIndex(elementIndex)
+    const nodes = this.vimScene.getInstanceIndicesFromElementIndex(elementIndex)
     if (!nodes) {
       console.error(
         'Could not find nodes geometry for element index: ' + elementIndex
@@ -301,7 +301,7 @@ export class Viewer {
    */
   getBoundingBoxForElementIndex (elementIndex: number): THREE.Box3 | null {
     if (!this.vimScene) throw new Error(NO_SCENE_LOADED)
-    const nodes = this.vimScene.getNodeIndicesFromElementIndex(elementIndex)
+    const nodes = this.vimScene.getInstanceIndicesFromElementIndex(elementIndex)
     if (!nodes) {
       console.error('Could not find nodes for : ' + elementIndex)
       return null
@@ -399,13 +399,18 @@ export class Viewer {
     console.log(hit)
     if (!hit.isHit) return
 
+    const object = this.vimScene.getObjectFromElement(hit.elementIndex)
+    this.renderer.changeColor(object, this.vimSettings.getMatrix())
+
+    /*
     this.selectByElementIndex(hit.elementIndex)
+    this.camera.setTarget(hit.position)
+    if (hit.doubleClick) this.lookAtSelection()
+    */
     const entity = this.vimScene.vim.getEntity(
       Document.tableElement,
       hit.elementIndex
     )
-    this.camera.setTarget(hit.position)
-    if (hit.doubleClick) this.lookAtSelection()
     console.log(entity)
   }
 

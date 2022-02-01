@@ -31,7 +31,7 @@ export class Scene {
     }
 
     for (let i = 0; i < instances.length; i++) {
-      this.instanceToThreeMesh.set(instances[i], [[mesh, 0]])
+      this.instanceToThreeMesh.set(instances[i], [[mesh, i]])
     }
 
     mesh.geometry.computeBoundingBox()

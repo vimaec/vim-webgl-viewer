@@ -4,6 +4,7 @@
 
 import * as THREE from 'three'
 import { Scene } from '../vim-loader/scene'
+import { VimObject } from '../vim-loader/vimObject'
 import { ViewerSettings } from './viewerSettings'
 
 export class ViewerRenderer {
@@ -108,6 +109,19 @@ export class ViewerRenderer {
     this.scene.remove(mesh)
     const i = this.meshes.indexOf(mesh)
     if (i > 0) this.meshes.splice(i, 1)
+  }
+
+  changeColor (object: VimObject, matrix: THREE.Matrix4) {
+    object.changeColor()
+
+    object.overrides.forEach((o) => {
+      o.matrixAutoUpdate = false
+      o.applyMatrix4(matrix)
+      // o.scale.set(0.01, 0.01, 0.01)
+      // o.updateMatrix()
+    })
+
+    this.addObjects(object.overrides)
   }
 
   addScene (scene: Scene) {
