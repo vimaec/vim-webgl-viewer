@@ -38,11 +38,15 @@ Virtually the simplest usage of the VIM viewer is the following example:
     <script src="https://unpkg.com/three@0.133.1/build/three.min.js"></script>
     <script src="https://unpkg.com/vim-webgl-viewer"></script>
     <script>
-      var viewer = new vim.Viewer()
-      viewer.loadModel({
-        url: 'https://vim.azureedge.net/samples/residence.vim',
-        rotation: { x: 270 }
-      })
+
+      const viewer = new vim.Viewer()
+
+      viewer.loadVim(
+        'https://vim.azureedge.net/samples/residence.vim',
+        {
+          rotation: { x: 270, y: 0, z: 0 },
+        }
+      )
     </script>
   </body>
 </html>
