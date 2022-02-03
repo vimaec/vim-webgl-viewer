@@ -182,7 +182,7 @@ const disposer = viewer.highlightElementByIndex(elementIndex)
 ```
 
 **Replace or add behavior on click**
-```
+```javascript
 // Capture default behavior
 const defaultClick = viewer.onMouseClick
 // Override the onClick callback
@@ -198,7 +198,7 @@ viewer.onMouseClick = (hit) => {
 ```
 
 **Load from a custom http request**
-```
+```javascript
 // Make request as usual
 const xhr = new XMLHttpRequest()
 // Specify response type ArrayBuffer
