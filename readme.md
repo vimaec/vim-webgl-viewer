@@ -180,3 +180,35 @@ viewer.lookAtElementIndex(elementIndex)
 // call disposer() to remove highligh
 const disposer = viewer.highlightElementByIndex(elementIndex)
 ```
+
+**Replace or add behavior on click**
+```
+// Capture default behavior
+const defaultClick = viewer.onMouseClick
+// Override the onClick callback
+viewer.onMouseClick = (hit) => {
+  // Call the default behavior
+  defaultClick.bind(viewer)(hit)
+
+  // Add extra logic here
+  const entity = viewer.vimScene.vim.getEntity('Vim.Element', hit.elementIndex)
+  console.log('My extra behaviour with this entity:')
+  console.log(entity)
+}
+```
+
+**Load from a custom http request**
+```
+// Make request as usual
+const xhr = new XMLHttpRequest()
+// Specify response type ArrayBuffer
+xhr.responseType = 'arraybuffer'
+xhr.open('GET', url)
+xhr.send()
+xhr.onload = () => {
+// Load vim by passing the array buffer
+  viewer.loadVim(xhr.response, {
+    rotation: { x: 270, y: 0, z: 0 }
+  })
+}
+```
