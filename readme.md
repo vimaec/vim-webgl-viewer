@@ -3,6 +3,9 @@
 [![npm](https://img.shields.io/npm/v/vim-webgl-viewer)](https://npmjs.com/package/vim-webgl-viewer)
 [![Website](https://img.shields.io/website?url=https%3A%2F%2Fvimaec.github.io%2Fvim-webgl-viewer)](https://vimaec.github.io/vim-webgl-viewer/)
 
+# Documentation
+https://vimaec.github.io/vim-webgl-viewer/api/
+
 # Live Demo
 
 - [Small Model Demo - Residence](https://vimaec.github.io/vim-webgl-viewer)
