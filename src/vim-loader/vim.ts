@@ -87,17 +87,22 @@ export class Vim {
     return this.getObjectFromElement(element)
   }
 
-  getObjectFromElement (element: number) {
-    if (this.elementToObjects.has(element)) {
-      return this.elementToObjects.get(element)
+  getObjectFromElementId (id: number) {
+    const element = this.getElementFromId(id)
+    return this.getObjectFromElement(element)
+  }
+
+  getObjectFromElement (index: number) {
+    if (this.elementToObjects.has(index)) {
+      return this.elementToObjects.get(index)
     }
 
-    const instances = this.getInstanceIndicesFromElementIndex(element)
+    const instances = this.getInstanceIndicesFromElementIndex(index)
     const meshes = this.getMeshesFromInstances(instances)
     if (!meshes) return
 
-    const result = new VimObject(this, element, instances, meshes)
-    this.elementToObjects.set(element, result)
+    const result = new VimObject(this, index, instances, meshes)
+    this.elementToObjects.set(index, result)
     return result
   }
 

@@ -63,7 +63,7 @@ export class HitTester {
         const instance = Math.round(hit.uv.x)
         r.object = this.viewer.vim.getObjectFromInstance(instance)
       } else if (hit.instanceId !== undefined) {
-        this.viewer.vim.getObjectFromMesh(
+        r.object = this.viewer.vim.getObjectFromMesh(
           hit.object as THREE.InstancedMesh,
           hit.instanceId
         )

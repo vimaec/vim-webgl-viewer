@@ -197,5 +197,7 @@ export class VimObject {
     mesh.count++
   }
 
-  private showMerged () {}
+  private showMerged () {
+    throw new Error('Show Hide not yet implemented for merged meshes')
+  }
 }
