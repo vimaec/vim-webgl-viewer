@@ -24,8 +24,8 @@ import { HitTestResult } from './hitTester'
 // loader
 import { VimLoader } from '../vim-loader/vimLoader'
 import { Vim } from '../vim-loader/vim'
-import * as g3dToGeometry from '../vim-loader/geometry'
 import { Document } from '../vim-webgl-viewer'
+import { VimObject } from '../vim-loader/vimObject'
 
 export type ViewerState =
   | 'Uninitialized'
@@ -47,7 +47,7 @@ export class Viewer {
 
   // State
   vimSettings: VimSettings | undefined
-  vimScene: Vim | undefined
+  vim: Vim | undefined
   state: ViewerState = 'Uninitialized'
   static stateChangeEvent = 'viewerStateChangedEvent'
 
@@ -89,7 +89,7 @@ export class Viewer {
     this.camera.frameUpdate(timeDelta)
 
     // Rendering
-    if (this.vimScene) this.renderer.render()
+    if (this.vim) this.renderer.render()
   }
 
   /**
@@ -132,7 +132,7 @@ export class Viewer {
         },
         (error) => {
           this.vimSettings = undefined
-          this.vimScene = undefined
+          this.vim = undefined
           onError?.(error)
         }
       )
@@ -146,9 +146,9 @@ export class Viewer {
   }
 
   private onVimLoaded (vim: Vim, settings: VimSettings) {
-    this.vimScene = vim
+    this.vim = vim
     this.vimSettings = settings
-
+    this.vim.matrix = settings.getMatrix()
     const matrix = this.vimSettings.getMatrix()
 
     // Scene
@@ -177,7 +177,7 @@ export class Viewer {
    * Unload existing vim to get ready to load a new vim
    */
   unloadVim () {
-    this.vimScene = undefined
+    this.vim = undefined
     this.vimSettings = undefined
     this.renderer.clearScene()
     this.selection.clear()
@@ -188,17 +188,17 @@ export class Viewer {
    * @param options full vim options, same as for loadVim
    */
   reloadVim (options: VimOptions) {
-    if (!this.vimScene) throw new Error(NO_SCENE_LOADED)
+    if (!this.vim) throw new Error(NO_SCENE_LOADED)
 
     const settings = new VimSettings(options)
     // Go from Element Ids -> Node Indices
     const elementIds = settings.getElementIdsFilter()
     const instanceIndices = elementIds
-      ? this.vimScene.getInstanceIndicesFromElementIds(elementIds)
+      ? this.vim.getInstanceIndicesFromElementIds(elementIds)
       : undefined
 
     const scene = new VimLoader().loadFromVim(
-      this.vimScene.vim,
+      this.vim.document,
       settings.getTransparency(),
       instanceIndices
     )
@@ -227,113 +227,15 @@ export class Viewer {
     this.reloadVim(options)
   }
 
-  // TODO: Handle case where an element Id is not unique
-  /**
-   * Get the element index from the element Id
-   * @param elementId id of element
-   * @returns index of element
-   */
-  getElementIndexFromElementId = (elementId: number) => {
-    if (!this.vimScene) throw new Error(NO_SCENE_LOADED)
-    return this.vimScene.getElementIndexFromElementId(elementId)
-  }
-
-  /**
-   * Get the parent element index from a node index
-   * @param nodeIndex index of node
-   * @returns index of element
-   */
-  getElementIndexFromNodeIndex (nodeIndex: number): number {
-    if (!this.vimScene) throw new Error(NO_SCENE_LOADED)
-    return this.vimScene.getElementIndexFromNodeIndex(nodeIndex)
-  }
-
-  /**
-   * Get the element index related to given mesh
-   * @param mesh instanced mesh
-   * @param index index into the instanced mesh
-   * @returns index of element
-   */
-  getElementIndexFromMeshInstance (mesh: THREE.Mesh, index: number): number {
-    if (!this.vimScene) throw new Error(NO_SCENE_LOADED)
-    return this.vimScene.getElementIndexFromMesh(mesh, index)
-  }
-
-  /**
-   * highlight all geometry related to and element
-   * @param elementIndex index of element
-   * @returns a disposer function for the created geometry
-   */
-  highlightElementByIndex (elementIndex: number): Function {
-    if (!this.vimScene) throw new Error(NO_SCENE_LOADED)
-    const nodes = this.vimScene.getInstanceIndicesFromElementIndex(elementIndex)
-    if (!nodes) {
-      console.error(
-        'Could not find nodes geometry for element index: ' + elementIndex
-      )
-      return () => {}
-    }
-
-    const geometry = g3dToGeometry.createFromInstances(
-      this.vimScene.vim.g3d,
-      nodes
-    )
-    geometry.applyMatrix4(this.vimSettings.getMatrix())
-    if (!geometry) {
-      console.error(
-        'Could not create geometry for element index: ' + elementIndex
-      )
-      return () => {}
-    }
-
-    const disposer = this.highlight(geometry)
-
-    return () => {
-      disposer()
-      geometry.dispose()
-    }
-  }
-
-  /**
-   * Compute total bounding box of all geometries related to an element
-   * @param elementIndex index of element
-   * @returns THREE bounding
-   */
-  getBoundingBoxForElementIndex (elementIndex: number): THREE.Box3 | null {
-    if (!this.vimScene) throw new Error(NO_SCENE_LOADED)
-    const nodes = this.vimScene.getInstanceIndicesFromElementIndex(elementIndex)
-    if (!nodes) {
-      console.error('Could not find nodes for : ' + elementIndex)
-      return null
-    }
-
-    const geometry = g3dToGeometry.createFromInstances(
-      this.vimScene.vim.g3d,
-      nodes
-    )
-    if (!geometry) {
-      console.error(
-        'Could not create geometry for element index: ' + elementIndex
-      )
-      return null
-    }
-    geometry.computeBoundingBox()
-    const result = geometry.boundingBox
-    geometry.dispose()
-    return result
-  }
-
   /**
    * Select all geometry related to a given element
    * @param elementIndex index of element
    */
-  selectByElementIndex (elementIndex: number) {
-    if (!this.vimScene) throw new Error(NO_SCENE_LOADED)
-    console.log('Selecting element with index: ' + elementIndex)
-    console.log(
-      'Bim Element Name: ' + this.vimScene.getElementName(elementIndex)
-    )
-    this.selection.select(elementIndex)
+  select (object: VimObject) {
+    if (!this.vim) throw new Error(NO_SCENE_LOADED)
+    console.log('Selecting element with index: ' + object.element)
+    console.log('Bim Element Name: ' + this.vim.getElementName(object.element))
+    this.selection.select(object)
   }
 
   /**
@@ -348,16 +250,8 @@ export class Viewer {
    * Move the camera to frame all geometry related to an element
    * @param elementIndex index of element
    */
-  lookAtElementIndex (elementIndex: number) {
-    const box = this.getBoundingBoxForElementIndex(elementIndex)
-    if (!box) {
-      console.error(
-        'Could not create geometry for element index: ' + elementIndex
-      )
-      return
-    }
-
-    const sphere = box.getBoundingSphere(new THREE.Sphere())
+  lookAt (object: VimObject) {
+    const sphere = object.getBoundingSphere()
     this.camera.lookAtSphere(sphere, true)
   }
 
@@ -397,41 +291,19 @@ export class Viewer {
 
   private defaultOnClick (hit: HitTestResult) {
     console.log(hit)
-    if (!hit.isHit) return
+    if (!hit.object) return
 
-    const object = this.vimScene.getObjectFromElement(hit.elementIndex)
-    this.renderer.changeColor(object, this.vimSettings.getMatrix())
+    this.select(hit.object)
 
-    /*
-    this.selectByElementIndex(hit.elementIndex)
-    this.camera.setTarget(hit.position)
+    const center = hit.object.getBoundingBox().getCenter(new THREE.Vector3())
+    this.camera.setTarget(center)
+
     if (hit.doubleClick) this.lookAtSelection()
-    */
-    const entity = this.vimScene.vim.getEntity(
+
+    const entity = this.vim.document.getEntity(
       Document.tableElement,
-      hit.elementIndex
+      hit.object.element
     )
     console.log(entity)
-  }
-
-  // TODO: Move to geometry layer
-  private highlight (geometry: THREE.BufferGeometry): Function {
-    const wireframe = new THREE.WireframeGeometry(geometry)
-    const material = new THREE.LineBasicMaterial({
-      depthTest: false,
-      opacity: 0.5,
-      color: new THREE.Color(0x0000ff),
-      transparent: true
-    })
-    const line = new THREE.LineSegments(wireframe, material)
-
-    this.renderer.addObjects([line])
-
-    // returns disposer
-    return () => {
-      this.renderer.scene.remove(line)
-      wireframe.dispose()
-      material.dispose()
-    }
   }
 }

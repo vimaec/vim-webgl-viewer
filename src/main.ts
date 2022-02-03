@@ -26,7 +26,7 @@ const viewer = new Viewer({
 })
 
 viewer.loadVim(
-  url,
+  'residence.vim',
   {
     rotation: { x: 270, y: 0, z: 0 },
     transparency: transparency

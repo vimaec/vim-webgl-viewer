@@ -3,6 +3,7 @@
  */
 
 import * as THREE from 'three'
+import { VimObject } from '../vim-loader/vimObject'
 import { Viewer } from './viewer'
 
 type ThreeIntersectionList = THREE.Intersection<THREE.Object3D<THREE.Event>>[]
@@ -10,12 +11,8 @@ type ThreeIntersectionList = THREE.Intersection<THREE.Object3D<THREE.Event>>[]
 export class HitTestResult {
   mousePosition: THREE.Vector2
   doubleClick: boolean
-  nodeIndex: number = -1
-  instanceId: number = -1
+  object: VimObject
   intersections: ThreeIntersectionList
-  isMerged: boolean
-  isInstanced: boolean
-  elementIndex: number = -1
 
   // Convenience functions and mnemonics
   get firstHit (): THREE.Intersection<THREE.Object3D<THREE.Event>> {
@@ -63,15 +60,12 @@ export class HitTester {
     if (hit) {
       // Merged mesh have node origin of each face encoded in uvs
       if (hit.object.userData.merged && hit.uv !== undefined) {
-        r.isMerged = true
-        r.nodeIndex = Math.round(hit.uv.x)
-        r.elementIndex = this.viewer.getElementIndexFromNodeIndex(r.nodeIndex)
+        const instance = Math.round(hit.uv.x)
+        r.object = this.viewer.vim.getObjectFromInstance(instance)
       } else if (hit.instanceId !== undefined) {
-        r.isInstanced = true
-        r.instanceId = hit.instanceId
-        r.elementIndex = this.viewer.getElementIndexFromMeshInstance(
+        this.viewer.vim.getObjectFromMesh(
           hit.object as THREE.InstancedMesh,
-          r.instanceId
+          hit.instanceId
         )
       }
     }

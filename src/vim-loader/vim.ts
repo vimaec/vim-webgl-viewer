@@ -14,13 +14,15 @@ import { VimObject } from './vimObject'
  * Provides an interface to access BIM data.
  */
 export class Vim {
-  vim: Document
+  document: Document
   scene: Scene
+  matrix: THREE.Matrix4 = new THREE.Matrix4()
   elementIndexToInstanceIndices: Map<number, number[]>
   elementIdToElementIndex: Map<number, number>
+  elementToObjects: Map<number, VimObject> = new Map<number, VimObject>()
 
   constructor (vim: Document, scene: Scene) {
-    this.vim = vim
+    this.document = vim
     this.scene = scene
     this.elementIndexToInstanceIndices = this.mapElementIndexToInstanceIndices()
     this.elementIdToElementIndex = this.mapElementIdToIndex()
@@ -75,32 +77,46 @@ export class Vim {
     return map
   }
 
+  getObjectFromMesh (mesh: THREE.Mesh, index: number) {
+    const element = this.getElementFromMesh(mesh, index)
+    return this.getObjectFromElement(element)
+  }
+
+  getObjectFromInstance (instance: number) {
+    const element = this.getElemenFromInstance(instance)
+    return this.getObjectFromElement(element)
+  }
+
   getObjectFromElement (element: number) {
+    if (this.elementToObjects.has(element)) {
+      return this.elementToObjects.get(element)
+    }
+
     const instances = this.getInstanceIndicesFromElementIndex(element)
-    const merged: [THREE.Mesh, number, number][] = []
-    const instanced: [THREE.InstancedMesh, number][] = []
+    const meshes = this.getMeshesFromInstances(instances)
+    if (!meshes) return
+
+    const result = new VimObject(this, element, instances, meshes)
+    this.elementToObjects.set(element, result)
+    return result
+  }
+
+  getMeshesFromInstances (instances: number[]) {
+    if (!instances?.length) return
+
+    const meshes: [THREE.Mesh, number][] = []
     for (let i = 0; i < instances.length; i++) {
       const instance = instances[i]
       if (instance < 0) continue
       const [mesh, index] = this.getMeshFromInstanceIndex(instance)
       if (!mesh) continue
-      if (mesh.userData.merged) {
-        const start = mesh.userData.submeshes[index]
-        const end =
-          index + 1 < mesh.userData.submeshes.length
-            ? mesh.userData.submeshes[index + 1]
-            : mesh.geometry.getIndex().count
-
-        merged.push([mesh, start, end])
-      } else {
-        instanced.push([mesh as THREE.InstancedMesh, index])
-      }
+      meshes.push([mesh, index])
     }
-    const result = new VimObject(element, instances, merged, instanced)
-    return result
+    if (meshes.length === 0) return
+    return meshes
   }
 
-  getElementIndexFromElementId = (elementId: number): number | undefined =>
+  getElementFromId = (elementId: number): number | undefined =>
     this.elementIdToElementIndex.get(elementId)
 
   getStringColumn = (table: any, colNameNoPrefix: string): number[] =>
@@ -130,10 +146,10 @@ export class Vim {
     table?.get(Document.tableElementLegacy) // Backwards compatible call with vim0.9
 
   getElementTable = () =>
-    this.vim.entities?.get(Document.tableElement) ??
-    this.vim.entities?.get(Document.tableElementLegacy)
+    this.document.entities?.get(Document.tableElement) ??
+    this.document.entities?.get(Document.tableElementLegacy)
 
-  getNodeTable = () => this.vim.entities.get(Document.tableNode)
+  getNodeTable = () => this.document.entities.get(Document.tableNode)
 
   /**
    * Get Node/Instance Indices for given element index
@@ -168,60 +184,56 @@ export class Vim {
 
     // element ids -> element indices
     const elementIndices = elementIds
-      .map((id) => this.getElementIndexFromElementId(id))
+      .map((id) => this.getElementFromId(id))
       .filter((i): i is number => i !== undefined)
 
     // element indices -> nodes indices
     return this.getNodeIndicesFromElementIndices(elementIndices)
   }
 
-  getMeshesFromElementIndex (elementIndex: number): [THREE.Mesh, number][] | [] {
-    const nodeIndices = this.getInstanceIndicesFromElementIndex(elementIndex)
-    if (!nodeIndices || !nodeIndices.length) return null
-
-    const result: [THREE.Mesh, number][] = []
-    nodeIndices.forEach((i) => {
-      const mesh = this.getMeshFromInstanceIndex(i)
-      if (mesh.length) result.push(mesh)
-    })
-    return result
-  }
-
   getMeshFromInstanceIndex (nodeIndex: number): [THREE.Mesh, number] | [] {
     if (nodeIndex < 0) throw new Error('Invalid negative index')
     const array = this.scene.instanceToThreeMesh.get(nodeIndex)
-    return array ? array[0] : []
+    return array ?? []
   }
 
-  getNodeIndexFromMesh (mesh: THREE.Mesh, instance: number): number {
-    if (!mesh || instance < 0) return -1
-    const nodes = this.scene.threeMeshIdToInstance.get(mesh.id)
+  /**
+   * Returns the index of the g3d instance that from which this mesh instance was created
+   * @param mesh a mesh created by the vim loader
+   * @param index if merged mesh the index into the merged mesh, if instance mesh the instance index.
+   * @returns a g3d instance index.
+   */
+  getInstanceFromMesh (mesh: THREE.Mesh, index: number): number {
+    if (!mesh || index < 0) return -1
+    const nodes = this.scene.threeMeshIdToInstances.get(mesh.id)
     if (!nodes) return -1
-    return nodes[instance]
+    return nodes[index]
   }
 
-  getElementIndexFromMesh (mesh: THREE.Mesh, instance: number): number {
+  /**
+   * Get the element index related to given mesh
+   * @param mesh instanced mesh
+   * @param index index into the instanced mesh
+   * @returns index of element
+   */
+  getElementFromMesh (mesh: THREE.Mesh, instance: number): number {
     if (!mesh || instance < 0) return -1
-    const nodeIndex = this.getNodeIndexFromMesh(mesh, instance)
-    return this.getElementIndexFromNodeIndex(nodeIndex)
+    const nodeIndex = this.getInstanceFromMesh(mesh, instance)
+    return this.getElemenFromInstance(nodeIndex)
   }
 
-  getElementIndexFromNodeIndex (nodeIndex: number): number {
-    if (nodeIndex < 0) return -1
+  /**
+   * Returns the element index associated with the g3d instance index.
+   * @param instance g3d instance index
+   * @returns element index or -1 if not found
+   */
+  getElemenFromInstance (instance: number): number {
+    if (instance < 0) return -1
     const node = this.getNodeTable()
     if (!node) return -1
     const elements = this.getElementIndices(node)
     if (!elements) return -1
-    return elements[nodeIndex]
-  }
-
-  getElementIdFromNodeIndex (nodeIndex: number): number {
-    if (nodeIndex < 0) return -1
-    const elementIndex = this.getElementIndexFromNodeIndex(nodeIndex)
-    if (elementIndex < 0) return -1
-    const ids = this.getIntColumn(this.getElementTable(), 'Id')
-    if (!ids) return -1
-    return ids[elementIndex]
+    return elements[instance]
   }
 
   // TODO add better ways to access bim
@@ -234,6 +246,6 @@ export class Vim {
   }
 
   getStringFromIndex (stringIndex: number): string {
-    return stringIndex < 0 ? '' : this.vim.strings[stringIndex]
+    return stringIndex < 0 ? '' : this.document.strings[stringIndex]
   }
 }

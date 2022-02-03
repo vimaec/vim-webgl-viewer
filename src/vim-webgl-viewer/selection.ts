@@ -3,6 +3,7 @@
  */
 
 import * as THREE from 'three'
+import { VimObject } from '../vim-loader/vimObject'
 import { Viewer } from './viewer'
 
 // TODO: Fix circular dependency
@@ -36,16 +37,11 @@ export class Selection {
     this.highlightDisposer = null
   }
 
-  select (elementIndex: number) {
+  select (object: VimObject) {
     this.clear()
-    if (elementIndex < 0) {
-      return
-    }
-    this.elementIndex = elementIndex
-    this.highlightDisposer = this.viewer.highlightElementByIndex(elementIndex)
-    this.boundingSphere =
-      this.viewer
-        .getBoundingBoxForElementIndex(elementIndex)
-        ?.getBoundingSphere(new THREE.Sphere()) ?? null
+    const wireframe = object.createWireframe()
+    this.viewer.renderer.addObject(wireframe)
+    this.highlightDisposer = () => this.viewer.renderer.removeObject(wireframe)
+    this.boundingSphere = object.getBoundingSphere()
   }
 }

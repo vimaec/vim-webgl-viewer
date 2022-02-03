@@ -14,14 +14,18 @@ import * as vimGeometry from './geometry'
 export class MeshBuilder {
   private materialOpaque: THREE.Material
   private materialTransparent: THREE.Material | undefined
+  private wireframeMaterial: THREE.Material | undefined
 
   constructor (
     materialOpaque?: THREE.Material,
-    materialTransparent?: THREE.Material
+    materialTransparent?: THREE.Material,
+    wireframeMaterial?: THREE.Material
   ) {
     this.materialOpaque = materialOpaque ?? this.createDefaultOpaqueMaterial()
     this.materialTransparent =
       materialTransparent ?? this.createDefaultTransparentMaterial()
+    this.wireframeMaterial =
+      wireframeMaterial ?? this.createDefaultWireframeMaterial()
   }
 
   /**
@@ -48,6 +52,20 @@ export class MeshBuilder {
     material.transparent = true
     material.depthWrite = true
     // material.opacity = 0.3
+    return material
+  }
+
+  /**
+   * Creates a new instance of the default wireframe material
+   * @returns a THREE.LineBasicMaterial
+   */
+  createDefaultWireframeMaterial (): THREE.Material {
+    const material = new THREE.LineBasicMaterial({
+      depthTest: false,
+      opacity: 0.5,
+      color: new THREE.Color(0x0000ff),
+      transparent: true
+    })
     return material
   }
 
@@ -150,4 +168,22 @@ export class MeshBuilder {
 
     return mesh
   }
+
+  createWireframe (g3d: G3d, instances: number[]) {
+    const geometry = vimGeometry.createFromInstances(g3d, instances)
+
+    const wireframe = new THREE.WireframeGeometry(geometry)
+    const material = new THREE.LineBasicMaterial({
+      depthTest: false,
+      opacity: 0.5,
+      color: new THREE.Color(0x0000ff),
+      transparent: true
+    })
+    return new THREE.LineSegments(wireframe, material)
+  }
+}
+
+let defaultBuilder: MeshBuilder
+export function getDefaultBuilder () {
+  return defaultBuilder ?? (defaultBuilder = new MeshBuilder())
 }

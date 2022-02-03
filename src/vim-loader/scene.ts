@@ -6,7 +6,7 @@
 import * as THREE from 'three'
 import { G3d } from './g3d'
 import * as vimGeometry from './geometry'
-import { MeshBuilder } from './mesh'
+import * as meshing from './mesh'
 
 /**
  * A Scene regroups many THREE.Meshes
@@ -16,8 +16,30 @@ import { MeshBuilder } from './mesh'
 export class Scene {
   meshes: THREE.Mesh[] = []
   boundingBox: THREE.Box3 = new THREE.Box3()
-  instanceToThreeMesh: Map<number, [THREE.Mesh, number][]> = new Map()
-  threeMeshIdToInstance: Map<number, number[]> = new Map()
+  instanceToThreeMesh: Map<number, [THREE.Mesh, number]> = new Map()
+  threeMeshIdToInstances: Map<number, number[]> = new Map()
+
+  swapInstances (mesh: THREE.InstancedMesh, indexA: number, indexB: number) {
+    const array = this.threeMeshIdToInstances.get(mesh.id)
+    if (!array) throw new Error('Could not find mesh with id : ' + mesh.id)
+    if (indexA === indexB) return
+
+    const matrixA = new THREE.Matrix4()
+    const matrixB = new THREE.Matrix4()
+    mesh.getMatrixAt(indexA, matrixA)
+    mesh.getMatrixAt(indexB, matrixB)
+    mesh.setMatrixAt(indexA, matrixB)
+    mesh.setMatrixAt(indexB, matrixA)
+
+    const instanceA = array[indexA]
+    const instanceB = array[indexB]
+
+    this.instanceToThreeMesh.get(instanceA)[1] = indexB
+    this.instanceToThreeMesh.get(instanceB)[1] = indexA
+    array[indexA] = instanceB
+    array[indexB] = instanceA
+    mesh.instanceMatrix.needsUpdate = true
+  }
 
   /**
    * Add an instanced mesh to the Scene and recomputes fields as needed.
@@ -31,14 +53,14 @@ export class Scene {
     }
 
     for (let i = 0; i < instances.length; i++) {
-      this.instanceToThreeMesh.set(instances[i], [[mesh, i]])
+      this.instanceToThreeMesh.set(instances[i], [mesh, i])
     }
 
     mesh.geometry.computeBoundingBox()
     const box = mesh.geometry.boundingBox!
     this.boundingBox = this.boundingBox?.union(box) ?? box.clone()
 
-    this.threeMeshIdToInstance.set(mesh.id, instances)
+    this.threeMeshIdToInstances.set(mesh.id, instances)
     this.meshes.push(mesh)
     return this
   }
@@ -81,11 +103,11 @@ export class Scene {
     }
 
     for (let i = 0; i < instances.length; i++) {
-      this.instanceToThreeMesh.set(instances[i], [[mesh, i]])
+      this.instanceToThreeMesh.set(instances[i], [mesh, i])
     }
     const box = this.computeIntancedMeshBoundingBox(mesh)!
     this.boundingBox = this.boundingBox?.union(box) ?? box.clone()
-    this.threeMeshIdToInstance.set(mesh.id, instances)
+    this.threeMeshIdToInstances.set(mesh.id, instances)
   }
 
   /**
@@ -94,12 +116,10 @@ export class Scene {
   merge (other: Scene) {
     other.meshes.forEach((mesh) => this.meshes.push(mesh))
     other.instanceToThreeMesh.forEach((value, key) => {
-      const values = this.instanceToThreeMesh.get(key) ?? []
-      value.forEach((pair) => values.push(pair))
       this.instanceToThreeMesh.set(key, value)
     })
-    other.threeMeshIdToInstance.forEach((value, key) => {
-      this.threeMeshIdToInstance.set(key, value)
+    other.threeMeshIdToInstances.forEach((value, key) => {
+      this.threeMeshIdToInstances.set(key, value)
     })
     this.boundingBox =
       this.boundingBox?.union(other.boundingBox) ?? other.boundingBox.clone()
@@ -148,14 +168,12 @@ export function createSceneFromG3d (
   instances: number[] | undefined = undefined
 ): Scene {
   const scene = new Scene()
-  const builder = new MeshBuilder()
 
   // Add shared geometry
   const shared = createSceneFromInstanciabledMeshes(
     g3d,
     transparency,
-    instances,
-    builder
+    instances
   )
   scene.merge(shared)
 
@@ -164,8 +182,7 @@ export function createSceneFromG3d (
     const opaque = createSceneFromMergeableMeshes(
       g3d,
       transparency === 'allAsOpaque' ? 'allAsOpaque' : 'opaqueOnly',
-      instances,
-      builder
+      instances
     )
     scene.merge(opaque)
   }
@@ -175,8 +192,7 @@ export function createSceneFromG3d (
     const transparent = createSceneFromMergeableMeshes(
       g3d,
       'transparentOnly',
-      instances,
-      builder
+      instances
     )
     scene.merge(transparent)
   }
@@ -193,7 +209,7 @@ export function createSceneFromInstanciabledMeshes (
   g3d: G3d,
   transparency: vimGeometry.TransparencyMode,
   instances: number[] | undefined = undefined,
-  builder: MeshBuilder = new MeshBuilder()
+  builder: meshing.MeshBuilder = meshing.getDefaultBuilder()
 ) {
   const meshes = builder.createInstancedMeshes(g3d, transparency, instances)
   return Scene.fromInstancedMeshes(meshes)
@@ -209,7 +225,7 @@ export function createSceneFromMergeableMeshes (
   g3d: G3d,
   transparency: vimGeometry.TransparencyMode,
   instances: number[] | undefined = undefined,
-  builder: MeshBuilder = new MeshBuilder()
+  builder: meshing.MeshBuilder = meshing.getDefaultBuilder()
 ) {
   const mesh = builder.createMergedMesh(g3d, transparency, instances)
   return new Scene().addMergedMesh(mesh)
