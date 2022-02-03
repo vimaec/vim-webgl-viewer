@@ -1,3 +1,8 @@
+/**
+ * Api handle for element/instance/mesh.
+ * @module vim-loader
+ */
+
 // external
 import * as THREE from 'three'
 import { Vim } from './vim'
