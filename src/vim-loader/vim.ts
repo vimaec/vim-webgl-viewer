@@ -77,6 +77,10 @@ export class Vim {
     return map
   }
 
+  applyMatrix4 (matrix: THREE.Matrix4) {
+    this.scene.applyMatrix4(matrix)
+  }
+
   getObjectFromMesh (mesh: THREE.Mesh, index: number) {
     const element = this.getElementFromMesh(mesh, index)
     return this.getObjectFromElement(element)

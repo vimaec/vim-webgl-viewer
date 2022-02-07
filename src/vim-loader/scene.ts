@@ -19,6 +19,14 @@ export class Scene {
   instanceToThreeMesh: Map<number, [THREE.Mesh, number]> = new Map()
   threeMeshIdToInstances: Map<number, number[]> = new Map()
 
+  applyMatrix4 (matrix: THREE.Matrix4) {
+    for (let i = 0; i < this.meshes.length; i++) {
+      this.meshes[i].matrixAutoUpdate = false
+      this.meshes[i].matrix.copy(matrix)
+    }
+    this.boundingBox.applyMatrix4(matrix)
+  }
+
   swapInstances (mesh: THREE.InstancedMesh, indexA: number, indexB: number) {
     const array = this.threeMeshIdToInstances.get(mesh.id)
     if (!array) throw new Error('Could not find mesh with id : ' + mesh.id)

@@ -123,20 +123,10 @@ export class ViewerRenderer {
     this.worldBoundingBox = this.worldBoundingBox ?? this.localBoundingBox
   }
 
-  applyMatrix4 (matrix: THREE.Matrix4) {
-    for (let i = 0; i < this.meshes.length; i++) {
-      this.meshes[i].matrixAutoUpdate = false
-      this.meshes[i].matrix.copy(matrix)
-    }
-    this.worldBoundingBox = this.localBoundingBox.clone().applyMatrix4(matrix)
-  }
-
-  computeBoundingBox (matrix: THREE.Matrix4) {
-    this.localBoundingBox = this._computeBoundingBox(this.scene)
-    this.worldBoundingBox = this.localBoundingBox.clone().applyMatrix4(matrix)
-  }
-
-  _computeBoundingBox (scene: THREE.Scene): THREE.Box3 {
+  /**
+   * Computes the bounding box of an arbitrary scene.
+   */
+  private _computeBoundingBox (scene: THREE.Scene): THREE.Box3 {
     let box: THREE.Box3 | undefined
 
     const grow = (geometry: THREE.BufferGeometry, matrix: THREE.Matrix4) => {

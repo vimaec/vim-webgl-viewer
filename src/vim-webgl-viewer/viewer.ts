@@ -149,12 +149,10 @@ export class Viewer {
   private onVimLoaded (vim: Vim, settings: VimSettings) {
     this.vim = vim
     this.vimSettings = settings
-    this.vim.matrix = settings.getMatrix()
-    const matrix = this.vimSettings.getMatrix()
+    this.vim.applyMatrix4(settings.getMatrix())
 
     // Scene
     this.renderer.addScene(vim.scene)
-    this.renderer.applyMatrix4(matrix)
     this.renderer.render()
 
     this.ApplyVimSettings()
