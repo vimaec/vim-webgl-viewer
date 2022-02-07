@@ -13,6 +13,14 @@ import { Scene } from './scene'
 import { TransparencyMode } from './geometry'
 
 export class VimLoader {
+  loader: THREE.FileLoader
+  loaded: Set<string> = new Set<string>()
+  constructor () {
+    this.loader = new THREE.FileLoader()
+    THREE.Cache.enabled = true
+  }
+
+  count = 0
   // Loads the VIM from a URL
   // Download should be handled without three for Parser and Loader to be divided properly
   loadFromUrl (
@@ -22,13 +30,12 @@ export class VimLoader {
     onProgress?: (progress: ProgressEvent | 'processing') => void,
     onError?: (event: ErrorEvent) => void
   ) {
-    const loader = new THREE.FileLoader()
-    loader.setResponseType('arraybuffer')
-    loader.setRequestHeader({
+    this.loader.setResponseType('arraybuffer')
+    this.loader.setRequestHeader({
       'Content-Encoding': 'gzip'
     })
-
-    loader.load(
+    this.loaded.add(url)
+    this.loader.load(
       url,
       (data: string | ArrayBuffer) => {
         if (!data) {
@@ -40,6 +47,7 @@ export class VimLoader {
           return
         }
         onProgress?.('processing')
+        if (this.loaded.has(url)) data = data.slice(0)
         const vim = Document.parseFromArrayBuffer(data)
         const scene = this.loadFromVim(vim, transparency)
         onLoad?.(scene)

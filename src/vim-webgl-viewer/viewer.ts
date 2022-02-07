@@ -44,6 +44,7 @@ export class Viewer {
   selection: Selection
   camera: ViewerCamera
   controls: ViewerInput
+  loader: VimLoader
 
   // State
   vims: [Vim, VimSettings][] = []
@@ -57,6 +58,7 @@ export class Viewer {
   onMouseClick: (hit: HitTestResult) => void
 
   constructor (options?: Partial<ViewerOptions>) {
+    this.loader = new VimLoader()
     this.settings = new ViewerSettings(options)
 
     const canvas = Viewer.getOrCreateCanvas(this.settings.getCanvasId())
@@ -119,7 +121,7 @@ export class Viewer {
     }
 
     if (typeof source === 'string') {
-      new VimLoader().loadFromUrl(
+      this.loader.loadFromUrl(
         source,
         settings.getTransparency(),
         (vim) => finish(vim),
@@ -131,7 +133,7 @@ export class Viewer {
         }
       )
     } else {
-      const vim = new VimLoader().loadFromArrayBuffer(
+      const vim = this.loader.loadFromArrayBuffer(
         source,
         settings.getTransparency()
       )
@@ -141,6 +143,7 @@ export class Viewer {
 
   private onVimLoaded (vim: Vim, settings: VimSettings) {
     vim.applyMatrix4(settings.getMatrix())
+    vim.setIndex(this.vims.length)
     this.vims.push([vim, settings])
 
     // Scene
@@ -185,7 +188,7 @@ export class Viewer {
       ? this.getVimAt(0).getInstanceIndicesFromElementIds(elementIds)
       : undefined
 
-    const scene = new VimLoader().loadFromVim(
+    const scene = this.loader.loadFromVim(
       this.getVimAt(0).document,
       settings.getTransparency(),
       instanceIndices

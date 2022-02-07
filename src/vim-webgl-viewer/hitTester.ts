@@ -58,13 +58,16 @@ export class HitTester {
 
     const hit = r.firstHit
     if (hit) {
+      const vimIndex = hit.object.userData.index
       // Merged mesh have node origin of each face encoded in uvs
       if (hit.object.userData.merged && hit.uv !== undefined) {
         const instance = Math.round(hit.uv.x)
-        r.object = this.viewer.getVimAt(0).getObjectFromInstance(instance)
+        r.object = this.viewer
+          .getVimAt(vimIndex)
+          .getObjectFromInstance(instance)
       } else if (hit.instanceId !== undefined) {
         r.object = this.viewer
-          .getVimAt(0)
+          .getVimAt(vimIndex)
           .getObjectFromMesh(hit.object as THREE.InstancedMesh, hit.instanceId)
       }
     }

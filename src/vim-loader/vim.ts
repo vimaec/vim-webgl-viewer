@@ -82,6 +82,10 @@ export class Vim {
     this.scene.applyMatrix4(matrix)
   }
 
+  setIndex (index: number) {
+    this.scene.setIndex(index)
+  }
+
   getObjectFromMesh (mesh: THREE.Mesh, index: number) {
     const element = this.getElementFromMesh(mesh, index)
     return this.getObjectFromElement(element)

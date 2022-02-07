@@ -20,11 +20,17 @@ export class Scene {
   threeMeshIdToInstances: Map<number, number[]> = new Map()
 
   applyMatrix4 (matrix: THREE.Matrix4) {
-    for (let i = 0; i < this.meshes.length; i++) {
-      this.meshes[i].matrixAutoUpdate = false
-      this.meshes[i].matrix.copy(matrix)
+    for (let m = 0; m < this.meshes.length; m++) {
+      this.meshes[m].matrixAutoUpdate = false
+      this.meshes[m].matrix.copy(matrix)
     }
     this.boundingBox.applyMatrix4(matrix)
+  }
+
+  setIndex (index: number) {
+    for (let m = 0; m < this.meshes.length; m++) {
+      this.meshes[m].userData.index = index
+    }
   }
 
   swapInstances (mesh: THREE.InstancedMesh, indexA: number, indexB: number) {
