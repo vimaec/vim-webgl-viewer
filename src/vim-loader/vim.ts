@@ -17,6 +17,7 @@ export class Vim {
   document: Document
   scene: Scene
   matrix: THREE.Matrix4 = new THREE.Matrix4()
+  index: number
   elementIndexToInstanceIndices: Map<number, number[]>
   elementIdToElementIndex: Map<number, number>
   elementToObjects: Map<number, VimObject> = new Map<number, VimObject>()
@@ -83,6 +84,7 @@ export class Vim {
   }
 
   setIndex (index: number) {
+    this.index = index
     this.scene.setIndex(index)
   }
 

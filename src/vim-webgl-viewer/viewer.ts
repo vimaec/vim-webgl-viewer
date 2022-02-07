@@ -50,6 +50,19 @@ export class Viewer {
   vims: [Vim, VimSettings][] = []
   getVimAt = (index: number) => this.vims[index][0]
   getSettingsAt = (index: number) => this.vims[index][1]
+  addVim (vim: Vim, settings: VimSettings) {
+    for (let i = 0; i <= this.vims.length; i++) {
+      if (this.vims[i] === undefined) {
+        this.vims[i] = [vim, settings]
+        vim.setIndex(i)
+        return
+      }
+    }
+  }
+
+  removeVim (vim: Vim) {
+    this.vims[vim.index] = undefined
+  }
 
   /**
    * Callback for on mouse click. Replace it to override or combine
@@ -114,7 +127,7 @@ export class Viewer {
 
     const finish = (vim: Vim) => {
       const filter = settings.getElementIdsFilter()
-      if (filter) this.filter(filter)
+      if (filter) this.filterVim(vim, filter)
       else this.onVimLoaded(vim, settings)
       this.lookAtScene()
       onLoad?.(vim)
@@ -143,8 +156,7 @@ export class Viewer {
 
   private onVimLoaded (vim: Vim, settings: VimSettings) {
     vim.applyMatrix4(settings.getMatrix())
-    vim.setIndex(this.vims.length)
-    this.vims.push([vim, settings])
+    this.addVim(vim, settings)
 
     // Scene
     this.renderer.addScene(vim.scene)
@@ -168,32 +180,29 @@ export class Viewer {
   /**
    * Unload existing vim to get ready to load a new vim
    */
-  unloadVim () {
-    // TODO: Clear vs Unload One
-    this.vims = []
-    this.renderer.clearScene()
-    this.selection.clear()
+  unloadVim (vim: Vim) {
+    this.removeVim(vim)
+    this.renderer.removeScene(vim.scene)
+    if (this.selection.object.vim === vim) this.selection.clear()
   }
 
   /**
    * Unload existing vim and reloads it without redownloading it
    * @param options full vim options, same as for loadVim
    */
-  reloadVim (options: VimOptions) {
-    // TODO Fix This.
+  reloadVim (vim: Vim, options: VimOptions) {
     const settings = new VimSettings(options)
-    // Go from Element Ids -> Node Indices
     const elementIds = settings.getElementIdsFilter()
     const instanceIndices = elementIds
-      ? this.getVimAt(0).getInstanceIndicesFromElementIds(elementIds)
+      ? vim.getInstanceIndicesFromElementIds(elementIds)
       : undefined
 
     const scene = this.loader.loadFromVim(
-      this.getVimAt(0).document,
+      vim.document,
       settings.getTransparency(),
       instanceIndices
     )
-    this.unloadVim()
+    this.unloadVim(vim)
     this.onVimLoaded(scene, settings)
   }
 
@@ -201,21 +210,21 @@ export class Viewer {
    * Reloads the current vim with the same settings except it applies a new element filter
    * @param includedElementIds array of element ids to keep, passing undefined will load the whole vim
    */
-  filter (includedElementIds: number[] | undefined) {
+  filterVim (vim: Vim, includedElementIds: number[] | undefined) {
     // TODO Fix this
     const options = this.getSettingsAt(0).getOptions()
     options.elementIds = includedElementIds
-    this.reloadVim(options)
+    this.reloadVim(vim, options)
   }
 
   /**
    * Reloads the current vim with the same settings except it removes element filter
    */
-  clearFilter () {
+  clearFilter (vim: Vim) {
     // TODO: Fix this
     const options = this.getSettingsAt(0).getOptions()
     options.elementIds = undefined
-    this.reloadVim(options)
+    this.reloadVim(vim, options)
   }
 
   /**

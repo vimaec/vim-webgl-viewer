@@ -12,7 +12,7 @@ export class Selection {
   viewer: Viewer
 
   // State
-  elementIndex: number = -1
+  object: VimObject | undefined = undefined
   boundingSphere: THREE.Sphere | null = null
 
   // Disposable State
@@ -23,11 +23,11 @@ export class Selection {
   }
 
   hasSelection () {
-    return this.elementIndex >= 0
+    return this.object !== undefined
   }
 
   clear () {
-    this.elementIndex = -1
+    this.object = undefined
     this.boundingSphere = null
     this.disposeResources()
   }
@@ -39,6 +39,7 @@ export class Selection {
 
   select (object: VimObject) {
     this.clear()
+    this.object = object
     const wireframe = object.createWireframe()
     this.viewer.renderer.addObject(wireframe)
     this.highlightDisposer = () => this.viewer.renderer.removeObject(wireframe)

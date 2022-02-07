@@ -110,6 +110,12 @@ export class ViewerRenderer {
     if (i > 0) this.meshes.splice(i, 1)
   }
 
+  removeScene (scene: Scene) {
+    for (let i = 0; i < scene.meshes.length; i++) {
+      this.removeObject(scene.meshes[i])
+    }
+  }
+
   addScene (scene: Scene) {
     scene.meshes.forEach((m) => {
       this.scene.add(m)
