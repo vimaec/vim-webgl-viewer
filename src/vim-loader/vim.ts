@@ -78,6 +78,7 @@ export class Vim {
   }
 
   applyMatrix4 (matrix: THREE.Matrix4) {
+    this.matrix = matrix
     this.scene.applyMatrix4(matrix)
   }
 

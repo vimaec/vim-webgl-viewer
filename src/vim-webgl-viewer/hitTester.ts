@@ -61,12 +61,11 @@ export class HitTester {
       // Merged mesh have node origin of each face encoded in uvs
       if (hit.object.userData.merged && hit.uv !== undefined) {
         const instance = Math.round(hit.uv.x)
-        r.object = this.viewer.vim.getObjectFromInstance(instance)
+        r.object = this.viewer.getVimAt(0).getObjectFromInstance(instance)
       } else if (hit.instanceId !== undefined) {
-        r.object = this.viewer.vim.getObjectFromMesh(
-          hit.object as THREE.InstancedMesh,
-          hit.instanceId
-        )
+        r.object = this.viewer
+          .getVimAt(0)
+          .getObjectFromMesh(hit.object as THREE.InstancedMesh, hit.instanceId)
       }
     }
     return r

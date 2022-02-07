@@ -34,7 +34,7 @@ export type ViewerState =
   | [state: 'Error', error: ErrorEvent]
   | 'Ready'
 
-const NO_SCENE_LOADED = 'No vim loaded in viewer. Ignoring'
+// const NO_SCENE_LOADED = 'No vim loaded in viewer. Ignoring'
 
 export class Viewer {
   settings: ViewerSettings
@@ -46,16 +46,15 @@ export class Viewer {
   controls: ViewerInput
 
   // State
-  vimSettings: VimSettings | undefined
-  vim: Vim | undefined
-  state: ViewerState = 'Uninitialized'
-  static stateChangeEvent = 'viewerStateChangedEvent'
+  vims: [Vim, VimSettings][] = []
+  getVimAt = (index: number) => this.vims[index][0]
+  getSettingsAt = (index: number) => this.vims[index][1]
 
   /**
    * Callback for on mouse click. Replace it to override or combine
    * default behaviour with your custom logic.
    */
-  public onMouseClick: (hit: HitTestResult) => void
+  onMouseClick: (hit: HitTestResult) => void
 
   constructor (options?: Partial<ViewerOptions>) {
     this.settings = new ViewerSettings(options)
@@ -89,7 +88,7 @@ export class Viewer {
     this.camera.frameUpdate(timeDelta)
 
     // Rendering
-    if (this.vim) this.renderer.render()
+    if (this.vims.length) this.renderer.render()
   }
 
   /**
@@ -109,10 +108,6 @@ export class Viewer {
     onProgress?: (request: ProgressEvent | 'processing') => void,
     onError?: (event: ErrorEvent) => void
   ) {
-    if (this.vimSettings) {
-      throw new Error('There is already a vim loaded or loading')
-    }
-
     const settings = new VimSettings(options)
 
     const finish = (vim: Vim) => {
@@ -132,8 +127,6 @@ export class Viewer {
           onProgress?.(progress)
         },
         (error) => {
-          this.vimSettings = undefined
-          this.vim = undefined
           onError?.(error)
         }
       )
@@ -147,9 +140,8 @@ export class Viewer {
   }
 
   private onVimLoaded (vim: Vim, settings: VimSettings) {
-    this.vim = vim
-    this.vimSettings = settings
-    this.vim.applyMatrix4(settings.getMatrix())
+    vim.applyMatrix4(settings.getMatrix())
+    this.vims.push([vim, settings])
 
     // Scene
     this.renderer.addScene(vim.scene)
@@ -174,8 +166,8 @@ export class Viewer {
    * Unload existing vim to get ready to load a new vim
    */
   unloadVim () {
-    this.vim = undefined
-    this.vimSettings = undefined
+    // TODO: Clear vs Unload One
+    this.vims = []
     this.renderer.clearScene()
     this.selection.clear()
   }
@@ -185,17 +177,16 @@ export class Viewer {
    * @param options full vim options, same as for loadVim
    */
   reloadVim (options: VimOptions) {
-    if (!this.vim) throw new Error(NO_SCENE_LOADED)
-
+    // TODO Fix This.
     const settings = new VimSettings(options)
     // Go from Element Ids -> Node Indices
     const elementIds = settings.getElementIdsFilter()
     const instanceIndices = elementIds
-      ? this.vim.getInstanceIndicesFromElementIds(elementIds)
+      ? this.getVimAt(0).getInstanceIndicesFromElementIds(elementIds)
       : undefined
 
     const scene = new VimLoader().loadFromVim(
-      this.vim.document,
+      this.getVimAt(0).document,
       settings.getTransparency(),
       instanceIndices
     )
@@ -208,8 +199,8 @@ export class Viewer {
    * @param includedElementIds array of element ids to keep, passing undefined will load the whole vim
    */
   filter (includedElementIds: number[] | undefined) {
-    if (!this.vimSettings) throw new Error(NO_SCENE_LOADED)
-    const options = this.vimSettings.getOptions()
+    // TODO Fix this
+    const options = this.getSettingsAt(0).getOptions()
     options.elementIds = includedElementIds
     this.reloadVim(options)
   }
@@ -218,8 +209,8 @@ export class Viewer {
    * Reloads the current vim with the same settings except it removes element filter
    */
   clearFilter () {
-    if (!this.vimSettings) throw new Error(NO_SCENE_LOADED)
-    const options = this.vimSettings.getOptions()
+    // TODO: Fix this
+    const options = this.getSettingsAt(0).getOptions()
     options.elementIds = undefined
     this.reloadVim(options)
   }
@@ -229,9 +220,10 @@ export class Viewer {
    * @param elementIndex index of element
    */
   select (object: VimObject) {
-    if (!this.vim) throw new Error(NO_SCENE_LOADED)
     console.log('Selecting element with index: ' + object.element)
-    console.log('Bim Element Name: ' + this.vim.getElementName(object.element))
+    console.log(
+      'Bim Element Name: ' + this.getVimAt(0).getElementName(object.element)
+    )
     this.selection.select(object)
   }
 
@@ -280,7 +272,7 @@ export class Viewer {
 
   public ApplyVimSettings () {
     this.environment.applyVimSettings(
-      this.vimSettings,
+      this.getSettingsAt(0),
       this.renderer.getBoundingBox()
     )
     this.camera.applyVimSettings(this.renderer.getBoundingSphere())
@@ -297,7 +289,7 @@ export class Viewer {
 
     if (hit.doubleClick) this.lookAtSelection()
 
-    const entity = this.vim.document.getEntity(
+    const entity = this.getVimAt(0).document.getEntity(
       Document.tableElement,
       hit.object.element
     )
