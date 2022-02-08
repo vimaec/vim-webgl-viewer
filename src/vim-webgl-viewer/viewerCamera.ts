@@ -109,7 +109,7 @@ class ViewerCamera {
     this.OrbitalTargetDistance = this.CurrentOrbitalDistance
   }
 
-  frameScene (sphere?: THREE.Sphere) {
+  frameSphere (sphere?: THREE.Sphere) {
     if (!sphere) {
       this.reset()
       return

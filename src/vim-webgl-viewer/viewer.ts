@@ -34,8 +34,6 @@ export type ViewerState =
   | [state: 'Error', error: ErrorEvent]
   | 'Ready'
 
-// const NO_SCENE_LOADED = 'No vim loaded in viewer. Ignoring'
-
 export class Viewer {
   settings: ViewerSettings
 
@@ -48,21 +46,6 @@ export class Viewer {
 
   // State
   vims: [Vim, VimSettings][] = []
-  getVimAt = (index: number) => this.vims[index][0]
-  getSettingsAt = (index: number) => this.vims[index][1]
-  addVim (vim: Vim, settings: VimSettings) {
-    for (let i = 0; i <= this.vims.length; i++) {
-      if (this.vims[i] === undefined) {
-        this.vims[i] = [vim, settings]
-        vim.setIndex(i)
-        return
-      }
-    }
-  }
-
-  removeVim (vim: Vim) {
-    this.vims[vim.index] = undefined
-  }
 
   /**
    * Callback for on mouse click. Replace it to override or combine
@@ -94,6 +77,21 @@ export class Viewer {
     this.animate()
   }
 
+  /**
+   * Either returns html canvas at provided Id or creates a canvas at root level
+   */
+  private static getOrCreateCanvas (canvasId?: string) {
+    let canvas = canvasId
+      ? (document.getElementById(canvasId) as HTMLCanvasElement)
+      : undefined
+
+    if (!canvas) {
+      canvas = document.createElement('canvas')
+      document.body.appendChild(canvas)
+    }
+    return canvas
+  }
+
   // Calls render, and asks the framework to prepare the next frame
   private animate () {
     requestAnimationFrame(() => this.animate())
@@ -104,6 +102,37 @@ export class Viewer {
 
     // Rendering
     if (this.vims.length) this.renderer.render()
+  }
+
+  /**
+   * Returns vim with given index. Once loaded vims do not change index.
+   */
+  getVimAt = (index: number) => this.vims[index][0]
+
+  /**
+   * Returns settings associated with vim at given index.
+   */
+  getSettingsAt = (index: number) => this.vims[index][1]
+
+  /**
+   * Adds given vim to the first empty spot of the vims array
+   */
+  private addVim (vim: Vim, settings: VimSettings) {
+    for (let i = 0; i <= this.vims.length; i++) {
+      if (this.vims[i] === undefined) {
+        this.vims[i] = [vim, settings]
+        vim.setIndex(i)
+        return
+      }
+    }
+  }
+
+  /**
+   * Remove given vim from the vims array and leaves an undefined spot.
+   */
+  private removeVim (vim: Vim) {
+    this.vims[vim.index] = undefined
+    vim.index = -1
   }
 
   /**
@@ -129,7 +158,7 @@ export class Viewer {
       const filter = settings.getElementIdsFilter()
       if (filter) this.filterVim(vim, filter)
       else this.onVimLoaded(vim, settings)
-      this.lookAtScene()
+      this.frameContent()
       onLoad?.(vim)
     }
 
@@ -158,23 +187,10 @@ export class Viewer {
     vim.applyMatrix4(settings.getMatrix())
     this.addVim(vim, settings)
 
-    // Scene
     this.renderer.addScene(vim.scene)
     this.renderer.render()
 
     this.ApplyVimSettings()
-  }
-
-  private static getOrCreateCanvas (canvasId?: string) {
-    let canvas = canvasId
-      ? (document.getElementById(canvasId) as HTMLCanvasElement)
-      : undefined
-
-    if (!canvas) {
-      canvas = document.createElement('canvas')
-      document.body.appendChild(canvas)
-    }
-    return canvas
   }
 
   /**
@@ -197,13 +213,13 @@ export class Viewer {
       ? vim.getInstanceIndicesFromElementIds(elementIds)
       : undefined
 
-    const scene = this.loader.loadFromVim(
+    const newVim = this.loader.loadFromVim(
       vim.document,
       settings.getTransparency(),
       instanceIndices
     )
     this.unloadVim(vim)
-    this.onVimLoaded(scene, settings)
+    this.onVimLoaded(newVim, settings)
   }
 
   /**
@@ -263,15 +279,15 @@ export class Viewer {
     if (this.selection.hasSelection()) {
       this.camera.lookAtSphere(this.selection.boundingSphere!)
     } else {
-      this.camera.frameScene(this.renderer.getBoundingSphere())
+      this.frameContent()
     }
   }
 
   /**
    * Move the camera to frame the whole scene
    */
-  lookAtScene () {
-    this.camera.frameScene(this.renderer.getBoundingSphere())
+  frameContent () {
+    this.camera.frameSphere(this.renderer.getBoundingSphere())
   }
 
   /**
