@@ -102,14 +102,14 @@ export class InputMouse {
 
   onMouseUp = (event: any) => {
     if (this.isMouseDown && !this.hasMouseMoved) {
-      this.onMouseClick(new THREE.Vector2(event.x, event.y), false)
+      this.onMouseClick(new THREE.Vector2(event.offsetX, event.offsetY), false)
     }
     this.isMouseDown = false
     event.preventDefault()
   }
 
   onDoubleClick = (event: any) => {
-    this.onMouseClick(new THREE.Vector2(event.x, event.y), true)
+    this.onMouseClick(new THREE.Vector2(event.offsetX, event.offsetY), true)
   }
 
   onMouseClick = (position: THREE.Vector2, doubleClick: boolean) => {
