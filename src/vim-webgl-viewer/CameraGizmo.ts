@@ -6,7 +6,7 @@ import * as THREE from 'three'
 import { SphereGeometry } from 'three'
 import { ViewerRenderer } from './viewerRenderer'
 import { ViewerCamera } from './viewerCamera'
-import { ViewerSettings } from './viewerSettings'
+import { ViewerSettings } from './settings'
 import { DEG2RAD } from 'three/src/math/MathUtils'
 
 export class CameraGizmo {

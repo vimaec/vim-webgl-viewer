@@ -6,7 +6,7 @@
 import * as THREE from 'three'
 import { CameraGizmo } from './cameraGizmo'
 import { ViewerRenderer } from './viewerRenderer'
-import { ViewerSettings } from './viewerSettings'
+import { ViewerSettings } from './settings'
 
 const direction = {
   forward: new THREE.Vector3(0, 0, -1),
@@ -151,7 +151,7 @@ class ViewerCamera {
     this.vimReferenceSize = settings.getCameraReferenceVimSize()
   }
 
-  applyVimSettings (boundingSphere?: THREE.Sphere) {
+  fitToContent (boundingSphere: THREE.Sphere) {
     this.sceneSizeMultiplier = boundingSphere.radius / this.vimReferenceSize
     // Gizmo
     this.gizmo.applyVimSettings(this.sceneSizeMultiplier)

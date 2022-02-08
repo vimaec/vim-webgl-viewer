@@ -162,7 +162,7 @@ export class InputKeyboard {
           event.preventDefault()
           break
         case KEYS.KEY_HOME:
-          this.viewer.lookAtScene()
+          this.viewer.frameContent()
           event.preventDefault()
           break
         // Selection

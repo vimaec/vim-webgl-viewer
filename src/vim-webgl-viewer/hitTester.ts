@@ -13,12 +13,30 @@ export class HitTestResult {
   doubleClick: boolean
   object: VimObject
   intersections: ThreeIntersectionList
+  firstHit: THREE.Intersection
 
-  // Convenience functions and mnemonics
-  get firstHit (): THREE.Intersection<THREE.Object3D<THREE.Event>> {
-    return this.intersections[0]
+  constructor (
+    mousePosition: THREE.Vector2,
+    doubleClick: boolean,
+    intersections: ThreeIntersectionList
+  ) {
+    this.mousePosition = mousePosition
+    this.doubleClick = doubleClick
+    this.intersections = intersections
+    this.firstHit = HitTestResult.GetFirstVimHit(intersections)
   }
 
+  private static GetFirstVimHit (
+    intersections: ThreeIntersectionList
+  ): THREE.Intersection | undefined {
+    for (let i = 0; i < intersections.length; i++) {
+      if (intersections[i].object?.userData?.index !== undefined) {
+        return intersections[i]
+      }
+    }
+  }
+
+  // Convenience functions and mnemonics
   get isHit (): boolean {
     return !!this.firstHit
   }
@@ -49,14 +67,13 @@ export class HitTester {
   }
 
   onMouseClick (position: THREE.Vector2, double: boolean): HitTestResult {
-    const r = new HitTestResult()
-    r.mousePosition = position
-    r.doubleClick = double
     console.time('raycast')
-    r.intersections = this.mouseRaycast(position)
+    const intersections = this.mouseRaycast(position)
     console.timeEnd('raycast')
+    const r = new HitTestResult(position, double, intersections)
 
     const hit = r.firstHit
+
     if (hit) {
       const vimIndex = hit.object.userData.index
       // Merged mesh have node origin of each face encoded in uvs
@@ -82,6 +99,6 @@ export class HitTester {
       new THREE.Vector2(x, y),
       this.viewer.camera.camera
     )
-    return this.raycaster.intersectObjects(this.viewer.renderer.meshes)
+    return this.raycaster.intersectObjects(this.viewer.renderer.scene.children)
   }
 }

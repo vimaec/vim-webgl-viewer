@@ -4,7 +4,7 @@
 
 import * as THREE from 'three'
 import { Scene } from '../vim-loader/scene'
-import { ViewerSettings } from './viewerSettings'
+import { ViewerSettings } from './settings'
 
 export class ViewerRenderer {
   camera: THREE.PerspectiveCamera
@@ -14,9 +14,7 @@ export class ViewerRenderer {
 
   // state
   scene: THREE.Scene
-  meshes: THREE.Object3D[] = []
-  private localBoundingBox: THREE.Box3
-  private worldBoundingBox: THREE.Box3
+  private boundingBox: THREE.Box3
 
   constructor (canvas: HTMLCanvasElement, settings: ViewerSettings) {
     this.renderer = new THREE.WebGLRenderer({
@@ -35,7 +33,6 @@ export class ViewerRenderer {
 
     this.camera = new THREE.PerspectiveCamera()
     this.scene = new THREE.Scene()
-    this.localBoundingBox = new THREE.Box3()
     this.fitToCanvas()
     this.setOnResize(this.fitToCanvas, settings.getCanvasResizeDelay())
   }
@@ -46,7 +43,7 @@ export class ViewerRenderer {
    * @param callback code to be called
    * @param timeout time after the last resize before code will be called
    */
-  setOnResize (callback, timeout) {
+  private setOnResize (callback, timeout) {
     let timerId
     window.addEventListener('resize', function () {
       if (timerId !== undefined) {
@@ -60,12 +57,12 @@ export class ViewerRenderer {
     })
   }
 
-  getBoundingSphere () {
-    return this.worldBoundingBox?.getBoundingSphere(new THREE.Sphere())
+  getBoundingSphere (target: THREE.Sphere = new THREE.Sphere()) {
+    return this.boundingBox?.getBoundingSphere(target)
   }
 
-  getBoundingBox () {
-    return this.worldBoundingBox?.clone()
+  getBoundingBox (target: THREE.Box3 = new THREE.Box3()) {
+    return target.copy(this.boundingBox)
   }
 
   render () {
@@ -87,72 +84,32 @@ export class ViewerRenderer {
     this.camera.updateProjectionMatrix()
   }
 
-  clearScene () {
-    this.meshes.forEach((m) => this.scene.remove(m))
-    this.meshes = []
-    this.localBoundingBox = undefined
-    this.worldBoundingBox = undefined
-  }
-
-  addObjects (meshes: THREE.Object3D[]) {
-    meshes.forEach((m) => {
-      this.addObject(m)
-    })
-  }
-
   addObject (mesh: THREE.Object3D) {
     this.scene.add(mesh)
-  }
-
-  removeObject (mesh: THREE.Object3D) {
-    this.scene.remove(mesh)
-    const i = this.meshes.indexOf(mesh)
-    if (i > 0) this.meshes.splice(i, 1)
-  }
-
-  removeScene (scene: Scene) {
-    for (let i = 0; i < scene.meshes.length; i++) {
-      this.removeObject(scene.meshes[i])
-    }
   }
 
   addScene (scene: Scene) {
     scene.meshes.forEach((m) => {
       this.scene.add(m)
-      this.meshes.push(m)
     })
 
-    this.localBoundingBox = this.localBoundingBox
-      ? this.localBoundingBox.union(scene.boundingBox)
+    this.boundingBox = this.boundingBox
+      ? this.boundingBox.union(scene.boundingBox)
       : scene.boundingBox.clone()
-
-    this.worldBoundingBox = this.worldBoundingBox ?? this.localBoundingBox
   }
 
-  /**
-   * Computes the bounding box of an arbitrary scene.
-   */
-  private _computeBoundingBox (scene: THREE.Scene): THREE.Box3 {
-    let box: THREE.Box3 | undefined
+  removeObject (mesh: THREE.Object3D) {
+    this.scene.remove(mesh)
+  }
 
-    const grow = (geometry: THREE.BufferGeometry, matrix: THREE.Matrix4) => {
-      geometry.computeBoundingSphere()
-      let currentBox = geometry.boundingBox!.clone()
-      currentBox = currentBox.applyMatrix4(matrix)
-      box = box ? box.union(currentBox) : currentBox
+  removeScene (scene: Scene) {
+    for (let i = 0; i < scene.meshes.length; i++) {
+      this.scene.remove(scene.meshes[i])
     }
-    const matrix = new THREE.Matrix4()
-    scene.traverse((obj) => {
-      if (obj instanceof THREE.InstancedMesh) {
-        for (let i = 0; i < obj.count; i++) {
-          obj.getMatrixAt(i, matrix)
-          grow(obj.geometry, matrix)
-        }
-      } else if (obj instanceof THREE.Mesh) {
-        grow(obj.geometry, obj.matrix)
-      }
-    })
+  }
 
-    return box ?? new THREE.Box3()
+  clear () {
+    this.scene.clear()
+    this.boundingBox = undefined
   }
 }

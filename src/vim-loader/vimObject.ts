@@ -29,6 +29,13 @@ export class VimObject {
     this.meshes = meshes
   }
 
+  getBimElement () {
+    return this.vim.document.getElement(this.element)
+  }
+
+  /**
+   * returns the bounding box of the object from cache or computed if needed.
+   */
   getBoundingBox () {
     if (this.boundingBox) return this.boundingBox
 
@@ -36,7 +43,7 @@ export class VimObject {
       this.vim.document.g3d,
       this.instances
     )
-    geometry.applyMatrix4(this.vim.matrix)
+    geometry.applyMatrix4(this.vim.getMatrix())
 
     geometry.computeBoundingBox()
     this.boundingBox = geometry.boundingBox
@@ -44,15 +51,25 @@ export class VimObject {
     return this.boundingBox
   }
 
+  public getCenter (target: THREE.Vector3 = new THREE.Vector3()) {
+    return this.getBoundingBox().getCenter(target)
+  }
+
+  /**
+   * returns the bounding sphere of the object from cache or computed if needed.
+   */
   getBoundingSphere (target: THREE.Sphere = new THREE.Sphere()) {
     return this.getBoundingBox().getBoundingSphere(target)
   }
 
+  /**
+   * Creates a new three wireframe Line object from the object geometry
+   */
   createWireframe () {
     const wireframe = meshing
       .getDefaultBuilder()
       .createWireframe(this.vim.document.g3d, this.instances)
-    wireframe.applyMatrix4(this.vim.matrix)
+    wireframe.applyMatrix4(this.vim.getMatrix())
     return wireframe
   }
 

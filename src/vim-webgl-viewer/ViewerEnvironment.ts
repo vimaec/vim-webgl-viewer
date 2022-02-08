@@ -3,8 +3,9 @@
  */
 
 import * as THREE from 'three'
-import { VimSettings, ViewerSettings } from './viewerSettings'
+import { ViewerSettings } from './settings'
 import { EnvironmentPlane } from './environmentPlane'
+import { Box3 } from 'three'
 
 export class ViewerEnvironment {
   plane: EnvironmentPlane
@@ -18,7 +19,7 @@ export class ViewerEnvironment {
     this.applyViewerSettings(settings)
   }
 
-  getElements (): THREE.Object3D[] {
+  getObjects (): THREE.Object3D[] {
     return [this.plane.mesh, this.skyLight, this.sunLight]
   }
 
@@ -37,8 +38,8 @@ export class ViewerEnvironment {
     this.sunLight.intensity = settings.getSunlightIntensity()
   }
 
-  public applyVimSettings (settings: VimSettings, box: THREE.Box3) {
+  public fitToContent (box: Box3) {
     // Plane
-    this.plane.applyVimSettings(settings, box)
+    this.plane.fitToContent(box)
   }
 }

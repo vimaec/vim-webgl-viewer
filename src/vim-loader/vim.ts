@@ -6,6 +6,7 @@
 import * as THREE from 'three'
 import { Document } from './document'
 import { Scene } from './scene'
+import { VimSettings } from './settings'
 import { VimObject } from './vimObject'
 
 /**
@@ -16,7 +17,7 @@ import { VimObject } from './vimObject'
 export class Vim {
   document: Document
   scene: Scene
-  matrix: THREE.Matrix4 = new THREE.Matrix4()
+  settings: VimSettings
   index: number
   elementIndexToInstanceIndices: Map<number, number[]>
   elementIdToElementIndex: Map<number, number>
@@ -78,14 +79,18 @@ export class Vim {
     return map
   }
 
-  applyMatrix4 (matrix: THREE.Matrix4) {
-    this.matrix = matrix
-    this.scene.applyMatrix4(matrix)
+  applySettings (settings: VimSettings) {
+    this.settings = settings
+    this.scene.applyMatrix4(this.settings.getMatrix())
   }
 
   setIndex (index: number) {
     this.index = index
     this.scene.setIndex(index)
+  }
+
+  getMatrix () {
+    return this.settings.getMatrix()
   }
 
   getObjectFromMesh (mesh: THREE.Mesh, index: number) {

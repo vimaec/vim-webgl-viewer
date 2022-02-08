@@ -33,7 +33,11 @@ export class Document {
     this.strings = strings
   }
 
-  getEntity (type: string, index: number): any {
+  getElement (index: number) {
+    return this.getEntity(Document.tableElement, index)
+  }
+
+  getEntity (type: string, index: number) {
     const r = new Map<string, string | number>()
     if (index < 0) return r
     const table = this.entities?.get(type)

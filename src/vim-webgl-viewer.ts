@@ -10,7 +10,7 @@ export * from './vim-webgl-viewer/ViewerEnvironment'
 export * from './vim-webgl-viewer/viewerInput'
 export * from './vim-webgl-viewer/viewerLoader'
 export * from './vim-webgl-viewer/viewerRenderer'
-export * from './vim-webgl-viewer/viewerSettings'
+export * from './vim-webgl-viewer/settings'
 export * from './vim-webgl-viewer/hitTester'
 
 export * from './vim-loader/bfast'

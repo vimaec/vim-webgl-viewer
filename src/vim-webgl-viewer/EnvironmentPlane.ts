@@ -3,7 +3,7 @@
  */
 
 import * as THREE from 'three'
-import { VimSettings, ViewerSettings } from './viewerSettings'
+import { ViewerSettings } from './settings'
 
 export class EnvironmentPlane {
   source: string
@@ -32,12 +32,12 @@ export class EnvironmentPlane {
     this.material.opacity = settings.getPlaneOpacity()
   }
 
-  applyVimSettings (settings: VimSettings, box: THREE.Box3) {
+  fitToContent (box: THREE.Box3) {
     // Position
     const center = box.getCenter(new THREE.Vector3())
     const position = new THREE.Vector3(
       center.x,
-      box.min.y - settings.getScale().y,
+      box.min.y - Math.abs(box.min.y) * 0.01,
       center.z
     )
     this.mesh.position.copy(position)

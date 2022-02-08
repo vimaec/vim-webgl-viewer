@@ -3,16 +3,9 @@
  @module viw-webgl-viewer
 */
 
-// external
-import * as THREE from 'three'
-
 // internal
-import {
-  VimSettings,
-  ViewerSettings,
-  VimOptions,
-  ViewerOptions
-} from './viewerSettings'
+import { ViewerSettings, ViewerOptions } from './settings'
+import { VimSettings, VimOptions } from '../vim-loader/settings'
 
 import { ViewerCamera } from './viewerCamera'
 import { ViewerInput } from './viewerInput'
@@ -24,7 +17,6 @@ import { HitTestResult } from './hitTester'
 // loader
 import { VimLoader } from '../vim-loader/vimLoader'
 import { Vim } from '../vim-loader/vim'
-import { Document } from '../vim-webgl-viewer'
 import { VimObject } from '../vim-loader/vimObject'
 
 export type ViewerState =
@@ -45,7 +37,7 @@ export class Viewer {
   loader: VimLoader
 
   // State
-  vims: [Vim, VimSettings][] = []
+  vims: Vim[] = []
 
   /**
    * Callback for on mouse click. Replace it to override or combine
@@ -63,7 +55,7 @@ export class Viewer {
     this.camera = new ViewerCamera(this.renderer, this.settings)
 
     this.environment = new ViewerEnvironment(this.settings)
-    this.renderer.addObjects(this.environment.getElements())
+    this.environment.getObjects().forEach((o) => this.renderer.addObject(o))
 
     // Default mouse click behaviour, can be overriden
     this.onMouseClick = this.defaultOnClick
@@ -107,20 +99,15 @@ export class Viewer {
   /**
    * Returns vim with given index. Once loaded vims do not change index.
    */
-  getVimAt = (index: number) => this.vims[index][0]
-
-  /**
-   * Returns settings associated with vim at given index.
-   */
-  getSettingsAt = (index: number) => this.vims[index][1]
+  getVimAt = (index: number) => this.vims[index]
 
   /**
    * Adds given vim to the first empty spot of the vims array
    */
-  private addVim (vim: Vim, settings: VimSettings) {
+  private addVim (vim: Vim) {
     for (let i = 0; i <= this.vims.length; i++) {
       if (this.vims[i] === undefined) {
-        this.vims[i] = [vim, settings]
+        this.vims[i] = vim
         vim.setIndex(i)
         return
       }
@@ -184,13 +171,12 @@ export class Viewer {
   }
 
   private onVimLoaded (vim: Vim, settings: VimSettings) {
-    vim.applyMatrix4(settings.getMatrix())
-    this.addVim(vim, settings)
+    this.addVim(vim)
+    vim.applySettings(settings)
 
     this.renderer.addScene(vim.scene)
-    this.renderer.render()
-
-    this.ApplyVimSettings()
+    this.environment.fitToContent(this.renderer.getBoundingBox())
+    this.camera.fitToContent(this.renderer.getBoundingSphere())
   }
 
   /**
@@ -227,8 +213,7 @@ export class Viewer {
    * @param includedElementIds array of element ids to keep, passing undefined will load the whole vim
    */
   filterVim (vim: Vim, includedElementIds: number[] | undefined) {
-    // TODO Fix this
-    const options = this.getSettingsAt(0).getOptions()
+    const options = vim.settings.getOptions()
     options.elementIds = includedElementIds
     this.reloadVim(vim, options)
   }
@@ -238,20 +223,16 @@ export class Viewer {
    */
   clearFilter (vim: Vim) {
     // TODO: Fix this
-    const options = this.getSettingsAt(0).getOptions()
+    const options = vim.settings.getOptions()
     options.elementIds = undefined
     this.reloadVim(vim, options)
   }
 
   /**
-   * Select all geometry related to a given element
-   * @param elementIndex index of element
+   * Select given vim object
    */
   select (object: VimObject) {
-    console.log('Selecting element with index: ' + object.element)
-    console.log(
-      'Bim Element Name: ' + this.getVimAt(0).getElementName(object.element)
-    )
+    console.log(`Selected Element Index: ${object.element}`)
     this.selection.select(object)
   }
 
@@ -260,7 +241,7 @@ export class Viewer {
    */
   clearSelection () {
     this.selection.clear()
-    console.log('Cleared Selection')
+    console.log('Selection Cleared')
   }
 
   /**
@@ -298,29 +279,16 @@ export class Viewer {
     this.camera.applyViewerSettings(this.settings)
   }
 
-  public ApplyVimSettings () {
-    this.environment.applyVimSettings(
-      this.getSettingsAt(0),
-      this.renderer.getBoundingBox()
-    )
-    this.camera.applyVimSettings(this.renderer.getBoundingSphere())
-  }
-
   private defaultOnClick (hit: HitTestResult) {
     console.log(hit)
     if (!hit.object) return
 
     this.select(hit.object)
 
-    const center = hit.object.getBoundingBox().getCenter(new THREE.Vector3())
-    this.camera.setTarget(center)
+    this.camera.setTarget(hit.object.getCenter())
 
     if (hit.doubleClick) this.lookAtSelection()
 
-    const entity = this.getVimAt(0).document.getEntity(
-      Document.tableElement,
-      hit.object.element
-    )
-    console.log(entity)
+    console.log(hit.object.getBimElement())
   }
 }
