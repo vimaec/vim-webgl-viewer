@@ -4,6 +4,7 @@
  */
 
 import * as THREE from 'three'
+import { ShaderChunk, ShaderLib } from 'three'
 import { G3d } from './g3d'
 import * as vimGeometry from './geometry'
 
@@ -12,18 +13,18 @@ import * as vimGeometry from './geometry'
  * Allows to reuse the same material for all new built meshes
  */
 export class MeshBuilder {
-  private materialOpaque: THREE.Material
-  private materialTransparent: THREE.Material | undefined
-  private wireframeMaterial: THREE.Material | undefined
+  materialOpaque: THREE.Material
+  materialTransparent: THREE.Material | undefined
+  wireframeMaterial: THREE.Material | undefined
 
   constructor (
     materialOpaque?: THREE.Material,
     materialTransparent?: THREE.Material,
     wireframeMaterial?: THREE.Material
   ) {
-    this.materialOpaque = materialOpaque ?? this.createDefaultOpaqueMaterial()
+    this.materialOpaque = materialOpaque ?? this.createDefaultOpaqueMaterial2()
     this.materialTransparent =
-      materialTransparent ?? this.createDefaultTransparentMaterial()
+      materialTransparent ?? this.createDefaultTransparentMaterial2()
     this.wireframeMaterial =
       wireframeMaterial ?? this.createDefaultWireframeMaterial()
   }
@@ -33,7 +34,7 @@ export class MeshBuilder {
    * @returns a THREE.MeshPhongMaterial
    */
   createDefaultOpaqueMaterial () {
-    return new THREE.MeshPhongMaterial({
+    const phong = new THREE.MeshPhongMaterial({
       color: 0x999999,
       vertexColors: true,
       flatShading: true,
@@ -41,6 +42,115 @@ export class MeshBuilder {
       side: THREE.DoubleSide,
       shininess: 70
     })
+    /*
+    phong.defines = { USE_UV: true }
+    phong.onBeforeCompile = (shader) => {
+      shader.fragmentShader = shader.fragmentShader.replace(
+        '#include <output_fragment>',
+        'float d = length(outgoingLight);\n' +
+          'gl_FragColor = vec4(vColor * (1.0f - vUv.y) * d + outgoingLight * vUv.y , 1);'
+      )
+      phong.userData.shader = shader
+    }
+    phong.customProgramCacheKey = () => 'custom'
+*/
+    return phong
+  }
+
+  createDefaultOpaqueMaterial2 () {
+    const phong = new THREE.MeshPhongMaterial({
+      color: 0x999999,
+      vertexColors: true,
+      flatShading: true,
+      // TODO: experiment without being double-sided
+      side: THREE.DoubleSide,
+      shininess: 70
+    })
+
+    phong.defines = { USE_UV: true }
+    phong.onBeforeCompile = (shader) => {
+      this.patchMixedShader(shader)
+      phong.userData.shader = shader
+    }
+
+    return phong
+  }
+
+  patchMergedShader (shader: THREE.Shader) {
+    shader.fragmentShader = shader.fragmentShader.replace(
+      '#include <output_fragment>',
+      'float d = length(outgoingLight);\n' +
+        'gl_FragColor = vec4(vColor * (1.0f - vUv.y) * d + outgoingLight * vUv.y , 1);'
+    )
+    return shader
+  }
+
+  patchInstancedShader (shader: THREE.Shader) {
+    shader.vertexShader = shader.vertexShader
+      .replace(
+        '#include <color_pars_vertex>',
+        '#include <color_pars_vertex>\n' + 'attribute float useVertexColor;'
+      )
+      .replace(
+        '#include <color_vertex>',
+        `vColor = color;
+     #ifdef USE_INSTANCING_COLOR
+       vColor.xyz = ((1.0f - useVertexColor) * instanceColor.xyz) + (useVertexColor * outgoingLight.xyz);
+     #endif`
+      )
+    return shader
+  }
+
+  patchMixedShader (shader: THREE.Shader) {
+    shader.vertexShader = shader.vertexShader
+      .replace(
+        '#include <color_pars_vertex>',
+        `
+        #include <color_pars_vertex>
+        #ifdef USE_INSTANCING 
+        attribute float useVertexColor;
+        #endif
+        `
+      )
+      .replace(
+        '#include <color_vertex>',
+        `
+        #include <color_vertex>
+        #ifdef USE_INSTANCING_COLOR
+          vColor.xyz = ((1.0f - useVertexColor) * instanceColor.xyz) + (useVertexColor * color.xyz);
+        #endif
+        `
+      )
+    shader.fragmentShader = shader.fragmentShader.replace(
+      '#include <output_fragment>',
+      `
+      #ifdef USE_INSTANCING 
+        #include <output_fragment>
+      #else
+        float d = length(outgoingLight);
+        gl_FragColor = vec4(vColor.xyz * (1.0f - vUv.y) * d + outgoingLight.xyz * vUv.y , diffuseColor.a);
+      #endif
+      `
+    )
+    return shader
+  }
+
+  createDefaultTransparentMaterial2 () {
+    const phong = new THREE.MeshPhongMaterial({
+      color: 0x999999,
+      vertexColors: true,
+      flatShading: true,
+      side: THREE.DoubleSide,
+      transparent: true,
+      shininess: 70
+    })
+
+    phong.defines = { USE_UV: true }
+    phong.onBeforeCompile = (shader) => {
+      this.patchMixedShader(shader)
+      phong.userData.shader = shader
+    }
+    return phong
   }
 
   /**
@@ -48,11 +158,50 @@ export class MeshBuilder {
    * @returns a THREE.MeshPhongMaterial
    */
   createDefaultTransparentMaterial () {
-    const material = this.createDefaultOpaqueMaterial()
-    material.transparent = true
-    material.depthWrite = true
-    // material.opacity = 0.3
-    return material
+    const phong = new THREE.MeshPhongMaterial({
+      color: 0x999999,
+      vertexColors: true,
+      flatShading: true,
+      // TODO: experiment without being double-sided
+      side: THREE.DoubleSide,
+      transparent: true,
+      shininess: 70
+    })
+    /*
+    phong.onBeforeCompile = (shader) => {
+      shader.vertexShader = shader.vertexShader
+        .replace(
+          '#include <color_pars_vertex>',
+          '#include <color_pars_vertex>\n' + 'attribute float useVertexColor;'
+        )
+        .replace(
+          '#include <color_vertex>',
+          `vColor = color;
+         #ifdef USE_INSTANCING_COLOR
+	         vColor.xyz = ((1.0f - useVertexColor) * instanceColor.xyz) + (useVertexColor * vColor.xyz);
+         #endif`
+        )
+
+        ShaderChunk.color_vertex.replace(
+          'vColor.xyz *= instanceColor.xyz;',
+          // 'vColor.xyz = instanceColor.xyz;'
+          'vColor.xyz = vec3(0,0,0);'
+        )
+      // )
+
+      shader.fragmentShader = shader.fragmentShader.replace(
+        '#include <output_fragment>',
+        'gl_FragColor = vec4(vColor);'
+
+        // 'float d = length(outgoingLight);\n' +
+        // 'gl_FragColor = vec4(vColor.xyz * (1.0f - vUseLight) * d + outgoingLight * vUseLight , vColor.w);'
+      )
+
+      phong.userData.shader = shader
+    }
+    phong.customProgramCacheKey = () => 'custom'
+*/
+    return phong
   }
 
   /**

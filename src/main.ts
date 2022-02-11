@@ -25,18 +25,50 @@ const viewer = new Viewer({
   }
 })
 
+/*
 viewer.loadVim(
-  url,
+  'residence.vim',
   {
+    // position: { x: 3, y: 0, z: 0 },
     rotation: { x: 270, y: 0, z: 0 },
     transparency: transparency
   },
-  (result) => {},
+  (result) => {
+    onLoaded()
+    // load2()
+  },
   (progress) => {
     if (progress === 'processing') console.log('Processing')
     else console.log(`Downloading: ${(progress.loaded as number) / 1000000} MB`)
   },
   (error) => console.error(`Failed to load vim: ${error}`)
-)
+) */
+load2()
+
+function load2 () {
+  for (let i = 0; i < 2; i++) {
+    for (let j = 0; j < 2; j++) {
+      viewer.loadVim(
+        'residence.vim',
+        {
+          // position: { x: 1, y: 10.6, z: 0 },
+          position: { x: i, y: 0, z: j },
+          rotation: { x: 270, y: 0, z: 0 },
+          transparency: transparency
+        },
+        (result) => {},
+        (progress) => {
+          if (progress === 'processing') console.log('Processing')
+          else {
+            console.log(
+              `Downloading: ${(progress.loaded as number) / 1000000} MB`
+            )
+          }
+        },
+        (error) => console.error(`Failed to load vim: ${error}`)
+      )
+    }
+  }
+}
 
 globalThis.viewer = viewer

@@ -373,6 +373,10 @@ export class G3d {
     return this.getMaterialColor(this.submeshMaterial[submesh])
   }
 
+  getSubmeshAlpha (submesh: number): Float32Array {
+    return this.getMaterialColor(this.submeshMaterial[submesh])
+  }
+
   // ------------- Instances -----------------
   getInstanceCount = () => this.instanceMeshes.length
 
@@ -393,6 +397,11 @@ export class G3d {
       material * this.colorArity,
       (material + 1) * this.colorArity
     )
+  }
+
+  getMaterialAlpha (material: number): number {
+    if (material < 0) return 1
+    return this.getMaterialAlpha[number]
   }
 
   static fromBfast (bfast: BFast): G3d {

@@ -281,7 +281,7 @@ export class MeshMerger {
 
         // Fill uvs with instances at the same time as vertices. Used for picking
         this.uvs[uv++] = instance
-        this.uvs[uv++] = instance
+        this.uvs[uv++] = 1
       }
 
       // Keep offset for next mesh
