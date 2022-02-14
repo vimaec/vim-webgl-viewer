@@ -3,6 +3,9 @@
 [![npm](https://img.shields.io/npm/v/vim-webgl-viewer)](https://npmjs.com/package/vim-webgl-viewer)
 [![Website](https://img.shields.io/website?url=https%3A%2F%2Fvimaec.github.io%2Fvim-webgl-viewer)](https://vimaec.github.io/vim-webgl-viewer/)
 
+# Documentation
+https://vimaec.github.io/vim-webgl-viewer/api/
+
 # Live Demo
 
 - [Small Model Demo - Residence](https://vimaec.github.io/vim-webgl-viewer)
@@ -38,11 +41,15 @@ Virtually the simplest usage of the VIM viewer is the following example:
     <script src="https://unpkg.com/three@0.133.1/build/three.min.js"></script>
     <script src="https://unpkg.com/vim-webgl-viewer"></script>
     <script>
-      var viewer = new vim.Viewer()
-      viewer.loadModel({
-        url: 'https://vim.azureedge.net/samples/residence.vim',
-        rotation: { x: 270 }
-      })
+
+      const viewer = new vim.Viewer()
+
+      viewer.loadVim(
+        'https://vim.azureedge.net/samples/residence.vim',
+        {
+          rotation: { x: 270, y: 0, z: 0 },
+        }
+      )
     </script>
   </body>
 </html>
@@ -175,4 +182,36 @@ viewer.lookAtElementIndex(elementIndex)
 // Optional highlight for your element
 // call disposer() to remove highligh
 const disposer = viewer.highlightElementByIndex(elementIndex)
+```
+
+**Replace or add behavior on click**
+```javascript
+// Capture default behavior
+const defaultClick = viewer.onMouseClick
+// Override the onClick callback
+viewer.onMouseClick = (hit) => {
+  // Call the default behavior
+  defaultClick.bind(viewer)(hit)
+
+  // Add extra logic here
+  const entity = viewer.vimScene.vim.getEntity('Vim.Element', hit.elementIndex)
+  console.log('My extra behaviour with this entity:')
+  console.log(entity)
+}
+```
+
+**Load from a custom http request**
+```javascript
+// Make request as usual
+const xhr = new XMLHttpRequest()
+// Specify response type ArrayBuffer
+xhr.responseType = 'arraybuffer'
+xhr.open('GET', url)
+xhr.send()
+xhr.onload = () => {
+// Load vim by passing the array buffer
+  viewer.loadVim(xhr.response, {
+    rotation: { x: 270, y: 0, z: 0 }
+  })
+}
 ```
