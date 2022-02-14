@@ -19,13 +19,6 @@ import { VimLoader } from '../vim-loader/vimLoader'
 import { Vim } from '../vim-loader/vim'
 import { VimObject } from '../vim-loader/vimObject'
 
-export type ViewerState =
-  | 'Uninitialized'
-  | [state: 'Downloading', progress: number]
-  | 'Processing'
-  | [state: 'Error', error: ErrorEvent]
-  | 'Ready'
-
 export class Viewer {
   settings: ViewerSettings
 
