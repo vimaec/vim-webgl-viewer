@@ -77,7 +77,7 @@ export class VimObject {
    * Changes the display color of this object.
    * @param color Color to apply, undefined to revert to default color.
    */
-  changeColor (color: THREE.Color | undefined) {
+  changeColor (color: THREE.Color | undefined = undefined) {
     for (let m = 0; m < this.meshes.length; m++) {
       const [mesh, index] = this.meshes[m]
       if (mesh.userData.merged) {
@@ -133,12 +133,10 @@ export class VimObject {
     index: number,
     color: THREE.Color | undefined
   ) {
-    /*
     if (!color) {
       this.resetMergedMeshColor(mesh, index)
       return
     }
-    */
 
     const start = this.getMergedMeshStart(mesh, index)
     const end = this.getMergedMeshEnd(mesh, index)
@@ -146,118 +144,9 @@ export class VimObject {
     const colors = mesh.geometry.getAttribute('color')
     const uvs = mesh.geometry.getAttribute('uv')
     const indices = mesh.geometry.getIndex()
-    /*
-    // We need groups to do coloring so we add them.
-    if (!Array.isArray(mesh.material)) {
-      mesh.material = [
-        mesh.material,
-        new THREE.MeshBasicMaterial({ color: color })
-      ]
-      mesh.geometry.addGroup(0, mesh.geometry.index.count, 0)
-    }
-
-    // Get Or Add Material
-    let materialIndex = -1
-    if (color) {
-      const materials = mesh.material as THREE.MeshBasicMaterial[]
-      for (let i = 0; i < materials.length; i++) {
-        if (materials[i].color?.equals(color)) {
-          materialIndex = i
-          break
-        }
-      }
-
-      if (materialIndex < 0) {
-        materialIndex = materials.length
-        const m = new THREE.MeshBasicMaterial()
-        m.color.copy(color)
-        materials.push(m)
-      }
-    } else {
-      materialIndex = 0
-    }
-
-    // Find Index of group just before
-    let previousIndex
-    let nextIndex
-    let currentIndex = 0
-    for (let i = 0; i < mesh.geometry.groups.length; i++) {
-      const group = mesh.geometry.groups[i]
-      if (group.start + group.count === start) {
-        previousIndex = i
-      }
-      if (group.start === end) {
-        nextIndex = i
-      }
-      if (start === group.start) {
-        currentIndex = i
-      }
-    }
-
-    const previous = previousIndex
-      ? mesh.geometry.groups[previousIndex]
-      : undefined
-    const next = nextIndex ? mesh.geometry.groups[nextIndex] : undefined
-    const current = mesh.geometry.groups[currentIndex]
-    const mergePrevious = previous
-      ? previous.materialIndex === materialIndex
-      : false
-    const mergeNext = next ? next.materialIndex === materialIndex : false
-
-    if (mergePrevious && mergeNext) {
-      console.log('merge Both')
-
-      mesh.geometry.groups[nextIndex] =
-        mesh.geometry.groups[mesh.geometry.groups.length - 1]
-      mesh.geometry.groups[mesh.geometry.groups.length - 1] = next
-
-      mesh.geometry.groups[previousIndex] =
-        mesh.geometry.groups[mesh.geometry.groups.length - 2]
-      mesh.geometry.groups[mesh.geometry.groups.length - 2] = previous
-
-      mesh.geometry.groups.length -= 2
-      current.start = previous.start
-      current.count = next.start + next.count - previous.start
-      current.materialIndex = materialIndex
-    } else if (mergePrevious) {
-      if (!next) {
-        mesh.geometry.groups[currentIndex] =
-          mesh.geometry.groups[mesh.geometry.groups.length - 1]
-        mesh.geometry.groups[mesh.geometry.groups.length - 1] = current
-        mesh.geometry.groups.length -= 1
-      }
-      previous.count = end - previous.start
-      console.log('merge Previous')
-    } else if (mergeNext) {
-      if (!previous) {
-        mesh.geometry.groups[currentIndex] =
-          mesh.geometry.groups[mesh.geometry.groups.length - 1]
-        mesh.geometry.groups[mesh.geometry.groups.length - 1] = current
-        mesh.geometry.groups.length -= 1
-      }
-      next.start = start
-      next.count = next.count + end - start
-      console.log('merge Next')
-    } else {
-      mesh.geometry.addGroup(
-        current.start,
-        start - current.start,
-        current.materialIndex
-      )
-      mesh.geometry.addGroup(end, current.start + current.count - end)
-      current.start = start
-      current.count = end - start
-      current.materialIndex = materialIndex
-      console.log('split')
-    }
-    mesh.geometry.attributes.groups.needsUpdate = true
-    */
 
     for (let i = start; i < end; i++) {
       const v = indices.getX(i)
-      console.log(
-        'previous colors: ' + [colors.getX(v), colors.getY(v), colors.getZ(v)]
-      )
       colors.setXYZ(v, color.r, color.g, color.b)
       uvs.setY(v, 0)
     }
@@ -271,6 +160,7 @@ export class VimObject {
    */
   private resetMergedMeshColor (mesh: THREE.Mesh, index: number) {
     const colors = mesh.geometry.getAttribute('color')
+    const uvs = mesh.geometry.getAttribute('uv')
 
     const instance = this.vim.getInstanceFromMesh(mesh, index)
     const g3d = this.vim.document.g3d
@@ -284,9 +174,11 @@ export class VimObject {
       for (let i = start; i < end; i++) {
         const v = g3d.meshVertexOffsets[g3dMesh] + g3d.indices[i]
         colors.setXYZ(v, color[0], color[1], color[2])
+        uvs.setY(v, 1)
       }
     }
     colors.needsUpdate = true
+    uvs.needsUpdate = true
   }
 
   /**
@@ -299,28 +191,31 @@ export class VimObject {
     index: number,
     color: THREE.Color
   ) {
-    const colorSize = mesh.geometry.getAttribute('color').itemSize
-
     if (mesh.instanceColor === null) {
+      // Add color instance attribute
+      const colorSize = mesh.geometry.getAttribute('color').itemSize
       const colors = new Float32Array(mesh.count * colorSize)
       colors.fill(1)
+      mesh.instanceColor = new THREE.InstancedBufferAttribute(colors, 4)
 
+      // Add custom useVertexColor instance attribute
       const useVertexColor = new Float32Array(mesh.count)
       useVertexColor.fill(1)
-
-      mesh.instanceColor = new THREE.InstancedBufferAttribute(colors, 4)
       mesh.geometry.setAttribute(
         'useVertexColor',
         new THREE.InstancedBufferAttribute(useVertexColor, 1)
       )
     }
     if (color) {
+      // Set instance to use instance color provided
       mesh.instanceColor.setXYZW(index, color.r, color.g, color.b, 1)
       mesh.geometry.getAttribute('useVertexColor').setX(index, 0)
     } else {
-      mesh.instanceColor.setXYZW(index, 1, 1, 1, 0)
+      // Revert to vertex color
       mesh.geometry.getAttribute('useVertexColor').setX(index, 1)
     }
+
+    // Set attributes dirty
     mesh.geometry.getAttribute('useVertexColor').needsUpdate = true
     mesh.instanceColor.needsUpdate = true
   }

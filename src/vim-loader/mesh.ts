@@ -4,220 +4,19 @@
  */
 
 import * as THREE from 'three'
-import { ShaderChunk, ShaderLib } from 'three'
 import { G3d } from './g3d'
 import * as vimGeometry from './geometry'
+import { MaterialLibrary } from './materials'
 
 /**
  * Builds meshes from the g3d and BufferGeometry
  * Allows to reuse the same material for all new built meshes
  */
 export class MeshBuilder {
-  materialOpaque: THREE.Material
-  materialTransparent: THREE.Material | undefined
-  wireframeMaterial: THREE.Material | undefined
+  materials: MaterialLibrary
 
-  constructor (
-    materialOpaque?: THREE.Material,
-    materialTransparent?: THREE.Material,
-    wireframeMaterial?: THREE.Material
-  ) {
-    this.materialOpaque = materialOpaque ?? this.createDefaultOpaqueMaterial2()
-    this.materialTransparent =
-      materialTransparent ?? this.createDefaultTransparentMaterial2()
-    this.wireframeMaterial =
-      wireframeMaterial ?? this.createDefaultWireframeMaterial()
-  }
-
-  /**
-   * Creates a new instance of the default loader opaque material
-   * @returns a THREE.MeshPhongMaterial
-   */
-  createDefaultOpaqueMaterial () {
-    const phong = new THREE.MeshPhongMaterial({
-      color: 0x999999,
-      vertexColors: true,
-      flatShading: true,
-      // TODO: experiment without being double-sided
-      side: THREE.DoubleSide,
-      shininess: 70
-    })
-    /*
-    phong.defines = { USE_UV: true }
-    phong.onBeforeCompile = (shader) => {
-      shader.fragmentShader = shader.fragmentShader.replace(
-        '#include <output_fragment>',
-        'float d = length(outgoingLight);\n' +
-          'gl_FragColor = vec4(vColor * (1.0f - vUv.y) * d + outgoingLight * vUv.y , 1);'
-      )
-      phong.userData.shader = shader
-    }
-    phong.customProgramCacheKey = () => 'custom'
-*/
-    return phong
-  }
-
-  createDefaultOpaqueMaterial2 () {
-    const phong = new THREE.MeshPhongMaterial({
-      color: 0x999999,
-      vertexColors: true,
-      flatShading: true,
-      // TODO: experiment without being double-sided
-      side: THREE.DoubleSide,
-      shininess: 70
-    })
-
-    phong.defines = { USE_UV: true }
-    phong.onBeforeCompile = (shader) => {
-      this.patchMixedShader(shader)
-      phong.userData.shader = shader
-    }
-
-    return phong
-  }
-
-  patchMergedShader (shader: THREE.Shader) {
-    shader.fragmentShader = shader.fragmentShader.replace(
-      '#include <output_fragment>',
-      'float d = length(outgoingLight);\n' +
-        'gl_FragColor = vec4(vColor * (1.0f - vUv.y) * d + outgoingLight * vUv.y , 1);'
-    )
-    return shader
-  }
-  /*
-  patchInstancedShader (shader: THREE.Shader) {
-    shader.vertexShader = shader.vertexShader
-      .replace(
-        '#include <color_pars_vertex>',
-        '#include <color_pars_vertex>\n' + 'attribute float useVertexColor;'
-      )
-      .replace(
-        '#include <color_vertex>',
-        `vColor = color;
-     #ifdef USE_INSTANCING_COLOR
-       vColor.xyz = ((1.0f - useVertexColor) * instanceColor.xyz) + (useVertexColor * outgoingLight.xyz);
-     #endif`
-      )
-    return shader
-  }
-  */
-
-  patchMixedShader (shader: THREE.Shader) {
-    shader.vertexShader = shader.vertexShader
-      // Add useVertexColor when instanced colors are used.
-      .replace(
-        '#include <color_pars_vertex>',
-        `
-        #include <color_pars_vertex>
-        #ifdef USE_INSTANCING_COLOR 
-        attribute float useVertexColor;
-        #endif
-        `
-      )
-      .replace(
-        '#include <color_vertex>',
-        `
-        #include <color_vertex>
-        #ifdef USE_INSTANCING_COLOR
-          vColor.xyz = ((1.0f - useVertexColor) * instanceColor.xyz) + (useVertexColor * color.xyz);
-        #endif
-        `
-      )
-    shader.fragmentShader = shader.fragmentShader.replace(
-      '#include <output_fragment>',
-      `
-      #ifdef USE_INSTANCING 
-        #include <output_fragment>
-      #else
-        float d = length(outgoingLight);
-        gl_FragColor = vec4(vColor.xyz * (1.0f - vUv.y) * d + outgoingLight.xyz * vUv.y , diffuseColor.a);
-      #endif
-      `
-    )
-    return shader
-  }
-
-  createDefaultTransparentMaterial2 () {
-    const phong = new THREE.MeshPhongMaterial({
-      color: 0x999999,
-      vertexColors: true,
-      flatShading: true,
-      side: THREE.DoubleSide,
-      transparent: true,
-      shininess: 70
-    })
-
-    phong.defines = { USE_UV: true }
-    phong.onBeforeCompile = (shader) => {
-      this.patchMixedShader(shader)
-      phong.userData.shader = shader
-    }
-    return phong
-  }
-
-  /**
-   * Creates a new instance of the default loader transparent material
-   * @returns a THREE.MeshPhongMaterial
-   */
-  createDefaultTransparentMaterial () {
-    const phong = new THREE.MeshPhongMaterial({
-      color: 0x999999,
-      vertexColors: true,
-      flatShading: true,
-      // TODO: experiment without being double-sided
-      side: THREE.DoubleSide,
-      transparent: true,
-      shininess: 70
-    })
-    /*
-    phong.onBeforeCompile = (shader) => {
-      shader.vertexShader = shader.vertexShader
-        .replace(
-          '#include <color_pars_vertex>',
-          '#include <color_pars_vertex>\n' + 'attribute float useVertexColor;'
-        )
-        .replace(
-          '#include <color_vertex>',
-          `vColor = color;
-         #ifdef USE_INSTANCING_COLOR
-	         vColor.xyz = ((1.0f - useVertexColor) * instanceColor.xyz) + (useVertexColor * vColor.xyz);
-         #endif`
-        )
-
-        ShaderChunk.color_vertex.replace(
-          'vColor.xyz *= instanceColor.xyz;',
-          // 'vColor.xyz = instanceColor.xyz;'
-          'vColor.xyz = vec3(0,0,0);'
-        )
-      // )
-
-      shader.fragmentShader = shader.fragmentShader.replace(
-        '#include <output_fragment>',
-        'gl_FragColor = vec4(vColor);'
-
-        // 'float d = length(outgoingLight);\n' +
-        // 'gl_FragColor = vec4(vColor.xyz * (1.0f - vUseLight) * d + outgoingLight * vUseLight , vColor.w);'
-      )
-
-      phong.userData.shader = shader
-    }
-    phong.customProgramCacheKey = () => 'custom'
-*/
-    return phong
-  }
-
-  /**
-   * Creates a new instance of the default wireframe material
-   * @returns a THREE.LineBasicMaterial
-   */
-  createDefaultWireframeMaterial (): THREE.Material {
-    const material = new THREE.LineBasicMaterial({
-      depthTest: false,
-      opacity: 0.5,
-      color: new THREE.Color(0x0000ff),
-      transparent: true
-    })
-    return material
+  constructor (materials: MaterialLibrary = undefined) {
+    this.materials = materials ?? new MaterialLibrary()
   }
 
   /**
@@ -280,7 +79,9 @@ export class MeshBuilder {
     instances: number[],
     useAlpha: boolean
   ) {
-    const material = useAlpha ? this.materialTransparent : this.materialOpaque
+    const material = useAlpha
+      ? this.materials.transparent
+      : this.materials.opaque
 
     const result = new THREE.InstancedMesh(geometry, material, instances.length)
 
@@ -309,8 +110,8 @@ export class MeshBuilder {
 
     const geometry = merger.toBufferGeometry()
     const material = vimGeometry.transparencyRequiresAlpha(transparency)
-      ? this.materialTransparent
-      : this.materialOpaque
+      ? this.materials.transparent
+      : this.materials.opaque
 
     const mesh = new THREE.Mesh(geometry, material)
     mesh.userData.merged = true
