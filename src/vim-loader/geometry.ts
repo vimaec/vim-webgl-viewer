@@ -87,26 +87,23 @@ function createVertexColors (
   mesh: number,
   useAlpha: boolean
 ): Float32Array {
-  const result = new Float32Array(
-    g3d.getMeshVertexCount(mesh) * (useAlpha ? 4 : 3)
-  )
+  const colorSize = useAlpha ? 4 : 3
+  const result = new Float32Array(g3d.getMeshVertexCount(mesh) * colorSize)
 
   const subStart = g3d.getMeshSubmeshStart(mesh)
   const subEnd = g3d.getMeshSubmeshEnd(mesh)
-  // const [subStart, subEnd] = g3d.getMeshSubmeshRange(mesh)
 
   for (let submesh = subStart; submesh < subEnd; submesh++) {
     const color = g3d.getSubmeshColor(submesh)
-
     const start = g3d.getSubmeshIndexStart(submesh)
     const end = g3d.getSubmeshIndexEnd(submesh)
-    // const [start, end] = g3d.getSubmeshIndexRange(submesh)
-    let v = 0
+
     for (let i = start; i < end; i++) {
-      result[v++] = color[0]
-      result[v++] = color[1]
-      result[v++] = color[2]
-      if (useAlpha) result[v++] = color[3]
+      const v = g3d.indices[i] * colorSize
+      result[v] = color[0]
+      result[v + 1] = color[1]
+      result[v + 2] = color[2]
+      if (useAlpha) result[v + 3] = color[3]
     }
   }
   return result
