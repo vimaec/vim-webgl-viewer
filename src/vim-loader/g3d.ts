@@ -399,11 +399,6 @@ export class G3d {
     )
   }
 
-  getMaterialAlpha (material: number): number {
-    if (material < 0) return 1
-    return this.getMaterialAlpha[number]
-  }
-
   static fromBfast (bfast: BFast): G3d {
     const base = AbstractG3d.fromBfast(bfast)
     return new G3d(base)
