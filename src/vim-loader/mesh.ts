@@ -84,7 +84,7 @@ export class MeshBuilder {
     )
     return shader
   }
-
+  /*
   patchInstancedShader (shader: THREE.Shader) {
     shader.vertexShader = shader.vertexShader
       .replace(
@@ -100,14 +100,16 @@ export class MeshBuilder {
       )
     return shader
   }
+  */
 
   patchMixedShader (shader: THREE.Shader) {
     shader.vertexShader = shader.vertexShader
+      // Add useVertexColor when instanced colors are used.
       .replace(
         '#include <color_pars_vertex>',
         `
         #include <color_pars_vertex>
-        #ifdef USE_INSTANCING 
+        #ifdef USE_INSTANCING_COLOR 
         attribute float useVertexColor;
         #endif
         `
