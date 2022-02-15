@@ -6,7 +6,7 @@ import * as THREE from 'three'
 import { ViewerSettings } from './settings'
 import { Box3 } from 'three'
 
-export class Floor {
+class Floor {
   source: string
   mesh: THREE.Mesh
   size: number
