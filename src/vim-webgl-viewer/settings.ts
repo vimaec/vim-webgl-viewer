@@ -1,5 +1,4 @@
 /**
- @author VIM / https://vimaec.com
  @module viw-webgl-viewer
 */
 

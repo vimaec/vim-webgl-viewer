@@ -1,3 +1,8 @@
+/**
+ * Settings and options related to loading a vim
+ * @module vim-loader
+ */
+
 import deepmerge from 'deepmerge'
 import { clone, cloneDeep } from 'lodash'
 import { transparencyIsValid, TransparencyMode } from './geometry'

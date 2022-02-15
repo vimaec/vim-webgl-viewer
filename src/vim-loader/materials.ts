@@ -1,3 +1,8 @@
+/**
+ * Defines how loader materials are created and allows replacement
+ * @module vim-loader
+ */
+
 import * as THREE from 'three'
 
 /**
