@@ -24,11 +24,8 @@
     "bump-dev": "npm version prerelease --preid=dev",
     "publish-dev": "npm publish --tag=dev",
     "serve-docs": "http-server ./docs -o --host",
-    "serve-root": "http-server -o",
-    "test-latest": "opener https://vimaec.github.io/vim-webgl-viewer/?vim=https%3A%2F%2Fvim.azureedge.net%2Fsamples%2Fskanska.vim",
-    "test-dev": "opener https://vimaec.github.io/vim-webgl-viewer/index-dev.html?vim=https%3A%2F%2Fvim.azureedge.net%2Fsamples%2Fskanska.vim",
-    "release-patch": "npm version patch && git push && npm publish && npm run test-latest",
-    "release-dev": "npm run build && npm run bump-dev && git push && npm run publish-dev && npm run test-dev",
+    "release-patch": "npm version patch && git push && npm publish",
+    "release-dev": "npm run build && npm run bump-dev && git push && npm run publish-dev",
     "eslint": "eslint --ext .js,.ts src --fix",
     "documentation": "typedoc --entryPointStrategy expand --mergeModulesMergeMode module --out docs/api --excludePrivate ./src/vim-webgl-viewer/ ./src/vim-loader/",
     "declarations": "tsc --declaration --emitDeclarationOnly --outdir ./dist/types"

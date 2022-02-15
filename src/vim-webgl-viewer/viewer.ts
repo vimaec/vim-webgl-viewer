@@ -92,7 +92,7 @@ export class Viewer {
   /**
    * Returns vim with given index. Once loaded vims do not change index.
    */
-  getVimAt = (index: number) => this.vims[index]
+  getVim = (index: number = 0) => this.vims[index]
 
   /**
    * Adds given vim to the first empty spot of the vims array

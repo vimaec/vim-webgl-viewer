@@ -64,36 +64,37 @@ Virtually the simplest usage of the VIM viewer is the following example:
 
 # Folder Structure
 
-- `docs` - this is the root folder for the GitHub page at `https://vimaec.github.io/vim-webgl-viewer`. The `docs\index.html` file uses
-  the latest published default NPM release package (`@latest`), while the `docs\index-dev.html` uses the latest published dev NPM package (`@dev`). Also contains a mustache template and file for generating the various index.html files from
+- `docs` - this is the root folder for the GitHub page at `https://vimaec.github.io/vim-webgl-viewer`. The `docs\index.html` file is meant demo the latest stable patch release, while the `docs\index-dev.html` Is meant to test the latest dev release.
 - `src` - contains the TypeScript source code for the viewer and loader.
 - `dist` - created by running the build script for creating a
-  distributable package. It contains three files after running the `build` script:
+  distributable package. It contains five items after running the `build` script:
   - `dist\vim-webgl-viewer.es.js` - an EcmaScript module
+  - `dist\vim-webgl-viewer.es.js.map` - Typescript source map file map for the EcmaScript module
   - `dist\vim-webgl-viewer.iife.js` - an immediately-invocable function expression (IIFE) intended for consumption from a web-page
-  - `index.html` - an index.html test file that can be used to test the IIFE output locally, before packaging on NPM.
+  - `dist\vim-webgl-viewer.iife.js.map` - Typescript source map file map for the IIFE
+  - `types\` - A folder containing Typescript type declarations for the package.
 
 # For Contributors
 
 ## Making a Pre-Release
 
 1. First develop and test the feature using `npm run dev`
-2. When satisfied using `npm run build` to build the distribution files.
-3. Use `npm run serve-dist` to test the built distribution files locally. Or `npm run test-dist` to combine steps 2 and 3.
-4. When satisfied merge into and checkout the `main` branch (the default branch).
-5. Assure that `git status` is clean
-6. Login to npm if needed using `npm login`
-7. Use `npm run release-dev` to create a pre-release NPM package, and test it on the GitHub pages.
+2. Login to npm if needed using `npm login`
+3. Assure that `git status` is clean
+4. Use `npm run release-dev` to create a pre-release NPM package.
+5. Change the `docs/index-dev.html` to use the newly published package.
+6. Use `npm run serve-docs` to test the npm dev package locally.
+7. When satisfied merge current PR into `main`.
 
-After making a pre-release package test it by running `npm run test-dev`. This will open `https://vimaec.github.io/vim-webgl-viewer/index-dev.html`.
 
 ## Making a Patch Release
 
-Login to npm if needed using `npm login`
-
-After creating and validating the pre-release, and assuring `main` is checked out, and the git status is clean, run `npm run release-patch`.
-
-After making a release package test it by running `npm run test-latest`. This will open `https://vimaec.github.io/vim-webgl-viewer/index.html`
+1. Make sure the dev release is working properly at `https://vimaec.github.io/vim-webgl-viewer/index-dev.html`
+2. Login to npm if needed using `npm login`
+3. Use `npm run release-patch` to create a patch release NPM package.
+4. Change the `docs/index.html` to use the newly published package.
+5. Push the the new `docs/index.html` to `main`.
+6. Make sure `https://vimaec.github.io/vim-webgl-viewer/index.html` is working as expected.
 
 ## Scripts
 
@@ -101,17 +102,18 @@ The following scripts are defined in the package.json, and can each be
 executed from within VSCode by right-clicking the script name, or from the
 command line by writing `npm run <script-name>` where `<script-name>` is the name of the script.
 
+
+
 - `dev` - launch a dev environment using Vite
 - `build` - compiles an IIFE JavaScript module and ES module using Vite and the configuration file, placing the output in the `dist` folder.
 - `bump-dev` - increments the pre-release version of the NPM package, with the id `dev`. This will update the `package.json` version number with a pre-release tag and number value (e.g. 1.0.0-dev.42). It will also create corresponding tag and commit it to Git.
 - `publish-dev` - publishes the current package to NPM with a `dev` tag, as opposed to the default tag `latest`.
 - `serve-docs` - launches a web-server with the docs folder as the root folder, for testing a published NPM packages (tagged develop or latest) locally
-- `serve-dist`: - launches a web-server with the dist folder as the root folder, for testing the built artifacts locally before publishing
-- `gen-docs` - Uses mustache to create index.html files
-- `test-latest` - Opens the GitHub page with a test file and using the latest release on NPM.
-- `test-dist` - Locally serves the `dist` folder for testing before releasing a package.
 - `release-patch` - Increments the patch number and publishes an NPM package using the default tag (`@latest`). Intended to be called from the `main` branch only after the pre-release package has been created and tested.
 - `release-dev` - Increments the prerelease number and publishes an NPM prerelease package using the `@dev` tag. Intended to be called from the `main` branch after the features has been tested and built locally.
+- `eslint` - Runs eslint and reports all syntactic inconsistencies.
+- `documentation` - Generates api documentation at `docs/api`.
+- `declarations` - Generates typescript declrations at `dist/types`. 
 
 ## Contributing:
 
@@ -120,7 +122,7 @@ command line by writing `npm run <script-name>` where `<script-name>` is the nam
 
 ## The Sources and Dependencies
 
-The distributable file `vim-webgl-viewer.iife.js` does not contain the underlying source for [Three.JS](https://threejs.org) to avoid duplication. Please include Three.JS on your own.
+The distributable files do not contain the underlying source for [Three.JS](https://threejs.org) to avoid duplication. Please include Three.JS on your own.
 
 ## Camera Controls
 
@@ -155,33 +157,45 @@ The distributable file `vim-webgl-viewer.iife.js` does not contain the underlyin
 (https://blog.storyblocks.com/video-tutorials/7-basic-camera-movements/)
 
 
-## Meshes, Nodes and Elements
+## Vim
 
-The viewer is broadly divided into three layer.
+![Vim class diagram](docs/vim.jpg)
 
-**Meshes:** The scene is rendered using a collection of InstancedMesh, specific object are refered by a (Mesh, instanceIndex) pair.
-
-**Nodes:** The vim scene is a collection of nodes with a transform and a geometry, each node will result in zero or one object added to Three to be rendered. Nodes are refered by Index.
-
-**Elements:** objects from the original the bim software containing rich data. Each element can have from 0 to N nodes associated with it. Elements are refered to by Id or Index.
-
-**Example:**  
-A table has elementId 12321  
-it gets exported into 5 nodes, 4 legs and a table top.  
-the 5 nodes are rendered using 2 meshes, one for the table top, one for all 4 legs.
+The `Viewer` provides methods to load and unload `Vim`s.
+`Object` is the highest level api and acts as a bridge between `BIM`, `G3d` and `THREE` objects
+A `Vim` contains a `Document` which contains the raw `BIM` and `g3d` information parsed from the file.
+A `Vim` contains the `Settings` used when loading was called.
+A `Vim` contains a `Scene` which contains the generated THREE objects to render the `Vim`.
+All raw `G3d` and `BIM` data is stored using the `BFast` format.
+`mesh.ts` Takes `G3d` data and `THREE.BufferGeometry` and generates `THREE.Mesh`s.
+`geometry.ts` Takes `G3d` and generates `THREE.BufferGeometry`
 
 ## How To
 
 **Frame camera on an element**
 ```javascript
-// If you already have element index from the vim you can skip this line
-const elementIndex = viewer.getElementIndexFromElementId(MY_ELEMENT_ID)
+const vim = viewer.getVim(VIM_INDEX)
+const object =  vim.getObjectFromElementId(ELEMENT_ID)
+viewer.lookAt(object)
+```
 
-viewer.lookAtElementIndex(elementIndex)
+**Highlight an element**
+```javascript
+const wireframe = object.createWireframe()
+this.viewer.renderer.addObject(wireframe)
 
-// Optional highlight for your element
-// call disposer() to remove highligh
-const disposer = viewer.highlightElementByIndex(elementIndex)
+// To remove hightlight
+// this.viewer.renderer.removeObject(wireframe)
+```
+
+**Change Color of an element**
+```javascript
+const vim = viewer.getVim(VIM_INDEX)
+const object =  vim.getObjectFromElementId(ELEMENT_ID)
+object.changeColor(new THREE.Color(1,0,0))
+
+// Revert to original color
+// object.changeColor()
 ```
 
 **Replace or add behavior on click**
@@ -194,9 +208,8 @@ viewer.onMouseClick = (hit) => {
   defaultClick.bind(viewer)(hit)
 
   // Add extra logic here
-  const entity = viewer.vimScene.vim.getEntity('Vim.Element', hit.elementIndex)
-  console.log('My extra behaviour with this entity:')
-  console.log(entity)
+  console.log('My extra behaviour with this entity')
+  console.log(hit.object.getBimElement())
 }
 ```
 
