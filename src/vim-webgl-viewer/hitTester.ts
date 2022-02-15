@@ -80,11 +80,11 @@ export class HitTester {
       if (hit.object.userData.merged && hit.uv !== undefined) {
         const instance = Math.round(hit.uv.x)
         r.object = this.viewer
-          .getVimAt(vimIndex)
+          .getVim(vimIndex)
           .getObjectFromInstance(instance)
       } else if (hit.instanceId !== undefined) {
         r.object = this.viewer
-          .getVimAt(vimIndex)
+          .getVim(vimIndex)
           .getObjectFromMesh(hit.object as THREE.InstancedMesh, hit.instanceId)
       }
     }
