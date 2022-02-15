@@ -188,14 +188,15 @@ export class Viewer {
   reloadVim (vim: Vim, options: VimOptions) {
     const settings = new VimSettings(options)
     const elementIds = settings.getElementIdsFilter()
-    const instanceIndices = elementIds
-      ? vim.getInstanceIndicesFromElementIds(elementIds)
-      : undefined
+
+    const instances = elementIds
+      .flatMap((id) => vim.getObjectFromElementId(id)?.instances)
+      .filter((i): i is number => i !== undefined)
 
     const newVim = this.loader.loadFromVim(
       vim.document,
       settings.getTransparency(),
-      instanceIndices
+      instances
     )
     this.unloadVim(vim)
     this.onVimLoaded(newVim, settings)

@@ -56,6 +56,56 @@ export class Document {
     return r
   }
 
+  /**
+   * Returns the element index associated with the g3d instance index.
+   * @param instance g3d instance index
+   * @returns element index or -1 if not found
+   */
+  getElementFromInstance (instance: number): number {
+    const instanceElements = this.getInstanceElementIndices()
+    if (!instanceElements) return -1
+    return instanceElements[instance]
+  }
+
+  getStringColumn = (table: any, colNameNoPrefix: string): number[] =>
+    table?.get('string:' + colNameNoPrefix)
+
+  getIndexColumn = (table: any, tableName: string, fieldName: string) =>
+    table?.get(`index:${tableName}:${fieldName}`)
+
+  getDataColumn = (table: any, typePrefix: any, colNameNoPrefix: any) =>
+    table?.get(typePrefix + colNameNoPrefix) ??
+    table?.get('numeric:' + colNameNoPrefix) // Backwards compatible call with vim0.9
+
+  getIntColumn = (table: any, colNameNoPrefix: string) =>
+    this.getDataColumn(table, 'int:', colNameNoPrefix)
+
+  getByteColumn = (table: any, colNameNoPrefix: string) =>
+    this.getDataColumn(table, 'byte:', colNameNoPrefix)
+
+  getFloatColumn = (table: any, colNameNoPrefix: string) =>
+    this.getDataColumn(table, 'float:', colNameNoPrefix)
+
+  getDoubleColumn = (table: any, colNameNoPrefix: string) =>
+    this.getDataColumn(table, 'double:', colNameNoPrefix)
+
+  getInstanceElementIndices (): number[] {
+    const table = this.getNodeTable()
+    if (!table) return
+    const result =
+      this.getIndexColumn(table, Document.tableElement, 'Element') ??
+      // Backwards compatible call with vim0.9
+      table?.get(Document.tableElementLegacy)
+
+    return result
+  }
+
+  getElementTable = () =>
+    this.entities?.get(Document.tableElement) ??
+    this.entities?.get(Document.tableElementLegacy)
+
+  getNodeTable = () => this.entities.get(Document.tableNode)
+
   static parseFromArrayBuffer (data: ArrayBuffer) {
     const bfast = BFast.fromArrayBuffer(data)
     return Document.parseFromBFast(bfast)

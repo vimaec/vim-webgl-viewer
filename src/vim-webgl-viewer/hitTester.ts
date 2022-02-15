@@ -76,12 +76,10 @@ export class HitTester {
 
     if (hit) {
       const vimIndex = hit.object.userData.index
-      // Merged mesh have node origin of each face encoded in uvs
+      // Merged meshes have g3d intance index of each face encoded in uvs
       if (hit.object.userData.merged && hit.uv !== undefined) {
         const instance = Math.round(hit.uv.x)
-        r.object = this.viewer
-          .getVim(vimIndex)
-          .getObjectFromInstance(instance)
+        r.object = this.viewer.getVim(vimIndex).getObjectFromInstance(instance)
       } else if (hit.instanceId !== undefined) {
         r.object = this.viewer
           .getVim(vimIndex)

@@ -19,6 +19,19 @@ export class Scene {
   instanceToThreeMesh: Map<number, [THREE.Mesh, number]> = new Map()
   threeMeshIdToInstances: Map<number, number[]> = new Map()
 
+  /**
+   * Returns the index of the g3d instance that from which this mesh instance was created
+   * @param mesh a mesh created by the vim loader
+   * @param index if merged mesh the index into the merged mesh, if instance mesh the instance index.
+   * @returns a g3d instance index.
+   */
+  getInstanceFromMesh (mesh: THREE.Mesh, index: number): number {
+    if (!mesh || index < 0) return -1
+    const instances = this.threeMeshIdToInstances.get(mesh.id)
+    if (!instances) return -1
+    return instances[index]
+  }
+
   applyMatrix4 (matrix: THREE.Matrix4) {
     for (let m = 0; m < this.meshes.length; m++) {
       this.meshes[m].matrixAutoUpdate = false

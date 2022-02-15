@@ -165,7 +165,7 @@ export class Object {
     const indices = mesh.geometry.getIndex()
     let mergedIndex = this.getMergedMeshStart(mesh, index)
 
-    const instance = this.vim.getInstanceFromMesh(mesh, index)
+    const instance = this.vim.scene.getInstanceFromMesh(mesh, index)
     const g3d = this.vim.document.g3d
     const g3dMesh = g3d.instanceMeshes[instance]
     const subStart = g3d.getMeshSubmeshStart(g3dMesh)
