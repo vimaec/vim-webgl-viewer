@@ -7,7 +7,7 @@ import * as THREE from 'three'
 import { Document } from './document'
 import { Scene } from './scene'
 import { VimSettings } from './settings'
-import { VimObject } from './vimObject'
+import { Object } from './object'
 
 /**
  * Container for the built three meshes and the vim data from which it was built.
@@ -21,7 +21,7 @@ export class Vim {
   index: number
   elementIndexToInstanceIndices: Map<number, number[]>
   elementIdToElementIndex: Map<number, number>
-  elementToObjects: Map<number, VimObject> = new Map<number, VimObject>()
+  elementToObjects: Map<number, Object> = new Map<number, Object>()
 
   constructor (vim: Document, scene: Scene) {
     this.document = vim
@@ -117,7 +117,7 @@ export class Vim {
     const meshes = this.getMeshesFromInstances(instances)
     if (!meshes) return
 
-    const result = new VimObject(this, index, instances, meshes)
+    const result = new Object(this, index, instances, meshes)
     this.elementToObjects.set(index, result)
     return result
   }

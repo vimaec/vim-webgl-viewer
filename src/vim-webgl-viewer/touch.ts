@@ -3,17 +3,17 @@
  */
 
 import * as THREE from 'three'
-import { ViewerCamera } from './viewerCamera'
-import { InputMouse } from './inputMouse'
-import { ViewerRenderer } from './viewerRenderer'
+import { ViewerCamera } from './camera'
+import { Mouse } from './mouse'
+import { Renderer } from './renderer'
 
 export class InputTouch {
   TapDurationMs: number = 500
 
   // Dependencies
   private camera: ViewerCamera
-  private renderer: ViewerRenderer
-  private mouse: InputMouse
+  private renderer: Renderer
+  private mouse: Mouse
 
   // State
   private touchStart: THREE.Vector2 | undefined = undefined // When one touch occurs this is the value, when two or more touches occur it is the average of the first two.
@@ -21,11 +21,7 @@ export class InputTouch {
   private touchStart2: THREE.Vector2 | undefined = undefined // The second touch when multiple touches occur, otherwise left undefined
   private touchStartTime: number | undefined = undefined // In ms since epoch
 
-  constructor (
-    camera: ViewerCamera,
-    renderer: ViewerRenderer,
-    mouse: InputMouse
-  ) {
+  constructor (camera: ViewerCamera, renderer: Renderer, mouse: Mouse) {
     this.camera = camera
     this.renderer = renderer
     this.mouse = mouse

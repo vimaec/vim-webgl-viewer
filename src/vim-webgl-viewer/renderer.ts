@@ -6,7 +6,7 @@ import * as THREE from 'three'
 import { Scene } from '../vim-loader/scene'
 import { ViewerSettings } from './settings'
 
-export class ViewerRenderer {
+export class Renderer {
   camera: THREE.PerspectiveCamera
   renderer: THREE.WebGLRenderer
   clock = new THREE.Clock()

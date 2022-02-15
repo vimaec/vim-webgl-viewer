@@ -4,8 +4,8 @@
 */
 
 import * as THREE from 'three'
-import { CameraGizmo } from './cameraGizmo'
-import { ViewerRenderer } from './viewerRenderer'
+import { CameraGizmo } from './gizmos'
+import { Renderer } from './renderer'
 import { ViewerSettings } from './settings'
 
 const direction = {
@@ -17,7 +17,7 @@ const direction = {
   down: new THREE.Vector3(0, -1, 0)
 }
 
-class ViewerCamera {
+class Camera {
   gizmo: CameraGizmo
   public camera: THREE.PerspectiveCamera
 
@@ -55,7 +55,7 @@ class ViewerCamera {
   private orbitSpeed: number = 1
   private wheelSpeed: number = 0.2
 
-  constructor (renderer: ViewerRenderer, settings: ViewerSettings) {
+  constructor (renderer: Renderer, settings: ViewerSettings) {
     this.gizmo = new CameraGizmo(this, renderer)
     this.camera = renderer.camera
     this.applyViewerSettings(settings)
@@ -350,4 +350,4 @@ class ViewerCamera {
   }
 }
 
-export { direction, ViewerCamera }
+export { direction, Camera as ViewerCamera }

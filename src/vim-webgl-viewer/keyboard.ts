@@ -4,8 +4,8 @@
 
 import * as THREE from 'three'
 
-import { ViewerCamera } from './viewerCamera'
-import { CameraGizmo } from './cameraGizmo'
+import { ViewerCamera } from './camera'
+import { CameraGizmo } from './gizmos'
 import { Viewer } from './viewer'
 
 export const KEYS = {
@@ -99,7 +99,7 @@ export const KEYS = {
   KEY_Z: 90
 }
 
-export class InputKeyboard {
+export class Keyboard {
   // Settings
   ShiftMultiplier: number = 3.0
 

@@ -246,11 +246,9 @@ export class MeshMerger {
       // Copy all colors to merged array
       const subStart = this.g3d.getMeshSubmeshStart(mesh)
       const subEnd = this.g3d.getMeshSubmeshEnd(mesh)
-      // const [subStart, subEnd] = this.g3d.getMeshSubmeshRange(mesh)
       for (let sub = subStart; sub < subEnd; sub++) {
         const startIndex = this.g3d.getSubmeshIndexStart(sub)
         const endIndex = this.g3d.getSubmeshIndexEnd(sub)
-        // const [startIndex, endIndex] = this.g3d.getSubmeshIndexRange(sub)
 
         const subColor = this.g3d.getSubmeshColor(sub)
         for (let i = startIndex; i < endIndex; i++) {

@@ -3,7 +3,7 @@
  */
 
 import * as THREE from 'three'
-import { VimObject } from '../vim-loader/vimObject'
+import { Object } from '../vim-loader/object'
 import { Viewer } from './viewer'
 
 type ThreeIntersectionList = THREE.Intersection<THREE.Object3D<THREE.Event>>[]
@@ -11,7 +11,7 @@ type ThreeIntersectionList = THREE.Intersection<THREE.Object3D<THREE.Event>>[]
 export class HitTestResult {
   mousePosition: THREE.Vector2
   doubleClick: boolean
-  object: VimObject
+  object: Object
   intersections: ThreeIntersectionList
   firstHit: THREE.Intersection
 

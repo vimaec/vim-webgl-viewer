@@ -9,7 +9,7 @@ import { Vim } from './vim'
 import * as meshing from './mesh'
 import * as vimGeometry from './geometry'
 
-export class VimObject {
+export class Object {
   vim: Vim
   element: number
   instances: number[]
@@ -147,6 +147,7 @@ export class VimObject {
 
     for (let i = start; i < end; i++) {
       const v = indices.getX(i)
+      // alpha is left to its current value
       colors.setXYZ(v, color.r, color.g, color.b)
       uvs.setY(v, 0)
     }

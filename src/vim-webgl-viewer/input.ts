@@ -3,9 +3,9 @@
  */
 
 import { Viewer } from './viewer'
-import { InputKeyboard } from './inputKeyboard'
-import { InputTouch } from './inputTouch'
-import { InputMouse } from './inputMouse'
+import { Keyboard } from './keyboard'
+import { InputTouch } from './touch'
+import { Mouse } from './mouse'
 
 export class ViewerInput {
   // Dependencies
@@ -14,15 +14,15 @@ export class ViewerInput {
   // State
   private unregisters: Function[]
   private touch: InputTouch
-  private mouse: InputMouse
-  private keyboard: InputKeyboard
+  private mouse: Mouse
+  private keyboard: Keyboard
 
   constructor (viewer: Viewer) {
     this.canvas = viewer.renderer.canvas
     this.unregisters = []
 
-    this.keyboard = new InputKeyboard(viewer.camera, viewer)
-    this.mouse = new InputMouse(viewer, this.keyboard)
+    this.keyboard = new Keyboard(viewer.camera, viewer)
+    this.mouse = new Mouse(viewer, this.keyboard)
     this.touch = new InputTouch(viewer.camera, viewer.renderer, this.mouse)
   }
 

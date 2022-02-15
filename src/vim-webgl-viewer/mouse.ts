@@ -5,13 +5,13 @@
 import * as THREE from 'three'
 import { Viewer } from './viewer'
 import { HitTester } from './hitTester'
-import { InputKeyboard } from './inputKeyboard'
+import { Keyboard } from './keyboard'
 
-export class InputMouse {
+export class Mouse {
   // Dependencies
   viewer: Viewer
   hitTester: HitTester
-  inputKeyboard: InputKeyboard
+  inputKeyboard: Keyboard
 
   get camera () {
     return this.viewer.camera
@@ -25,7 +25,7 @@ export class InputMouse {
   isMouseDown: Boolean = false
   hasMouseMoved: Boolean = false
 
-  constructor (viewer: Viewer, keyboard: InputKeyboard) {
+  constructor (viewer: Viewer, keyboard: Keyboard) {
     this.viewer = viewer
     this.hitTester = new HitTester(viewer)
     this.inputKeyboard = keyboard

@@ -7,30 +7,39 @@
 import { ViewerSettings, ViewerOptions } from './settings'
 import { VimSettings, VimOptions } from '../vim-loader/settings'
 
-import { ViewerCamera } from './viewerCamera'
-import { ViewerInput } from './viewerInput'
+import { ViewerCamera } from './camera'
+import { ViewerInput } from './input'
 import { Selection } from './selection'
-import { ViewerEnvironment } from './viewerEnvironment'
-import { ViewerRenderer } from './viewerRenderer'
+import { Environment } from './environment'
+import { Renderer } from './renderer'
 import { HitTestResult } from './hitTester'
 
 // loader
 import { VimLoader } from '../vim-loader/vimLoader'
 import { Vim } from '../vim-loader/vim'
-import { VimObject } from '../vim-loader/vimObject'
+import { Object } from '../vim-loader/object'
+import { randFloat, randInt } from 'three/src/math/MathUtils'
+import * as THREE from 'three'
+
+export type ViewerState =
+  | 'Uninitialized'
+  | [state: 'Downloading', progress: number]
+  | 'Processing'
+  | [state: 'Error', error: ErrorEvent]
+  | 'Ready'
 
 export class Viewer {
   settings: ViewerSettings
 
-  environment: ViewerEnvironment
-  renderer: ViewerRenderer
+  environment: Environment
+  renderer: Renderer
   selection: Selection
   camera: ViewerCamera
   controls: ViewerInput
   loader: VimLoader
 
   // State
-  vims: Vim[] = []
+  private vims: Vim[] = []
 
   /**
    * Callback for on mouse click. Replace it to override or combine
@@ -43,11 +52,11 @@ export class Viewer {
     this.settings = new ViewerSettings(options)
 
     const canvas = Viewer.getOrCreateCanvas(this.settings.getCanvasId())
-    this.renderer = new ViewerRenderer(canvas, this.settings)
+    this.renderer = new Renderer(canvas, this.settings)
 
     this.camera = new ViewerCamera(this.renderer, this.settings)
 
-    this.environment = new ViewerEnvironment(this.settings)
+    this.environment = new Environment(this.settings)
     this.environment.getObjects().forEach((o) => this.renderer.addObject(o))
 
     // Default mouse click behaviour, can be overriden
@@ -224,7 +233,7 @@ export class Viewer {
   /**
    * Select given vim object
    */
-  select (object: VimObject) {
+  select (object: Object) {
     console.log(`Selected Element Index: ${object.element}`)
     this.selection.select(object)
   }
@@ -241,7 +250,7 @@ export class Viewer {
    * Move the camera to frame all geometry related to an element
    * @param elementIndex index of element
    */
-  lookAt (object: VimObject) {
+  lookAt (object: Object) {
     const sphere = object.getBoundingSphere()
     this.camera.lookAtSphere(sphere, true)
   }
@@ -283,5 +292,24 @@ export class Viewer {
     if (hit.doubleClick) this.lookAtSelection()
 
     console.log(hit.object.getBimElement())
+  }
+
+  disco () {
+    requestAnimationFrame(() => {
+      for (let i = 0; i < 1000; i++) {
+        const vim = this.vims[randInt(0, this.vims.length - 1)]
+        const elementCount = vim.elementIndexToInstanceIndices.size
+        const obj = vim.getObjectFromElement(randInt(0, elementCount - 1))
+
+        if (randInt(0, 10) === 0) obj?.changeColor()
+        else {
+          obj?.changeColor(
+            new THREE.Color(randFloat(0, 1), randFloat(0, 1), randFloat(0, 1))
+          )
+        }
+      }
+
+      this.disco()
+    })
   }
 }

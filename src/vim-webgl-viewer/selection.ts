@@ -3,7 +3,7 @@
  */
 
 import * as THREE from 'three'
-import { VimObject } from '../vim-loader/vimObject'
+import { Object } from '../vim-loader/object'
 import { Viewer } from './viewer'
 
 // TODO: Fix circular dependency
@@ -12,7 +12,7 @@ export class Selection {
   viewer: Viewer
 
   // State
-  object: VimObject | undefined = undefined
+  object: Object | undefined = undefined
   boundingSphere: THREE.Sphere | null = null
 
   // Disposable State
@@ -37,7 +37,7 @@ export class Selection {
     this.highlightDisposer = null
   }
 
-  select (object: VimObject) {
+  select (object: Object) {
     this.clear()
     this.object = object
     const wireframe = object.createWireframe()
