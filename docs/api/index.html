@@ -53,14 +53,15 @@ other relational or non-relation data sets.</p>
   <h1>Folder Structure</h1>
 </a>
 <ul>
-<li><code>docs</code> - this is the root folder for the GitHub page at <code>https://vimaec.github.io/vim-webgl-viewer</code>. The <code>docs\index.html</code> file uses
-the latest published default NPM release package (<code>@latest</code>), while the <code>docs\index-dev.html</code> uses the latest published dev NPM package (<code>@dev</code>). Also contains a mustache template and file for generating the various index.html files from</li>
+<li><code>docs</code> - this is the root folder for the GitHub page at <code>https://vimaec.github.io/vim-webgl-viewer</code>. The <code>docs\index.html</code> file is meant demo the latest stable patch release, while the <code>docs\index-dev.html</code> Is meant to test the latest dev release.</li>
 <li><code>src</code> - contains the TypeScript source code for the viewer and loader.</li>
 <li><code>dist</code> - created by running the build script for creating a
-distributable package. It contains three files after running the <code>build</code> script:<ul>
+distributable package. It contains five items after running the <code>build</code> script:<ul>
 <li><code>dist\vim-webgl-viewer.es.js</code> - an EcmaScript module</li>
+<li><code>dist\vim-webgl-viewer.es.js.map</code> - Typescript source map file map for the EcmaScript module</li>
 <li><code>dist\vim-webgl-viewer.iife.js</code> - an immediately-invocable function expression (IIFE) intended for consumption from a web-page</li>
-<li><code>index.html</code> - an index.html test file that can be used to test the IIFE output locally, before packaging on NPM.</li>
+<li><code>dist\vim-webgl-viewer.iife.js.map</code> - Typescript source map file map for the IIFE</li>
+<li><code>types\</code> - A folder containing Typescript type declarations for the package.</li>
 </ul>
 </li>
 </ul>
@@ -74,21 +75,25 @@ distributable package. It contains three files after running the <code>build</co
 </a>
 <ol>
 <li>First develop and test the feature using <code>npm run dev</code></li>
-<li>When satisfied using <code>npm run build</code> to build the distribution files.</li>
-<li>Use <code>npm run serve-dist</code> to test the built distribution files locally. Or <code>npm run test-dist</code> to combine steps 2 and 3.</li>
-<li>When satisfied merge into and checkout the <code>main</code> branch (the default branch).</li>
-<li>Assure that <code>git status</code> is clean</li>
 <li>Login to npm if needed using <code>npm login</code></li>
-<li>Use <code>npm run release-dev</code> to create a pre-release NPM package, and test it on the GitHub pages.</li>
+<li>Assure that <code>git status</code> is clean</li>
+<li>Use <code>npm run release-dev</code> to create a pre-release NPM package.</li>
+<li>Change the <code>docs/index-dev.html</code> to use the newly published package.</li>
+<li>Use <code>npm run serve-docs</code> to test the npm dev package locally.</li>
+<li>When satisfied merge current PR into <code>main</code>.</li>
 </ol>
-<p>After making a pre-release package test it by running <code>npm run test-dev</code>. This will open <code>https://vimaec.github.io/vim-webgl-viewer/index-dev.html</code>.</p>
 
 <a href="#making-a-patch-release" id="making-a-patch-release" style="color: inherit; text-decoration: none;">
   <h2>Making a Patch Release</h2>
 </a>
-<p>Login to npm if needed using <code>npm login</code></p>
-<p>After creating and validating the pre-release, and assuring <code>main</code> is checked out, and the git status is clean, run <code>npm run release-patch</code>.</p>
-<p>After making a release package test it by running <code>npm run test-latest</code>. This will open <code>https://vimaec.github.io/vim-webgl-viewer/index.html</code></p>
+<ol>
+<li>Make sure the dev release is working properly at <code>https://vimaec.github.io/vim-webgl-viewer/index-dev.html</code></li>
+<li>Login to npm if needed using <code>npm login</code></li>
+<li>Use <code>npm run release-patch</code> to create a patch release NPM package.</li>
+<li>Change the <code>docs/index.html</code> to use the newly published package.</li>
+<li>Push the the new <code>docs/index.html</code> to <code>main</code>.</li>
+<li>Make sure <code>https://vimaec.github.io/vim-webgl-viewer/index.html</code> is working as expected.</li>
+</ol>
 
 <a href="#scripts" id="scripts" style="color: inherit; text-decoration: none;">
   <h2>Scripts</h2>
@@ -102,12 +107,11 @@ command line by writing <code>npm run &lt;script-name&gt;</code> where <code>&lt
 <li><code>bump-dev</code> - increments the pre-release version of the NPM package, with the id <code>dev</code>. This will update the <code>package.json</code> version number with a pre-release tag and number value (e.g. 1.0.0-dev.42). It will also create corresponding tag and commit it to Git.</li>
 <li><code>publish-dev</code> - publishes the current package to NPM with a <code>dev</code> tag, as opposed to the default tag <code>latest</code>.</li>
 <li><code>serve-docs</code> - launches a web-server with the docs folder as the root folder, for testing a published NPM packages (tagged develop or latest) locally</li>
-<li><code>serve-dist</code>: - launches a web-server with the dist folder as the root folder, for testing the built artifacts locally before publishing</li>
-<li><code>gen-docs</code> - Uses mustache to create index.html files</li>
-<li><code>test-latest</code> - Opens the GitHub page with a test file and using the latest release on NPM.</li>
-<li><code>test-dist</code> - Locally serves the <code>dist</code> folder for testing before releasing a package.</li>
 <li><code>release-patch</code> - Increments the patch number and publishes an NPM package using the default tag (<code>@latest</code>). Intended to be called from the <code>main</code> branch only after the pre-release package has been created and tested.</li>
 <li><code>release-dev</code> - Increments the prerelease number and publishes an NPM prerelease package using the <code>@dev</code> tag. Intended to be called from the <code>main</code> branch after the features has been tested and built locally.</li>
+<li><code>eslint</code> - Runs eslint and reports all syntactic inconsistencies.</li>
+<li><code>documentation</code> - Generates api documentation at <code>docs/api</code>.</li>
+<li><code>declarations</code> - Generates typescript declrations at <code>dist/types</code>.</li>
 </ul>
 
 <a href="#contributing" id="contributing" style="color: inherit; text-decoration: none;">
@@ -121,7 +125,7 @@ command line by writing <code>npm run &lt;script-name&gt;</code> where <code>&lt
 <a href="#the-sources-and-dependencies" id="the-sources-and-dependencies" style="color: inherit; text-decoration: none;">
   <h2>The Sources and Dependencies</h2>
 </a>
-<p>The distributable file <code>vim-webgl-viewer.iife.js</code> does not contain the underlying source for <a href="https://threejs.org">Three.JS</a> to avoid duplication. Please include Three.JS on your own.</p>
+<p>The distributable files do not contain the underlying source for <a href="https://threejs.org">Three.JS</a> to avoid duplication. Please include Three.JS on your own.</p>
 
 <a href="#camera-controls" id="camera-controls" style="color: inherit; text-decoration: none;">
   <h2>Camera Controls</h2>
@@ -144,23 +148,33 @@ command line by writing <code>npm run &lt;script-name&gt;</code> where <code>&lt
 <p><strong>One Finger swipe:</strong> Tilt/Pan camera<br><strong>Two Finger swipe:</strong> Truck/Pedestal camera<br><strong>Two Finger pinch/spread:</strong> Dolly Camera  </p>
 <p>(<a href="https://blog.storyblocks.com/video-tutorials/7-basic-camera-movements/">https://blog.storyblocks.com/video-tutorials/7-basic-camera-movements/</a>)</p>
 
-<a href="#meshes-nodes-and-elements" id="meshes-nodes-and-elements" style="color: inherit; text-decoration: none;">
-  <h2>Meshes, Nodes and Elements</h2>
+<a href="#vim" id="vim" style="color: inherit; text-decoration: none;">
+  <h2>Vim</h2>
 </a>
-<p>The viewer is broadly divided into three layer.</p>
-<p><strong>Meshes:</strong> The scene is rendered using a collection of InstancedMesh, specific object are refered by a (Mesh, instanceIndex) pair.</p>
-<p><strong>Nodes:</strong> The vim scene is a collection of nodes with a transform and a geometry, each node will result in zero or one object added to Three to be rendered. Nodes are refered by Index.</p>
-<p><strong>Elements:</strong> objects from the original the bim software containing rich data. Each element can have from 0 to N nodes associated with it. Elements are refered to by Id or Index.</p>
-<p><strong>Example:</strong><br>A table has elementId 12321<br>it gets exported into 5 nodes, 4 legs and a table top.<br>the 5 nodes are rendered using 2 meshes, one for the table top, one for all 4 legs.</p>
+<p><img src="docs/vim.jpg" alt="Vim class diagram"></p>
+<p>The <code>Viewer</code> provides methods to load and unload <code>Vim</code>s.
+<code>Object</code> is the highest level api and acts as a bridge between <code>BIM</code>, <code>G3d</code> and <code>THREE</code> objects
+A <code>Vim</code> contains a <code>Document</code> which contains the raw <code>BIM</code> and <code>g3d</code> information parsed from the file.
+A <code>Vim</code> contains the <code>Settings</code> used when loading was called.
+A <code>Vim</code> contains a <code>Scene</code> which contains the generated THREE objects to render the <code>Vim</code>.
+All raw <code>G3d</code> and <code>BIM</code> data is stored using the <code>BFast</code> format.
+<code>mesh.ts</code> Takes <code>G3d</code> data and <code>THREE.BufferGeometry</code> and generates <code>THREE.Mesh</code>s.
+<code>geometry.ts</code> Takes <code>G3d</code> and generates <code>THREE.BufferGeometry</code></p>
 
 <a href="#how-to" id="how-to" style="color: inherit; text-decoration: none;">
   <h2>How To</h2>
 </a>
 <p><strong>Frame camera on an element</strong></p>
-<pre><code class="language-javascript"><span class="hl-12">// If you already have element index from the vim you can skip this line</span><br/><span class="hl-6">const</span><span class="hl-2"> </span><span class="hl-7">elementIndex</span><span class="hl-2"> = </span><span class="hl-8">viewer</span><span class="hl-2">.</span><span class="hl-9">getElementIndexFromElementId</span><span class="hl-2">(</span><span class="hl-7">MY_ELEMENT_ID</span><span class="hl-2">)</span><br/><br/><span class="hl-8">viewer</span><span class="hl-2">.</span><span class="hl-9">lookAtElementIndex</span><span class="hl-2">(</span><span class="hl-8">elementIndex</span><span class="hl-2">)</span><br/><br/><span class="hl-12">// Optional highlight for your element</span><br/><span class="hl-12">// call disposer() to remove highligh</span><br/><span class="hl-6">const</span><span class="hl-2"> </span><span class="hl-7">disposer</span><span class="hl-2"> = </span><span class="hl-8">viewer</span><span class="hl-2">.</span><span class="hl-9">highlightElementByIndex</span><span class="hl-2">(</span><span class="hl-8">elementIndex</span><span class="hl-2">)</span>
+<pre><code class="language-javascript"><span class="hl-6">const</span><span class="hl-2"> </span><span class="hl-7">vim</span><span class="hl-2"> = </span><span class="hl-8">viewer</span><span class="hl-2">.</span><span class="hl-9">getVim</span><span class="hl-2">(</span><span class="hl-7">VIM_INDEX</span><span class="hl-2">)</span><br/><span class="hl-6">const</span><span class="hl-2"> </span><span class="hl-7">object</span><span class="hl-2"> =  </span><span class="hl-8">vim</span><span class="hl-2">.</span><span class="hl-9">getObjectFromElementId</span><span class="hl-2">(</span><span class="hl-7">ELEMENT_ID</span><span class="hl-2">)</span><br/><span class="hl-8">viewer</span><span class="hl-2">.</span><span class="hl-9">lookAt</span><span class="hl-2">(</span><span class="hl-8">object</span><span class="hl-2">)</span>
+</code></pre>
+<p><strong>Highlight an element</strong></p>
+<pre><code class="language-javascript"><span class="hl-6">const</span><span class="hl-2"> </span><span class="hl-7">wireframe</span><span class="hl-2"> = </span><span class="hl-8">object</span><span class="hl-2">.</span><span class="hl-9">createWireframe</span><span class="hl-2">()</span><br/><span class="hl-6">this</span><span class="hl-2">.</span><span class="hl-8">viewer</span><span class="hl-2">.</span><span class="hl-8">renderer</span><span class="hl-2">.</span><span class="hl-9">addObject</span><span class="hl-2">(</span><span class="hl-8">wireframe</span><span class="hl-2">)</span><br/><br/><span class="hl-12">// To remove hightlight</span><br/><span class="hl-12">// this.viewer.renderer.removeObject(wireframe)</span>
+</code></pre>
+<p><strong>Change Color of an element</strong></p>
+<pre><code class="language-javascript"><span class="hl-6">const</span><span class="hl-2"> </span><span class="hl-7">vim</span><span class="hl-2"> = </span><span class="hl-8">viewer</span><span class="hl-2">.</span><span class="hl-9">getVim</span><span class="hl-2">(</span><span class="hl-7">VIM_INDEX</span><span class="hl-2">)</span><br/><span class="hl-6">const</span><span class="hl-2"> </span><span class="hl-7">object</span><span class="hl-2"> =  </span><span class="hl-8">vim</span><span class="hl-2">.</span><span class="hl-9">getObjectFromElementId</span><span class="hl-2">(</span><span class="hl-7">ELEMENT_ID</span><span class="hl-2">)</span><br/><span class="hl-8">object</span><span class="hl-2">.</span><span class="hl-9">changeColor</span><span class="hl-2">(</span><span class="hl-6">new</span><span class="hl-2"> </span><span class="hl-7">THREE</span><span class="hl-2">.</span><span class="hl-9">Color</span><span class="hl-2">(</span><span class="hl-11">1</span><span class="hl-2">,</span><span class="hl-11">0</span><span class="hl-2">,</span><span class="hl-11">0</span><span class="hl-2">))</span><br/><br/><span class="hl-12">// Revert to original color</span><br/><span class="hl-12">// object.changeColor()</span>
 </code></pre>
 <p><strong>Replace or add behavior on click</strong></p>
-<pre><code class="language-javascript"><span class="hl-12">// Capture default behavior</span><br/><span class="hl-6">const</span><span class="hl-2"> </span><span class="hl-7">defaultClick</span><span class="hl-2"> = </span><span class="hl-8">viewer</span><span class="hl-2">.</span><span class="hl-8">onMouseClick</span><br/><span class="hl-12">// Override the onClick callback</span><br/><span class="hl-8">viewer</span><span class="hl-2">.</span><span class="hl-9">onMouseClick</span><span class="hl-2"> = (</span><span class="hl-8">hit</span><span class="hl-2">) </span><span class="hl-6">=&gt;</span><span class="hl-2"> {</span><br/><span class="hl-2">  </span><span class="hl-12">// Call the default behavior</span><br/><span class="hl-2">  </span><span class="hl-8">defaultClick</span><span class="hl-2">.</span><span class="hl-9">bind</span><span class="hl-2">(</span><span class="hl-8">viewer</span><span class="hl-2">)(</span><span class="hl-8">hit</span><span class="hl-2">)</span><br/><br/><span class="hl-2">  </span><span class="hl-12">// Add extra logic here</span><br/><span class="hl-2">  </span><span class="hl-6">const</span><span class="hl-2"> </span><span class="hl-7">entity</span><span class="hl-2"> = </span><span class="hl-8">viewer</span><span class="hl-2">.</span><span class="hl-8">vimScene</span><span class="hl-2">.</span><span class="hl-8">vim</span><span class="hl-2">.</span><span class="hl-9">getEntity</span><span class="hl-2">(</span><span class="hl-10">&#39;Vim.Element&#39;</span><span class="hl-2">, </span><span class="hl-8">hit</span><span class="hl-2">.</span><span class="hl-8">elementIndex</span><span class="hl-2">)</span><br/><span class="hl-2">  </span><span class="hl-8">console</span><span class="hl-2">.</span><span class="hl-9">log</span><span class="hl-2">(</span><span class="hl-10">&#39;My extra behaviour with this entity:&#39;</span><span class="hl-2">)</span><br/><span class="hl-2">  </span><span class="hl-8">console</span><span class="hl-2">.</span><span class="hl-9">log</span><span class="hl-2">(</span><span class="hl-8">entity</span><span class="hl-2">)</span><br/><span class="hl-2">}</span>
+<pre><code class="language-javascript"><span class="hl-12">// Capture default behavior</span><br/><span class="hl-6">const</span><span class="hl-2"> </span><span class="hl-7">defaultClick</span><span class="hl-2"> = </span><span class="hl-8">viewer</span><span class="hl-2">.</span><span class="hl-8">onMouseClick</span><br/><span class="hl-12">// Override the onClick callback</span><br/><span class="hl-8">viewer</span><span class="hl-2">.</span><span class="hl-9">onMouseClick</span><span class="hl-2"> = (</span><span class="hl-8">hit</span><span class="hl-2">) </span><span class="hl-6">=&gt;</span><span class="hl-2"> {</span><br/><span class="hl-2">  </span><span class="hl-12">// Call the default behavior</span><br/><span class="hl-2">  </span><span class="hl-8">defaultClick</span><span class="hl-2">.</span><span class="hl-9">bind</span><span class="hl-2">(</span><span class="hl-8">viewer</span><span class="hl-2">)(</span><span class="hl-8">hit</span><span class="hl-2">)</span><br/><br/><span class="hl-2">  </span><span class="hl-12">// Add extra logic here</span><br/><span class="hl-2">  </span><span class="hl-8">console</span><span class="hl-2">.</span><span class="hl-9">log</span><span class="hl-2">(</span><span class="hl-10">&#39;My extra behaviour with this entity&#39;</span><span class="hl-2">)</span><br/><span class="hl-2">  </span><span class="hl-8">console</span><span class="hl-2">.</span><span class="hl-9">log</span><span class="hl-2">(</span><span class="hl-8">hit</span><span class="hl-2">.</span><span class="hl-8">object</span><span class="hl-2">.</span><span class="hl-9">getBimElement</span><span class="hl-2">())</span><br/><span class="hl-2">}</span>
 </code></pre>
 <p><strong>Load from a custom http request</strong></p>
 <pre><code class="language-javascript"><span class="hl-12">// Make request as usual</span><br/><span class="hl-6">const</span><span class="hl-2"> </span><span class="hl-7">xhr</span><span class="hl-2"> = </span><span class="hl-6">new</span><span class="hl-2"> </span><span class="hl-9">XMLHttpRequest</span><span class="hl-2">()</span><br/><span class="hl-12">// Specify response type ArrayBuffer</span><br/><span class="hl-8">xhr</span><span class="hl-2">.</span><span class="hl-8">responseType</span><span class="hl-2"> = </span><span class="hl-10">&#39;arraybuffer&#39;</span><br/><span class="hl-8">xhr</span><span class="hl-2">.</span><span class="hl-9">open</span><span class="hl-2">(</span><span class="hl-10">&#39;GET&#39;</span><span class="hl-2">, </span><span class="hl-8">url</span><span class="hl-2">)</span><br/><span class="hl-8">xhr</span><span class="hl-2">.</span><span class="hl-9">send</span><span class="hl-2">()</span><br/><span class="hl-8">xhr</span><span class="hl-2">.</span><span class="hl-9">onload</span><span class="hl-2"> = () </span><span class="hl-6">=&gt;</span><span class="hl-2"> {</span><br/><span class="hl-12">// Load vim by passing the array buffer</span><br/><span class="hl-2">  </span><span class="hl-8">viewer</span><span class="hl-2">.</span><span class="hl-9">loadVim</span><span class="hl-2">(</span><span class="hl-8">xhr</span><span class="hl-2">.</span><span class="hl-8">response</span><span class="hl-2">, {</span><br/><span class="hl-2">    </span><span class="hl-8">rotation:</span><span class="hl-2"> { </span><span class="hl-8">x:</span><span class="hl-2"> </span><span class="hl-11">270</span><span class="hl-2">, </span><span class="hl-8">y:</span><span class="hl-2"> </span><span class="hl-11">0</span><span class="hl-2">, </span><span class="hl-8">z:</span><span class="hl-2"> </span><span class="hl-11">0</span><span class="hl-2"> }</span><br/><span class="hl-2">  })</span><br/><span class="hl-2">}</span>
