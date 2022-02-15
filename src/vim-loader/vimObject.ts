@@ -161,20 +161,24 @@ export class VimObject {
   private resetMergedMeshColor (mesh: THREE.Mesh, index: number) {
     const colors = mesh.geometry.getAttribute('color')
     const uvs = mesh.geometry.getAttribute('uv')
+    const indices = mesh.geometry.getIndex()
+    let mergedIndex = this.getMergedMeshStart(mesh, index)
 
     const instance = this.vim.getInstanceFromMesh(mesh, index)
     const g3d = this.vim.document.g3d
     const g3dMesh = g3d.instanceMeshes[instance]
     const subStart = g3d.getMeshSubmeshStart(g3dMesh)
     const subEnd = g3d.getMeshSubmeshEnd(g3dMesh)
+
     for (let sub = subStart; sub < subEnd; sub++) {
       const start = g3d.getSubmeshIndexStart(sub)
       const end = g3d.getSubmeshIndexEnd(sub)
       const color = g3d.getSubmeshColor(sub)
       for (let i = start; i < end; i++) {
-        const v = g3d.meshVertexOffsets[g3dMesh] + g3d.indices[i]
+        const v = indices.getX(mergedIndex)
         colors.setXYZ(v, color[0], color[1], color[2])
         uvs.setY(v, 1)
+        mergedIndex++
       }
     }
     colors.needsUpdate = true
