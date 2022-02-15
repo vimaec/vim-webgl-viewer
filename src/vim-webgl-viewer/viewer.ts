@@ -18,15 +18,6 @@ import { HitTestResult } from './hitTester'
 import { VimLoader } from '../vim-loader/vimLoader'
 import { Vim } from '../vim-loader/vim'
 import { Object } from '../vim-loader/object'
-import { randFloat, randInt } from 'three/src/math/MathUtils'
-import * as THREE from 'three'
-
-export type ViewerState =
-  | 'Uninitialized'
-  | [state: 'Downloading', progress: number]
-  | 'Processing'
-  | [state: 'Error', error: ErrorEvent]
-  | 'Ready'
 
 export class Viewer {
   settings: ViewerSettings
@@ -292,24 +283,5 @@ export class Viewer {
     if (hit.doubleClick) this.lookAtSelection()
 
     console.log(hit.object.getBimElement())
-  }
-
-  disco () {
-    requestAnimationFrame(() => {
-      for (let i = 0; i < 1000; i++) {
-        const vim = this.vims[randInt(0, this.vims.length - 1)]
-        const elementCount = vim.elementIndexToInstanceIndices.size
-        const obj = vim.getObjectFromElement(randInt(0, elementCount - 1))
-
-        if (randInt(0, 10) === 0) obj?.changeColor()
-        else {
-          obj?.changeColor(
-            new THREE.Color(randFloat(0, 1), randFloat(0, 1), randFloat(0, 1))
-          )
-        }
-      }
-
-      this.disco()
-    })
   }
 }
