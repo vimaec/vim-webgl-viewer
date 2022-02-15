@@ -16,7 +16,7 @@ if (params.has('transparency')) {
 // Create Viewer
 const viewer = new Viewer({
   camera: { showGizmo: true },
-  plane: {
+  groundPlane: {
     show: true,
     texture:
       'https://vimdevelopment01storage.blob.core.windows.net/textures/vim-floor-soft.png',

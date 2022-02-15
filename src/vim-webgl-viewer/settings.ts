@@ -26,7 +26,7 @@ export type ColorHSL = {
 /**
  * Plane under Scene related options
  */
-export type PlaneOptions = {
+export type GroundPlaneOptions = {
   /** Enables/Disables plane under scene */
   show: boolean
   /** Local or remote texture url for plane */
@@ -106,7 +106,7 @@ export type ViewerOptions = {
   /**
    * Plane under scene related options
    */
-  plane: Partial<PlaneOptions>
+  groundPlane: Partial<GroundPlaneOptions>
   /**
    * Skylight (hemisphere light) options
    */
@@ -145,7 +145,7 @@ export class ViewerSettings {
         },
         showGizmo: true
       },
-      plane: {
+      groundPlane: {
         show: true,
         texture: null,
         opacity: 1,
@@ -177,11 +177,11 @@ export class ViewerSettings {
   getCanvasId = () => this.options.canvas.id
 
   // Plane
-  getPlaneShow = () => this.options.plane.show
-  getPlaneColor = () => toRGBColor(this.options.plane.color)
-  getPlaneTextureUrl = () => this.options.plane.texture
-  getPlaneOpacity = () => this.options.plane.opacity
-  getPlaneSize = () => this.options.plane.size
+  getGroundPlaneShow = () => this.options.groundPlane.show
+  getGroundPlaneColor = () => toRGBColor(this.options.groundPlane.color)
+  getGroundPlaneTextureUrl = () => this.options.groundPlane.texture
+  getGroundPlaneOpacity = () => this.options.groundPlane.opacity
+  getGroundPlaneSize = () => this.options.groundPlane.size
 
   // Skylight
   getSkylightColor = () => toHSLColor(this.options.skylight.skyColor)

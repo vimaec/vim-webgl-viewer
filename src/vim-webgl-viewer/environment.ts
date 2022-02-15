@@ -6,7 +6,7 @@ import * as THREE from 'three'
 import { ViewerSettings } from './settings'
 import { Box3 } from 'three'
 
-class Floor {
+class GroundPlane {
   source: string
   mesh: THREE.Mesh
   size: number
@@ -23,14 +23,14 @@ class Floor {
   }
 
   applyViewerSettings (settings: ViewerSettings) {
-    this.size = settings.getPlaneSize()
+    this.size = settings.getGroundPlaneSize()
     // Visibily
-    this.mesh.visible = settings.getPlaneShow()
+    this.mesh.visible = settings.getGroundPlaneShow()
 
     // Looks
-    this.applyTexture(settings.getPlaneTextureUrl())
-    this.material.color.copy(settings.getPlaneColor())
-    this.material.opacity = settings.getPlaneOpacity()
+    this.applyTexture(settings.getGroundPlaneTextureUrl())
+    this.material.color.copy(settings.getGroundPlaneColor())
+    this.material.opacity = settings.getGroundPlaneOpacity()
   }
 
   fitToContent (box: THREE.Box3) {
@@ -91,12 +91,12 @@ class Floor {
 }
 
 export class Environment {
-  plane: Floor
+  plane: GroundPlane
   skyLight: THREE.HemisphereLight
   sunLight: THREE.DirectionalLight
 
   constructor (settings: ViewerSettings) {
-    this.plane = new Floor()
+    this.plane = new GroundPlane()
     this.skyLight = new THREE.HemisphereLight()
     this.sunLight = new THREE.DirectionalLight()
     this.applyViewerSettings(settings)
