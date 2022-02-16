@@ -175,7 +175,7 @@ export class Keyboard {
           break
         case KEYS.KEY_Z:
         case KEYS.KEY_F:
-          this.viewer.lookAtSelection()
+          this.viewer.frameSelection()
           event.preventDefault()
           break
       }

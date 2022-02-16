@@ -87,7 +87,7 @@ export class Camera {
     this.orbitalTargetDistance = this.currentOrbitalDistance
   }
 
-  lookAt (position: THREE.Vector3) {
+  lookAtPosition (position: THREE.Vector3) {
     this.camera.lookAt(position)
   }
 

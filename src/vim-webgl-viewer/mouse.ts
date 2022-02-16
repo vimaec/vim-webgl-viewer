@@ -83,7 +83,7 @@ export class Mouse {
 
     if (this.inputKeyboard.isCtrlPressed) {
       this.camera.speedMultiplier -= scrollValue
-    } else if (this.camera.mouseOrbit) {
+    } else if (this.camera.orbit) {
       const impulse = new THREE.Vector3(0, 0, scrollValue)
       this.camera.addLocalImpulse(impulse)
       // this.camera.updateOrbitalDistance(-scrollValue)
