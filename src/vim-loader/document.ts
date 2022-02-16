@@ -148,7 +148,7 @@ export class Document {
     const stringData = lookup.get('strings')
 
     const header = new TextDecoder('utf-8').decode(headerData)
-    const g3d = G3d.fromBfast(BFast.fromArray(g3dData))
+    const g3d = G3d.createFromBfast(BFast.fromArray(g3dData))
     const assets = BFast.fromArray(assetData)
     const entities = Document.parseEntityTables(BFast.fromArray(entityData))
     const strings = new TextDecoder('utf-8').decode(stringData).split('\0')

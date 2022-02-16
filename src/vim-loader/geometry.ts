@@ -49,7 +49,7 @@ export function transparencyMatches (
  * @returns a BufferGeometry
  */
 export function createGeometryFromInstances (g3d: G3d, instances: number[]) {
-  const merger = MeshMerger.MergeInstances(g3d, instances, 'all')
+  const merger = MeshMerger.createFromInstances(g3d, instances, 'all')
   return merger.toBufferGeometry()
 }
 
@@ -147,7 +147,7 @@ export class MeshMerger {
   /**
    * Prepares a merge of all meshes referenced by only one instance.
    */
-  static MergeUniqueMeshes (g3d: G3d, transparency: TransparencyMode) {
+  static createFromUniqueMeshes (g3d: G3d, transparency: TransparencyMode) {
     let vertexCount = 0
     let indexCount = 0
     const instances = []
@@ -179,7 +179,7 @@ export class MeshMerger {
   /**
    * Prepares a merge of all meshes referenced by given instances.
    */
-  static MergeInstances (
+  static createFromInstances (
     g3d: G3d,
     instances: number[],
     transparency: TransparencyMode

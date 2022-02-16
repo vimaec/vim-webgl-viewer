@@ -38,7 +38,7 @@ export class BFastHeader {
     this.numArrays = numArrays
   }
 
-  static fromArray (array: Int32Array, byteLength: number): BFastHeader {
+  static createFromArray (array: Int32Array, byteLength: number): BFastHeader {
     // Check validity of data
     // TODO: check endianness
 
@@ -72,8 +72,8 @@ export class BFast {
    * @param bytes an array of bytes from which to construct the bfast
    * @returns a bfast instance
    */
-  static fromArray (bytes: Uint8Array): BFast {
-    return this.fromArrayBuffer(
+  static createFromArray (bytes: Uint8Array): BFast {
+    return this.createFromArrayBuffer(
       bytes.buffer,
       bytes.byteOffset,
       bytes.byteLength
@@ -87,7 +87,7 @@ export class BFast {
    * @param byteLength how many bytes to parse from the array
    * @returns a bfast instance
    */
-  static fromArrayBuffer (
+  static createFromArrayBuffer (
     arrayBuffer: ArrayBuffer,
     byteOffset: number = 0,
     byteLength: number = arrayBuffer.byteLength - byteOffset
@@ -98,7 +98,7 @@ export class BFast {
     const data = new Int32Array(arrayBuffer, byteOffset, byteLength / 4)
 
     // Parse the header
-    const header = BFastHeader.fromArray(data, byteLength)
+    const header = BFastHeader.createFromArray(data, byteLength)
 
     // Compute each buffer
     const buffers: Uint8Array[] = []

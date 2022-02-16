@@ -113,7 +113,7 @@ export class Scene {
    * @param meshes members are expected to have userData.instances = number[]
    * where numbers are the indices of the g3d instances that went into creating each mesh
    */
-  static fromInstancedMeshes (meshes: THREE.InstancedMesh[]) {
+  static createFromInstancedMeshes (meshes: THREE.InstancedMesh[]) {
     const scene = new Scene()
 
     for (let m = 0; m < meshes.length; m++) {
@@ -180,7 +180,7 @@ export class Scene {
    * @param transparency Specify whether color is RBG or RGBA and whether material is opaque or transparent
    * @param instances g3d instance indices to be included in the Scene. All if undefined.
    */
-  static fromG3d (
+  static createFromG3d (
     g3d: G3d,
     transparency: vimGeometry.TransparencyMode = 'all',
     instances: number[] | undefined = undefined
@@ -240,7 +240,7 @@ export function createSceneFromInstanciableMeshes (
   builder: meshing.MeshBuilder = meshing.getDefaultBuilder()
 ) {
   const meshes = builder.createInstancedMeshes(g3d, transparency, instances)
-  return Scene.fromInstancedMeshes(meshes)
+  return Scene.createFromInstancedMeshes(meshes)
 }
 // g3d instance indices to be included in the merged mesh. All mergeable meshes if undefined.
 /**

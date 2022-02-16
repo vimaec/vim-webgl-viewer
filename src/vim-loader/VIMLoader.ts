@@ -14,8 +14,8 @@ import { TransparencyMode } from './geometry'
  * See https://github.com/vimaec/vim
  */
 export class VimLoader {
-  loader: THREE.FileLoader
-  loaded: Set<string> = new Set<string>()
+  private loader: THREE.FileLoader
+  private loaded: Set<string> = new Set<string>()
   constructor () {
     this.loader = new THREE.FileLoader()
     THREE.Cache.enabled = true
@@ -93,7 +93,7 @@ export class VimLoader {
     transparency: TransparencyMode,
     instances?: number[]
   ): Vim {
-    const scene = Scene.fromG3d(vim.g3d, transparency, instances)
+    const scene = Scene.createFromG3d(vim.g3d, transparency, instances)
     return new Vim(vim, scene)
   }
 }
