@@ -21,30 +21,29 @@ export const DIRECTIONS = {
  */
 export class Camera {
   gizmo: CameraGizmo
-  public camera: THREE.PerspectiveCamera
+  camera: THREE.PerspectiveCamera
 
-  private MinOrbitalDistance: number = 0.02
+  private inputVelocity: THREE.Vector3
+  private velocity: THREE.Vector3
+  private impulse: THREE.Vector3
+  public speedMultiplier: number
 
-  private InputVelocity: THREE.Vector3
-  private Velocity: THREE.Vector3
-  private Impulse: THREE.Vector3
-  public SpeedMultiplier: number
-
-  public OrbitalTarget: THREE.Vector3
-  public CurrentOrbitalDistance: number
-  public OrbitalTargetDistance: number
+  private orbitalTarget: THREE.Vector3
+  private minOrbitalDistance: number = 0.02
+  private currentOrbitalDistance: number
+  private orbitalTargetDistance: number
 
   private lerpSecondsDuration: number
   private lerpMsEndtime: number
 
-  private _isMouseOrbit: boolean = false
+  private _mouseOrbit: boolean = false
 
-  public get IsMouseOrbit () {
-    return this._isMouseOrbit
+  public get mouseOrbit () {
+    return this._mouseOrbit
   }
 
-  public set IsMouseOrbit (value: boolean) {
-    this._isMouseOrbit = value
+  public set mouseOrbit (value: boolean) {
+    this._mouseOrbit = value
     this.gizmo.show(value)
   }
 
@@ -62,17 +61,17 @@ export class Camera {
     this.camera = renderer.camera
     this.applyViewerSettings(settings)
 
-    this.InputVelocity = new THREE.Vector3(0, 0, 0)
-    this.Velocity = new THREE.Vector3(0, 0, 0)
-    this.Impulse = new THREE.Vector3(0, 0, 0)
-    this.SpeedMultiplier = 0
+    this.inputVelocity = new THREE.Vector3(0, 0, 0)
+    this.velocity = new THREE.Vector3(0, 0, 0)
+    this.impulse = new THREE.Vector3(0, 0, 0)
+    this.speedMultiplier = 0
     this.sceneSizeMultiplier = 1
-    this.OrbitalTarget = new THREE.Vector3(0, 0, 0)
-    this.CurrentOrbitalDistance = this.camera.position
+    this.orbitalTarget = new THREE.Vector3(0, 0, 0)
+    this.currentOrbitalDistance = this.camera.position
       .clone()
-      .sub(this.OrbitalTarget)
+      .sub(this.orbitalTarget)
       .length()
-    this.OrbitalTargetDistance = this.CurrentOrbitalDistance
+    this.orbitalTargetDistance = this.currentOrbitalDistance
   }
 
   lookAt (position: THREE.Vector3) {
@@ -93,22 +92,22 @@ export class Camera {
 
     this.camera.lookAt(sphere.center)
     this.camera.position.copy(pos)
-    this.OrbitalTarget = sphere.center
-    this.CurrentOrbitalDistance = this.OrbitalTarget.clone().sub(pos).length()
-    this.OrbitalTargetDistance = this.CurrentOrbitalDistance
+    this.orbitalTarget = sphere.center
+    this.currentOrbitalDistance = this.orbitalTarget.clone().sub(pos).length()
+    this.orbitalTargetDistance = this.currentOrbitalDistance
   }
 
   reset () {
     this.camera.position.set(0, 0, -5)
     this.camera.lookAt(0, 0, 1)
 
-    this.InputVelocity.set(0, 0, 0)
-    this.Velocity.set(0, 0, 0)
-    this.Impulse.set(0, 0, 0)
+    this.inputVelocity.set(0, 0, 0)
+    this.velocity.set(0, 0, 0)
+    this.impulse.set(0, 0, 0)
 
-    this.CurrentOrbitalDistance = 5
-    this.OrbitalTarget.set(0, 0, 0)
-    this.OrbitalTargetDistance = this.CurrentOrbitalDistance
+    this.currentOrbitalDistance = 5
+    this.orbitalTarget.set(0, 0, 0)
+    this.orbitalTargetDistance = this.currentOrbitalDistance
   }
 
   frameSphere (sphere?: THREE.Sphere) {
@@ -123,16 +122,17 @@ export class Camera {
         .add(new THREE.Vector3(0, sphere.radius, -2 * sphere.radius))
     )
     this.camera.lookAt(sphere.center)
-    this.OrbitalTarget = sphere.center
-    this.CurrentOrbitalDistance = this.OrbitalTarget.clone()
+    this.orbitalTarget = sphere.center
+    this.currentOrbitalDistance = this.orbitalTarget
+      .clone()
       .sub(this.camera.position)
       .length()
-    this.OrbitalTargetDistance = this.CurrentOrbitalDistance
+    this.orbitalTargetDistance = this.currentOrbitalDistance
   }
 
   applyViewerSettings (settings: ViewerSettings) {
     // Mode
-    this.IsMouseOrbit = settings.getCameraIsOrbit()
+    this.mouseOrbit = settings.getCameraIsOrbit()
 
     // Camera
     this.camera.fov = settings.getCameraFov()
@@ -157,7 +157,7 @@ export class Camera {
     this.sceneSizeMultiplier = boundingSphere.radius / this.vimReferenceSize
     // Gizmo
     this.gizmo.applyVimSettings(this.sceneSizeMultiplier)
-    this.gizmo.show(this.IsMouseOrbit)
+    this.gizmo.show(this.mouseOrbit)
   }
 
   applyLocalImpulse (impulse: THREE.Vector3) {
@@ -165,7 +165,7 @@ export class Camera {
       .clone()
       .multiplyScalar(this.getSpeedMultiplier() * this.wheelSpeed)
     localImpulse.applyQuaternion(this.camera.quaternion)
-    this.Impulse.add(localImpulse)
+    this.impulse.add(localImpulse)
   }
 
   moveCameraBy (dir: THREE.Vector3 = DIRECTIONS.forward, speed: number) {
@@ -173,9 +173,9 @@ export class Camera {
     if (speed) vector.multiplyScalar(speed)
     vector.applyQuaternion(this.camera.quaternion)
 
-    this.OrbitalTarget.add(vector)
+    this.orbitalTarget.add(vector)
     this.gizmo.show()
-    if (!this._isMouseOrbit) {
+    if (!this._mouseOrbit) {
       this.camera.position.add(vector)
     }
   }
@@ -195,8 +195,8 @@ export class Camera {
   }
 
   dollyCameraBy (amount: number) {
-    if (this._isMouseOrbit) {
-      this.CurrentOrbitalDistance += amount
+    if (this._mouseOrbit) {
+      this.currentOrbitalDistance += amount
     } else {
       this.moveCameraBy(
         new THREE.Vector3(0, 0, amount),
@@ -210,7 +210,7 @@ export class Camera {
     move.setZ(-move.z)
     move.applyQuaternion(this.camera.quaternion)
     move.multiplyScalar(this.getSpeedMultiplier())
-    this.InputVelocity.copy(move)
+    this.inputVelocity.copy(move)
   }
 
   /**
@@ -225,7 +225,7 @@ export class Camera {
     // When moving the mouse one full sreen
     // Orbit will rotate 180 degree around the scene
     // Basic will rotate 180 degrees on itself
-    const factor = this._isMouseOrbit
+    const factor = this._mouseOrbit
       ? Math.PI * this.orbitSpeed
       : Math.PI * this.rotateSpeed
 
@@ -239,12 +239,12 @@ export class Camera {
 
     this.camera.quaternion.setFromEuler(euler)
 
-    if (!this._isMouseOrbit) {
+    if (!this._mouseOrbit) {
       const offset = new THREE.Vector3(0, 0, 1)
         .applyQuaternion(this.camera.quaternion)
-        .multiplyScalar(this.CurrentOrbitalDistance)
+        .multiplyScalar(this.currentOrbitalDistance)
 
-      this.OrbitalTarget = this.camera.position.clone().sub(offset)
+      this.orbitalTarget = this.camera.position.clone().sub(offset)
     }
   }
 
@@ -258,48 +258,48 @@ export class Camera {
   }
 
   setTarget (position: THREE.Vector3) {
-    this.OrbitalTarget = position
-    this.OrbitalTargetDistance = this.camera.position.distanceTo(position)
+    this.orbitalTarget = position
+    this.orbitalTargetDistance = this.camera.position.distanceTo(position)
     this.startLerp(0.4)
   }
 
   getSpeedMultiplier () {
     return (
-      Math.pow(1.25, this.SpeedMultiplier) *
+      Math.pow(1.25, this.speedMultiplier) *
       this.sceneSizeMultiplier *
       this.moveSpeed
     )
   }
 
   updateOrbitalDistance (diff: number) {
-    this.OrbitalTargetDistance -= diff * this.getSpeedMultiplier()
-    this.OrbitalTargetDistance = Math.max(
-      this.OrbitalTargetDistance,
-      this.MinOrbitalDistance
+    this.orbitalTargetDistance -= diff * this.getSpeedMultiplier()
+    this.orbitalTargetDistance = Math.max(
+      this.orbitalTargetDistance,
+      this.minOrbitalDistance
     )
   }
 
   frameUpdate (deltaTime: number) {
-    const targetVelocity = this.InputVelocity.clone()
+    const targetVelocity = this.inputVelocity.clone()
 
     // Update the camera velocity and position
     const invBlendFactor = Math.pow(this.velocityBlendFactor, deltaTime)
     const blendFactor = 1.0 - invBlendFactor
 
-    this.Velocity.multiplyScalar(invBlendFactor)
+    this.velocity.multiplyScalar(invBlendFactor)
     targetVelocity.multiplyScalar(blendFactor)
-    this.Velocity.add(targetVelocity)
+    this.velocity.add(targetVelocity)
 
-    this.CurrentOrbitalDistance =
-      this.CurrentOrbitalDistance * invBlendFactor +
-      this.OrbitalTargetDistance * blendFactor
+    this.currentOrbitalDistance =
+      this.currentOrbitalDistance * invBlendFactor +
+      this.orbitalTargetDistance * blendFactor
 
-    const positionDelta = this.Velocity.clone().multiplyScalar(deltaTime)
-    const impulse = this.Impulse.clone().multiplyScalar(blendFactor)
+    const positionDelta = this.velocity.clone().multiplyScalar(deltaTime)
+    const impulse = this.impulse.clone().multiplyScalar(blendFactor)
     positionDelta.add(impulse)
 
     const orbitDelta = positionDelta.clone()
-    if (this._isMouseOrbit) {
+    if (this._mouseOrbit) {
       // compute local space forward component of movement
       const inv = this.camera.quaternion.clone().invert()
       const local = positionDelta.clone().applyQuaternion(inv)
@@ -309,21 +309,21 @@ export class Camera {
       orbitDelta.applyQuaternion(this.camera.quaternion)
 
       // apply local space z to orbit distance,
-      this.CurrentOrbitalDistance = Math.max(
-        this.CurrentOrbitalDistance + local.z,
-        this.MinOrbitalDistance * this.sceneSizeMultiplier
+      this.currentOrbitalDistance = Math.max(
+        this.currentOrbitalDistance + local.z,
+        this.minOrbitalDistance * this.sceneSizeMultiplier
       )
-      this.OrbitalTargetDistance = this.CurrentOrbitalDistance
+      this.orbitalTargetDistance = this.currentOrbitalDistance
     }
 
-    this.Impulse.multiplyScalar(invBlendFactor)
+    this.impulse.multiplyScalar(invBlendFactor)
     this.camera.position.add(positionDelta)
-    this.OrbitalTarget.add(orbitDelta)
+    this.orbitalTarget.add(orbitDelta)
 
-    if (this._isMouseOrbit) {
-      const target = new THREE.Vector3(0, 0, this.CurrentOrbitalDistance)
+    if (this._mouseOrbit) {
+      const target = new THREE.Vector3(0, 0, this.currentOrbitalDistance)
       target.applyQuaternion(this.camera.quaternion)
-      target.add(this.OrbitalTarget)
+      target.add(this.orbitalTarget)
 
       if (this.isLerping()) {
         const frames = this.lerpSecondsDuration / deltaTime
@@ -338,7 +338,7 @@ export class Camera {
       }
     }
 
-    this.gizmo.update(this.OrbitalTarget)
+    this.gizmo.update(this.orbitalTarget)
   }
 
   isSignificant (vector: THREE.Vector3) {
