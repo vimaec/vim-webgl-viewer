@@ -54,14 +54,14 @@ export class HitTestResult {
     return this.firstHit.object.id
   }
 
-  get hitFace (): number {
+  get faceIndex (): number {
     return this.firstHit.faceIndex
   }
 }
 
 export class HitTester {
-  viewer: Viewer
-  raycaster = new THREE.Raycaster()
+  private viewer: Viewer
+  private raycaster = new THREE.Raycaster()
 
   constructor (viewer: Viewer) {
     this.viewer = viewer

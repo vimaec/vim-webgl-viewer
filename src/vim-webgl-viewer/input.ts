@@ -4,7 +4,7 @@
 
 import { Viewer } from './viewer'
 import { Keyboard } from './keyboard'
-import { InputTouch } from './touch'
+import { Touch } from './touch'
 import { Mouse } from './mouse'
 
 /**
@@ -16,7 +16,7 @@ export class Input {
 
   // State
   private unregisters: Function[]
-  private touch: InputTouch
+  private touch: Touch
   private mouse: Mouse
   private keyboard: Keyboard
 
@@ -26,7 +26,7 @@ export class Input {
 
     this.keyboard = new Keyboard(viewer.camera, viewer)
     this.mouse = new Mouse(viewer, this.keyboard)
-    this.touch = new InputTouch(viewer.camera, viewer.renderer, this.mouse)
+    this.touch = new Touch(viewer.camera, viewer.renderer, this.mouse)
   }
 
   private reg = (
