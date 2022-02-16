@@ -4,7 +4,7 @@
 
 // internal
 import { ViewerSettings, ViewerOptions } from './settings'
-import { ViewerCamera } from './camera'
+import { Camera } from './camera'
 import { Input } from './input'
 import { Selection } from './selection'
 import { Environment } from './environment'
@@ -26,7 +26,7 @@ export class Viewer {
   environment: Environment
   renderer: Renderer
   selection: Selection
-  camera: ViewerCamera
+  camera: Camera
   controls: Input
   loader: VimLoader
 
@@ -46,7 +46,7 @@ export class Viewer {
     const canvas = Viewer.getOrCreateCanvas(this.settings.getCanvasId())
     this.renderer = new Renderer(canvas, this.settings)
 
-    this.camera = new ViewerCamera(this.renderer, this.settings)
+    this.camera = new Camera(this.renderer, this.settings)
 
     this.environment = new Environment(this.settings)
     this.environment.getObjects().forEach((o) => this.renderer.addObject(o))

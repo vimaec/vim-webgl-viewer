@@ -5,7 +5,7 @@
 import * as THREE from 'three'
 import { SphereGeometry } from 'three'
 import { Renderer } from './renderer'
-import { ViewerCamera } from './camera'
+import { Camera } from './camera'
 import { ViewerSettings } from './settings'
 import { DEG2RAD } from 'three/src/math/MathUtils'
 
@@ -14,7 +14,7 @@ import { DEG2RAD } from 'three/src/math/MathUtils'
  */
 export class CameraGizmo {
   // Dependencies
-  camera: ViewerCamera
+  camera: Camera
   renderer: Renderer
 
   // Settings
@@ -32,7 +32,7 @@ export class CameraGizmo {
   timeout: ReturnType<typeof setTimeout>
   active: boolean
 
-  constructor (camera: ViewerCamera, renderer: Renderer) {
+  constructor (camera: Camera, renderer: Renderer) {
     this.camera = camera
     this.renderer = renderer
   }

@@ -4,7 +4,7 @@
 
 import * as THREE from 'three'
 
-import { ViewerCamera } from './camera'
+import { Camera } from './camera'
 import { CameraGizmo } from './gizmos'
 import { Viewer } from './viewer'
 
@@ -107,7 +107,7 @@ export class Keyboard {
   ShiftMultiplier: number = 3.0
 
   // Dependencies
-  camera: ViewerCamera
+  camera: Camera
   viewer: Viewer
   gizmo: CameraGizmo
 
@@ -121,7 +121,7 @@ export class Keyboard {
   isShiftPressed: boolean = false
   isCtrlPressed: boolean
 
-  constructor (camera: ViewerCamera, viewer: Viewer) {
+  constructor (camera: Camera, viewer: Viewer) {
     this.camera = camera
     this.viewer = viewer
   }

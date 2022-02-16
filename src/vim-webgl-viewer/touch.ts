@@ -3,7 +3,7 @@
  */
 
 import * as THREE from 'three'
-import { ViewerCamera } from './camera'
+import { Camera } from './camera'
 import { Mouse } from './mouse'
 import { Renderer } from './renderer'
 
@@ -14,7 +14,7 @@ export class InputTouch {
   TapDurationMs: number = 500
 
   // Dependencies
-  private camera: ViewerCamera
+  private camera: Camera
   private renderer: Renderer
   private mouse: Mouse
 
@@ -24,7 +24,7 @@ export class InputTouch {
   private touchStart2: THREE.Vector2 | undefined = undefined // The second touch when multiple touches occur, otherwise left undefined
   private touchStartTime: number | undefined = undefined // In ms since epoch
 
-  constructor (camera: ViewerCamera, renderer: Renderer, mouse: Mouse) {
+  constructor (camera: Camera, renderer: Renderer, mouse: Mouse) {
     this.camera = camera
     this.renderer = renderer
     this.mouse = mouse

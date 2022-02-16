@@ -7,7 +7,7 @@ import { CameraGizmo } from './gizmos'
 import { Renderer } from './renderer'
 import { ViewerSettings } from './settings'
 
-const direction = {
+export const DIRECTIONS = {
   forward: new THREE.Vector3(0, 0, -1),
   back: new THREE.Vector3(0, 0, 1),
   left: new THREE.Vector3(-1, 0, 0),
@@ -19,7 +19,7 @@ const direction = {
 /**
  * Manages viewer camera movement and position
  */
-class Camera {
+export class Camera {
   gizmo: CameraGizmo
   public camera: THREE.PerspectiveCamera
 
@@ -168,7 +168,7 @@ class Camera {
     this.Impulse.add(localImpulse)
   }
 
-  moveCameraBy (dir: THREE.Vector3 = direction.forward, speed: number) {
+  moveCameraBy (dir: THREE.Vector3 = DIRECTIONS.forward, speed: number) {
     const vector = dir.clone()
     if (speed) vector.multiplyScalar(speed)
     vector.applyQuaternion(this.camera.quaternion)
@@ -351,5 +351,3 @@ class Camera {
     )
   }
 }
-
-export { direction, Camera as ViewerCamera }
