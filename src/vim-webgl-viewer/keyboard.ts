@@ -161,7 +161,7 @@ export class Keyboard {
           break
         case KEYS.KEY_F8:
         case KEYS.KEY_SPACE:
-          this.camera.mouseOrbit = !this.camera.mouseOrbit
+          this.camera.orbit = !this.camera.orbit
           event.preventDefault()
           break
         case KEYS.KEY_HOME:

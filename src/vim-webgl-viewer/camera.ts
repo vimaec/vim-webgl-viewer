@@ -36,14 +36,14 @@ export class Camera {
   private lerpSecondsDuration: number
   private lerpMsEndtime: number
 
-  private _mouseOrbit: boolean = false
+  private _orbitMode: boolean = false
 
-  public get mouseOrbit () {
-    return this._mouseOrbit
+  public get orbitMode () {
+    return this._orbitMode
   }
 
-  public set mouseOrbit (value: boolean) {
-    this._mouseOrbit = value
+  public set orbitMode (value: boolean) {
+    this._orbitMode = value
     this.gizmo.show(value)
   }
 
@@ -113,7 +113,7 @@ export class Camera {
 
   applyViewerSettings (settings: ViewerSettings) {
     // Mode
-    this.mouseOrbit = settings.getCameraIsOrbit()
+    this.orbitMode = settings.getCameraIsOrbit()
 
     // Camera
     this.camera.fov = settings.getCameraFov()
@@ -142,7 +142,7 @@ export class Camera {
     this.sceneSizeMultiplier = sphere.radius / this.vimReferenceSize
     // Gizmo
     this.gizmo.applyVimSettings(this.sceneSizeMultiplier)
-    this.gizmo.show(this.mouseOrbit)
+    this.gizmo.show(this.orbitMode)
   }
 
   addLocalImpulse (impulse: THREE.Vector3) {
@@ -160,7 +160,7 @@ export class Camera {
 
     this.orbitalTarget.add(v)
     this.gizmo.show()
-    if (!this._mouseOrbit) {
+    if (!this.orbitMode) {
       this.camera.position.add(v)
     }
   }
@@ -180,7 +180,7 @@ export class Camera {
   }
 
   dolly (amount: number) {
-    if (this._mouseOrbit) {
+    if (this.orbitMode) {
       this.currentOrbitalDistance += amount
     } else {
       this.move(new THREE.Vector3(0, 0, amount), this.getSpeedMultiplier())
@@ -207,7 +207,7 @@ export class Camera {
     // When moving the mouse one full sreen
     // Orbit will rotate 180 degree around the scene
     // Basic will rotate 180 degrees on itself
-    const factor = this._mouseOrbit
+    const factor = this.orbitMode
       ? Math.PI * this.orbitSpeed
       : Math.PI * this.rotateSpeed
 
@@ -221,7 +221,7 @@ export class Camera {
 
     this.camera.quaternion.setFromEuler(euler)
 
-    if (!this._mouseOrbit) {
+    if (!this.orbitMode) {
       const offset = new THREE.Vector3(0, 0, 1)
         .applyQuaternion(this.camera.quaternion)
         .multiplyScalar(this.currentOrbitalDistance)
@@ -236,7 +236,7 @@ export class Camera {
     this.startLerp(0.4)
   }
 
-  frameUpdate (deltaTime: number) {
+  update (deltaTime: number) {
     const targetVelocity = this.inputVelocity.clone()
 
     // Update the camera velocity and position
@@ -256,7 +256,7 @@ export class Camera {
     positionDelta.add(impulse)
 
     const orbitDelta = positionDelta.clone()
-    if (this._mouseOrbit) {
+    if (this.orbitMode) {
       // compute local space forward component of movement
       const inv = this.camera.quaternion.clone().invert()
       const local = positionDelta.clone().applyQuaternion(inv)
@@ -277,7 +277,7 @@ export class Camera {
     this.camera.position.add(positionDelta)
     this.orbitalTarget.add(orbitDelta)
 
-    if (this._mouseOrbit) {
+    if (this.orbitMode) {
       const target = new THREE.Vector3(0, 0, this.currentOrbitalDistance)
       target.applyQuaternion(this.camera.quaternion)
       target.add(this.orbitalTarget)

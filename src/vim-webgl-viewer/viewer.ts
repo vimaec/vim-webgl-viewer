@@ -84,7 +84,7 @@ export class Viewer {
 
     // Camera
     const timeDelta = this.renderer.clock.getDelta()
-    this.camera.frameUpdate(timeDelta)
+    this.camera.update(timeDelta)
 
     // Rendering
     if (this.vims.length) this.renderer.render()
@@ -244,7 +244,7 @@ export class Viewer {
    */
   lookAtObject (object: Object) {
     const center = object.getCenter()
-    this.camera.lookAt(center)
+    this.camera.lookAtPosition(center)
   }
 
   /**
