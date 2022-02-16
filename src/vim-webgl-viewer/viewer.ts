@@ -239,8 +239,7 @@ export class Viewer {
   }
 
   /**
-   * Move the camera to frame all geometry related to an element
-   * @param elementIndex index of element
+   * Move the camera to frame given object
    */
   lookAt (object: Object) {
     const sphere = object.getBoundingSphere()

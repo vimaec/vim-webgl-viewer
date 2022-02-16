@@ -33,8 +33,12 @@ export class Document {
     this.strings = strings
   }
 
-  getElement (index: number) {
-    return this.getEntity(Document.tableElement, index)
+  /**
+   * Returns BIM data for given element
+   * @param element element index
+   */
+  getElement (element: number) {
+    return this.getEntity(Document.tableElement, element)
   }
 
   getEntity (type: string, index: number) {
@@ -62,7 +66,7 @@ export class Document {
    * @returns element index or -1 if not found
    */
   getElementFromInstance (instance: number): number {
-    const instanceElements = this.getInstanceElementIndices()
+    const instanceElements = this.getInstanceToElementMap()
     if (!instanceElements) return -1
     return instanceElements[instance]
   }
@@ -89,7 +93,7 @@ export class Document {
   getDoubleColumn = (table: any, colNameNoPrefix: string) =>
     this.getDataColumn(table, 'double:', colNameNoPrefix)
 
-  getInstanceElementIndices (): number[] {
+  getInstanceToElementMap (): number[] {
     const table = this.getNodeTable()
     if (!table) return
     const result =

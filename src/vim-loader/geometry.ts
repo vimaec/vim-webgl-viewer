@@ -56,7 +56,7 @@ export function createGeometryFromInstances (g3d: G3d, instances: number[]) {
 
 /**
  * Creates a BufferGeometry from a given mesh index in the g3d
- * @param mesh mesh index in the g3d
+ * @param mesh g3d mesh index
  * @param useAlpha specify to use RGB or RGBA for colors
  */
 export function createGeometryFromMesh (
