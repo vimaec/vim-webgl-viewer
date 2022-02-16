@@ -24,7 +24,9 @@ export class Scene {
    * For instanced mesh, index refers to instance index.
    */
   getMeshFromInstance (instance: number) {
-    return this.instanceToThreeMesh[instance] ?? []
+    return this.instanceToThreeMesh.has(instance)
+      ? this.instanceToThreeMesh.get(instance)
+      : []
   }
 
   /**
