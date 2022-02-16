@@ -54,7 +54,7 @@ export class VimLoader {
         onProgress?.('processing')
         // slight hack to avoid multiple load call to share the same data.
         if (this.loaded.has(url)) data = data.slice(0)
-        const vim = Document.parseFromArrayBuffer(data)
+        const vim = Document.createFromArrayBuffer(data)
         const scene = this.loadFromVim(vim, transparency)
         onLoad?.(scene)
       },
@@ -77,7 +77,7 @@ export class VimLoader {
     transparency: TransparencyMode,
     instances?: number[]
   ) {
-    const vim = Document.parseFromArrayBuffer(data)
+    const vim = Document.createFromArrayBuffer(data)
     return this.loadFromVim(vim, transparency, instances)
   }
 

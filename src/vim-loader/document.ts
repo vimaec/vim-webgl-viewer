@@ -121,9 +121,9 @@ export class Document {
    * @param data array representation of a vim
    * @returns a Document instance
    */
-  static parseFromArrayBuffer (data: ArrayBuffer) {
+  static createFromArrayBuffer (data: ArrayBuffer) {
     const bfast = BFast.fromArrayBuffer(data)
-    return Document.parseFromBFast(bfast)
+    return Document.createFromBFast(bfast)
   }
 
   /**
@@ -131,7 +131,7 @@ export class Document {
    * @param data Bfast reprentation of a vim
    * @returns a Document instance
    */
-  static parseFromBFast (bfast: BFast): Document {
+  static createFromBFast (bfast: BFast): Document {
     if (bfast.buffers.length < 5) {
       throw new Error('VIM requires at least five BFast buffers')
     }
