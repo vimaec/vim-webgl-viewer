@@ -74,29 +74,6 @@ export class Camera {
     this.orbitalTargetDistance = this.currentOrbitalDistance
   }
 
-  lookAt (position: THREE.Vector3) {
-    this.camera.lookAt(position)
-  }
-
-  lookAtSphere (sphere: THREE.Sphere, setY: boolean = false) {
-    if (!sphere) return
-
-    if (setY) {
-      this.camera.position.setY(sphere.center.y)
-    }
-
-    const axis = this.camera.position.clone().sub(sphere.center).normalize()
-    const fovRadian = (this.camera.fov * Math.PI) / 180
-    const dist = 1.33 * sphere.radius * (1 + 2 / Math.tan(fovRadian))
-    const pos = axis.clone().multiplyScalar(dist).add(sphere.center)
-
-    this.camera.lookAt(sphere.center)
-    this.camera.position.copy(pos)
-    this.orbitalTarget = sphere.center
-    this.currentOrbitalDistance = this.orbitalTarget.clone().sub(pos).length()
-    this.orbitalTargetDistance = this.currentOrbitalDistance
-  }
-
   reset () {
     this.camera.position.set(0, 0, -5)
     this.camera.lookAt(0, 0, 1)
@@ -108,6 +85,10 @@ export class Camera {
     this.currentOrbitalDistance = 5
     this.orbitalTarget.set(0, 0, 0)
     this.orbitalTargetDistance = this.currentOrbitalDistance
+  }
+
+  lookAt (position: THREE.Vector3) {
+    this.camera.lookAt(position)
   }
 
   frameSphere (sphere?: THREE.Sphere) {
@@ -153,14 +134,18 @@ export class Camera {
     this.vimReferenceSize = settings.getCameraReferenceVimSize()
   }
 
-  fitToContent (boundingSphere: THREE.Sphere) {
-    this.sceneSizeMultiplier = boundingSphere.radius / this.vimReferenceSize
+  /**
+   * Adapts camera speed to be faster for large model and slower for small models.
+   * @param sphere bounding sphere of the renderered scene
+   */
+  adaptToContent (sphere: THREE.Sphere) {
+    this.sceneSizeMultiplier = sphere.radius / this.vimReferenceSize
     // Gizmo
     this.gizmo.applyVimSettings(this.sceneSizeMultiplier)
     this.gizmo.show(this.mouseOrbit)
   }
 
-  applyLocalImpulse (impulse: THREE.Vector3) {
+  addLocalImpulse (impulse: THREE.Vector3) {
     const localImpulse = impulse
       .clone()
       .multiplyScalar(this.getSpeedMultiplier() * this.wheelSpeed)
@@ -168,44 +153,41 @@ export class Camera {
     this.impulse.add(localImpulse)
   }
 
-  moveCameraBy (dir: THREE.Vector3 = DIRECTIONS.forward, speed: number) {
-    const vector = dir.clone()
-    if (speed) vector.multiplyScalar(speed)
-    vector.applyQuaternion(this.camera.quaternion)
+  move (vector: THREE.Vector3 = DIRECTIONS.forward, speed: number) {
+    const v = vector.clone()
+    if (speed) v.multiplyScalar(speed)
+    v.applyQuaternion(this.camera.quaternion)
 
-    this.orbitalTarget.add(vector)
+    this.orbitalTarget.add(v)
     this.gizmo.show()
     if (!this._mouseOrbit) {
-      this.camera.position.add(vector)
+      this.camera.position.add(v)
     }
   }
 
-  truckPedestalCameraBy (pt: THREE.Vector2) {
-    this.moveCameraBy(
-      new THREE.Vector3(-pt.x, pt.y, 0),
+  truckPedestal (vector: THREE.Vector2) {
+    this.move(
+      new THREE.Vector3(-vector.x, vector.y, 0),
       this.getSpeedMultiplier()
     )
   }
 
-  truckDollyCameraBy (pt: THREE.Vector2) {
-    this.moveCameraBy(
-      new THREE.Vector3(-pt.x, 0, pt.y),
+  truckDolly (vector: THREE.Vector2) {
+    this.move(
+      new THREE.Vector3(-vector.x, 0, vector.y),
       this.getSpeedMultiplier()
     )
   }
 
-  dollyCameraBy (amount: number) {
+  dolly (amount: number) {
     if (this._mouseOrbit) {
       this.currentOrbitalDistance += amount
     } else {
-      this.moveCameraBy(
-        new THREE.Vector3(0, 0, amount),
-        this.getSpeedMultiplier()
-      )
+      this.move(new THREE.Vector3(0, 0, amount), this.getSpeedMultiplier())
     }
   }
 
-  setCameraLocalVelocity (vector: THREE.Vector3) {
+  setLocalVelocity (vector: THREE.Vector3) {
     const move = vector.clone()
     move.setZ(-move.z)
     move.applyQuaternion(this.camera.quaternion)
@@ -215,9 +197,9 @@ export class Camera {
 
   /**
    * Rotates the camera around the X or Y axis or both
-   * @param delta where coordinates are in relative screen size. ie [-1, 1]
+   * @param vector where coordinates are in relative screen size. ie [-1, 1]
    */
-  rotateCameraBy (delta: THREE.Vector2) {
+  rotate (vector: THREE.Vector2) {
     if (this.isLerping()) return
     const euler = new THREE.Euler(0, 0, 0, 'YXZ')
     euler.setFromQuaternion(this.camera.quaternion)
@@ -229,8 +211,8 @@ export class Camera {
       ? Math.PI * this.orbitSpeed
       : Math.PI * this.rotateSpeed
 
-    euler.y -= delta.x * factor
-    euler.x -= delta.y * factor
+    euler.y -= vector.x * factor
+    euler.x -= vector.y * factor
     euler.z = 0
 
     // Clamp X rotation to prevent performing a loop.
@@ -248,35 +230,10 @@ export class Camera {
     }
   }
 
-  isLerping () {
-    return new Date().getTime() < this.lerpMsEndtime
-  }
-
-  startLerp (seconds: number) {
-    this.lerpMsEndtime = new Date().getTime() + seconds * 1000
-    this.lerpSecondsDuration = seconds
-  }
-
   setTarget (position: THREE.Vector3) {
     this.orbitalTarget = position
     this.orbitalTargetDistance = this.camera.position.distanceTo(position)
     this.startLerp(0.4)
-  }
-
-  getSpeedMultiplier () {
-    return (
-      Math.pow(1.25, this.speedMultiplier) *
-      this.sceneSizeMultiplier *
-      this.moveSpeed
-    )
-  }
-
-  updateOrbitalDistance (diff: number) {
-    this.orbitalTargetDistance -= diff * this.getSpeedMultiplier()
-    this.orbitalTargetDistance = Math.max(
-      this.orbitalTargetDistance,
-      this.minOrbitalDistance
-    )
   }
 
   frameUpdate (deltaTime: number) {
@@ -341,7 +298,24 @@ export class Camera {
     this.gizmo.update(this.orbitalTarget)
   }
 
-  isSignificant (vector: THREE.Vector3) {
+  private getSpeedMultiplier () {
+    return (
+      Math.pow(1.25, this.speedMultiplier) *
+      this.sceneSizeMultiplier *
+      this.moveSpeed
+    )
+  }
+
+  private isLerping () {
+    return new Date().getTime() < this.lerpMsEndtime
+  }
+
+  private startLerp (seconds: number) {
+    this.lerpMsEndtime = new Date().getTime() + seconds * 1000
+    this.lerpSecondsDuration = seconds
+  }
+
+  private isSignificant (vector: THREE.Vector3) {
     // One hundreth of standard scene size per frame
     const min = (0.01 * this.sceneSizeMultiplier) / 60
     return (

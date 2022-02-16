@@ -151,17 +151,17 @@ export class Keyboard {
       switch (event.keyCode) {
         case KEYS.KEY_ADD:
         case KEYS.KEY_OEM_PLUS:
-          this.camera.SpeedMultiplier += 1
+          this.camera.speedMultiplier += 1
           event.preventDefault()
           break
         case KEYS.KEY_SUBTRACT:
         case KEYS.KEY_OEM_MINUS:
-          this.camera.SpeedMultiplier -= 1
+          this.camera.speedMultiplier -= 1
           event.preventDefault()
           break
         case KEYS.KEY_F8:
         case KEYS.KEY_SPACE:
-          this.camera.IsMouseOrbit = !this.camera.IsMouseOrbit
+          this.camera.mouseOrbit = !this.camera.mouseOrbit
           event.preventDefault()
           break
         case KEYS.KEY_HOME:

@@ -170,7 +170,7 @@ export class Viewer {
 
     this.renderer.addScene(vim.scene)
     this.environment.fitToContent(this.renderer.getBoundingBox())
-    this.camera.fitToContent(this.renderer.getBoundingSphere())
+    this.camera.adaptToContent(this.renderer.getBoundingSphere())
   }
 
   /**
@@ -240,11 +240,11 @@ export class Viewer {
   }
 
   /**
-   * Move the camera to frame given object
+   * Look at given object
    */
   lookAt (object: Object) {
-    const sphere = object.getBoundingSphere()
-    this.camera.lookAtSphere(sphere, true)
+    const center = object.getCenter()
+    this.camera.lookAtPosition(center)
   }
 
   /**
@@ -252,7 +252,7 @@ export class Viewer {
    */
   lookAtSelection () {
     if (this.selection.hasSelection()) {
-      this.camera.lookAtSphere(this.selection.boundingSphere!)
+      this.camera.frameSphere(this.selection.boundingSphere!)
     } else {
       this.frameContent()
     }
