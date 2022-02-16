@@ -22,7 +22,7 @@ export class Document {
   entities: Map<string, EntityTable>
   strings: string[]
 
-  instanceToElement: number[]
+  private instanceToElement: number[]
   constructor (
     header: string,
     assets: BFast,
