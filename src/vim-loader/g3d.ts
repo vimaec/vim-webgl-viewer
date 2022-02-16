@@ -211,7 +211,10 @@ export class G3d {
   MATRIX_SIZE = 16
   COLOR_SIZE = 4
   POSITION_SIZE = 3
-  defaultColor = new Float32Array([1, 1, 1, 1])
+  /**
+   * Opaque white
+   */
+  DEFAULT_COLOR = new Float32Array([1, 1, 1, 1])
 
   constructor (g3d: AbstractG3d) {
     this.rawG3d = g3d
@@ -411,7 +414,7 @@ export class G3d {
    * @param material g3d material index
    */
   getMaterialColor (material: number): Float32Array {
-    if (material < 0) return this.defaultColor
+    if (material < 0) return this.DEFAULT_COLOR
     return this.materialColors.subarray(
       material * this.COLOR_SIZE,
       (material + 1) * this.COLOR_SIZE
@@ -421,7 +424,7 @@ export class G3d {
   /**
    * Parses a new instance of G3d from a bfast reprensatation of the format.
    */
-  static fromBfast (bfast: BFast): G3d {
+  static createFromBfast (bfast: BFast): G3d {
     const base = AbstractG3d.fromBfast(bfast)
     return new G3d(base)
   }
