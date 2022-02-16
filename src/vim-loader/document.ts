@@ -9,9 +9,9 @@ import { G3d } from './g3d'
 export type EntityTable = Map<string, ArrayLike<number>>
 
 export class Document {
-  static tableElement = 'Vim.Element'
-  static tableElementLegacy = 'Rvt.Element'
-  static tableNode = 'Vim.Node'
+  private static tableElement = 'Vim.Element'
+  private static tableElementLegacy = 'Rvt.Element'
+  private static tableNode = 'Vim.Node'
 
   header: string
   assets: BFast
@@ -106,12 +106,21 @@ export class Document {
 
   getNodeTable = () => this.entities.get(Document.tableNode)
 
+  /**
+   * Creates a new Document instance from an array buffer of a vim file
+   * @param data array representation of a vim
+   * @returns a Document instance
+   */
   static parseFromArrayBuffer (data: ArrayBuffer) {
     const bfast = BFast.fromArrayBuffer(data)
     return Document.parseFromBFast(bfast)
   }
 
-  // Given a BFAST container (header/names/buffers) constructs a VIM data structure
+  /**
+   * Creates a new Document instance from a bfast following the vim format
+   * @param data Bfast reprentation of a vim
+   * @returns a Document instance
+   */
   static parseFromBFast (bfast: BFast): Document {
     if (bfast.buffers.length < 5) {
       throw new Error('VIM requires at least five BFast buffers')
@@ -139,7 +148,7 @@ export class Document {
     return new Document(header, assets, g3d, entities, strings)
   }
 
-  static parseEntityTables (bfast: BFast): Map<string, EntityTable> {
+  private static parseEntityTables (bfast: BFast): Map<string, EntityTable> {
     const result = new Map<string, any>()
     for (let i = 0; i < bfast.buffers.length; ++i) {
       const current = bfast.names[i]
@@ -151,7 +160,7 @@ export class Document {
     return result
   }
 
-  static parseEntityTable (bfast: BFast): EntityTable {
+  private static parseEntityTable (bfast: BFast): EntityTable {
     const result = new Map<string, any>()
     for (let i = 0; i < bfast.buffers.length; ++i) {
       const columnName = bfast.names[i]

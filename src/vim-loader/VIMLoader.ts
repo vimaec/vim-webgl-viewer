@@ -20,9 +20,13 @@ export class VimLoader {
     THREE.Cache.enabled = true
   }
 
-  count = 0
-  // Loads the VIM from a URL
-  // Download should be handled without three for Parser and Loader to be divided properly
+  /**
+   * Load a vim from a remote or local url
+   * @param transparency defines how and if to render objects according to transparency.
+   * @param onLoad Callback on success, returns a Vim instance.
+   * @param onProgress on progress callback with download info or 'processing'.
+   * @param onError error callback with error info.
+   */
   loadFromUrl (
     url: string,
     transparency: TransparencyMode = 'all',
@@ -47,6 +51,7 @@ export class VimLoader {
           return
         }
         onProgress?.('processing')
+        // slight hack to avoid multiple load call to share the same data.
         if (this.loaded.has(url)) data = data.slice(0)
         const vim = Document.parseFromArrayBuffer(data)
         const scene = this.loadFromVim(vim, transparency)
@@ -59,6 +64,13 @@ export class VimLoader {
     )
   }
 
+  /**
+   * Loads a vim from an array buffer of a vim file.
+   * Useful if you download the file using a custom http request.
+   * @param transparency defines how and if to render objects according to transparency.
+   * @param instances defines which g3d instances to load. All loaded if none provided.
+   * @returns a vim instance
+   */
   loadFromArrayBuffer (
     data: ArrayBuffer,
     transparency: TransparencyMode,
@@ -68,6 +80,13 @@ export class VimLoader {
     return this.loadFromVim(vim, transparency, instances)
   }
 
+  /**
+   * Reloads an existing vim
+   * Useful to load a different subset of the same vim.
+   * @param transparency defines how and if to render objects according to transparency.
+   * @param instances defines which g3d instances to load. All loaded if none provided.
+   * @returns a vim instance
+   */
   loadFromVim (
     vim: Document,
     transparency: TransparencyMode,

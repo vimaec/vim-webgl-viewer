@@ -17,21 +17,21 @@ export class Vim {
   document: Document
   scene: Scene
   settings: VimSettings
-  index: number
-  elementIndexToInstanceIndices: Map<number, number[]>
-  elementIdToElementIndex: Map<number, number>
-  elementToObjects: Map<number, Object> = new Map<number, Object>()
+  private _index: number
+  private elementToInstance: Map<number, number[]>
+  private elementIdToElement: Map<number, number>
+  private elementToObject: Map<number, Object> = new Map<number, Object>()
 
   constructor (vim: Document, scene: Scene) {
     this.document = vim
     this.scene = scene
-    this.elementIndexToInstanceIndices = this.mapElementIndexToInstanceIndices()
-    this.elementIdToElementIndex = this.mapElementIdToIndex()
+    this.elementToInstance = this.mapElementIndexToInstanceIndices()
+    this.elementIdToElement = this.mapElementIdToIndex()
   }
 
   private mapElementIndexToInstanceIndices (): Map<number, number[]> {
     const map = new Map<number, number[]>()
-    const instanceElements = this.document.getInstanceElementIndices()
+    const instanceElements = this.document.getInstanceToElementMap()
     const instanceCount = instanceElements.length
 
     for (let instance = 0; instance < instanceCount; instance++) {
@@ -86,8 +86,12 @@ export class Vim {
     this.scene.applyMatrix4(this.settings.getMatrix())
   }
 
-  setIndex (index: number) {
-    this.index = index
+  get index () {
+    return this._index
+  }
+
+  set index (index: number) {
+    this._index = index
     this.scene.setIndex(index)
   }
 
@@ -106,21 +110,21 @@ export class Vim {
   }
 
   getObjectFromElementId (id: number) {
-    const element = this.elementIdToElementIndex.get(id)
+    const element = this.elementIdToElement.get(id)
     return this.getObjectFromElement(element)
   }
 
   getObjectFromElement (index: number) {
-    if (this.elementToObjects.has(index)) {
-      return this.elementToObjects.get(index)
+    if (this.elementToObject.has(index)) {
+      return this.elementToObject.get(index)
     }
 
-    const instances = this.elementIndexToInstanceIndices.get(index)
+    const instances = this.elementToInstance.get(index)
     const meshes = this.getMeshesFromInstances(instances)
     if (!meshes) return
 
     const result = new Object(this, index, instances, meshes)
-    this.elementToObjects.set(index, result)
+    this.elementToObject.set(index, result)
     return result
   }
 

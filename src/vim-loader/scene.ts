@@ -32,6 +32,9 @@ export class Scene {
     return instances[index]
   }
 
+  /**
+   * Applies given transform matrix to all THREE.Meshes and bounding box.
+   */
   applyMatrix4 (matrix: THREE.Matrix4) {
     for (let m = 0; m < this.meshes.length; m++) {
       this.meshes[m].matrixAutoUpdate = false
@@ -40,6 +43,9 @@ export class Scene {
     this.boundingBox.applyMatrix4(matrix)
   }
 
+  /**
+   * Sets vim index for this scene and all its THREE.Meshes.
+   */
   setIndex (index: number) {
     for (let m = 0; m < this.meshes.length; m++) {
       this.meshes[m].userData.index = index
@@ -197,11 +203,7 @@ export function createSceneFromG3d (
   const scene = new Scene()
 
   // Add shared geometry
-  const shared = createSceneFromInstanciabledMeshes(
-    g3d,
-    transparency,
-    instances
-  )
+  const shared = createSceneFromInstanciableMeshes(g3d, transparency, instances)
   scene.merge(shared)
 
   // Add opaque geometry
@@ -232,7 +234,7 @@ export function createSceneFromG3d (
  * @param instances g3d instance indices to be included in the Scene. All if undefined.
  * @param builder optional builder to reuse the same materials
  */
-export function createSceneFromInstanciabledMeshes (
+export function createSceneFromInstanciableMeshes (
   g3d: G3d,
   transparency: vimGeometry.TransparencyMode,
   instances: number[] | undefined = undefined,

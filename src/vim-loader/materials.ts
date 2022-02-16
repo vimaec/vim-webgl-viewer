@@ -19,9 +19,9 @@ export class MaterialLibrary {
     transparent?: THREE.Material,
     wireframe?: THREE.Material
   ) {
-    this.opaque = opaque ?? createDefaultOpaqueMaterial()
-    this.transparent = transparent ?? createDefaultTransparentMaterial()
-    this.wireframe = wireframe ?? createDefaultWireframeMaterial()
+    this.opaque = opaque ?? createOpaqueMaterial()
+    this.transparent = transparent ?? createTransparentMaterial()
+    this.wireframe = wireframe ?? createWireframeMaterial()
   }
 }
 
@@ -43,7 +43,7 @@ export function createBaseMaterial () {
  * Creates a new instance of the default opaque material used by the vim-loader
  * @returns a THREE.MeshPhongMaterial
  */
-export function createDefaultOpaqueMaterial () {
+export function createOpaqueMaterial () {
   const mat = createBaseMaterial()
   patchMaterial(mat)
   return mat
@@ -53,7 +53,7 @@ export function createDefaultOpaqueMaterial () {
  * Creates a new instance of the default loader transparent material
  * @returns a THREE.MeshPhongMaterial
  */
-export function createDefaultTransparentMaterial () {
+export function createTransparentMaterial () {
   const mat = createBaseMaterial()
   mat.transparent = true
   patchMaterial(mat)
@@ -67,15 +67,20 @@ export function createDefaultTransparentMaterial () {
 export function patchMaterial (material: THREE.Material) {
   material.defines = { USE_UV: true }
   material.onBeforeCompile = (shader) => {
-    patchMixedShader(shader)
+    patchShader(shader)
     material.userData.shader = shader
   }
 }
 
-export function patchMixedShader (shader: THREE.Shader) {
+/**
+ * Patches phong shader to be able to control when lighting should be applied to resulting color.
+ * Instanced meshes ignore light when InstanceColor is defined
+ * Instanced meshes ignore vertex color when instance attribute useVertexColor is 0
+ * Regular meshes ignore light in favor of vertex color when uv.y = 0
+ */
+export function patchShader (shader: THREE.Shader) {
   shader.vertexShader = shader.vertexShader
-  // Add useVertexColor when instanced colors are used.
-
+    // Add useVertexColor when instanced colors are used.
     .replace(
       '#include <color_pars_vertex>',
       `
@@ -127,7 +132,7 @@ export function patchMixedShader (shader: THREE.Shader) {
  * Creates a new instance of the default wireframe material
  * @returns a THREE.LineBasicMaterial
  */
-export function createDefaultWireframeMaterial (): THREE.Material {
+export function createWireframeMaterial (): THREE.Material {
   const material = new THREE.LineBasicMaterial({
     depthTest: false,
     opacity: 0.5,
@@ -136,3 +141,7 @@ export function createDefaultWireframeMaterial (): THREE.Material {
   })
   return material
 }
+
+let materials: MaterialLibrary
+export const getDefaultMaterialLibrary = () =>
+  materials ?? new MaterialLibrary()

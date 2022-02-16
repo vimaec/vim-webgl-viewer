@@ -6,7 +6,7 @@
 import * as THREE from 'three'
 import { G3d } from './g3d'
 import * as vimGeometry from './geometry'
-import { MaterialLibrary } from './materials'
+import { MaterialLibrary, getDefaultMaterialLibrary } from './materials'
 
 /**
  * Builds meshes from the g3d and BufferGeometry
@@ -16,7 +16,7 @@ export class MeshBuilder {
   materials: MaterialLibrary
 
   constructor (materials: MaterialLibrary = undefined) {
-    this.materials = materials ?? new MaterialLibrary()
+    this.materials = materials ?? getDefaultMaterialLibrary()
   }
 
   /**
@@ -52,7 +52,7 @@ export class MeshBuilder {
       const useAlpha =
         vimGeometry.transparencyRequiresAlpha(transparency) &&
         g3d.meshTransparent[mesh]
-      const geometry = vimGeometry.createFromMesh(g3d, mesh, useAlpha)
+      const geometry = vimGeometry.createGeometryFromMesh(g3d, mesh, useAlpha)
       const resultMesh = this.createInstancedMesh(
         geometry,
         g3d,
@@ -121,17 +121,15 @@ export class MeshBuilder {
     return mesh
   }
 
+  /**
+   * Create a wireframe mesh from g3d instance indices
+   * @param instances g3d instance indices to be included in the merged mesh. All mergeable meshes if undefined.
+   * @returns a THREE.Mesh
+   */
   createWireframe (g3d: G3d, instances: number[]) {
-    const geometry = vimGeometry.createFromInstances(g3d, instances)
-
+    const geometry = vimGeometry.createGeometryFromInstances(g3d, instances)
     const wireframe = new THREE.WireframeGeometry(geometry)
-    const material = new THREE.LineBasicMaterial({
-      depthTest: false,
-      opacity: 0.5,
-      color: new THREE.Color(0x0000ff),
-      transparent: true
-    })
-    return new THREE.LineSegments(wireframe, material)
+    return new THREE.LineSegments(wireframe, this.materials.wireframe)
   }
 }
 

@@ -29,6 +29,9 @@ export class Object {
     this.meshes = meshes
   }
 
+  /**
+   * Returns Bim data for the element associated with this object.
+   */
   getBimElement () {
     return this.vim.document.getElement(this.element)
   }
@@ -39,7 +42,7 @@ export class Object {
   getBoundingBox () {
     if (this.boundingBox) return this.boundingBox
 
-    const geometry = vimGeometry.createFromInstances(
+    const geometry = vimGeometry.createGeometryFromInstances(
       this.vim.document.g3d,
       this.instances
     )
@@ -51,6 +54,10 @@ export class Object {
     return this.boundingBox
   }
 
+  /**
+   * Returns the center position of this object
+   * @param target Vector3 where to copy data. A new instance is created if none provided.
+   */
   public getCenter (target: THREE.Vector3 = new THREE.Vector3()) {
     return this.getBoundingBox().getCenter(target)
   }
@@ -90,9 +97,10 @@ export class Object {
   }
 
   /**
+   * NOT READY YET
    * Toggles visibility of this object.
    * @param value true to show object, false to hide object.
-   */
+
   show (value: boolean) {
     for (let m = 0; m < this.meshes.length; m++) {
       const [mesh, index] = this.meshes[m]
@@ -104,6 +112,7 @@ export class Object {
       }
     }
   }
+  */
 
   /**
    * @param index index of the merged mesh instance

@@ -209,9 +209,9 @@ export class G3d {
 
   rawG3d: AbstractG3d
 
-  matrixArity = 16
-  colorArity = 4
-  positionArity = 3
+  MATRIX_SIZE = 16
+  COLOR_SIZE = 4
+  POSITION_SIZE = 3
   defaultColor = new Float32Array([1, 1, 1, 1])
 
   constructor (g3d: AbstractG3d) {
@@ -249,6 +249,9 @@ export class G3d {
     this.meshTransparent = this.computeMeshIsTransparent()
   }
 
+  /**
+   * Computes the index of the first vertex of each mesh
+   */
   private computeMeshVertexOffsets (): Int32Array {
     const result = new Int32Array(this.getMeshCount())
     for (let m = 0; m < result.length; m++) {
@@ -263,6 +266,9 @@ export class G3d {
     return result
   }
 
+  /**
+   * Rebase indices to be relative to its own mesh instead of to the whole g3d
+   */
   private rebaseIndices () {
     const count = this.getMeshCount()
     for (let m = 0; m < count; m++) {
@@ -275,6 +281,9 @@ export class G3d {
     }
   }
 
+  /**
+   * Computes all instances pointing to each mesh.
+   */
   private computeMeshInstances = (): number[][] => {
     const result: number[][] = []
 
@@ -289,6 +298,9 @@ export class G3d {
     return result
   }
 
+  /**
+   * Computes an array where true if any of the materials used by a mesh has transparency.
+   */
   private computeMeshIsTransparent (): Array<boolean> {
     const result = new Array<boolean>(this.getMeshCount())
     for (let m = 0; m < result.length; m++) {
@@ -298,7 +310,7 @@ export class G3d {
       for (let s = subStart; s < subEnd; s++) {
         const material = this.submeshMaterial[s]
         const alpha =
-          this.materialColors[material * this.colorArity + this.colorArity - 1]
+          this.materialColors[material * this.COLOR_SIZE + this.COLOR_SIZE - 1]
         result[m] = result[m] || alpha < 1
       }
     }
@@ -306,7 +318,7 @@ export class G3d {
   }
 
   // ------------- All -----------------
-  getVertexCount = () => this.positions.length / this.positionArity
+  getVertexCount = () => this.positions.length / this.POSITION_SIZE
 
   // ------------- Meshes -----------------
   getMeshCount = () => this.meshSubmeshes.length
@@ -369,36 +381,47 @@ export class G3d {
     return this.getSubmeshIndexEnd(submesh) - this.getSubmeshIndexStart(submesh)
   }
 
+  /**
+   * Returns color of given submesh as a 4-number array (RGBA)
+   * @param submesh g3d submesh index
+   */
   getSubmeshColor (submesh: number): Float32Array {
-    return this.getMaterialColor(this.submeshMaterial[submesh])
-  }
-
-  getSubmeshAlpha (submesh: number): Float32Array {
     return this.getMaterialColor(this.submeshMaterial[submesh])
   }
 
   // ------------- Instances -----------------
   getInstanceCount = () => this.instanceMeshes.length
 
-  getInstanceTransform (instance: number): Float32Array {
+  /**
+   * Returns an 16 number array representation of the matrix for given instance
+   * @param instance g3d instance index
+   */
+  getInstanceMatrix (instance: number): Float32Array {
     return this.instanceTransforms.subarray(
-      instance * this.matrixArity,
-      (instance + 1) * this.matrixArity
+      instance * this.MATRIX_SIZE,
+      (instance + 1) * this.MATRIX_SIZE
     )
   }
 
   // ------------- Material -----------------
 
-  getMaterialCount = () => this.materialColors.length / this.colorArity
+  getMaterialCount = () => this.materialColors.length / this.COLOR_SIZE
 
+  /**
+   * Returns color of given material as a 4-number array (RGBA)
+   * @param material g3d material index
+   */
   getMaterialColor (material: number): Float32Array {
     if (material < 0) return this.defaultColor
     return this.materialColors.subarray(
-      material * this.colorArity,
-      (material + 1) * this.colorArity
+      material * this.COLOR_SIZE,
+      (material + 1) * this.COLOR_SIZE
     )
   }
 
+  /**
+   * Parses a new instance of G3d from a bfast reprensatation of the format.
+   */
   static fromBfast (bfast: BFast): G3d {
     const base = AbstractG3d.fromBfast(bfast)
     return new G3d(base)
@@ -420,9 +443,9 @@ export class G3d {
     isPresent(this.materialColors, 'materialColors')
 
     // Basic
-    if (this.positions.length % this.positionArity !== 0) {
+    if (this.positions.length % this.POSITION_SIZE !== 0) {
       throw new Error(
-        'Invalid position buffer, must be divisible by ' + this.positionArity
+        'Invalid position buffer, must be divisible by ' + this.POSITION_SIZE
       )
     }
 
@@ -439,15 +462,15 @@ export class G3d {
     // Instances
     if (
       this.instanceMeshes.length !==
-      this.instanceTransforms.length / this.matrixArity
+      this.instanceTransforms.length / this.MATRIX_SIZE
     ) {
       throw new Error('Instance buffers mismatched')
     }
 
-    if (this.instanceTransforms.length % this.matrixArity !== 0) {
+    if (this.instanceTransforms.length % this.MATRIX_SIZE !== 0) {
       throw new Error(
         'Invalid InstanceTransform buffer, must respect arity ' +
-          this.matrixArity
+          this.MATRIX_SIZE
       )
     }
 
@@ -506,9 +529,9 @@ export class G3d {
     }
 
     // Materials
-    if (this.materialColors.length % this.colorArity !== 0) {
+    if (this.materialColors.length % this.COLOR_SIZE !== 0) {
       throw new Error(
-        'Invalid material color buffer, must be divisible by ' + this.colorArity
+        'Invalid material color buffer, must be divisible by ' + this.COLOR_SIZE
       )
     }
   }

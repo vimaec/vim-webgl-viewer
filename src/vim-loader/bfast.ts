@@ -5,6 +5,9 @@
  * @module vim-loader
  */
 
+/**
+ * Bfast header, mainly for validation.
+ */
 export class BFastHeader {
   magic: number
   dataStart: number
@@ -66,6 +69,11 @@ export class BFast {
     this.buffers = buffers
   }
 
+  /**
+   * Returns a newly constructed bfast instance from parsing the data of arrayBuffer
+   * @param bytes an array of bytes from which to construct the bfast
+   * @returns a bfast instance
+   */
   static fromArray (bytes: Uint8Array): BFast {
     return this.fromArrayBuffer(
       bytes.buffer,

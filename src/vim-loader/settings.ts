@@ -35,6 +35,9 @@ export type VimOptions = {
    */
   elementIds?: number[]
 
+  /**
+   * Defines how to draw or not to draw objects according to their transparency
+   */
   transparency?: TransparencyMode
 }
 

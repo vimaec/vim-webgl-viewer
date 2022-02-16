@@ -101,7 +101,7 @@ export class Viewer {
     for (let i = 0; i <= this.vims.length; i++) {
       if (this.vims[i] === undefined) {
         this.vims[i] = vim
-        vim.setIndex(i)
+        vim.index = i
         return
       }
     }

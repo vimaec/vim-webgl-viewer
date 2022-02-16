@@ -49,7 +49,7 @@ export function transparencyMatches (
  * @param instances indices of the instances from the g3d to merge
  * @returns a BufferGeometry
  */
-export function createFromInstances (g3d: G3d, instances: number[]) {
+export function createGeometryFromInstances (g3d: G3d, instances: number[]) {
   const merger = MeshMerger.MergeInstances(g3d, instances, 'all')
   return merger.toBufferGeometry()
 }
@@ -59,14 +59,14 @@ export function createFromInstances (g3d: G3d, instances: number[]) {
  * @param mesh mesh index in the g3d
  * @param useAlpha specify to use RGB or RGBA for colors
  */
-export function createFromMesh (
+export function createGeometryFromMesh (
   g3d: G3d,
   mesh: number,
   useAlpha: boolean
 ): THREE.BufferGeometry {
   const colors = createVertexColors(g3d, mesh, useAlpha)
 
-  return createBufferGeometryFromArrays(
+  return createGeometryFromArrays(
     g3d.positions.subarray(
       g3d.getMeshVertexStart(mesh) * 3,
       g3d.getMeshVertexEnd(mesh) * 3
@@ -139,7 +139,7 @@ export class MeshMerger {
 
     // allocate all memory required for merge
     this.indices = new Uint32Array(indexCount)
-    this.vertices = new Float32Array(vertexCount * this.g3d.positionArity)
+    this.vertices = new Float32Array(vertexCount * this.g3d.POSITION_SIZE)
     this.colors = new Float32Array(vertexCount * this.colorSize)
     this.uvs = new Float32Array(vertexCount * 2)
     this.submeshes = new Array(this.instances.length)
@@ -268,11 +268,11 @@ export class MeshMerger {
       const vertexEnd = this.g3d.getMeshVertexEnd(mesh)
 
       for (let p = vertexStart; p < vertexEnd; p++) {
-        vector.fromArray(this.g3d.positions, p * this.g3d.positionArity)
+        vector.fromArray(this.g3d.positions, p * this.g3d.POSITION_SIZE)
         vector.applyMatrix4(matrix)
         vector.toArray(this.vertices, vertex)
 
-        vertex += this.g3d.positionArity
+        vertex += this.g3d.POSITION_SIZE
 
         // Fill uvs with instances at the same time as vertices. Used for picking
         this.uvs[uv++] = instance
@@ -284,10 +284,13 @@ export class MeshMerger {
     }
   }
 
+  /**
+   * Runs the merge process and return the resulting BufferGeometry
+   */
   toBufferGeometry () {
     this.merge()
 
-    const geometry = createBufferGeometryFromArrays(
+    const geometry = createGeometryFromArrays(
       this.vertices,
       this.indices,
       this.colors,
@@ -307,7 +310,7 @@ export class MeshMerger {
  * @param uvs uv data with 2 number per vertex (XY)
  * @returns a BufferGeometry
  */
-export function createBufferGeometryFromArrays (
+export function createGeometryFromArrays (
   vertices: Float32Array,
   indices: Uint32Array,
   vertexColors: Float32Array | undefined = undefined,
@@ -336,12 +339,17 @@ export function createBufferGeometryFromArrays (
   return geometry
 }
 
+/**
+ * Returns a THREE.Matrix4 from the g3d for given instance
+ * @param instance g3d instance index
+ * @param target matrix where the data will be copied, a new matrix will be created if none provided.
+ */
 export function getInstanceMatrix (
   g3d: G3d,
-  index: number,
+  instance: number,
   target: THREE.Matrix4 = new THREE.Matrix4()
 ): THREE.Matrix4 {
-  const matrixAsArray = g3d.getInstanceTransform(index)
+  const matrixAsArray = g3d.getInstanceMatrix(instance)
   target.fromArray(matrixAsArray)
   return target
 }
