@@ -22,6 +22,7 @@ export class Document {
   entities: Map<string, EntityTable>
   strings: string[]
 
+  instanceToElement: number[]
   constructor (
     header: string,
     assets: BFast,
@@ -69,9 +70,11 @@ export class Document {
    * @returns element index or -1 if not found
    */
   getElementFromInstance (instance: number): number {
-    const instanceElements = this.getInstanceToElementMap()
-    if (!instanceElements) return -1
-    return instanceElements[instance]
+    return this.getInstanceToElementMap()[instance]
+  }
+
+  getInstanceCount () {
+    return this.getInstanceToElementMap().length
   }
 
   getStringColumn = (table: any, colNameNoPrefix: string): number[] =>
@@ -96,22 +99,22 @@ export class Document {
   getDoubleColumn = (table: any, colNameNoPrefix: string) =>
     this.getDataColumn(table, 'double:', colNameNoPrefix)
 
-  getInstanceToElementMap (): number[] {
-    const table = this.getNodeTable()
-    if (!table) return
-    const result =
+  private getInstanceToElementMap (): number[] {
+    if (this.instanceToElement) return this.instanceToElement
+    const table = this.getInstanceTable()
+    this.instanceToElement =
       this.getIndexColumn(table, Document.tableElement, 'Element') ??
       // Backwards compatible call with vim0.9
       table?.get(Document.tableElementLegacy)
 
-    return result
+    return this.instanceToElement
   }
 
   getElementTable = () =>
     this.entities?.get(Document.tableElement) ??
     this.entities?.get(Document.tableElementLegacy)
 
-  getNodeTable = () => this.entities.get(Document.tableNode)
+  getInstanceTable = () => this.entities.get(Document.tableNode)
 
   /**
    * Creates a new Document instance from an array buffer of a vim file

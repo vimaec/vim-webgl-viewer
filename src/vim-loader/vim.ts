@@ -30,11 +30,10 @@ export class Vim {
 
   private mapElementToInstance (): Map<number, number[]> {
     const map = new Map<number, number[]>()
-    const instanceElements = this.document.getInstanceToElementMap()
-    const instanceCount = instanceElements.length
+    const instanceCount = this.document.getInstanceCount()
 
     for (let instance = 0; instance < instanceCount; instance++) {
-      const element = instanceElements[instance]
+      const element = this.document.getElementFromInstance(instance)
       if (element === undefined) continue
 
       const instances = map.get(element)
