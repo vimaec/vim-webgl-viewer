@@ -104,12 +104,12 @@ export const KEYS = {
  */
 export class Keyboard {
   // Settings
-  ShiftMultiplier: number = 3.0
+  private SHIFT_MULTIPLIER: number = 3.0
 
   // Dependencies
-  camera: Camera
-  viewer: Viewer
-  gizmo: CameraGizmo
+  private camera: Camera
+  private viewer: Viewer
+  private gizmo: CameraGizmo
 
   // State
   isUpPressed: boolean
@@ -161,7 +161,7 @@ export class Keyboard {
           break
         case KEYS.KEY_F8:
         case KEYS.KEY_SPACE:
-          this.camera.orbit = !this.camera.orbit
+          this.camera.orbitMode = !this.camera.orbitMode
           event.preventDefault()
           break
         case KEYS.KEY_HOME:
@@ -230,13 +230,13 @@ export class Keyboard {
     }
   }
 
-  applyMove = () => {
+  private applyMove = () => {
     const move = new THREE.Vector3(
       (this.isRightPressed ? 1 : 0) - (this.isLeftPressed ? 1 : 0),
       (this.isEPressed ? 1 : 0) - (this.isQPressed ? 1 : 0),
       (this.isUpPressed ? 1 : 0) - (this.isDownPressed ? 1 : 0)
     )
-    const speed = this.isShiftPressed ? this.ShiftMultiplier : 1
+    const speed = this.isShiftPressed ? this.SHIFT_MULTIPLIER : 1
     move.multiplyScalar(speed)
     this.camera.setLocalVelocity(move)
   }

@@ -59,7 +59,7 @@ export class Camera {
   constructor (renderer: Renderer, settings: ViewerSettings) {
     this.gizmo = new CameraGizmo(this, renderer)
     this.camera = renderer.camera
-    this.applyViewerSettings(settings)
+    this.applySettings(settings)
 
     this.inputVelocity = new THREE.Vector3(0, 0, 0)
     this.velocity = new THREE.Vector3(0, 0, 0)
@@ -111,7 +111,7 @@ export class Camera {
     this.orbitalTargetDistance = this.currentOrbitalDistance
   }
 
-  applyViewerSettings (settings: ViewerSettings) {
+  applySettings (settings: ViewerSettings) {
     // Mode
     this.orbitMode = settings.getCameraIsOrbit()
 
@@ -128,7 +128,7 @@ export class Camera {
     this.orbitSpeed = settings.getCameraOrbitSpeed()
 
     // Gizmo
-    this.gizmo.applyViewerSettings(settings)
+    this.gizmo.applySettings(settings)
 
     // Values
     this.vimReferenceSize = settings.getCameraReferenceVimSize()
@@ -141,7 +141,7 @@ export class Camera {
   adaptToContent (sphere: THREE.Sphere) {
     this.sceneSizeMultiplier = sphere.radius / this.vimReferenceSize
     // Gizmo
-    this.gizmo.applyVimSettings(this.sceneSizeMultiplier)
+    this.gizmo.adaptToContent(this.sceneSizeMultiplier)
     this.gizmo.show(this.orbitMode)
   }
 
@@ -295,7 +295,7 @@ export class Camera {
       }
     }
 
-    this.gizmo.update(this.orbitalTarget)
+    this.gizmo.setPosition(this.orbitalTarget)
   }
 
   private getSpeedMultiplier () {

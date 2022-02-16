@@ -10,8 +10,8 @@ import { Renderer } from './renderer'
 /**
  * Manages user touch inputs.
  */
-export class InputTouch {
-  TapDurationMs: number = 500
+export class Touch {
+  TAP_DURATION_MS: number = 500
 
   // Dependencies
   private camera: Camera
@@ -38,7 +38,7 @@ export class InputTouch {
         undefined
   }
 
-  onTap = (position: THREE.Vector2) => {
+  private onTap = (position: THREE.Vector2) => {
     this.mouse.onMouseClick(position, false)
   }
 
@@ -124,7 +124,7 @@ export class InputTouch {
   onTouchEnd = (_: any) => {
     if (this.isSingleTouch()) {
       const touchDurationMs = new Date().getTime() - this.touchStartTime!
-      if (touchDurationMs < this.TapDurationMs) {
+      if (touchDurationMs < this.TAP_DURATION_MS) {
         this.onTap(this.touchStart!)
       }
     }
@@ -140,11 +140,11 @@ export class InputTouch {
     )
   }
 
-  touchToVector (touch: any) {
+  private touchToVector (touch: any) {
     return new THREE.Vector2(touch.pageX, touch.pageY)
   }
 
-  average (p1: THREE.Vector2, p2: THREE.Vector2): THREE.Vector2 {
+  private average (p1: THREE.Vector2, p2: THREE.Vector2): THREE.Vector2 {
     return p1.clone().lerp(p2, 0.5)
   }
 }

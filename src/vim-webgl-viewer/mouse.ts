@@ -12,15 +12,15 @@ import { Keyboard } from './keyboard'
  */
 export class Mouse {
   // Dependencies
-  viewer: Viewer
-  hitTester: HitTester
-  inputKeyboard: Keyboard
+  private viewer: Viewer
+  private hitTester: HitTester
+  private inputKeyboard: Keyboard
 
-  get camera () {
+  private get camera () {
     return this.viewer.camera
   }
 
-  get renderer () {
+  private get renderer () {
     return this.viewer.renderer
   }
 
@@ -83,7 +83,7 @@ export class Mouse {
 
     if (this.inputKeyboard.isCtrlPressed) {
       this.camera.speedMultiplier -= scrollValue
-    } else if (this.camera.orbit) {
+    } else if (this.camera.orbitMode) {
       const impulse = new THREE.Vector3(0, 0, scrollValue)
       this.camera.addLocalImpulse(impulse)
       // this.camera.updateOrbitalDistance(-scrollValue)
@@ -116,7 +116,8 @@ export class Mouse {
   }
 
   onMouseClick = (position: THREE.Vector2, doubleClick: boolean) => {
-    const result = this.hitTester.onMouseClick(position, doubleClick)
+    const result = this.hitTester.screenRaycast(position)
+    result.doubleClick = doubleClick
     this.viewer.onMouseClick(result)
   }
 }

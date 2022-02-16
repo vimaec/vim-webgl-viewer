@@ -14,23 +14,23 @@ import { DEG2RAD } from 'three/src/math/MathUtils'
  */
 export class CameraGizmo {
   // Dependencies
-  camera: Camera
-  renderer: Renderer
+  private camera: Camera
+  private renderer: Renderer
 
   // Settings
-  scale: number
-  fov: number
+  private scale: number
+  private fov: number
 
   // Resources
-  box: THREE.BufferGeometry
-  wireframe: THREE.BufferGeometry
-  material: THREE.Material
-  materialAlways: THREE.Material
-  gizmos: THREE.Group
+  private box: THREE.BufferGeometry
+  private wireframe: THREE.BufferGeometry
+  private material: THREE.Material
+  private materialAlways: THREE.Material
+  private gizmos: THREE.Group
 
   // State
-  timeout: ReturnType<typeof setTimeout>
-  active: boolean
+  private timeout: ReturnType<typeof setTimeout>
+  private active: boolean
 
   constructor (camera: Camera, renderer: Renderer) {
     this.camera = camera
@@ -52,16 +52,16 @@ export class CameraGizmo {
     }
   }
 
-  update (position: THREE.Vector3) {
+  setPosition (position: THREE.Vector3) {
     this.gizmos?.position.copy(position)
   }
 
-  applyViewerSettings (settings: ViewerSettings) {
+  applySettings (settings: ViewerSettings) {
     this.active = settings.getCameraShowGizmo()
     this.fov = settings.getCameraFov()
   }
 
-  applyVimSettings (factor: number) {
+  adaptToContent (factor: number) {
     this.setScale((Math.tan((DEG2RAD * this.fov) / 2) * factor) / 10)
   }
 
@@ -70,7 +70,7 @@ export class CameraGizmo {
     this.scale = scale
   }
 
-  createGizmo () {
+  private createGizmo () {
     this.box = new SphereGeometry(1)
     this.wireframe = new THREE.WireframeGeometry(this.box)
 

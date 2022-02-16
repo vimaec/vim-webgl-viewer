@@ -169,7 +169,7 @@ export class Viewer {
     vim.applySettings(settings)
 
     this.renderer.addScene(vim.scene)
-    this.environment.fitToContent(this.renderer.getBoundingBox())
+    this.environment.adaptToContent(this.renderer.getBoundingBox())
     this.camera.adaptToContent(this.renderer.getBoundingSphere())
   }
 
@@ -276,8 +276,8 @@ export class Viewer {
    * Apply modified viewer settings
    */
   public ApplyViewerSettings () {
-    this.environment.applyViewerSettings(this.settings)
-    this.camera.applyViewerSettings(this.settings)
+    this.environment.applySettings(this.settings)
+    this.camera.applySettings(this.settings)
   }
 
   private defaultOnClick (hit: HitTestResult) {

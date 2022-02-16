@@ -12,14 +12,14 @@ import { Viewer } from './viewer'
  */
 export class Selection {
   // Dependencies
-  viewer: Viewer
+  private viewer: Viewer
 
   // State
   object: Object | undefined = undefined
   boundingSphere: THREE.Sphere | null = null
 
   // Disposable State
-  highlightDisposer: Function | null = null
+  private highlightDisposer: Function | null = null
 
   constructor (viewer: Viewer) {
     this.viewer = viewer

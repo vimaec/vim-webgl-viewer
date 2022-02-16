@@ -36,7 +36,7 @@ class GroundPlane {
     this.material.opacity = settings.getGroundPlaneOpacity()
   }
 
-  fitToContent (box: THREE.Box3) {
+  adaptToContent (box: THREE.Box3) {
     // Position
     const center = box.getCenter(new THREE.Vector3())
     const position = new THREE.Vector3(
@@ -97,24 +97,24 @@ class GroundPlane {
  * Manages ground plane and lights that are part of the THREE.Scene to render but not part of the Vims.
  */
 export class Environment {
-  plane: GroundPlane
+  groundPlane: GroundPlane
   skyLight: THREE.HemisphereLight
   sunLight: THREE.DirectionalLight
 
   constructor (settings: ViewerSettings) {
-    this.plane = new GroundPlane()
+    this.groundPlane = new GroundPlane()
     this.skyLight = new THREE.HemisphereLight()
     this.sunLight = new THREE.DirectionalLight()
-    this.applyViewerSettings(settings)
+    this.applySettings(settings)
   }
 
   getObjects (): THREE.Object3D[] {
-    return [this.plane.mesh, this.skyLight, this.sunLight]
+    return [this.groundPlane.mesh, this.skyLight, this.sunLight]
   }
 
-  applyViewerSettings (settings: ViewerSettings) {
+  applySettings (settings: ViewerSettings) {
     // Plane
-    this.plane.applyViewerSettings(settings)
+    this.groundPlane.applyViewerSettings(settings)
 
     // Skylight
     this.skyLight.color.copy(settings.getSkylightColor())
@@ -127,8 +127,8 @@ export class Environment {
     this.sunLight.intensity = settings.getSunlightIntensity()
   }
 
-  public fitToContent (box: Box3) {
+  public adaptToContent (box: Box3) {
     // Plane
-    this.plane.fitToContent(box)
+    this.groundPlane.adaptToContent(box)
   }
 }

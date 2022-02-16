@@ -20,11 +20,9 @@ export class HitTestResult {
 
   constructor (
     mousePosition: THREE.Vector2,
-    doubleClick: boolean,
     intersections: ThreeIntersectionList
   ) {
     this.mousePosition = mousePosition
-    this.doubleClick = doubleClick
     this.intersections = intersections
     this.firstHit = HitTestResult.GetFirstVimHit(intersections)
   }
@@ -69,11 +67,14 @@ export class HitTester {
     this.viewer = viewer
   }
 
-  onMouseClick (position: THREE.Vector2, double: boolean): HitTestResult {
+  /**
+   * Raycast at renderer canvas position
+   */
+  screenRaycast (position: THREE.Vector2): HitTestResult {
     console.time('raycast')
-    const intersections = this.mouseRaycast(position)
+    const intersections = this.raycast(position)
     console.timeEnd('raycast')
-    const r = new HitTestResult(position, double, intersections)
+    const r = new HitTestResult(position, intersections)
 
     const hit = r.firstHit
 
@@ -92,7 +93,7 @@ export class HitTester {
     return r
   }
 
-  mouseRaycast (position: THREE.Vector2): ThreeIntersectionList {
+  private raycast (position: THREE.Vector2): ThreeIntersectionList {
     const [width, height] = this.viewer.renderer.getContainerSize()
     const x = (position.x / width) * 2 - 1
     const y = -(position.y / height) * 2 + 1
