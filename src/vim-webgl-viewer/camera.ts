@@ -1,5 +1,4 @@
 /**
- @author VIM / https://vimaec.com
  @module viw-webgl-viewer
 */
 
@@ -17,6 +16,9 @@ const direction = {
   down: new THREE.Vector3(0, -1, 0)
 }
 
+/**
+ * Manages viewer camera movement and position
+ */
 class Camera {
   gizmo: CameraGizmo
   public camera: THREE.PerspectiveCamera

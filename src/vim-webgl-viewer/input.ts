@@ -7,7 +7,10 @@ import { Keyboard } from './keyboard'
 import { InputTouch } from './touch'
 import { Mouse } from './mouse'
 
-export class ViewerInput {
+/**
+ * Manages and registers all viewer user inputs for mouse, keyboard and touch
+ */
+export class Input {
   // Dependencies
   private canvas: HTMLCanvasElement
 

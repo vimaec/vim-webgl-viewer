@@ -8,6 +8,9 @@ import { Viewer } from './viewer'
 
 type ThreeIntersectionList = THREE.Intersection<THREE.Object3D<THREE.Event>>[]
 
+/**
+ * Highlevel aggregate of information about a raycast result
+ */
 export class HitTestResult {
   mousePosition: THREE.Vector2
   doubleClick: boolean

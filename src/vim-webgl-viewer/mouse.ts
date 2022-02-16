@@ -7,6 +7,9 @@ import { Viewer } from './viewer'
 import { HitTester } from './hitTester'
 import { Keyboard } from './keyboard'
 
+/**
+ * Manages mouse user inputs
+ */
 export class Mouse {
   // Dependencies
   viewer: Viewer

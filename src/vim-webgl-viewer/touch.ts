@@ -7,6 +7,9 @@ import { ViewerCamera } from './camera'
 import { Mouse } from './mouse'
 import { Renderer } from './renderer'
 
+/**
+ * Manages user touch inputs.
+ */
 export class InputTouch {
   TapDurationMs: number = 500
 

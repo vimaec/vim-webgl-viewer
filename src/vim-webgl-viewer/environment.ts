@@ -6,6 +6,9 @@ import * as THREE from 'three'
 import { ViewerSettings } from './settings'
 import { Box3 } from 'three'
 
+/**
+ * Manages the THREE.Mesh for the ground plane under the vims
+ */
 class GroundPlane {
   source: string
   mesh: THREE.Mesh
@@ -90,6 +93,9 @@ class GroundPlane {
   }
 }
 
+/**
+ * Manages ground plane and lights that are part of the THREE.Scene to render but not part of the Vims.
+ */
 export class Environment {
   plane: GroundPlane
   skyLight: THREE.HemisphereLight

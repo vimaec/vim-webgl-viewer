@@ -9,6 +9,9 @@ import { ViewerCamera } from './camera'
 import { ViewerSettings } from './settings'
 import { DEG2RAD } from 'three/src/math/MathUtils'
 
+/**
+ * Manages the camera target gizmo
+ */
 export class CameraGizmo {
   // Dependencies
   camera: ViewerCamera

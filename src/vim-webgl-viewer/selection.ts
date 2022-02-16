@@ -7,6 +7,9 @@ import { Object } from '../vim-loader/object'
 import { Viewer } from './viewer'
 
 // TODO: Fix circular dependency
+/**
+ * Provides basic selection mechanic in viewer
+ */
 export class Selection {
   // Dependencies
   viewer: Viewer

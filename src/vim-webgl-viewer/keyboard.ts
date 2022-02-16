@@ -99,6 +99,9 @@ export const KEYS = {
   KEY_Z: 90
 }
 
+/**
+ * Manages keyboard user inputs
+ */
 export class Keyboard {
   // Settings
   ShiftMultiplier: number = 3.0

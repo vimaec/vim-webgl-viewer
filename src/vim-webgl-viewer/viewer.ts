@@ -1,24 +1,25 @@
 /**
- @author VIM / https://vimaec.com
  @module viw-webgl-viewer
 */
 
 // internal
 import { ViewerSettings, ViewerOptions } from './settings'
-import { VimSettings, VimOptions } from '../vim-loader/settings'
-
 import { ViewerCamera } from './camera'
-import { ViewerInput } from './input'
+import { Input } from './input'
 import { Selection } from './selection'
 import { Environment } from './environment'
 import { Renderer } from './renderer'
 import { HitTestResult } from './hitTester'
 
 // loader
+import { VimSettings, VimOptions } from '../vim-loader/settings'
 import { VimLoader } from '../vim-loader/vimLoader'
 import { Vim } from '../vim-loader/vim'
 import { Object } from '../vim-loader/object'
 
+/**
+ * Viewer and loader for vim files.
+ */
 export class Viewer {
   settings: ViewerSettings
 
@@ -26,7 +27,7 @@ export class Viewer {
   renderer: Renderer
   selection: Selection
   camera: ViewerCamera
-  controls: ViewerInput
+  controls: Input
   loader: VimLoader
 
   // State
@@ -54,7 +55,7 @@ export class Viewer {
     this.onMouseClick = this.defaultOnClick
 
     // Input and Selection
-    this.controls = new ViewerInput(this)
+    this.controls = new Input(this)
     this.controls.register()
     this.selection = new Selection(this)
 

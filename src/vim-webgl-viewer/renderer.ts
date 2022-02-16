@@ -6,6 +6,9 @@ import * as THREE from 'three'
 import { Scene } from '../vim-loader/scene'
 import { ViewerSettings } from './settings'
 
+/**
+ * Manages how vim objects are added and removed from the THREE.Scene to be rendered
+ */
 export class Renderer {
   camera: THREE.PerspectiveCamera
   renderer: THREE.WebGLRenderer
