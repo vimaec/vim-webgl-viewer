@@ -238,6 +238,6 @@ export class Keyboard {
     )
     const speed = this.isShiftPressed ? this.ShiftMultiplier : 1
     move.multiplyScalar(speed)
-    this.camera.setCameraLocalVelocity(move)
+    this.camera.setLocalVelocity(move)
   }
 }

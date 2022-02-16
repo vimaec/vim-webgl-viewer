@@ -62,13 +62,13 @@ export class Mouse {
 
     if (event.buttons & 2) {
       // right button
-      this.camera.truckPedestalCameraBy(delta)
+      this.camera.truckPedestal(delta)
     } else if (event.buttons & 4) {
       // Midle button
-      this.camera.truckDollyCameraBy(delta)
+      this.camera.truckDolly(delta)
     } else {
       // left button
-      this.camera.rotateCameraBy(delta)
+      this.camera.rotate(delta)
     }
   }
 
@@ -85,11 +85,11 @@ export class Mouse {
       this.camera.speedMultiplier -= scrollValue
     } else if (this.camera.mouseOrbit) {
       const impulse = new THREE.Vector3(0, 0, scrollValue)
-      this.camera.applyLocalImpulse(impulse)
+      this.camera.addLocalImpulse(impulse)
       // this.camera.updateOrbitalDistance(-scrollValue)
     } else {
       const impulse = new THREE.Vector3(0, 0, scrollValue)
-      this.camera.applyLocalImpulse(impulse)
+      this.camera.addLocalImpulse(impulse)
     }
   }
 

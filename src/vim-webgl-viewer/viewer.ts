@@ -242,15 +242,22 @@ export class Viewer {
   /**
    * Look at given object
    */
-  lookAt (object: Object) {
+  lookAtObject (object: Object) {
     const center = object.getCenter()
-    this.camera.lookAtPosition(center)
+    this.camera.lookAt(center)
+  }
+
+  /**
+   * Look at given object
+   */
+  frameObject (object: Object) {
+    this.camera.frameSphere(object.getBoundingSphere())
   }
 
   /**
    * Move the camera to frame current selection
    */
-  lookAtSelection () {
+  frameSelection () {
     if (this.selection.hasSelection()) {
       this.camera.frameSphere(this.selection.boundingSphere!)
     } else {
@@ -281,7 +288,7 @@ export class Viewer {
 
     this.camera.setTarget(hit.object.getCenter())
 
-    if (hit.doubleClick) this.lookAtSelection()
+    if (hit.doubleClick) this.frameSelection()
 
     console.log(hit.object.getBimElement())
   }

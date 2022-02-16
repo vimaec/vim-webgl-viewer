@@ -60,15 +60,15 @@ export class InputTouch {
   }
 
   onDrag = (delta: THREE.Vector2) => {
-    this.camera.rotateCameraBy(delta)
+    this.camera.rotate(delta)
   }
 
   onDoubleDrag = (delta: THREE.Vector2) => {
-    this.camera.truckPedestalCameraBy(delta)
+    this.camera.truckPedestal(delta)
   }
 
   onPinchOrSpread = (delta: number) => {
-    this.camera.dollyCameraBy(delta)
+    this.camera.dolly(delta)
   }
 
   onTouchMove = (event: any) => {
