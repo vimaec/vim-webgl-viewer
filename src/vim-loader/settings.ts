@@ -1,5 +1,4 @@
 /**
- * Settings and options related to loading a vim
  * @module vim-loader
  */
 

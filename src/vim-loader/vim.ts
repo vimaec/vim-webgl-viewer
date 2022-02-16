@@ -1,5 +1,4 @@
 /**
- * Final result of loading a Vim.
  * @module vim-loader
  */
 
@@ -25,11 +24,11 @@ export class Vim {
   constructor (vim: Document, scene: Scene) {
     this.document = vim
     this.scene = scene
-    this.elementToInstance = this.mapElementIndexToInstanceIndices()
-    this.elementIdToElement = this.mapElementIdToIndex()
+    this.elementToInstance = this.mapElementToInstance()
+    this.elementIdToElement = this.mapElementIdToElement()
   }
 
-  private mapElementIndexToInstanceIndices (): Map<number, number[]> {
+  private mapElementToInstance (): Map<number, number[]> {
     const map = new Map<number, number[]>()
     const instanceElements = this.document.getInstanceToElementMap()
     const instanceCount = instanceElements.length
@@ -48,7 +47,7 @@ export class Vim {
     return map
   }
 
-  private mapElementIdToIndex (): Map<number, number> {
+  private mapElementIdToElement (): Map<number, number> {
     const map = new Map<number, number>()
     const elementIds = this.document.getIntColumn(
       this.document.getElementTable(),

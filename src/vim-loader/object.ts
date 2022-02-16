@@ -1,5 +1,4 @@
 /**
- * Api handle for element/instance/mesh.
  * @module vim-loader
  */
 
@@ -9,6 +8,9 @@ import { Vim } from './vim'
 import * as meshing from './mesh'
 import * as vimGeometry from './geometry'
 
+/**
+ * High level api to interact with the loaded vim geometry and data.
+ */
 export class Object {
   vim: Vim
   element: number

@@ -1,5 +1,4 @@
 /**
- * Provides methods to create BufferGeometry from g3d geometry data.
  * @module vim-loader
  */
 

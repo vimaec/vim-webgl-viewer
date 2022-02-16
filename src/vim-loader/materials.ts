@@ -1,12 +1,11 @@
 /**
- * Defines how loader materials are created and allows replacement
  * @module vim-loader
  */
 
 import * as THREE from 'three'
 
 /**
- * Defines the materials to be used by the vim loader.
+ * Defines the materials to be used by the vim loader and allows for material injection.
  * @returns a THREE.MeshPhongMaterial
  */
 export class MaterialLibrary {

@@ -1,5 +1,4 @@
 /**
- * Scene is the highest level organization of three geometry of the vim loader.
  * @module vim-loader
  */
 

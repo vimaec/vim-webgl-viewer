@@ -1,5 +1,4 @@
 /**
- * Provides methods to create Three.Mesh from BufferGeometry and g3d geometry data.
  * @module vim-loader
  */
 

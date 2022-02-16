@@ -1,5 +1,4 @@
 /**
- * Document is the parsed content of a vim, including geometry data, bim data and other meta data.
  * @module vim-loader
  */
 
@@ -8,6 +7,10 @@ import { G3d } from './g3d'
 
 export type EntityTable = Map<string, ArrayLike<number>>
 
+/**
+ * Document is the parsed content of a vim, including geometry data, bim data and other meta data.
+ * See https://github.com/vimaec/vim
+ */
 export class Document {
   private static tableElement = 'Vim.Element'
   private static tableElementLegacy = 'Rvt.Element'

@@ -1,8 +1,5 @@
 /**
- * Loader for the Vim File format.
- * See https://github.com/vimaec/vim
  * @module vim-loader
- * @author VIM / https://vimaec.com
  */
 
 import * as THREE from 'three'
@@ -12,6 +9,10 @@ import { Document } from './document'
 import { Scene } from './scene'
 import { TransparencyMode } from './geometry'
 
+/**
+ * Loader for the Vim File format.
+ * See https://github.com/vimaec/vim
+ */
 export class VimLoader {
   loader: THREE.FileLoader
   loaded: Set<string> = new Set<string>()
