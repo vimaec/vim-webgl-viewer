@@ -122,7 +122,7 @@ export class Document {
    * @returns a Document instance
    */
   static createFromArrayBuffer (data: ArrayBuffer) {
-    const bfast = BFast.fromArrayBuffer(data)
+    const bfast = BFast.createFromArrayBuffer(data)
     return Document.createFromBFast(bfast)
   }
 
@@ -148,9 +148,9 @@ export class Document {
     const stringData = lookup.get('strings')
 
     const header = new TextDecoder('utf-8').decode(headerData)
-    const g3d = G3d.createFromBfast(BFast.fromArray(g3dData))
-    const assets = BFast.fromArray(assetData)
-    const entities = Document.parseEntityTables(BFast.fromArray(entityData))
+    const g3d = G3d.createFromBfast(BFast.createFromArray(g3dData))
+    const assets = BFast.createFromArray(assetData)
+    const entities = Document.parseEntityTables(BFast.createFromArray(entityData))
     const strings = new TextDecoder('utf-8').decode(stringData).split('\0')
 
     g3d.validate()
@@ -164,7 +164,7 @@ export class Document {
       const current = bfast.names[i]
       const tableName = current.substring(current.indexOf(':') + 1)
       const buffer = bfast.buffers[i]
-      const next = Document.parseEntityTable(BFast.fromArray(buffer))
+      const next = Document.parseEntityTable(BFast.createFromArray(buffer))
       result.set(tableName, next)
     }
     return result

@@ -112,16 +112,16 @@ function createVertexColors (
  * Helper to merge many instances/meshes from a g3d direcly into a BufferGeometry
  */
 export class MeshMerger {
-  g3d: G3d
-  colorSize: number
+  private g3d: G3d
+  private colorSize: number
 
-  meshes: number[]
-  indices: Uint32Array
-  vertices: Float32Array
-  colors: Float32Array
-  uvs: Float32Array
-  instances: number[]
-  submeshes: number[]
+  private meshes: number[]
+  private indices: Uint32Array
+  private vertices: Float32Array
+  private colors: Float32Array
+  private uvs: Float32Array
+  private instances: number[]
+  private submeshes: number[]
 
   constructor (
     g3d: G3d,
@@ -143,6 +143,9 @@ export class MeshMerger {
     this.uvs = new Float32Array(vertexCount * 2)
     this.submeshes = new Array(this.instances.length)
   }
+
+  getInstances = () => this.instances
+  getSubmeshes = () => this.submeshes
 
   /**
    * Prepares a merge of all meshes referenced by only one instance.

@@ -15,8 +15,17 @@ import * as meshing from './mesh'
 export class Scene {
   meshes: THREE.Mesh[] = []
   boundingBox: THREE.Box3 = new THREE.Box3()
-  instanceToThreeMesh: Map<number, [THREE.Mesh, number]> = new Map()
-  threeMeshIdToInstances: Map<number, number[]> = new Map()
+  private instanceToThreeMesh: Map<number, [THREE.Mesh, number]> = new Map()
+  private threeMeshIdToInstances: Map<number, number[]> = new Map()
+
+  /**
+   * Returns the THREE.Mesh in which this instance is represented along with index
+   * For merged mesh, index refers to submesh index
+   * For instanced mesh, index refers to instance index.
+   */
+  getMeshFromInstance (instance: number) {
+    return this.instanceToThreeMesh[instance] ?? []
+  }
 
   /**
    * Returns the index of the g3d instance that from which this mesh instance was created

@@ -104,8 +104,8 @@ export class MeshBuilder {
     instances?: number[]
   ): THREE.Mesh {
     const merger = instances
-      ? vimGeometry.MeshMerger.MergeInstances(g3d, instances, transparency)
-      : vimGeometry.MeshMerger.MergeUniqueMeshes(g3d, transparency)
+      ? vimGeometry.MeshMerger.createFromInstances(g3d, instances, transparency)
+      : vimGeometry.MeshMerger.createFromUniqueMeshes(g3d, transparency)
 
     const geometry = merger.toBufferGeometry()
     const material = vimGeometry.transparencyRequiresAlpha(transparency)
@@ -114,8 +114,8 @@ export class MeshBuilder {
 
     const mesh = new THREE.Mesh(geometry, material)
     mesh.userData.merged = true
-    mesh.userData.instances = merger.instances
-    mesh.userData.submeshes = merger.submeshes
+    mesh.userData.instances = merger.getInstances()
+    mesh.userData.submeshes = merger.getSubmeshes()
 
     return mesh
   }
