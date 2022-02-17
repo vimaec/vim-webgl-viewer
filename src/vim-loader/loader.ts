@@ -7,17 +7,17 @@ import * as THREE from 'three'
 import { Vim } from './vim'
 import { Document } from './document'
 import { Scene } from './scene'
-import { TransparencyMode } from './geometry'
+import { Transparency } from './geometry'
 
 /**
  * Loader for the Vim File format.
  * See https://github.com/vimaec/vim
  */
-export class VimLoader {
-  private loader: THREE.FileLoader
-  private loaded: Set<string> = new Set<string>()
+export class Loader {
+  private _loader: THREE.FileLoader
+  private _loaded: Set<string> = new Set<string>()
   constructor () {
-    this.loader = new THREE.FileLoader()
+    this._loader = new THREE.FileLoader()
     THREE.Cache.enabled = true
   }
 
@@ -30,17 +30,17 @@ export class VimLoader {
    */
   loadFromUrl (
     url: string,
-    transparency: TransparencyMode = 'all',
+    transparency: Transparency.Mode = 'all',
     onLoad?: (response: Vim) => void,
     onProgress?: (progress: ProgressEvent | 'processing') => void,
     onError?: (event: ErrorEvent) => void
   ) {
-    this.loader.setResponseType('arraybuffer')
-    this.loader.setRequestHeader({
+    this._loader.setResponseType('arraybuffer')
+    this._loader.setRequestHeader({
       'Content-Encoding': 'gzip'
     })
-    this.loaded.add(url)
-    this.loader.load(
+    this._loaded.add(url)
+    this._loader.load(
       url,
       (data: string | ArrayBuffer) => {
         if (!data) {
@@ -53,7 +53,7 @@ export class VimLoader {
         }
         onProgress?.('processing')
         // slight hack to avoid multiple load call to share the same data.
-        if (this.loaded.has(url)) data = data.slice(0)
+        if (this._loaded.has(url)) data = data.slice(0)
         const vim = Document.createFromArrayBuffer(data)
         const scene = this.loadFromVim(vim, transparency)
         onLoad?.(scene)
@@ -74,7 +74,7 @@ export class VimLoader {
    */
   loadFromArrayBuffer (
     data: ArrayBuffer,
-    transparency: TransparencyMode,
+    transparency: Transparency.Mode,
     instances?: number[]
   ) {
     const vim = Document.createFromArrayBuffer(data)
@@ -90,7 +90,7 @@ export class VimLoader {
    */
   loadFromVim (
     vim: Document,
-    transparency: TransparencyMode,
+    transparency: Transparency.Mode,
     instances?: number[]
   ): Vim {
     const scene = Scene.createFromG3d(vim.g3d, transparency, instances)

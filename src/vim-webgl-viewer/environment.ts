@@ -3,37 +3,39 @@
  */
 
 import * as THREE from 'three'
-import { ViewerSettings } from './settings'
+import { ViewerSettings } from './viewerSettings'
 import { Box3 } from 'three'
 
 /**
  * Manages the THREE.Mesh for the ground plane under the vims
  */
 export class GroundPlane {
-  source: string
   mesh: THREE.Mesh
-  size: number
+
+  private _source: string
+
+  private _size: number
 
   // disposable
-  geometry: THREE.PlaneBufferGeometry
-  material: THREE.MeshBasicMaterial
-  texture: THREE.Texture
+  private _geometry: THREE.PlaneBufferGeometry
+  private _material: THREE.MeshBasicMaterial
+  private _texture: THREE.Texture
 
   constructor () {
-    this.geometry = new THREE.PlaneBufferGeometry()
-    this.material = new THREE.MeshBasicMaterial({ transparent: true })
-    this.mesh = new THREE.Mesh(this.geometry, this.material)
+    this._geometry = new THREE.PlaneBufferGeometry()
+    this._material = new THREE.MeshBasicMaterial({ transparent: true })
+    this.mesh = new THREE.Mesh(this._geometry, this._material)
   }
 
   applyViewerSettings (settings: ViewerSettings) {
-    this.size = settings.getGroundPlaneSize()
+    this._size = settings.getGroundPlaneSize()
     // Visibily
     this.mesh.visible = settings.getGroundPlaneShow()
 
     // Looks
     this.applyTexture(settings.getGroundPlaneTextureUrl())
-    this.material.color.copy(settings.getGroundPlaneColor())
-    this.material.opacity = settings.getGroundPlaneOpacity()
+    this._material.color.copy(settings.getGroundPlaneColor())
+    this._material.opacity = settings.getGroundPlaneOpacity()
   }
 
   adaptToContent (box: THREE.Box3) {
@@ -53,43 +55,43 @@ export class GroundPlane {
 
     // Scale
     const sphere = box?.getBoundingSphere(new THREE.Sphere())
-    const size = (sphere?.radius ?? 1) * this.size
+    const size = (sphere?.radius ?? 1) * this._size
     const scale = new THREE.Vector3(1, 1, 1).multiplyScalar(size)
     this.mesh.scale.copy(scale)
   }
 
   applyTexture (texUrl: string) {
     // Check for changes
-    if (texUrl === this.source) return
-    this.source = texUrl
+    if (texUrl === this._source) return
+    this._source = texUrl
 
     // dispose previous texture
-    this.texture?.dispose()
-    this.texture = null
+    this._texture?.dispose()
+    this._texture = null
 
     // Bail if new texture url, is no texture
     if (!texUrl) return
 
     // load texture
     const loader = new THREE.TextureLoader()
-    this.texture = loader.load(texUrl)
-    if (!this.texture) {
+    this._texture = loader.load(texUrl)
+    if (!this._texture) {
       console.error('Failed to load texture: ' + texUrl)
       return
     }
 
     // Apply texture
-    this.material.map = this.texture
+    this._material.map = this._texture
   }
 
   dispose () {
-    this.geometry?.dispose()
-    this.material?.dispose()
-    this.texture?.dispose()
+    this._geometry?.dispose()
+    this._material?.dispose()
+    this._texture?.dispose()
 
-    this.geometry = null
-    this.material = null
-    this.texture = null
+    this._geometry = null
+    this._material = null
+    this._texture = null
   }
 }
 

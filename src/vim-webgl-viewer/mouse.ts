@@ -12,16 +12,16 @@ import { Keyboard } from './keyboard'
  */
 export class Mouse {
   // Dependencies
-  private viewer: Viewer
-  private hitTester: HitTester
-  private inputKeyboard: Keyboard
+  private _viewer: Viewer
+  private _hitTester: HitTester
+  private _inputKeyboard: Keyboard
 
   private get camera () {
-    return this.viewer.camera
+    return this._viewer.camera
   }
 
   private get renderer () {
-    return this.viewer.renderer
+    return this._viewer.renderer
   }
 
   // State
@@ -29,9 +29,9 @@ export class Mouse {
   hasMouseMoved: Boolean = false
 
   constructor (viewer: Viewer, keyboard: Keyboard) {
-    this.viewer = viewer
-    this.hitTester = new HitTester(viewer)
-    this.inputKeyboard = keyboard
+    this._viewer = viewer
+    this._hitTester = new HitTester(viewer)
+    this._inputKeyboard = keyboard
   }
 
   reset = () => {
@@ -81,7 +81,7 @@ export class Mouse {
     // Thus we only use the direction of the value
     const scrollValue = Math.sign(event.deltaY)
 
-    if (this.inputKeyboard.isCtrlPressed) {
+    if (this._inputKeyboard.isCtrlPressed) {
       this.camera.speedMultiplier -= scrollValue
     } else if (this.camera.orbitMode) {
       const impulse = new THREE.Vector3(0, 0, scrollValue)
@@ -116,8 +116,8 @@ export class Mouse {
   }
 
   onMouseClick = (position: THREE.Vector2, doubleClick: boolean) => {
-    const result = this.hitTester.screenRaycast(position)
+    const result = this._hitTester.screenRaycast(position)
     result.doubleClick = doubleClick
-    this.viewer.onMouseClick(result)
+    this._viewer.onMouseClick(result)
   }
 }

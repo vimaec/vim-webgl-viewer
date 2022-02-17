@@ -4,8 +4,8 @@
 
 import * as THREE from 'three'
 import { G3d } from './g3d'
-import * as vimGeometry from './geometry'
-import * as meshing from './mesh'
+import { Transparency } from './geometry'
+import { Mesh } from './mesh'
 
 /**
  * A Scene regroups many THREE.Meshes
@@ -15,8 +15,8 @@ import * as meshing from './mesh'
 export class Scene {
   meshes: THREE.Mesh[] = []
   boundingBox: THREE.Box3 = new THREE.Box3()
-  private instanceToThreeMesh: Map<number, [THREE.Mesh, number]> = new Map()
-  private threeMeshIdToInstances: Map<number, number[]> = new Map()
+  private _instanceToThreeMesh: Map<number, [THREE.Mesh, number]> = new Map()
+  private _threeMeshIdToInstances: Map<number, number[]> = new Map()
 
   /**
    * Returns the THREE.Mesh in which this instance is represented along with index
@@ -24,8 +24,8 @@ export class Scene {
    * For instanced mesh, index refers to instance index.
    */
   getMeshFromInstance (instance: number) {
-    return this.instanceToThreeMesh.has(instance)
-      ? this.instanceToThreeMesh.get(instance)
+    return this._instanceToThreeMesh.has(instance)
+      ? this._instanceToThreeMesh.get(instance)
       : []
   }
 
@@ -37,7 +37,7 @@ export class Scene {
    */
   getInstanceFromMesh (mesh: THREE.Mesh, index: number): number {
     if (!mesh || index < 0) return -1
-    const instances = this.threeMeshIdToInstances.get(mesh.id)
+    const instances = this._threeMeshIdToInstances.get(mesh.id)
     if (!instances) return -1
     return instances[index]
   }
@@ -63,7 +63,7 @@ export class Scene {
   }
 
   swapInstances (mesh: THREE.InstancedMesh, indexA: number, indexB: number) {
-    const array = this.threeMeshIdToInstances.get(mesh.id)
+    const array = this._threeMeshIdToInstances.get(mesh.id)
     if (!array) throw new Error('Could not find mesh with id : ' + mesh.id)
     if (indexA === indexB) return
 
@@ -77,8 +77,8 @@ export class Scene {
     const instanceA = array[indexA]
     const instanceB = array[indexB]
 
-    this.instanceToThreeMesh.get(instanceA)[1] = indexB
-    this.instanceToThreeMesh.get(instanceB)[1] = indexA
+    this._instanceToThreeMesh.get(instanceA)[1] = indexB
+    this._instanceToThreeMesh.get(instanceB)[1] = indexA
     array[indexA] = instanceB
     array[indexB] = instanceA
     mesh.instanceMatrix.needsUpdate = true
@@ -96,14 +96,14 @@ export class Scene {
     }
 
     for (let i = 0; i < instances.length; i++) {
-      this.instanceToThreeMesh.set(instances[i], [mesh, i])
+      this._instanceToThreeMesh.set(instances[i], [mesh, i])
     }
 
     mesh.geometry.computeBoundingBox()
     const box = mesh.geometry.boundingBox!
     this.boundingBox = this.boundingBox?.union(box) ?? box.clone()
 
-    this.threeMeshIdToInstances.set(mesh.id, instances)
+    this._threeMeshIdToInstances.set(mesh.id, instances)
     this.meshes.push(mesh)
     return this
   }
@@ -146,11 +146,11 @@ export class Scene {
     }
 
     for (let i = 0; i < instances.length; i++) {
-      this.instanceToThreeMesh.set(instances[i], [mesh, i])
+      this._instanceToThreeMesh.set(instances[i], [mesh, i])
     }
     const box = this.computeIntancedMeshBoundingBox(mesh)!
     this.boundingBox = this.boundingBox?.union(box) ?? box.clone()
-    this.threeMeshIdToInstances.set(mesh.id, instances)
+    this._threeMeshIdToInstances.set(mesh.id, instances)
   }
 
   /**
@@ -158,11 +158,11 @@ export class Scene {
    */
   merge (other: Scene) {
     other.meshes.forEach((mesh) => this.meshes.push(mesh))
-    other.instanceToThreeMesh.forEach((value, key) => {
-      this.instanceToThreeMesh.set(key, value)
+    other._instanceToThreeMesh.forEach((value, key) => {
+      this._instanceToThreeMesh.set(key, value)
     })
-    other.threeMeshIdToInstances.forEach((value, key) => {
-      this.threeMeshIdToInstances.set(key, value)
+    other._threeMeshIdToInstances.forEach((value, key) => {
+      this._threeMeshIdToInstances.set(key, value)
     })
     this.boundingBox =
       this.boundingBox?.union(other.boundingBox) ?? other.boundingBox.clone()
@@ -193,79 +193,72 @@ export class Scene {
    */
   static createFromG3d (
     g3d: G3d,
-    transparency: vimGeometry.TransparencyMode = 'all',
+    transparency: Transparency.Mode = 'all',
     instances: number[] | undefined = undefined
   ): Scene {
-    return createSceneFromG3d(g3d, transparency, instances)
-  }
-}
+    const scene = new Scene()
 
-/**
- * Creates a new Scene from a g3d by merging mergeble meshes and instancing instantiable meshes
- * @param transparency Specify whether color is RBG or RGBA and whether material is opaque or transparent
- * @param instances g3d instance indices to be included in the Scene. All if undefined.
- */
-export function createSceneFromG3d (
-  g3d: G3d,
-  transparency: vimGeometry.TransparencyMode = 'all',
-  instances: number[] | undefined = undefined
-): Scene {
-  const scene = new Scene()
-
-  // Add shared geometry
-  const shared = createSceneFromInstanciableMeshes(g3d, transparency, instances)
-  scene.merge(shared)
-
-  // Add opaque geometry
-  if (transparency !== 'transparentOnly') {
-    const opaque = createSceneFromMergeableMeshes(
+    // Add shared geometry
+    const shared = Scene.createFromInstanciableMeshes(
       g3d,
-      transparency === 'allAsOpaque' ? 'allAsOpaque' : 'opaqueOnly',
+      transparency,
       instances
     )
-    scene.merge(opaque)
+    scene.merge(shared)
+
+    // Add opaque geometry
+    if (transparency !== 'transparentOnly') {
+      const opaque = Scene.createFromMergeableMeshes(
+        g3d,
+        transparency === 'allAsOpaque' ? 'allAsOpaque' : 'opaqueOnly',
+        instances
+      )
+      scene.merge(opaque)
+    }
+
+    // Add transparent geometry
+    if (Transparency.RequiresAlpha(transparency)) {
+      const transparent = Scene.createFromMergeableMeshes(
+        g3d,
+        'transparentOnly',
+        instances
+      )
+      scene.merge(transparent)
+    }
+
+    return scene
   }
 
-  // Add transparent geometry
-  if (vimGeometry.transparencyRequiresAlpha(transparency)) {
-    const transparent = createSceneFromMergeableMeshes(
-      g3d,
-      'transparentOnly',
-      instances
-    )
-    scene.merge(transparent)
+  /**
+   * Creates a Scene from instantiable meshes from the g3d
+   * @param transparency Specify whether color is RBG or RGBA and whether material is opaque or transparent
+   * @param instances g3d instance indices to be included in the Scene. All if undefined.
+   * @param builder optional builder to reuse the same materials
+   */
+  static createFromInstanciableMeshes (
+    g3d: G3d,
+    transparency: Transparency.Mode,
+    instances: number[] | undefined = undefined,
+    builder: Mesh.Builder = Mesh.getDefaultBuilder()
+  ) {
+    const meshes = builder.createInstancedMeshes(g3d, transparency, instances)
+    return Scene.createFromInstancedMeshes(meshes)
   }
 
-  return scene
-}
-/**
- * Creates a Scene from instantiable meshes from the g3d
- * @param transparency Specify whether color is RBG or RGBA and whether material is opaque or transparent
- * @param instances g3d instance indices to be included in the Scene. All if undefined.
- * @param builder optional builder to reuse the same materials
- */
-export function createSceneFromInstanciableMeshes (
-  g3d: G3d,
-  transparency: vimGeometry.TransparencyMode,
-  instances: number[] | undefined = undefined,
-  builder: meshing.MeshBuilder = meshing.getDefaultBuilder()
-) {
-  const meshes = builder.createInstancedMeshes(g3d, transparency, instances)
-  return Scene.createFromInstancedMeshes(meshes)
-}
-// g3d instance indices to be included in the merged mesh. All mergeable meshes if undefined.
-/**
- * Creates a Scene from mergeable meshes from the g3d
- * @param transparency Specify whether color is RBG or RGBA and whether material is opaque or transparent
- * @param instances g3d instance indices to be included in the Scene. All if undefined.
- * @param builder optional builder to reuse the same materials
- */
-export function createSceneFromMergeableMeshes (
-  g3d: G3d,
-  transparency: vimGeometry.TransparencyMode,
-  instances: number[] | undefined = undefined,
-  builder: meshing.MeshBuilder = meshing.getDefaultBuilder()
-) {
-  const mesh = builder.createMergedMesh(g3d, transparency, instances)
-  return new Scene().addMergedMesh(mesh)
+  // g3d instance indices to be included in the merged mesh. All mergeable meshes if undefined.
+  /**
+   * Creates a Scene from mergeable meshes from the g3d
+   * @param transparency Specify whether color is RBG or RGBA and whether material is opaque or transparent
+   * @param instances g3d instance indices to be included in the Scene. All if undefined.
+   * @param builder optional builder to reuse the same materials
+   */
+  static createFromMergeableMeshes (
+    g3d: G3d,
+    transparency: Transparency.Mode,
+    instances: number[] | undefined = undefined,
+    builder: Mesh.Builder = Mesh.getDefaultBuilder()
+  ) {
+    const mesh = builder.createMergedMesh(g3d, transparency, instances)
+    return new Scene().addMergedMesh(mesh)
+  }
 }

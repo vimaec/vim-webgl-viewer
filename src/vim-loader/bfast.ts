@@ -6,7 +6,7 @@
  * Bfast header, mainly for validation.
  * See https://github.com/vimaec/bfast
  */
-export class BFastHeader {
+class BFastHeader {
   magic: number
   dataStart: number
   dataEnd: number

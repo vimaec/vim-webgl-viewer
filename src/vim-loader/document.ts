@@ -12,9 +12,9 @@ export type EntityTable = Map<string, ArrayLike<number>>
  * See https://github.com/vimaec/vim
  */
 export class Document {
-  private static tableElement = 'Vim.Element'
-  private static tableElementLegacy = 'Rvt.Element'
-  private static tableNode = 'Vim.Node'
+  private static TABLE_ELEMENT = 'Vim.Element'
+  private static TABLE_ELEMENT_LEGACY = 'Rvt.Element'
+  private static TABLE_NODE = 'Vim.Node'
 
   header: string
   assets: BFast
@@ -22,7 +22,7 @@ export class Document {
   entities: Map<string, EntityTable>
   strings: string[]
 
-  private instanceToElement: number[]
+  private _instanceToElement: number[]
   constructor (
     header: string,
     assets: BFast,
@@ -42,7 +42,7 @@ export class Document {
    * @param element element index
    */
   getElement (element: number) {
-    return this.getEntity(Document.tableElement, element)
+    return this.getEntity(Document.TABLE_ELEMENT, element)
   }
 
   getEntity (type: string, index: number) {
@@ -100,21 +100,21 @@ export class Document {
     this.getDataColumn(table, 'double:', colNameNoPrefix)
 
   private getInstanceToElementMap (): number[] {
-    if (this.instanceToElement) return this.instanceToElement
+    if (this._instanceToElement) return this._instanceToElement
     const table = this.getInstanceTable()
-    this.instanceToElement =
-      this.getIndexColumn(table, Document.tableElement, 'Element') ??
+    this._instanceToElement =
+      this.getIndexColumn(table, Document.TABLE_ELEMENT, 'Element') ??
       // Backwards compatible call with vim0.9
-      table?.get(Document.tableElementLegacy)
+      table?.get(Document.TABLE_ELEMENT_LEGACY)
 
-    return this.instanceToElement
+    return this._instanceToElement
   }
 
   getElementTable = () =>
-    this.entities?.get(Document.tableElement) ??
-    this.entities?.get(Document.tableElementLegacy)
+    this.entities?.get(Document.TABLE_ELEMENT) ??
+    this.entities?.get(Document.TABLE_ELEMENT_LEGACY)
 
-  getInstanceTable = () => this.entities.get(Document.tableNode)
+  getInstanceTable = () => this.entities.get(Document.TABLE_NODE)
 
   /**
    * Creates a new Document instance from an array buffer of a vim file
@@ -150,7 +150,9 @@ export class Document {
     const header = new TextDecoder('utf-8').decode(headerData)
     const g3d = G3d.createFromBfast(BFast.createFromArray(g3dData))
     const assets = BFast.createFromArray(assetData)
-    const entities = Document.parseEntityTables(BFast.createFromArray(entityData))
+    const entities = Document.parseEntityTables(
+      BFast.createFromArray(entityData)
+    )
     const strings = new TextDecoder('utf-8').decode(stringData).split('\0')
 
     g3d.validate()

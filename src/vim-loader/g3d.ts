@@ -4,7 +4,7 @@
 
 import { BFast } from './bfast'
 
-export class G3dAttributeDescriptor {
+class G3dAttributeDescriptor {
   // original descriptor string
   description: string
   // Indicates the part of the geometry that this attribute is associated with
@@ -60,7 +60,7 @@ export class G3dAttributeDescriptor {
   }
 }
 
-export class G3dAttribute {
+class G3dAttribute {
   descriptor: G3dAttributeDescriptor
   bytes: Uint8Array
   data: Uint8Array | Int16Array | Int32Array | Float32Array | Float64Array
@@ -121,7 +121,7 @@ export class G3dAttribute {
  * The G3D format is designed to be used either as a serialization format or as an in-memory data structure.
  * See https://github.com/vimaec/g3d
  */
-export class G3dAbstract {
+class AbstractG3d {
   meta: string
   attributes: G3dAttribute[]
 
@@ -140,7 +140,7 @@ export class G3dAbstract {
   }
 
   // Given a BFAST container (header/names/buffers) constructs a G3D data structure
-  static fromBfast (bfast: BFast): G3dAbstract {
+  static fromBfast (bfast: BFast): AbstractG3d {
     if (bfast.buffers.length < 2) {
       throw new Error('G3D requires at least two BFast buffers')
     }
@@ -166,7 +166,7 @@ export class G3dAbstract {
       attributes.push(attribute)
     }
 
-    return new G3dAbstract(meta, attributes)
+    return new AbstractG3d(meta, attributes)
   }
 }
 /**
@@ -206,7 +206,7 @@ export class G3d {
   meshInstances: Array<Array<number>>
   meshTransparent: Array<boolean>
 
-  rawG3d: G3dAbstract
+  rawG3d: AbstractG3d
 
   MATRIX_SIZE = 16
   COLOR_SIZE = 4
@@ -216,7 +216,7 @@ export class G3d {
    */
   DEFAULT_COLOR = new Float32Array([1, 1, 1, 1])
 
-  constructor (g3d: G3dAbstract) {
+  constructor (g3d: AbstractG3d) {
     this.rawG3d = g3d
 
     this.positions = g3d.findAttribute(VimAttributes.positions)
@@ -425,7 +425,7 @@ export class G3d {
    * Parses a new instance of G3d from a bfast reprensatation of the format.
    */
   static createFromBfast (bfast: BFast): G3d {
-    const base = G3dAbstract.fromBfast(bfast)
+    const base = AbstractG3d.fromBfast(bfast)
     return new G3d(base)
   }
 

@@ -4,7 +4,7 @@
 
 import * as THREE from 'three'
 import { Scene } from '../vim-loader/scene'
-import { ViewerSettings } from './settings'
+import { ViewerSettings } from './viewerSettings'
 
 /**
  * Manages how vim objects are added and removed from the THREE.Scene to be rendered
@@ -17,7 +17,7 @@ export class Renderer {
 
   // state
   scene: THREE.Scene
-  private boundingBox: THREE.Box3
+  private _boundingBox: THREE.Box3
 
   constructor (canvas: HTMLCanvasElement, settings: ViewerSettings) {
     this.renderer = new THREE.WebGLRenderer({
@@ -61,11 +61,11 @@ export class Renderer {
   }
 
   getBoundingSphere (target: THREE.Sphere = new THREE.Sphere()) {
-    return this.boundingBox?.getBoundingSphere(target)
+    return this._boundingBox?.getBoundingSphere(target)
   }
 
   getBoundingBox (target: THREE.Box3 = new THREE.Box3()) {
-    return target.copy(this.boundingBox)
+    return target.copy(this._boundingBox)
   }
 
   render () {
@@ -96,8 +96,8 @@ export class Renderer {
       this.scene.add(m)
     })
 
-    this.boundingBox = this.boundingBox
-      ? this.boundingBox.union(scene.boundingBox)
+    this._boundingBox = this._boundingBox
+      ? this._boundingBox.union(scene.boundingBox)
       : scene.boundingBox.clone()
   }
 
@@ -113,6 +113,6 @@ export class Renderer {
 
   clear () {
     this.scene.clear()
-    this.boundingBox = undefined
+    this._boundingBox = undefined
   }
 }

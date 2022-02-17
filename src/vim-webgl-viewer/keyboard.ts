@@ -5,7 +5,6 @@
 import * as THREE from 'three'
 
 import { Camera } from './camera'
-import { CameraGizmo } from './gizmos'
 import { Viewer } from './viewer'
 
 export const KEYS = {
@@ -107,9 +106,8 @@ export class Keyboard {
   private SHIFT_MULTIPLIER: number = 3.0
 
   // Dependencies
-  private camera: Camera
-  private viewer: Viewer
-  private gizmo: CameraGizmo
+  private _camera: Camera
+  private _viewer: Viewer
 
   // State
   isUpPressed: boolean
@@ -122,8 +120,8 @@ export class Keyboard {
   isCtrlPressed: boolean
 
   constructor (camera: Camera, viewer: Viewer) {
-    this.camera = camera
-    this.viewer = viewer
+    this._camera = camera
+    this._viewer = viewer
   }
 
   reset = () => {
@@ -151,31 +149,31 @@ export class Keyboard {
       switch (event.keyCode) {
         case KEYS.KEY_ADD:
         case KEYS.KEY_OEM_PLUS:
-          this.camera.speedMultiplier += 1
+          this._camera.speedMultiplier += 1
           event.preventDefault()
           break
         case KEYS.KEY_SUBTRACT:
         case KEYS.KEY_OEM_MINUS:
-          this.camera.speedMultiplier -= 1
+          this._camera.speedMultiplier -= 1
           event.preventDefault()
           break
         case KEYS.KEY_F8:
         case KEYS.KEY_SPACE:
-          this.camera.orbitMode = !this.camera.orbitMode
+          this._camera.orbitMode = !this._camera.orbitMode
           event.preventDefault()
           break
         case KEYS.KEY_HOME:
-          this.viewer.frameContent()
+          this._viewer.frameContent()
           event.preventDefault()
           break
         // Selection
         case KEYS.KEY_ESCAPE:
-          this.viewer.clearSelection()
+          this._viewer.clearSelection()
           event.preventDefault()
           break
         case KEYS.KEY_Z:
         case KEYS.KEY_F:
-          this.viewer.frameSelection()
+          this._viewer.frameSelection()
           event.preventDefault()
           break
       }
@@ -238,6 +236,6 @@ export class Keyboard {
     )
     const speed = this.isShiftPressed ? this.SHIFT_MULTIPLIER : 1
     move.multiplyScalar(speed)
-    this.camera.setLocalVelocity(move)
+    this._camera.setLocalVelocity(move)
   }
 }

@@ -12,21 +12,21 @@ import { Mouse } from './mouse'
  */
 export class Input {
   // Dependencies
-  private canvas: HTMLCanvasElement
+  private _canvas: HTMLCanvasElement
 
   // State
-  private unregisters: Function[]
-  private touch: Touch
-  private mouse: Mouse
-  private keyboard: Keyboard
+  private _unregisters: Function[]
+  private _touch: Touch
+  private _mouse: Mouse
+  private _keyboard: Keyboard
 
   constructor (viewer: Viewer) {
-    this.canvas = viewer.renderer.canvas
-    this.unregisters = []
+    this._canvas = viewer.renderer.canvas
+    this._unregisters = []
 
-    this.keyboard = new Keyboard(viewer.camera, viewer)
-    this.mouse = new Mouse(viewer, this.keyboard)
-    this.touch = new Touch(viewer.camera, viewer.renderer, this.mouse)
+    this._keyboard = new Keyboard(viewer.camera, viewer)
+    this._mouse = new Mouse(viewer, this._keyboard)
+    this._touch = new Touch(viewer.camera, viewer.renderer, this._mouse)
   }
 
   private reg = (
@@ -36,39 +36,39 @@ export class Input {
     listener: (event: any) => void
   ) => {
     handler.addEventListener(type, listener)
-    this.unregisters.push(() => handler.removeEventListener(type, listener))
+    this._unregisters.push(() => handler.removeEventListener(type, listener))
   }
 
   register () {
     // mouse
-    this.reg(this.canvas, 'mousedown', this.mouse.onMouseDown)
-    this.reg(this.canvas, 'wheel', this.mouse.onMouseWheel)
-    this.reg(this.canvas, 'mousemove', this.mouse.onMouseMove)
-    this.reg(this.canvas, 'mouseup', this.mouse.onMouseUp)
-    this.reg(this.canvas, 'mouseout', this.mouse.onMouseOut)
-    this.reg(this.canvas, 'dblclick', this.mouse.onDoubleClick)
+    this.reg(this._canvas, 'mousedown', this._mouse.onMouseDown)
+    this.reg(this._canvas, 'wheel', this._mouse.onMouseWheel)
+    this.reg(this._canvas, 'mousemove', this._mouse.onMouseMove)
+    this.reg(this._canvas, 'mouseup', this._mouse.onMouseUp)
+    this.reg(this._canvas, 'mouseout', this._mouse.onMouseOut)
+    this.reg(this._canvas, 'dblclick', this._mouse.onDoubleClick)
 
     // touch
-    this.reg(this.canvas, 'touchstart', this.touch.onTouchStart)
-    this.reg(this.canvas, 'touchend', this.touch.onTouchEnd)
-    this.reg(this.canvas, 'touchmove', this.touch.onTouchMove)
+    this.reg(this._canvas, 'touchstart', this._touch.onTouchStart)
+    this.reg(this._canvas, 'touchend', this._touch.onTouchEnd)
+    this.reg(this._canvas, 'touchmove', this._touch.onTouchMove)
 
     // keys
-    this.reg(document, 'keydown', this.keyboard.onKeyDown)
-    this.reg(document, 'keyup', this.keyboard.onKeyUp)
+    this.reg(document, 'keydown', this._keyboard.onKeyDown)
+    this.reg(document, 'keyup', this._keyboard.onKeyUp)
 
     // Disable right click menu
-    this.reg(this.canvas, 'contextmenu', (e) => e.preventDefault())
+    this.reg(this._canvas, 'contextmenu', (e) => e.preventDefault())
   }
 
   unregister = () => {
-    this.unregisters.forEach((f) => f())
+    this._unregisters.forEach((f) => f())
     this.reset()
   }
 
   reset () {
-    this.mouse.reset()
-    this.keyboard.reset()
-    this.touch.reset()
+    this._mouse.reset()
+    this._keyboard.reset()
+    this._touch.reset()
   }
 }

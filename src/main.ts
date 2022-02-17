@@ -1,5 +1,4 @@
-import * as geometry from './vim-loader/geometry'
-import { Viewer } from './vim-webgl-viewer/viewer'
+import * as VIM from './vim'
 
 // Parse URL
 const params = new URLSearchParams(window.location.search)
@@ -7,14 +6,14 @@ const url = params.has('vim')
   ? params.get('vim')
   : 'https://vim.azureedge.net/samples/residence.vim'
 
-let transparency: geometry.TransparencyMode = 'all'
+let transparency: VIM.Transparency.Mode = 'all'
 if (params.has('transparency')) {
   const t = params.get('transparency')
-  transparency = geometry.transparencyIsValid(t) ? t : 'all'
+  transparency = VIM.Transparency.IsValid(t) ? t : 'all'
 }
 
 // Create Viewer
-const viewer = new Viewer({
+const viewer = new VIM.Viewer({
   camera: { showGizmo: true },
   groundPlane: {
     show: true,

@@ -4,40 +4,42 @@
 
 import deepmerge from 'deepmerge'
 import { clone, cloneDeep } from 'lodash'
-import { transparencyIsValid, TransparencyMode } from './geometry'
+import { Transparency } from './geometry'
 import * as THREE from 'three'
 
-export type Vector3 = {
-  x: number
-  y: number
-  z: number
-}
-
-/**
- * Config object for loading a vim
- */
-export type VimOptions = {
-  /**
-   * Position offset for the vim
-   */
-  position: Vector3
-  /**
-   * Rotation for the vim
-   */
-  rotation: Vector3
-  /**
-   * Scale factor for the vim
-   */
-  scale: number
-  /**
-   * elements to include
-   */
-  elementIds?: number[]
+export namespace VimOptions {
+  export type Vector3 = {
+    x: number
+    y: number
+    z: number
+  }
 
   /**
-   * Defines how to draw or not to draw objects according to their transparency
+   * Config object for loading a vim
    */
-  transparency?: TransparencyMode
+  export type Root = {
+    /**
+     * Position offset for the vim
+     */
+    position: Vector3
+    /**
+     * Rotation for the vim
+     */
+    rotation: Vector3
+    /**
+     * Scale factor for the vim
+     */
+    scale: number
+    /**
+     * elements to include
+     */
+    elementIds?: number[]
+
+    /**
+     * Defines how to draw or not to draw objects according to their transparency
+     */
+    transparency?: Transparency.Mode
+  }
 }
 
 /**
@@ -46,10 +48,10 @@ export type VimOptions = {
  * <p>Provides default values for options</p>
  */
 export class VimSettings {
-  private options: VimOptions
+  private options: VimOptions.Root
 
-  constructor (options?: Partial<VimOptions>) {
-    const fallback: VimOptions = {
+  constructor (options?: Partial<VimOptions.Root>) {
+    const fallback: VimOptions.Root = {
       position: { x: 0, y: 0, z: 0 },
       rotation: { x: 0, y: 0, z: 0 },
       scale: 0.01,
@@ -58,12 +60,12 @@ export class VimSettings {
     }
 
     this.options = options ? deepmerge(fallback, options, undefined) : fallback
-    this.options.transparency = transparencyIsValid(this.options.transparency)
+    this.options.transparency = Transparency.IsValid(this.options.transparency)
       ? this.options.transparency
       : 'all'
   }
 
-  getOptions = () => cloneDeep(this.options) as VimOptions
+  getOptions = () => cloneDeep(this.options) as VimOptions.Root
 
   getPosition = () => toVec(this.options.position)
   getRotation = () => toQuaternion(this.options.rotation)
@@ -79,11 +81,11 @@ export class VimSettings {
   getTransparency = () => this.options.transparency
 }
 
-function toVec (obj: Vector3): THREE.Vector3 {
+function toVec (obj: VimOptions.Vector3): THREE.Vector3 {
   return new THREE.Vector3(obj.x, obj.y, obj.z)
 }
 
-function toQuaternion (rot: Vector3): THREE.Quaternion {
+function toQuaternion (rot: VimOptions.Vector3): THREE.Quaternion {
   return new THREE.Quaternion().setFromEuler(toEuler(toVec(rot)))
 }
 

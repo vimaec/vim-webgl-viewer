@@ -5,7 +5,8 @@
 import * as THREE from 'three'
 import { CameraGizmo } from './gizmos'
 import { Renderer } from './renderer'
-import { ViewerSettings } from './settings'
+import { ViewerSettings } from './viewerSettings'
+import { DEG2RAD } from 'three/src/math/MathUtils'
 
 export const DIRECTIONS = {
   forward: new THREE.Vector3(0, 0, -1),
@@ -48,24 +49,24 @@ export class Camera {
   }
 
   // Settings
-  private vimReferenceSize: number
-  private sceneSizeMultiplier: number = 1
-  private velocityBlendFactor: number = 0.0001
-  private moveSpeed: number = 0.8
-  private rotateSpeed: number = 1
-  private orbitSpeed: number = 1
-  private wheelSpeed: number = 0.2
+  private _vimReferenceSize: number
+  private _sceneSizeMultiplier: number = 1
+  private _velocityBlendFactor: number = 0.0001
+  private _moveSpeed: number = 0.8
+  private _rotateSpeed: number = 1
+  private _orbitSpeed: number = 1
+  private _wheelSpeed: number = 0.2
 
   constructor (renderer: Renderer, settings: ViewerSettings) {
-    this.gizmo = new CameraGizmo(this, renderer)
     this.camera = renderer.camera
+    this.gizmo = new CameraGizmo(renderer)
     this.applySettings(settings)
 
     this.inputVelocity = new THREE.Vector3(0, 0, 0)
     this.velocity = new THREE.Vector3(0, 0, 0)
     this.impulse = new THREE.Vector3(0, 0, 0)
     this.speedMultiplier = 0
-    this.sceneSizeMultiplier = 1
+    this._sceneSizeMultiplier = 1
     this.orbitalTarget = new THREE.Vector3(0, 0, 0)
     this.currentOrbitalDistance = this.camera.position
       .clone()
@@ -123,15 +124,15 @@ export class Camera {
     this.camera.updateProjectionMatrix()
 
     // Controls
-    this.moveSpeed = settings.getCameraMoveSpeed()
-    this.rotateSpeed = settings.getCameraRotateSpeed()
-    this.orbitSpeed = settings.getCameraOrbitSpeed()
+    this._moveSpeed = settings.getCameraMoveSpeed()
+    this._rotateSpeed = settings.getCameraRotateSpeed()
+    this._orbitSpeed = settings.getCameraOrbitSpeed()
 
     // Gizmo
     this.gizmo.applySettings(settings)
 
     // Values
-    this.vimReferenceSize = settings.getCameraReferenceVimSize()
+    this._vimReferenceSize = settings.getCameraReferenceVimSize()
   }
 
   /**
@@ -139,16 +140,19 @@ export class Camera {
    * @param sphere bounding sphere of the renderered scene
    */
   adaptToContent (sphere: THREE.Sphere) {
-    this.sceneSizeMultiplier = sphere.radius / this.vimReferenceSize
+    this._sceneSizeMultiplier = sphere.radius / this._vimReferenceSize
     // Gizmo
-    this.gizmo.adaptToContent(this.sceneSizeMultiplier)
+    const gizmoSize =
+      Math.tan((DEG2RAD * this.camera.fov) / 2) *
+      (this._sceneSizeMultiplier / 10)
+    this.gizmo.setScale(gizmoSize)
     this.gizmo.show(this.orbitMode)
   }
 
   addLocalImpulse (impulse: THREE.Vector3) {
     const localImpulse = impulse
       .clone()
-      .multiplyScalar(this.getSpeedMultiplier() * this.wheelSpeed)
+      .multiplyScalar(this.getSpeedMultiplier() * this._wheelSpeed)
     localImpulse.applyQuaternion(this.camera.quaternion)
     this.impulse.add(localImpulse)
   }
@@ -208,8 +212,8 @@ export class Camera {
     // Orbit will rotate 180 degree around the scene
     // Basic will rotate 180 degrees on itself
     const factor = this.orbitMode
-      ? Math.PI * this.orbitSpeed
-      : Math.PI * this.rotateSpeed
+      ? Math.PI * this._orbitSpeed
+      : Math.PI * this._rotateSpeed
 
     euler.y -= vector.x * factor
     euler.x -= vector.y * factor
@@ -240,7 +244,7 @@ export class Camera {
     const targetVelocity = this.inputVelocity.clone()
 
     // Update the camera velocity and position
-    const invBlendFactor = Math.pow(this.velocityBlendFactor, deltaTime)
+    const invBlendFactor = Math.pow(this._velocityBlendFactor, deltaTime)
     const blendFactor = 1.0 - invBlendFactor
 
     this.velocity.multiplyScalar(invBlendFactor)
@@ -268,7 +272,7 @@ export class Camera {
       // apply local space z to orbit distance,
       this.currentOrbitalDistance = Math.max(
         this.currentOrbitalDistance + local.z,
-        this.minOrbitalDistance * this.sceneSizeMultiplier
+        this.minOrbitalDistance * this._sceneSizeMultiplier
       )
       this.orbitalTargetDistance = this.currentOrbitalDistance
     }
@@ -301,8 +305,8 @@ export class Camera {
   private getSpeedMultiplier () {
     return (
       Math.pow(1.25, this.speedMultiplier) *
-      this.sceneSizeMultiplier *
-      this.moveSpeed
+      this._sceneSizeMultiplier *
+      this._moveSpeed
     )
   }
 
@@ -317,7 +321,7 @@ export class Camera {
 
   private isSignificant (vector: THREE.Vector3) {
     // One hundreth of standard scene size per frame
-    const min = (0.01 * this.sceneSizeMultiplier) / 60
+    const min = (0.01 * this._sceneSizeMultiplier) / 60
     return (
       Math.abs(vector.x) > min ||
       Math.abs(vector.y) > min ||

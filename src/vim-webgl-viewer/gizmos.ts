@@ -5,82 +5,74 @@
 import * as THREE from 'three'
 import { SphereGeometry } from 'three'
 import { Renderer } from './renderer'
-import { Camera } from './camera'
-import { ViewerSettings } from './settings'
-import { DEG2RAD } from 'three/src/math/MathUtils'
+import { ViewerSettings } from './viewerSettings'
 
 /**
  * Manages the camera target gizmo
  */
 export class CameraGizmo {
   // Dependencies
-  private camera: Camera
-  private renderer: Renderer
+  private _renderer: Renderer
 
   // Settings
-  private scale: number
-  private fov: number
+  private _scale: number
+  private _fov: number
 
   // Resources
-  private box: THREE.BufferGeometry
-  private wireframe: THREE.BufferGeometry
-  private material: THREE.Material
-  private materialAlways: THREE.Material
-  private gizmos: THREE.Group
+  private _box: THREE.BufferGeometry
+  private _wireframe: THREE.BufferGeometry
+  private _material: THREE.Material
+  private _materialAlways: THREE.Material
+  private _gizmos: THREE.Group
 
   // State
-  private timeout: ReturnType<typeof setTimeout>
-  private active: boolean
+  private _timeout: ReturnType<typeof setTimeout>
+  private _active: boolean
 
-  constructor (camera: Camera, renderer: Renderer) {
-    this.camera = camera
-    this.renderer = renderer
+  constructor (renderer: Renderer) {
+    this._renderer = renderer
   }
 
   show (show: boolean = true) {
-    if (!this.active) return
+    if (!this._active) return
 
-    if (!this.gizmos) {
+    if (!this._gizmos) {
       this.createGizmo()
     }
 
-    clearTimeout(this.timeout)
-    this.gizmos.visible = show
+    clearTimeout(this._timeout)
+    this._gizmos.visible = show
     // Hide after one second since last request
     if (show) {
-      this.timeout = setTimeout(() => (this.gizmos.visible = false), 1000)
+      this._timeout = setTimeout(() => (this._gizmos.visible = false), 1000)
     }
   }
 
   setPosition (position: THREE.Vector3) {
-    this.gizmos?.position.copy(position)
+    this._gizmos?.position.copy(position)
   }
 
   applySettings (settings: ViewerSettings) {
-    this.active = settings.getCameraShowGizmo()
-    this.fov = settings.getCameraFov()
-  }
-
-  adaptToContent (factor: number) {
-    this.setScale((Math.tan((DEG2RAD * this.fov) / 2) * factor) / 10)
+    this._active = settings.getCameraShowGizmo()
+    this._fov = settings.getCameraFov()
   }
 
   setScale (scale: number = 1) {
-    this.gizmos?.scale.set(scale, scale, scale)
-    this.scale = scale
+    this._gizmos?.scale.set(scale, scale, scale)
+    this._scale = scale
   }
 
   private createGizmo () {
-    this.box = new SphereGeometry(1)
-    this.wireframe = new THREE.WireframeGeometry(this.box)
+    this._box = new SphereGeometry(1)
+    this._wireframe = new THREE.WireframeGeometry(this._box)
 
-    this.material = new THREE.LineBasicMaterial({
+    this._material = new THREE.LineBasicMaterial({
       depthTest: true,
       opacity: 0.5,
       color: new THREE.Color(0x0000ff),
       transparent: true
     })
-    this.materialAlways = new THREE.LineBasicMaterial({
+    this._materialAlways = new THREE.LineBasicMaterial({
       depthTest: false,
       opacity: 0.05,
       color: new THREE.Color(0x0000ff),
@@ -88,25 +80,27 @@ export class CameraGizmo {
     })
 
     // Add to scene as group
-    this.gizmos = new THREE.Group()
-    this.gizmos.add(new THREE.LineSegments(this.wireframe, this.material))
-    this.gizmos.add(new THREE.LineSegments(this.wireframe, this.materialAlways))
-    this.renderer.addObject(this.gizmos)
+    this._gizmos = new THREE.Group()
+    this._gizmos.add(new THREE.LineSegments(this._wireframe, this._material))
+    this._gizmos.add(
+      new THREE.LineSegments(this._wireframe, this._materialAlways)
+    )
+    this._renderer.addObject(this._gizmos)
 
-    this.setScale(this.scale)
+    this.setScale(this._scale)
   }
 
   dispose () {
-    this.box.dispose()
-    this.wireframe.dispose()
-    this.material.dispose()
-    this.materialAlways.dispose()
-    this.box = null
-    this.wireframe = null
-    this.material = null
-    this.materialAlways = null
+    this._box.dispose()
+    this._wireframe.dispose()
+    this._material.dispose()
+    this._materialAlways.dispose()
+    this._box = null
+    this._wireframe = null
+    this._material = null
+    this._materialAlways = null
 
-    this.renderer.removeObject(this.gizmos)
-    this.gizmos = null
+    this._renderer.removeObject(this._gizmos)
+    this._gizmos = null
   }
 }

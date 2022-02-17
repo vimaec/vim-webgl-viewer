@@ -5,8 +5,8 @@
 // external
 import * as THREE from 'three'
 import { Vim } from './vim'
-import * as meshing from './mesh'
-import * as vimGeometry from './geometry'
+import { Mesh } from './mesh'
+import { Geometry } from './geometry'
 
 /**
  * High level api to interact with the loaded vim geometry and data.
@@ -15,9 +15,9 @@ export class Object {
   vim: Vim
   element: number
   instances: number[]
-  color: THREE.Color | undefined
-  private boundingBox: THREE.Box3 | undefined
-  private meshes: [THREE.Mesh, number][]
+  private _color: THREE.Color | undefined
+  private _boundingBox: THREE.Box3 | undefined
+  private _meshes: [THREE.Mesh, number][]
 
   constructor (
     vim: Vim,
@@ -28,7 +28,11 @@ export class Object {
     this.vim = vim
     this.element = element
     this.instances = instances
-    this.meshes = meshes
+    this._meshes = meshes
+  }
+
+  get color () {
+    return this._color
   }
 
   /**
@@ -42,18 +46,18 @@ export class Object {
    * returns the bounding box of the object from cache or computed if needed.
    */
   getBoundingBox () {
-    if (this.boundingBox) return this.boundingBox
+    if (this._boundingBox) return this._boundingBox
 
-    const geometry = vimGeometry.createGeometryFromInstances(
+    const geometry = Geometry.createGeometryFromInstances(
       this.vim.document.g3d,
       this.instances
     )
     geometry.applyMatrix4(this.vim.getMatrix())
 
     geometry.computeBoundingBox()
-    this.boundingBox = geometry.boundingBox
+    this._boundingBox = geometry.boundingBox
     geometry.dispose()
-    return this.boundingBox
+    return this._boundingBox
   }
 
   /**
@@ -75,9 +79,10 @@ export class Object {
    * Creates a new three wireframe Line object from the object geometry
    */
   createWireframe () {
-    const wireframe = meshing
-      .getDefaultBuilder()
-      .createWireframe(this.vim.document.g3d, this.instances)
+    const wireframe = Mesh.getDefaultBuilder().createWireframe(
+      this.vim.document.g3d,
+      this.instances
+    )
     wireframe.applyMatrix4(this.vim.getMatrix())
     return wireframe
   }
@@ -87,15 +92,15 @@ export class Object {
    * @param color Color to apply, undefined to revert to default color.
    */
   changeColor (color: THREE.Color | undefined = undefined) {
-    for (let m = 0; m < this.meshes.length; m++) {
-      const [mesh, index] = this.meshes[m]
+    for (let m = 0; m < this._meshes.length; m++) {
+      const [mesh, index] = this._meshes[m]
       if (mesh.userData.merged) {
         this.changeMergedMeshColor(mesh, index, color)
       } else {
         this.changeInstancedMeshColor(mesh as THREE.InstancedMesh, index, color)
       }
     }
-    this.color = color
+    this._color = color
   }
 
   /**

@@ -15,14 +15,18 @@ export class Selection {
   private viewer: Viewer
 
   // State
-  object: Object | undefined = undefined
-  boundingSphere: THREE.Sphere | null = null
+  object: Object | undefined
+  private _boundingSphere: THREE.Sphere | undefined
 
   // Disposable State
-  private highlightDisposer: Function | null = null
+  private _highlightDisposer: Function | undefined
 
   constructor (viewer: Viewer) {
     this.viewer = viewer
+  }
+
+  getBoundingSphere (target: THREE.Sphere = new THREE.Sphere()) {
+    return target.copy(this._boundingSphere)
   }
 
   hasSelection () {
@@ -31,13 +35,13 @@ export class Selection {
 
   clear () {
     this.object = undefined
-    this.boundingSphere = null
+    this._boundingSphere = null
     this.disposeResources()
   }
 
   disposeResources () {
-    this.highlightDisposer?.()
-    this.highlightDisposer = null
+    this._highlightDisposer?.()
+    this._highlightDisposer = null
   }
 
   select (object: Object) {
@@ -45,7 +49,7 @@ export class Selection {
     this.object = object
     const wireframe = object.createWireframe()
     this.viewer.renderer.addObject(wireframe)
-    this.highlightDisposer = () => this.viewer.renderer.removeObject(wireframe)
-    this.boundingSphere = object.getBoundingSphere()
+    this._highlightDisposer = () => this.viewer.renderer.removeObject(wireframe)
+    this._boundingSphere = object.getBoundingSphere()
   }
 }

@@ -60,11 +60,11 @@ export class HitTestResult {
 }
 
 export class HitTester {
-  private viewer: Viewer
-  private raycaster = new THREE.Raycaster()
+  private _viewer: Viewer
+  private _raycaster = new THREE.Raycaster()
 
   constructor (viewer: Viewer) {
-    this.viewer = viewer
+    this._viewer = viewer
   }
 
   /**
@@ -83,9 +83,9 @@ export class HitTester {
       // Merged meshes have g3d intance index of each face encoded in uvs
       if (hit.object.userData.merged && hit.uv !== undefined) {
         const instance = Math.round(hit.uv.x)
-        r.object = this.viewer.getVim(vimIndex).getObjectFromInstance(instance)
+        r.object = this._viewer.getVim(vimIndex).getObjectFromInstance(instance)
       } else if (hit.instanceId !== undefined) {
-        r.object = this.viewer
+        r.object = this._viewer
           .getVim(vimIndex)
           .getObjectFromMesh(hit.object as THREE.InstancedMesh, hit.instanceId)
       }
@@ -94,13 +94,13 @@ export class HitTester {
   }
 
   private raycast (position: THREE.Vector2): ThreeIntersectionList {
-    const [width, height] = this.viewer.renderer.getContainerSize()
+    const [width, height] = this._viewer.renderer.getContainerSize()
     const x = (position.x / width) * 2 - 1
     const y = -(position.y / height) * 2 + 1
-    this.raycaster.setFromCamera(
+    this._raycaster.setFromCamera(
       new THREE.Vector2(x, y),
-      this.viewer.camera.camera
+      this._viewer.camera.camera
     )
-    return this.raycaster.intersectObjects(this.viewer.renderer.scene.children)
+    return this._raycaster.intersectObjects(this._viewer.renderer.scene.children)
   }
 }

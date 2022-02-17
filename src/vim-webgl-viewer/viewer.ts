@@ -3,7 +3,7 @@
 */
 
 // internal
-import { ViewerSettings, ViewerOptions } from './settings'
+import { ViewerSettings, ViewerOptions } from './viewerSettings'
 import { Camera } from './camera'
 import { Input } from './input'
 import { Selection } from './selection'
@@ -12,8 +12,8 @@ import { Renderer } from './renderer'
 import { HitTestResult } from './hitTester'
 
 // loader
-import { VimSettings, VimOptions } from '../vim-loader/settings'
-import { VimLoader } from '../vim-loader/vimLoader'
+import { VimSettings, VimOptions } from '../vim-loader/vimSettings'
+import { Loader } from '../vim-loader/loader'
 import { Vim } from '../vim-loader/vim'
 import { Object } from '../vim-loader/object'
 
@@ -28,10 +28,10 @@ export class Viewer {
   selection: Selection
   camera: Camera
   controls: Input
-  loader: VimLoader
+  loader: Loader
 
   // State
-  private vims: Vim[] = []
+  private _vims: Vim[] = []
 
   /**
    * Callback for on mouse click. Replace it to override or combine
@@ -39,8 +39,8 @@ export class Viewer {
    */
   onMouseClick: (hit: HitTestResult) => void
 
-  constructor (options?: Partial<ViewerOptions>) {
-    this.loader = new VimLoader()
+  constructor (options?: Partial<ViewerOptions.Root>) {
+    this.loader = new Loader()
     this.settings = new ViewerSettings(options)
 
     const canvas = Viewer.getOrCreateCanvas(this.settings.getCanvasId())
@@ -75,6 +75,7 @@ export class Viewer {
       canvas = document.createElement('canvas')
       document.body.appendChild(canvas)
     }
+
     return canvas
   }
 
@@ -85,23 +86,22 @@ export class Viewer {
     // Camera
     const timeDelta = this.renderer.clock.getDelta()
     this.camera.update(timeDelta)
-
     // Rendering
-    if (this.vims.length) this.renderer.render()
+    if (this._vims.length) this.renderer.render()
   }
 
   /**
    * Returns vim with given index. Once loaded vims do not change index.
    */
-  getVim = (index: number = 0) => this.vims[index]
+  getVim = (index: number = 0) => this._vims[index]
 
   /**
    * Adds given vim to the first empty spot of the vims array
    */
   private addVim (vim: Vim) {
-    for (let i = 0; i <= this.vims.length; i++) {
-      if (this.vims[i] === undefined) {
-        this.vims[i] = vim
+    for (let i = 0; i <= this._vims.length; i++) {
+      if (this._vims[i] === undefined) {
+        this._vims[i] = vim
         vim.index = i
         return
       }
@@ -112,7 +112,7 @@ export class Viewer {
    * Remove given vim from the vims array and leaves an undefined spot.
    */
   private removeVim (vim: Vim) {
-    this.vims[vim.index] = undefined
+    this._vims[vim.index] = undefined
     vim.index = -1
   }
 
@@ -128,7 +128,7 @@ export class Viewer {
     source:
       | string
       | ArrayBuffer = 'https://vim.azureedge.net/samples/residence.vim',
-    options?: Partial<VimOptions>,
+    options?: Partial<VimOptions.Root>,
     onLoad?: (response: Vim) => void,
     onProgress?: (request: ProgressEvent | 'processing') => void,
     onError?: (event: ErrorEvent) => void
@@ -186,7 +186,7 @@ export class Viewer {
    * Unload existing vim and reloads it without redownloading it
    * @param options full vim options, same as for loadVim
    */
-  reloadVim (vim: Vim, options: VimOptions) {
+  reloadVim (vim: Vim, options: VimOptions.Root) {
     const settings = new VimSettings(options)
     const elementIds = settings.getElementIdsFilter()
 
@@ -214,19 +214,9 @@ export class Viewer {
   }
 
   /**
-   * Reloads the current vim with the same settings except it removes element filter
-   */
-  clearFilter (vim: Vim) {
-    // TODO: Fix this
-    const options = vim.settings.getOptions()
-    options.elementIds = undefined
-    this.reloadVim(vim, options)
-  }
-
-  /**
    * Select given vim object
    */
-  select (object: Object) {
+  selectObject (object: Object) {
     console.log(`Selected Element Index: ${object.element}`)
     this.selection.select(object)
   }
@@ -243,8 +233,7 @@ export class Viewer {
    * Look at given object
    */
   lookAtObject (object: Object) {
-    const center = object.getCenter()
-    this.camera.lookAtPosition(center)
+    this.camera.lookAtPosition(object.getCenter())
   }
 
   /**
@@ -259,7 +248,7 @@ export class Viewer {
    */
   frameSelection () {
     if (this.selection.hasSelection()) {
-      this.camera.frameSphere(this.selection.boundingSphere!)
+      this.camera.frameSphere(this.selection.getBoundingSphere())
     } else {
       this.frameContent()
     }
@@ -272,19 +261,11 @@ export class Viewer {
     this.camera.frameSphere(this.renderer.getBoundingSphere())
   }
 
-  /**
-   * Apply modified viewer settings
-   */
-  public ApplyViewerSettings () {
-    this.environment.applySettings(this.settings)
-    this.camera.applySettings(this.settings)
-  }
-
   private defaultOnClick (hit: HitTestResult) {
     console.log(hit)
     if (!hit.object) return
 
-    this.select(hit.object)
+    this.selectObject(hit.object)
 
     this.camera.setTarget(hit.object.getCenter())
 

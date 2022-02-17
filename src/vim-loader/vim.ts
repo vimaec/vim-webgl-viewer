@@ -5,7 +5,7 @@
 import * as THREE from 'three'
 import { Document } from './document'
 import { Scene } from './scene'
-import { VimSettings } from './settings'
+import { VimSettings } from './vimSettings'
 import { Object } from './object'
 
 /**
@@ -17,15 +17,15 @@ export class Vim {
   scene: Scene
   settings: VimSettings
   private _index: number
-  private elementToInstance: Map<number, number[]>
-  private elementIdToElement: Map<number, number>
-  private elementToObject: Map<number, Object> = new Map<number, Object>()
+  private _elementToInstance: Map<number, number[]>
+  private _elementIdToElement: Map<number, number>
+  private _elementToObject: Map<number, Object> = new Map<number, Object>()
 
   constructor (vim: Document, scene: Scene) {
     this.document = vim
     this.scene = scene
-    this.elementToInstance = this.mapElementToInstance()
-    this.elementIdToElement = this.mapElementIdToElement()
+    this._elementToInstance = this.mapElementToInstance()
+    this._elementIdToElement = this.mapElementIdToElement()
   }
 
   private mapElementToInstance (): Map<number, number[]> {
@@ -108,21 +108,21 @@ export class Vim {
   }
 
   getObjectFromElementId (id: number) {
-    const element = this.elementIdToElement.get(id)
+    const element = this._elementIdToElement.get(id)
     return this.getObjectFromElement(element)
   }
 
   getObjectFromElement (index: number) {
-    if (this.elementToObject.has(index)) {
-      return this.elementToObject.get(index)
+    if (this._elementToObject.has(index)) {
+      return this._elementToObject.get(index)
     }
 
-    const instances = this.elementToInstance.get(index)
+    const instances = this._elementToInstance.get(index)
     const meshes = this.getMeshesFromInstances(instances)
     if (!meshes) return
 
     const result = new Object(this, index, instances, meshes)
-    this.elementToObject.set(index, result)
+    this._elementToObject.set(index, result)
     return result
   }
 
