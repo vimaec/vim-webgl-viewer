@@ -60,7 +60,7 @@ export class VimSettings {
     }
 
     this.options = options ? deepmerge(fallback, options, undefined) : fallback
-    this.options.transparency = Transparency.IsValid(this.options.transparency)
+    this.options.transparency = Transparency.isValid(this.options.transparency)
       ? this.options.transparency
       : 'all'
   }

@@ -9,7 +9,7 @@ const url = params.has('vim')
 let transparency: VIM.Transparency.Mode = 'all'
 if (params.has('transparency')) {
   const t = params.get('transparency')
-  transparency = VIM.Transparency.IsValid(t) ? t : 'all'
+  transparency = VIM.Transparency.isValid(t) ? t : 'all'
 }
 
 // Create Viewer
@@ -71,3 +71,4 @@ function load2 () {
 }
 
 globalThis.viewer = viewer
+globalThis.VIM = VIM

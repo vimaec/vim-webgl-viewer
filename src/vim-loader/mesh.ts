@@ -40,12 +40,12 @@ export namespace Mesh {
           ? meshInstances.filter((i) => set.has(i))
           : meshInstances
         if (meshInstances.length <= 1) continue
-        if (!Transparency.Match(transparency, g3d.meshTransparent[mesh])) {
+        if (!Transparency.match(transparency, g3d.meshTransparent[mesh])) {
           continue
         }
 
         const useAlpha =
-          Transparency.RequiresAlpha(transparency) && g3d.meshTransparent[mesh]
+          Transparency.requiresAlpha(transparency) && g3d.meshTransparent[mesh]
         const geometry = Geometry.createGeometryFromMesh(g3d, mesh, useAlpha)
         const resultMesh = this.createInstancedMesh(
           geometry,
@@ -107,7 +107,7 @@ export namespace Mesh {
         : Geometry.Merger.createFromUniqueMeshes(g3d, transparency)
 
       const geometry = merger.toBufferGeometry()
-      const material = Transparency.RequiresAlpha(transparency)
+      const material = Transparency.requiresAlpha(transparency)
         ? this.materials.transparent
         : this.materials.opaque
 

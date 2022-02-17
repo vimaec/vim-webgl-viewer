@@ -3,7 +3,6 @@
  */
 
 import * as THREE from 'three'
-import { SphereGeometry } from 'three'
 import { Renderer } from './renderer'
 import { ViewerSettings } from './viewerSettings'
 
@@ -63,7 +62,7 @@ export class CameraGizmo {
   }
 
   private createGizmo () {
-    this._box = new SphereGeometry(1)
+    this._box = new THREE.SphereGeometry(1)
     this._wireframe = new THREE.WireframeGeometry(this._box)
 
     this._material = new THREE.LineBasicMaterial({

@@ -217,7 +217,7 @@ export class Scene {
     }
 
     // Add transparent geometry
-    if (Transparency.RequiresAlpha(transparency)) {
+    if (Transparency.requiresAlpha(transparency)) {
       const transparent = Scene.createFromMergeableMeshes(
         g3d,
         'transparentOnly',

@@ -14,7 +14,7 @@ export namespace Transparency {
   /**
    * Returns true if the transparency mode is one of the valid values
    */
-  export function IsValid (value: string): value is Mode {
+  export function isValid (value: string): value is Mode {
     return ['all', 'opaqueOnly', 'transparentOnly', 'allAsOpaque'].includes(
       value
     )
@@ -23,14 +23,14 @@ export namespace Transparency {
   /**
    * Returns true if the transparency mode requires to use RGBA colors
    */
-  export function RequiresAlpha (mode: Mode) {
+  export function requiresAlpha (mode: Mode) {
     return mode === 'all' || mode === 'transparentOnly'
   }
 
   /**
    * Returns true if the transparency mode requires using meshes of given opacity
    */
-  export function Match (mode: Mode, transparent: boolean) {
+  export function match (mode: Mode, transparent: boolean) {
     return (
       mode === 'allAsOpaque' ||
       mode === 'all' ||
@@ -130,7 +130,7 @@ export namespace Geometry {
       vertexCount: number
     ) {
       this._g3d = g3d
-      this._colorSize = Transparency.RequiresAlpha(transparency) ? 4 : 3
+      this._colorSize = Transparency.requiresAlpha(transparency) ? 4 : 3
       this._instances = instances
       this._meshes = meshes
 
@@ -158,7 +158,7 @@ export namespace Geometry {
       for (let mesh = 0; mesh < meshCount; mesh++) {
         const meshInstances = g3d.meshInstances[mesh]
         if (!meshInstances || meshInstances.length !== 1) continue
-        if (!Transparency.Match(transparency, g3d.meshTransparent[mesh])) {
+        if (!Transparency.match(transparency, g3d.meshTransparent[mesh])) {
           continue
         }
 
@@ -193,7 +193,7 @@ export namespace Geometry {
         const instance = instances[i]
         const mesh = g3d.instanceMeshes[instance]
         if (mesh < 0) continue
-        if (!Transparency.Match(transparency, g3d.meshTransparent[mesh])) {
+        if (!Transparency.match(transparency, g3d.meshTransparent[mesh])) {
           continue
         }
 
