@@ -9,7 +9,7 @@ import { Box3 } from 'three'
 /**
  * Manages the THREE.Mesh for the ground plane under the vims
  */
-class GroundPlane {
+export class GroundPlane {
   source: string
   mesh: THREE.Mesh
   size: number

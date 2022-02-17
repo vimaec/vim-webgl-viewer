@@ -4,7 +4,7 @@
 
 import { BFast } from './bfast'
 
-class AttributeDescriptor {
+export class G3dAttributeDescriptor {
   // original descriptor string
   description: string
   // Indicates the part of the geometry that this attribute is associated with
@@ -38,7 +38,7 @@ class AttributeDescriptor {
     this.dataArity = parseInt(dataArity)
   }
 
-  static fromString (descriptor: string): AttributeDescriptor {
+  static fromString (descriptor: string): G3dAttributeDescriptor {
     const desc = descriptor.split(':')
 
     if (desc.length !== 6) {
@@ -48,7 +48,7 @@ class AttributeDescriptor {
     return new this(descriptor, desc[1], desc[2], desc[3], desc[4], desc[5])
   }
 
-  matches (other: AttributeDescriptor) {
+  matches (other: G3dAttributeDescriptor) {
     const match = (a: string, b: string) => a === '*' || b === '*' || a === b
 
     return (
@@ -60,19 +60,19 @@ class AttributeDescriptor {
   }
 }
 
-class Attribute {
-  descriptor: AttributeDescriptor
+export class G3dAttribute {
+  descriptor: G3dAttributeDescriptor
   bytes: Uint8Array
   data: Uint8Array | Int16Array | Int32Array | Float32Array | Float64Array
 
-  constructor (descriptor: AttributeDescriptor, bytes: Uint8Array) {
+  constructor (descriptor: G3dAttributeDescriptor, bytes: Uint8Array) {
     this.descriptor = descriptor
     this.bytes = bytes
-    this.data = Attribute.castData(bytes, descriptor.dataType)
+    this.data = G3dAttribute.castData(bytes, descriptor.dataType)
   }
 
-  static fromString (descriptor: string, buffer: Uint8Array): Attribute {
-    return new this(AttributeDescriptor.fromString(descriptor), buffer)
+  static fromString (descriptor: string, buffer: Uint8Array): G3dAttribute {
+    return new this(G3dAttributeDescriptor.fromString(descriptor), buffer)
   }
 
   // Converts a VIM attribute into a typed array from its raw data
@@ -121,17 +121,17 @@ class Attribute {
  * The G3D format is designed to be used either as a serialization format or as an in-memory data structure.
  * See https://github.com/vimaec/g3d
  */
-class AbstractG3d {
+export class G3dAbstract {
   meta: string
-  attributes: Attribute[]
+  attributes: G3dAttribute[]
 
-  constructor (meta: string, attributes: Attribute[]) {
+  constructor (meta: string, attributes: G3dAttribute[]) {
     this.meta = meta
     this.attributes = attributes
   }
 
-  findAttribute (descriptor: string): Attribute | null {
-    const filter = AttributeDescriptor.fromString(descriptor)
+  findAttribute (descriptor: string): G3dAttribute | null {
+    const filter = G3dAttributeDescriptor.fromString(descriptor)
     for (let i = 0; i < this.attributes.length; ++i) {
       const attribute = this.attributes[i]
       if (attribute.descriptor.matches(filter)) return attribute
@@ -140,7 +140,7 @@ class AbstractG3d {
   }
 
   // Given a BFAST container (header/names/buffers) constructs a G3D data structure
-  static fromBfast (bfast: BFast): AbstractG3d {
+  static fromBfast (bfast: BFast): G3dAbstract {
     if (bfast.buffers.length < 2) {
       throw new Error('G3D requires at least two BFast buffers')
     }
@@ -156,17 +156,17 @@ class AbstractG3d {
     const meta = new TextDecoder('utf-8').decode(metaBuffer)
 
     // Parse remaining buffers as Attributes
-    const attributes: Attribute[] = []
+    const attributes: G3dAttribute[] = []
     const nDescriptors = bfast.buffers.length - 1
     for (let i = 0; i < nDescriptors; ++i) {
-      const attribute = Attribute.fromString(
+      const attribute = G3dAttribute.fromString(
         bfast.names[i + 1],
         bfast.buffers[i + 1]
       )
       attributes.push(attribute)
     }
 
-    return new AbstractG3d(meta, attributes)
+    return new G3dAbstract(meta, attributes)
   }
 }
 /**
@@ -206,7 +206,7 @@ export class G3d {
   meshInstances: Array<Array<number>>
   meshTransparent: Array<boolean>
 
-  rawG3d: AbstractG3d
+  rawG3d: G3dAbstract
 
   MATRIX_SIZE = 16
   COLOR_SIZE = 4
@@ -216,7 +216,7 @@ export class G3d {
    */
   DEFAULT_COLOR = new Float32Array([1, 1, 1, 1])
 
-  constructor (g3d: AbstractG3d) {
+  constructor (g3d: G3dAbstract) {
     this.rawG3d = g3d
 
     this.positions = g3d.findAttribute(VimAttributes.positions)
@@ -425,7 +425,7 @@ export class G3d {
    * Parses a new instance of G3d from a bfast reprensatation of the format.
    */
   static createFromBfast (bfast: BFast): G3d {
-    const base = AbstractG3d.fromBfast(bfast)
+    const base = G3dAbstract.fromBfast(bfast)
     return new G3d(base)
   }
 
