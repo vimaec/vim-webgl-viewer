@@ -143,7 +143,7 @@ export class ViewerSettings {
         showGizmo: true
       },
       groundPlane: {
-        show: true,
+        show: false,
         texture: null,
         opacity: 1,
         color: { r: 0xff, g: 0xff, b: 0xff },
