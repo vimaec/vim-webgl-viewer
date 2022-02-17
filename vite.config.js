@@ -6,7 +6,7 @@ export default defineConfig({
     lib: {
       formats: ['iife', 'es'],
       entry: './src/vim.ts',
-      name: 'vim'
+      name: 'VIM'
     },
     // Minify set to true will break the IIFE output
     minify: false,
