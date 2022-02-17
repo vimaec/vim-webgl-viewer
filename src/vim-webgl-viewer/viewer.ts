@@ -214,19 +214,16 @@ export class Viewer {
   }
 
   /**
-   * Select given vim object
+   * Select given vim object or clear selection if undefined
    */
-  selectObject (object: Object) {
-    console.log(`Selected Element Index: ${object.element}`)
-    this.selection.select(object)
-  }
-
-  /**
-   * Clear current selection
-   */
-  clearSelection () {
-    this.selection.clear()
-    console.log('Selection Cleared')
+  selectObject (object: Object | undefined) {
+    if (object) {
+      console.log(`Selected Element Index: ${object.element}`)
+      this.selection.select(object)
+    } else {
+      console.log('Selection Cleared')
+      this.selection.clear()
+    }
   }
 
   /**

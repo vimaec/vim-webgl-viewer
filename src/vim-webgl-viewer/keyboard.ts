@@ -168,7 +168,7 @@ export class Keyboard {
           break
         // Selection
         case KEYS.KEY_ESCAPE:
-          this._viewer.clearSelection()
+          this._viewer.selectObject(undefined)
           event.preventDefault()
           break
         case KEYS.KEY_Z:
