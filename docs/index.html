@@ -22,7 +22,7 @@
 </head>
 <body>
     <script src="https://unpkg.com/three@0.133.1/build/three.min.js"></script>
-    <script src="https://unpkg.com/vim-webgl-viewer@1.1.28"></script>
+    <script src="https://unpkg.com/vim-webgl-viewer@1.1.29"></script>
     <script>
       // Parse URL
       const params = new URLSearchParams(window.location.search)
@@ -37,9 +37,9 @@
       }
 
       // Create Viewer
-      const viewer = new vim.Viewer({
+      const viewer = new VIM.Viewer({
         camera: { showGizmo: true },
-        plane: {
+        groundPlane: {
           show: true,
           texture:
             'https://vimdevelopment01storage.blob.core.windows.net/textures/vim-floor-soft.png',
