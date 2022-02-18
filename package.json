@@ -6,7 +6,7 @@
     "dist"
   ],
   "main": "./dist/vim-webgl-viewer.iife.js",
-  "types": "./dist/types/types.d.ts",
+  "types": "./dist/types/vim.d.ts",
   "module": "/dist/vim-webgl-viewer.es.js",
   "homepage": "https://github.com/vimaec/vim-webgl-viewer.git",
   "bugs": {
