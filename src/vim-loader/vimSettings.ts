@@ -3,7 +3,7 @@
  */
 
 import deepmerge from 'deepmerge'
-import { clone, cloneDeep } from 'lodash'
+import { clone, cloneDeep } from 'lodash-es'
 import { Transparency } from './geometry'
 import * as THREE from 'three'
 
