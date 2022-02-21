@@ -1,5 +1,4 @@
 /**
- * Document is the parsed content of a vim, including geometry data, bim data and other meta data.
  * @module vim-loader
  */
 
@@ -8,10 +7,14 @@ import { G3d } from './g3d'
 
 export type EntityTable = Map<string, ArrayLike<number>>
 
+/**
+ * Document is the parsed content of a vim, including geometry data, bim data and other meta data.
+ * See https://github.com/vimaec/vim
+ */
 export class Document {
-  static tableElement = 'Vim.Element'
-  static tableElementLegacy = 'Rvt.Element'
-  static tableNode = 'Vim.Node'
+  private static TABLE_ELEMENT = 'Vim.Element'
+  private static TABLE_ELEMENT_LEGACY = 'Rvt.Element'
+  private static TABLE_NODE = 'Vim.Node'
 
   header: string
   assets: BFast
@@ -19,6 +22,7 @@ export class Document {
   entities: Map<string, EntityTable>
   strings: string[]
 
+  private _instanceToElement: number[]
   constructor (
     header: string,
     assets: BFast,
@@ -33,7 +37,15 @@ export class Document {
     this.strings = strings
   }
 
-  getEntity (type: string, index: number): any {
+  /**
+   * Returns BIM data for given element
+   * @param element element index
+   */
+  getElement (element: number) {
+    return this.getEntity(Document.TABLE_ELEMENT, element)
+  }
+
+  getEntity (type: string, index: number) {
     const r = new Map<string, string | number>()
     if (index < 0) return r
     const table = this.entities?.get(type)
@@ -52,13 +64,74 @@ export class Document {
     return r
   }
 
-  static parseFromArrayBuffer (data: ArrayBuffer) {
-    const bfast = BFast.fromArrayBuffer(data)
-    return Document.parseFromBFast(bfast)
+  /**
+   * Returns the element index associated with the g3d instance index.
+   * @param instance g3d instance index
+   * @returns element index or -1 if not found
+   */
+  getElementFromInstance (instance: number): number {
+    return this.getInstanceToElementMap()[instance]
   }
 
-  // Given a BFAST container (header/names/buffers) constructs a VIM data structure
-  static parseFromBFast (bfast: BFast): Document {
+  getInstanceCount () {
+    return this.getInstanceToElementMap().length
+  }
+
+  getStringColumn = (table: any, colNameNoPrefix: string): number[] =>
+    table?.get('string:' + colNameNoPrefix)
+
+  getIndexColumn = (table: any, tableName: string, fieldName: string) =>
+    table?.get(`index:${tableName}:${fieldName}`)
+
+  getDataColumn = (table: any, typePrefix: any, colNameNoPrefix: any) =>
+    table?.get(typePrefix + colNameNoPrefix) ??
+    table?.get('numeric:' + colNameNoPrefix) // Backwards compatible call with vim0.9
+
+  getIntColumn = (table: any, colNameNoPrefix: string) =>
+    this.getDataColumn(table, 'int:', colNameNoPrefix)
+
+  getByteColumn = (table: any, colNameNoPrefix: string) =>
+    this.getDataColumn(table, 'byte:', colNameNoPrefix)
+
+  getFloatColumn = (table: any, colNameNoPrefix: string) =>
+    this.getDataColumn(table, 'float:', colNameNoPrefix)
+
+  getDoubleColumn = (table: any, colNameNoPrefix: string) =>
+    this.getDataColumn(table, 'double:', colNameNoPrefix)
+
+  private getInstanceToElementMap (): number[] {
+    if (this._instanceToElement) return this._instanceToElement
+    const table = this.getInstanceTable()
+    this._instanceToElement =
+      this.getIndexColumn(table, Document.TABLE_ELEMENT, 'Element') ??
+      // Backwards compatible call with vim0.9
+      table?.get(Document.TABLE_ELEMENT_LEGACY)
+
+    return this._instanceToElement
+  }
+
+  getElementTable = () =>
+    this.entities?.get(Document.TABLE_ELEMENT) ??
+    this.entities?.get(Document.TABLE_ELEMENT_LEGACY)
+
+  getInstanceTable = () => this.entities.get(Document.TABLE_NODE)
+
+  /**
+   * Creates a new Document instance from an array buffer of a vim file
+   * @param data array representation of a vim
+   * @returns a Document instance
+   */
+  static createFromArrayBuffer (data: ArrayBuffer) {
+    const bfast = BFast.createFromArrayBuffer(data)
+    return Document.createFromBFast(bfast)
+  }
+
+  /**
+   * Creates a new Document instance from a bfast following the vim format
+   * @param data Bfast reprentation of a vim
+   * @returns a Document instance
+   */
+  static createFromBFast (bfast: BFast): Document {
     if (bfast.buffers.length < 5) {
       throw new Error('VIM requires at least five BFast buffers')
     }
@@ -75,9 +148,11 @@ export class Document {
     const stringData = lookup.get('strings')
 
     const header = new TextDecoder('utf-8').decode(headerData)
-    const g3d = G3d.fromBfast(BFast.fromArray(g3dData))
-    const assets = BFast.fromArray(assetData)
-    const entities = Document.parseEntityTables(BFast.fromArray(entityData))
+    const g3d = G3d.createFromBfast(BFast.createFromArray(g3dData))
+    const assets = BFast.createFromArray(assetData)
+    const entities = Document.parseEntityTables(
+      BFast.createFromArray(entityData)
+    )
     const strings = new TextDecoder('utf-8').decode(stringData).split('\0')
 
     g3d.validate()
@@ -85,19 +160,19 @@ export class Document {
     return new Document(header, assets, g3d, entities, strings)
   }
 
-  static parseEntityTables (bfast: BFast): Map<string, EntityTable> {
+  private static parseEntityTables (bfast: BFast): Map<string, EntityTable> {
     const result = new Map<string, any>()
     for (let i = 0; i < bfast.buffers.length; ++i) {
       const current = bfast.names[i]
       const tableName = current.substring(current.indexOf(':') + 1)
       const buffer = bfast.buffers[i]
-      const next = Document.parseEntityTable(BFast.fromArray(buffer))
+      const next = Document.parseEntityTable(BFast.createFromArray(buffer))
       result.set(tableName, next)
     }
     return result
   }
 
-  static parseEntityTable (bfast: BFast): EntityTable {
+  private static parseEntityTable (bfast: BFast): EntityTable {
     const result = new Map<string, any>()
     for (let i = 0; i < bfast.buffers.length; ++i) {
       const columnName = bfast.names[i]

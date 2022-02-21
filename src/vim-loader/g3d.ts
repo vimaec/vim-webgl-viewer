@@ -1,13 +1,10 @@
 /**
- * G3D is a simple, efficient, generic binary format for storing and transmitting geometry.
- * The G3D format is designed to be used either as a serialization format or as an in-memory data structure.
- * See https://github.com/vimaec/g3d
  * @module vim-loader
  */
 
 import { BFast } from './bfast'
 
-class AttributeDescriptor {
+class G3dAttributeDescriptor {
   // original descriptor string
   description: string
   // Indicates the part of the geometry that this attribute is associated with
@@ -41,7 +38,7 @@ class AttributeDescriptor {
     this.dataArity = parseInt(dataArity)
   }
 
-  static fromString (descriptor: string): AttributeDescriptor {
+  static fromString (descriptor: string): G3dAttributeDescriptor {
     const desc = descriptor.split(':')
 
     if (desc.length !== 6) {
@@ -51,7 +48,7 @@ class AttributeDescriptor {
     return new this(descriptor, desc[1], desc[2], desc[3], desc[4], desc[5])
   }
 
-  matches (other: AttributeDescriptor) {
+  matches (other: G3dAttributeDescriptor) {
     const match = (a: string, b: string) => a === '*' || b === '*' || a === b
 
     return (
@@ -63,19 +60,19 @@ class AttributeDescriptor {
   }
 }
 
-class Attribute {
-  descriptor: AttributeDescriptor
+class G3dAttribute {
+  descriptor: G3dAttributeDescriptor
   bytes: Uint8Array
   data: Uint8Array | Int16Array | Int32Array | Float32Array | Float64Array
 
-  constructor (descriptor: AttributeDescriptor, bytes: Uint8Array) {
+  constructor (descriptor: G3dAttributeDescriptor, bytes: Uint8Array) {
     this.descriptor = descriptor
     this.bytes = bytes
-    this.data = Attribute.castData(bytes, descriptor.dataType)
+    this.data = G3dAttribute.castData(bytes, descriptor.dataType)
   }
 
-  static fromString (descriptor: string, buffer: Uint8Array): Attribute {
-    return new this(AttributeDescriptor.fromString(descriptor), buffer)
+  static fromString (descriptor: string, buffer: Uint8Array): G3dAttribute {
+    return new this(G3dAttributeDescriptor.fromString(descriptor), buffer)
   }
 
   // Converts a VIM attribute into a typed array from its raw data
@@ -126,15 +123,15 @@ class Attribute {
  */
 class AbstractG3d {
   meta: string
-  attributes: Attribute[]
+  attributes: G3dAttribute[]
 
-  constructor (meta: string, attributes: Attribute[]) {
+  constructor (meta: string, attributes: G3dAttribute[]) {
     this.meta = meta
     this.attributes = attributes
   }
 
-  findAttribute (descriptor: string): Attribute | null {
-    const filter = AttributeDescriptor.fromString(descriptor)
+  findAttribute (descriptor: string): G3dAttribute | null {
+    const filter = G3dAttributeDescriptor.fromString(descriptor)
     for (let i = 0; i < this.attributes.length; ++i) {
       const attribute = this.attributes[i]
       if (attribute.descriptor.matches(filter)) return attribute
@@ -159,10 +156,10 @@ class AbstractG3d {
     const meta = new TextDecoder('utf-8').decode(metaBuffer)
 
     // Parse remaining buffers as Attributes
-    const attributes: Attribute[] = []
+    const attributes: G3dAttribute[] = []
     const nDescriptors = bfast.buffers.length - 1
     for (let i = 0; i < nDescriptors; ++i) {
-      const attribute = Attribute.fromString(
+      const attribute = G3dAttribute.fromString(
         bfast.names[i + 1],
         bfast.buffers[i + 1]
       )
@@ -187,6 +184,8 @@ class VimAttributes {
 }
 
 /**
+ * G3D is a simple, efficient, generic binary format for storing and transmitting geometry.
+ * The G3D format is designed to be used either as a serialization format or as an in-memory data structure.
  * A G3d with specific attributes according to the VIM format specification.
  * See https://github.com/vimaec/vim#vim-geometry-attributes for the vim specification.
  * See https://github.com/vimaec/g3d for the g3d specification.
@@ -209,10 +208,13 @@ export class G3d {
 
   rawG3d: AbstractG3d
 
-  matrixArity = 16
-  colorArity = 4
-  positionArity = 3
-  defaultColor = new Float32Array([1, 1, 1, 1])
+  MATRIX_SIZE = 16
+  COLOR_SIZE = 4
+  POSITION_SIZE = 3
+  /**
+   * Opaque white
+   */
+  DEFAULT_COLOR = new Float32Array([1, 1, 1, 1])
 
   constructor (g3d: AbstractG3d) {
     this.rawG3d = g3d
@@ -249,6 +251,9 @@ export class G3d {
     this.meshTransparent = this.computeMeshIsTransparent()
   }
 
+  /**
+   * Computes the index of the first vertex of each mesh
+   */
   private computeMeshVertexOffsets (): Int32Array {
     const result = new Int32Array(this.getMeshCount())
     for (let m = 0; m < result.length; m++) {
@@ -263,6 +268,9 @@ export class G3d {
     return result
   }
 
+  /**
+   * Rebase indices to be relative to its own mesh instead of to the whole g3d
+   */
   private rebaseIndices () {
     const count = this.getMeshCount()
     for (let m = 0; m < count; m++) {
@@ -275,6 +283,9 @@ export class G3d {
     }
   }
 
+  /**
+   * Computes all instances pointing to each mesh.
+   */
   private computeMeshInstances = (): number[][] => {
     const result: number[][] = []
 
@@ -289,6 +300,9 @@ export class G3d {
     return result
   }
 
+  /**
+   * Computes an array where true if any of the materials used by a mesh has transparency.
+   */
   private computeMeshIsTransparent (): Array<boolean> {
     const result = new Array<boolean>(this.getMeshCount())
     for (let m = 0; m < result.length; m++) {
@@ -298,7 +312,7 @@ export class G3d {
       for (let s = subStart; s < subEnd; s++) {
         const material = this.submeshMaterial[s]
         const alpha =
-          this.materialColors[material * this.colorArity + this.colorArity - 1]
+          this.materialColors[material * this.COLOR_SIZE + this.COLOR_SIZE - 1]
         result[m] = result[m] || alpha < 1
       }
     }
@@ -306,7 +320,7 @@ export class G3d {
   }
 
   // ------------- All -----------------
-  getVertexCount = () => this.positions.length / this.positionArity
+  getVertexCount = () => this.positions.length / this.POSITION_SIZE
 
   // ------------- Meshes -----------------
   getMeshCount = () => this.meshSubmeshes.length
@@ -369,6 +383,10 @@ export class G3d {
     return this.getSubmeshIndexEnd(submesh) - this.getSubmeshIndexStart(submesh)
   }
 
+  /**
+   * Returns color of given submesh as a 4-number array (RGBA)
+   * @param submesh g3d submesh index
+   */
   getSubmeshColor (submesh: number): Float32Array {
     return this.getMaterialColor(this.submeshMaterial[submesh])
   }
@@ -376,26 +394,37 @@ export class G3d {
   // ------------- Instances -----------------
   getInstanceCount = () => this.instanceMeshes.length
 
-  getInstanceTransform (instance: number): Float32Array {
+  /**
+   * Returns an 16 number array representation of the matrix for given instance
+   * @param instance g3d instance index
+   */
+  getInstanceMatrix (instance: number): Float32Array {
     return this.instanceTransforms.subarray(
-      instance * this.matrixArity,
-      (instance + 1) * this.matrixArity
+      instance * this.MATRIX_SIZE,
+      (instance + 1) * this.MATRIX_SIZE
     )
   }
 
   // ------------- Material -----------------
 
-  getMaterialCount = () => this.materialColors.length / this.colorArity
+  getMaterialCount = () => this.materialColors.length / this.COLOR_SIZE
 
+  /**
+   * Returns color of given material as a 4-number array (RGBA)
+   * @param material g3d material index
+   */
   getMaterialColor (material: number): Float32Array {
-    if (material < 0) return this.defaultColor
+    if (material < 0) return this.DEFAULT_COLOR
     return this.materialColors.subarray(
-      material * this.colorArity,
-      (material + 1) * this.colorArity
+      material * this.COLOR_SIZE,
+      (material + 1) * this.COLOR_SIZE
     )
   }
 
-  static fromBfast (bfast: BFast): G3d {
+  /**
+   * Parses a new instance of G3d from a bfast reprensatation of the format.
+   */
+  static createFromBfast (bfast: BFast): G3d {
     const base = AbstractG3d.fromBfast(bfast)
     return new G3d(base)
   }
@@ -416,9 +445,9 @@ export class G3d {
     isPresent(this.materialColors, 'materialColors')
 
     // Basic
-    if (this.positions.length % this.positionArity !== 0) {
+    if (this.positions.length % this.POSITION_SIZE !== 0) {
       throw new Error(
-        'Invalid position buffer, must be divisible by ' + this.positionArity
+        'Invalid position buffer, must be divisible by ' + this.POSITION_SIZE
       )
     }
 
@@ -435,15 +464,15 @@ export class G3d {
     // Instances
     if (
       this.instanceMeshes.length !==
-      this.instanceTransforms.length / this.matrixArity
+      this.instanceTransforms.length / this.MATRIX_SIZE
     ) {
       throw new Error('Instance buffers mismatched')
     }
 
-    if (this.instanceTransforms.length % this.matrixArity !== 0) {
+    if (this.instanceTransforms.length % this.MATRIX_SIZE !== 0) {
       throw new Error(
         'Invalid InstanceTransform buffer, must respect arity ' +
-          this.matrixArity
+          this.MATRIX_SIZE
       )
     }
 
@@ -502,9 +531,9 @@ export class G3d {
     }
 
     // Materials
-    if (this.materialColors.length % this.colorArity !== 0) {
+    if (this.materialColors.length % this.COLOR_SIZE !== 0) {
       throw new Error(
-        'Invalid material color buffer, must be divisible by ' + this.colorArity
+        'Invalid material color buffer, must be divisible by ' + this.COLOR_SIZE
       )
     }
   }

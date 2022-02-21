@@ -3,49 +3,53 @@
  */
 
 import * as THREE from 'three'
+import { Object } from '../vim-loader/object'
 import { Viewer } from './viewer'
 
 // TODO: Fix circular dependency
+/**
+ * Provides basic selection mechanic in viewer
+ */
 export class Selection {
   // Dependencies
-  viewer: Viewer
+  private viewer: Viewer
 
   // State
-  elementIndex: number = -1
-  boundingSphere: THREE.Sphere | null = null
+  object: Object | undefined
+  private _boundingSphere: THREE.Sphere | undefined
 
   // Disposable State
-  highlightDisposer: Function | null = null
+  private _highlightDisposer: Function | undefined
 
   constructor (viewer: Viewer) {
     this.viewer = viewer
   }
 
+  getBoundingSphere (target: THREE.Sphere = new THREE.Sphere()) {
+    return target.copy(this._boundingSphere)
+  }
+
   hasSelection () {
-    return this.elementIndex >= 0
+    return this.object !== undefined
   }
 
   clear () {
-    this.elementIndex = -1
-    this.boundingSphere = null
+    this.object = undefined
+    this._boundingSphere = null
     this.disposeResources()
   }
 
   disposeResources () {
-    this.highlightDisposer?.()
-    this.highlightDisposer = null
+    this._highlightDisposer?.()
+    this._highlightDisposer = null
   }
 
-  select (elementIndex: number) {
+  select (object: Object) {
     this.clear()
-    if (elementIndex < 0) {
-      return
-    }
-    this.elementIndex = elementIndex
-    this.highlightDisposer = this.viewer.highlightElementByIndex(elementIndex)
-    this.boundingSphere =
-      this.viewer
-        .getBoundingBoxForElementIndex(elementIndex)
-        ?.getBoundingSphere(new THREE.Sphere()) ?? null
+    this.object = object
+    const wireframe = object.createWireframe()
+    this.viewer.renderer.addObject(wireframe)
+    this._highlightDisposer = () => this.viewer.renderer.removeObject(wireframe)
+    this._boundingSphere = object.getBoundingSphere()
   }
 }

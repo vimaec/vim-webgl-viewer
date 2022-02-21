@@ -1,186 +1,117 @@
 /**
- @author VIM / https://vimaec.com
  @module viw-webgl-viewer
 */
 
 import * as THREE from 'three'
 import deepmerge from 'deepmerge'
-import { clone, cloneDeep } from 'lodash'
-import { transparencyIsValid, TransparencyMode } from '../vim-loader/geometry'
+import { VimOptions } from '../vim-loader/vimSettings'
 
-export type Vector3 = {
-  x: number
-  y: number
-  z: number
-}
-
-export type ColorRGB = {
-  r: number
-  g: number
-  b: number
-}
-
-export type ColorHSL = {
-  h: number
-  s: number
-  l: number
-}
-
-/**
- * Plane under Scene related options
- */
-export type PlaneOptions = {
-  /** Enables/Disables plane under scene */
-  show: boolean
-  /** Local or remote texture url for plane */
-  texture: string
-  /** Opacity of the plane */
-  opacity: number
-  /** Color of the plane */
-  color: ColorRGB
-  /** Actual size is SceneRadius*size */
-  size: number
-}
-
-/** Dom canvas related options */
-export type CanvasOptions = {
-  /** Canvas dom model id. If none provided a new canvas will be created */
-  id: string
-  /** Limits how often canvas will be resized if window is resized. */
-  resizeDelay: number
-}
-
-/** Camera controls related options */
-export type CameraControlsOptions = {
-  /**
-   * <p>Set true to start in orbit mode.</p>
-   * <p>Camera has two modes: First person and orbit</p>
-   * <p>First person allows to moves the camera around freely</p>
-   * <p>Orbit rotates the camera around a focus point</p>
-   */
-  orbit: boolean
-  /** Camera speed is scaled according to SceneRadius/sceneReferenceSize */
-  vimReferenceSize: number
-  /** Camera rotation speed factor */
-  rotateSpeed: number
-  orbitSpeed: number
-  /** Camera movement speed factor */
-  moveSpeed: number
-}
-
-/** Camera related options */
-export type CameraOptions = {
-  /** Near clipping plane distance */
-  near: number
-  /** Far clipping plane distance */
-  far: number
-  /** Fov angle in degrees */
-  fov: number
-  /** Zoom level */
-  zoom: number
-  /** See ControlOptions */
-  controls: Partial<CameraControlsOptions>
-  showGizmo: boolean
-}
-
-export type SunLightOptions = {
-  position: Vector3
-  color: ColorHSL
-  intensity: number
-}
-
-export type SkyLightOptions = {
-  skyColor: ColorHSL
-  groundColor: ColorHSL
-  intensity: number
-}
-
-/** Viewer related options independant from vims */
-export type ViewerOptions = {
-  /**
-   * Webgl canvas related options
-   */
-  canvas: Partial<CanvasOptions>
-  /**
-   * Three.js camera related options
-   */
-  camera: Partial<CameraOptions>
-  // background: Partial<BackgroundOptions>
-  /**
-   * Plane under scene related options
-   */
-  plane: Partial<PlaneOptions>
-  /**
-   * Skylight (hemisphere light) options
-   */
-  skylight: Partial<SkyLightOptions>
-  /**
-   * Sunlight (directional light) options
-   */
-  sunLight: Partial<SunLightOptions>
-}
-
-/**
- * Config object for loading a vim
- */
-export type VimOptions = {
-  /**
-   * Position offset for the vim
-   */
-  position: Vector3
-  /**
-   * Rotation for the vim
-   */
-  rotation: Vector3
-  /**
-   * Scale factor for the vim
-   */
-  scale: number
-  /**
-   * elements to include
-   */
-  elementIds?: number[]
-
-  transparency?: TransparencyMode
-}
-
-/**
- * <p>Wrapper around Vim Options.</p>
- * <p>Casts options values into related THREE.js type</p>
- * <p>Provides default values for options</p>
- */
-export class VimSettings {
-  private options: VimOptions
-
-  constructor (options?: Partial<VimOptions>) {
-    const fallback: VimOptions = {
-      position: { x: 0, y: 0, z: 0 },
-      rotation: { x: 0, y: 0, z: 0 },
-      scale: 0.01,
-      elementIds: undefined,
-      transparency: 'all'
-    }
-
-    this.options = options ? deepmerge(fallback, options, undefined) : fallback
-    this.options.transparency = transparencyIsValid(this.options.transparency)
-      ? this.options.transparency
-      : 'all'
+export namespace ViewerOptions {
+  export type ColorRGB = {
+    r: number
+    g: number
+    b: number
   }
 
-  getOptions = () => cloneDeep(this.options) as VimOptions
+  export type ColorHSL = {
+    h: number
+    s: number
+    l: number
+  }
 
-  getPosition = () => toVec(this.options.position)
-  getRotation = () => toQuaternion(this.options.rotation)
-  getScale = () => scalarToVec(this.options.scale)
-  getMatrix = () =>
-    new THREE.Matrix4().compose(
-      this.getPosition(),
-      this.getRotation(),
-      this.getScale()
-    )
+  /**
+   * Plane under Scene related options
+   */
+  export type GroundPlane = {
+    /** Enables/Disables plane under scene */
+    show: boolean
+    /** Local or remote texture url for plane */
+    texture: string
+    /** Opacity of the plane */
+    opacity: number
+    /** Color of the plane */
+    color: ColorRGB
+    /** Actual size is SceneRadius*size */
+    size: number
+  }
 
-  getElementIdsFilter = () => clone(this.options.elementIds)
-  getTransparency = () => this.options.transparency
+  /** Dom canvas related options */
+  export type Canvas = {
+    /** Canvas dom model id. If none provided a new canvas will be created */
+    id: string
+    /** Limits how often canvas will be resized if window is resized. */
+    resizeDelay: number
+  }
+
+  /** Camera controls related options */
+  export type CameraControls = {
+    /**
+     * <p>Set true to start in orbit mode.</p>
+     * <p>Camera has two modes: First person and orbit</p>
+     * <p>First person allows to moves the camera around freely</p>
+     * <p>Orbit rotates the camera around a focus point</p>
+     */
+    orbit: boolean
+    /** Camera speed is scaled according to SceneRadius/sceneReferenceSize */
+    vimReferenceSize: number
+    /** Camera rotation speed factor */
+    rotateSpeed: number
+    orbitSpeed: number
+    /** Camera movement speed factor */
+    moveSpeed: number
+  }
+
+  /** Camera related options */
+  export type Camera = {
+    /** Near clipping plane distance */
+    near: number
+    /** Far clipping plane distance */
+    far: number
+    /** Fov angle in degrees */
+    fov: number
+    /** Zoom level */
+    zoom: number
+    /** See ControlOptions */
+    controls: Partial<CameraControls>
+    showGizmo: boolean
+  }
+
+  export type SunLight = {
+    position: VimOptions.Vector3
+    color: ColorHSL
+    intensity: number
+  }
+
+  export type SkyLight = {
+    skyColor: ColorHSL
+    groundColor: ColorHSL
+    intensity: number
+  }
+
+  /** Viewer related options independant from vims */
+  export type Root = {
+    /**
+     * Webgl canvas related options
+     */
+    canvas: Partial<Canvas>
+    /**
+     * Three.js camera related options
+     */
+    camera: Partial<Camera>
+    // background: Partial<BackgroundOptions>
+    /**
+     * Plane under scene related options
+     */
+    groundPlane: Partial<GroundPlane>
+    /**
+     * Skylight (hemisphere light) options
+     */
+    skylight: Partial<SkyLight>
+    /**
+     * Sunlight (directional light) options
+     */
+    sunLight: Partial<SunLight>
+  }
 }
 
 /**
@@ -189,10 +120,10 @@ export class VimSettings {
  * <p>Provides default values for options</p>
  */
 export class ViewerSettings {
-  public options: ViewerOptions
+  public options: ViewerOptions.Root
 
-  constructor (options?: Partial<ViewerOptions>) {
-    const fallback: ViewerOptions = {
+  constructor (options?: Partial<ViewerOptions.Root>) {
+    const fallback: ViewerOptions.Root = {
       canvas: {
         id: undefined,
         resizeDelay: 200
@@ -211,21 +142,26 @@ export class ViewerSettings {
         },
         showGizmo: true
       },
-      plane: {
-        show: true,
+      groundPlane: {
+        show: false,
         texture: null,
         opacity: 1,
         color: { r: 0xff, g: 0xff, b: 0xff },
         size: 3
       },
       skylight: {
+        // skyColor: { h: 1, s: 1, l: 1 },
         skyColor: { h: 0.6, s: 1, l: 0.6 },
         groundColor: { h: 0.095, s: 1, l: 0.75 },
+        // groundColor: { h: 1, s: 1, l: 1 },
         intensity: 0.6
+        // intensity: 1
       },
       sunLight: {
         position: { x: -47.0, y: 22, z: -45 },
+        // position: { x: 0, y: 0, z: -1000 },
         color: { h: 0.1, s: 1, l: 0.95 },
+        // color: { h: 1, s: 1, l: 1 },
         intensity: 1
       }
     }
@@ -238,11 +174,11 @@ export class ViewerSettings {
   getCanvasId = () => this.options.canvas.id
 
   // Plane
-  getPlaneShow = () => this.options.plane.show
-  getPlaneColor = () => toRGBColor(this.options.plane.color)
-  getPlaneTextureUrl = () => this.options.plane.texture
-  getPlaneOpacity = () => this.options.plane.opacity
-  getPlaneSize = () => this.options.plane.size
+  getGroundPlaneShow = () => this.options.groundPlane.show
+  getGroundPlaneColor = () => toRGBColor(this.options.groundPlane.color)
+  getGroundPlaneTextureUrl = () => this.options.groundPlane.texture
+  getGroundPlaneOpacity = () => this.options.groundPlane.opacity
+  getGroundPlaneSize = () => this.options.groundPlane.size
 
   // Skylight
   getSkylightColor = () => toHSLColor(this.options.skylight.skyColor)
@@ -270,30 +206,14 @@ export class ViewerSettings {
     this.options.camera.controls.vimReferenceSize
 }
 
-function toRGBColor (c: ColorRGB): THREE.Color {
+function toRGBColor (c: ViewerOptions.ColorRGB): THREE.Color {
   return new THREE.Color(c.r / 255, c.g / 255, c.b / 255)
 }
 
-function toHSLColor (obj: any): THREE.Color {
+function toHSLColor (obj: ViewerOptions.ColorHSL): THREE.Color {
   return new THREE.Color().setHSL(obj.h, obj.s, obj.l)
 }
 
-function toVec (obj: Vector3): THREE.Vector3 {
+function toVec (obj: VimOptions.Vector3): THREE.Vector3 {
   return new THREE.Vector3(obj.x, obj.y, obj.z)
-}
-
-function scalarToVec (x: number): THREE.Vector3 {
-  return new THREE.Vector3(x, x, x)
-}
-
-function toEuler (rot: THREE.Vector3): THREE.Euler {
-  return new THREE.Euler(
-    (rot.x * Math.PI) / 180,
-    (rot.y * Math.PI) / 180,
-    (rot.z * Math.PI) / 180
-  )
-}
-
-function toQuaternion (rot: Vector3): THREE.Quaternion {
-  return new THREE.Quaternion().setFromEuler(toEuler(toVec(rot)))
 }

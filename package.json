@@ -1,12 +1,12 @@
 {
   "name": "vim-webgl-viewer",
-  "version": "1.1.28",
+  "version": "1.1.30",
   "description": "A high-performance 3D viewer and VIM file loader built on top of Three.JS.",
   "files": [
     "dist"
   ],
   "main": "./dist/vim-webgl-viewer.iife.js",
-  "types": "./dist/types/vim-webgl-viewer.d.ts",
+  "types": "./dist/types/vim.d.ts",
   "module": "/dist/vim-webgl-viewer.es.js",
   "homepage": "https://github.com/vimaec/vim-webgl-viewer.git",
   "bugs": {
@@ -24,13 +24,8 @@
     "bump-dev": "npm version prerelease --preid=dev",
     "publish-dev": "npm publish --tag=dev",
     "serve-docs": "http-server ./docs -o --host",
-    "serve-dist": "http-server ./dist -o --host",
-    "serve-root": "http-server -o",
-    "test-dist": "npm run build && npm run serve-dist",
-    "test-latest": "opener https://vimaec.github.io/vim-webgl-viewer/?vim=https%3A%2F%2Fvim.azureedge.net%2Fsamples%2Fskanska.vim",
-    "test-dev": "opener https://vimaec.github.io/vim-webgl-viewer/index-dev.html?vim=https%3A%2F%2Fvim.azureedge.net%2Fsamples%2Fskanska.vim",
-    "release-patch": "npm version patch && git push && npm publish && npm run test-latest",
-    "release-dev": "npm run build && npm run bump-dev && git push && npm run publish-dev && npm run test-dev",
+    "release-patch": "npm version patch && git push && npm publish",
+    "release-dev": "npm run build && npm run bump-dev && git push && npm run publish-dev",
     "eslint": "eslint --ext .js,.ts src --fix",
     "documentation": "typedoc --entryPointStrategy expand --mergeModulesMergeMode module --out docs/api --excludePrivate ./src/vim-webgl-viewer/ ./src/vim-loader/",
     "declarations": "tsc --declaration --emitDeclarationOnly --outdir ./dist/types"
@@ -56,6 +51,7 @@
   },
   "dependencies": {
     "deepmerge": "^4.2.2",
+    "lodash-es": "^4.17.21",
     "three": "^0.133.1"
   },
   "keywords": [
