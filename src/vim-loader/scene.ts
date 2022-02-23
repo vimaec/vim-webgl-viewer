@@ -169,6 +169,13 @@ export class Scene {
     return this
   }
 
+  dispose () {
+    for (let i = 0; i < this.meshes.length; i++) {
+      this.meshes[i].geometry.dispose()
+    }
+    this.meshes.length = 0
+  }
+
   /**
    * Computes the bounding box around all instances in world position of an InstancedMesh.
    */

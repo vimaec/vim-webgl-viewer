@@ -3,7 +3,7 @@
  */
 
 import deepmerge from 'deepmerge'
-import { clone, cloneDeep } from 'lodash-es'
+import { cloneDeep } from 'lodash-es'
 import { Transparency } from './geometry'
 import * as THREE from 'three'
 
@@ -30,10 +30,6 @@ export namespace VimOptions {
      * Scale factor for the vim
      */
     scale: number
-    /**
-     * elements to include
-     */
-    elementIds?: number[]
 
     /**
      * Defines how to draw or not to draw objects according to their transparency
@@ -55,7 +51,6 @@ export class VimSettings {
       position: { x: 0, y: 0, z: 0 },
       rotation: { x: 0, y: 0, z: 0 },
       scale: 0.01,
-      elementIds: undefined,
       transparency: 'all'
     }
 
@@ -77,7 +72,6 @@ export class VimSettings {
       this.getScale()
     )
 
-  getElementIdsFilter = () => clone(this.options.elementIds)
   getTransparency = () => this.options.transparency
 }
 

@@ -36,6 +36,18 @@ export class Object {
   }
 
   /**
+   * Internal - Replace this object meshes and apply color as needed.
+   */
+  updateMeshes (meshes: [THREE.Mesh, number][]) {
+    this._meshes = meshes
+    for (let i = 0; i < meshes.length; i++) {
+      if (this.color) {
+        this.changeColor(this.color)
+      }
+    }
+  }
+
+  /**
    * Returns Bim data for the element associated with this object.
    */
   getBimElement () {

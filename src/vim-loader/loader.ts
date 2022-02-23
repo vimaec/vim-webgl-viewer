@@ -82,8 +82,7 @@ export class Loader {
   }
 
   /**
-   * Reloads an existing vim
-   * Useful to load a different subset of the same vim.
+   * Reloads a new vim from an existing vim
    * @param transparency defines how and if to render objects according to transparency.
    * @param instances defines which g3d instances to load. All loaded if none provided.
    * @returns a vim instance

@@ -84,7 +84,7 @@ export class CameraGizmo {
     this._gizmos.add(
       new THREE.LineSegments(this._wireframe, this._materialAlways)
     )
-    this._renderer.addObject(this._gizmos)
+    this._renderer.add(this._gizmos)
 
     this.setScale(this._scale)
   }
@@ -99,7 +99,7 @@ export class CameraGizmo {
     this._material = null
     this._materialAlways = null
 
-    this._renderer.removeObject(this._gizmos)
+    this._renderer.remove(this._gizmos)
     this._gizmos = null
   }
 }

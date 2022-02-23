@@ -11,7 +11,7 @@ type ThreeIntersectionList = THREE.Intersection<THREE.Object3D<THREE.Event>>[]
 /**
  * Highlevel aggregate of information about a raycast result
  */
-export class HitTestResult {
+export class RaycastResult {
   mousePosition: THREE.Vector2
   doubleClick: boolean
   object: Object
@@ -24,7 +24,7 @@ export class HitTestResult {
   ) {
     this.mousePosition = mousePosition
     this.intersections = intersections
-    this.firstHit = HitTestResult.GetFirstVimHit(intersections)
+    this.firstHit = RaycastResult.GetFirstVimHit(intersections)
   }
 
   private static GetFirstVimHit (
@@ -59,7 +59,7 @@ export class HitTestResult {
   }
 }
 
-export class HitTester {
+export class Raycaster {
   private _viewer: Viewer
   private _raycaster = new THREE.Raycaster()
 
@@ -68,13 +68,13 @@ export class HitTester {
   }
 
   /**
-   * Raycast at renderer canvas position
+   * Raycast projecting a ray from camera position to screen position
    */
-  screenRaycast (position: THREE.Vector2): HitTestResult {
+  screenRaycast (position: THREE.Vector2): RaycastResult {
     console.time('raycast')
     const intersections = this.raycast(position)
     console.timeEnd('raycast')
-    const r = new HitTestResult(position, intersections)
+    const r = new RaycastResult(position, intersections)
 
     const hit = r.firstHit
 

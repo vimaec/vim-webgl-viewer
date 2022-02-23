@@ -149,12 +149,12 @@ export class Keyboard {
       switch (event.keyCode) {
         case KEYS.KEY_ADD:
         case KEYS.KEY_OEM_PLUS:
-          this._camera.speedMultiplier += 1
+          this._camera.speed += 1
           event.preventDefault()
           break
         case KEYS.KEY_SUBTRACT:
         case KEYS.KEY_OEM_MINUS:
-          this._camera.speedMultiplier -= 1
+          this._camera.speed -= 1
           event.preventDefault()
           break
         case KEYS.KEY_F8:
@@ -163,17 +163,17 @@ export class Keyboard {
           event.preventDefault()
           break
         case KEYS.KEY_HOME:
-          this._viewer.frameContent()
+          this._viewer.camera.frame('all')
           event.preventDefault()
           break
         // Selection
         case KEYS.KEY_ESCAPE:
-          this._viewer.selectObject(undefined)
+          this._viewer.selection.clear()
           event.preventDefault()
           break
         case KEYS.KEY_Z:
         case KEYS.KEY_F:
-          this._viewer.frameSelection()
+          this._viewer.camera.frame(this._viewer.selection.object)
           event.preventDefault()
           break
       }
@@ -236,6 +236,6 @@ export class Keyboard {
     )
     const speed = this.isShiftPressed ? this.SHIFT_MULTIPLIER : 1
     move.multiplyScalar(speed)
-    this._camera.setLocalVelocity(move)
+    this._camera.localVelocity = move
   }
 }

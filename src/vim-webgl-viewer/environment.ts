@@ -99,24 +99,29 @@ export class GroundPlane {
  * Manages ground plane and lights that are part of the THREE.Scene to render but not part of the Vims.
  */
 export class Environment {
-  groundPlane: GroundPlane
   skyLight: THREE.HemisphereLight
   sunLight: THREE.DirectionalLight
+  private _groundPlane: GroundPlane
+
+  get groundPlane () { return this._groundPlane.mesh }
 
   constructor (settings: ViewerSettings) {
-    this.groundPlane = new GroundPlane()
+    this._groundPlane = new GroundPlane()
     this.skyLight = new THREE.HemisphereLight()
     this.sunLight = new THREE.DirectionalLight()
     this.applySettings(settings)
   }
 
+  /**
+   * Returns all three objects composing the environment
+   */
   getObjects (): THREE.Object3D[] {
-    return [this.groundPlane.mesh, this.skyLight, this.sunLight]
+    return [this._groundPlane.mesh, this.skyLight, this.sunLight]
   }
 
   applySettings (settings: ViewerSettings) {
     // Plane
-    this.groundPlane.applyViewerSettings(settings)
+    this._groundPlane.applyViewerSettings(settings)
 
     // Skylight
     this.skyLight.color.copy(settings.getSkylightColor())
@@ -129,8 +134,17 @@ export class Environment {
     this.sunLight.intensity = settings.getSunlightIntensity()
   }
 
+  /**
+   * Adjust scale so that it matches box dimensions.
+   */
   public adaptToContent (box: Box3) {
     // Plane
-    this.groundPlane.adaptToContent(box)
+    this._groundPlane.adaptToContent(box)
   }
+}
+
+export interface IEnvironment {
+  skyLight: THREE.HemisphereLight
+  sunLight: THREE.DirectionalLight
+  groundPlane: THREE.Mesh
 }
