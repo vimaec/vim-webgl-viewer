@@ -1,0 +1,112 @@
+<!-- 
+    Copyright (c) 2021 VIMaec LLC 
+    This code is licensed under MIT license 
+    This is a demonstration of the VIM 3D Model viewer and VIM file loader built using Three.JS  
+    For more information and the latest version see: http://www.github.com/vimaec/vim-webgl-viewer
+-->
+<html>
+<head>
+  <style>
+    /*Makes full screen and remove scrollbars*/
+    html,
+    body {
+      height: 100%;
+      margin: 0;
+      padding: 0;
+      overflow: hidden;
+      background: radial-gradient(circle at center, #F0F0FF, #999999);
+    }
+  </style>
+    <title>VIM 3D Model Viewer</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+</head>
+<body>
+    <script src="https://unpkg.com/three@0.133.1/build/three.min.js"></script>
+    <script src="https://unpkg.com/vim-webgl-viewer@1.1.31-dev.2"></script>
+    <script>
+      // Parse URL
+      const url = 'https://vim.azureedge.net/samples/residence.vim'
+
+      // Create Viewer
+      const viewer = new VIM.Viewer({
+        camera: { showGizmo: true },
+        groundPlane: {
+          show: true,
+          texture:
+            'https://vimdevelopment01storage.blob.core.windows.net/textures/vim-floor-soft.png',
+          opacity: 1,
+          size: 5
+        }
+      })
+
+    const offset = -1
+    let count = 0
+    function onLoad () {
+      if (++count === 5) {
+        viewer.selection.select(viewer.getVim(0).getObjectFromElementId(195095))
+
+        const vim0 = viewer.getVim(0)
+        const filter = [195095, 517815, 517321, 465993].map(i => vim0.getObjectFromElementId(i))
+        vim0.getObjectFromElementId(195095).changeColor(new THREE.Color(1, 0, 0))
+        vim0.getObjectFromElementId(517815).changeColor(new THREE.Color(0, 1, 0))
+        vim0.getObjectFromElementId(517321).changeColor(new THREE.Color(0, 0, 1))
+        vim0.getObjectFromElementId(465993).changeColor(new THREE.Color(0, 0, 0))
+        viewer.filterVim(vim0, filter)
+        viewer.selection.select(vim0.getObjectFromElementId(195095))
+
+        const vim4 = viewer.getVim(4)
+        vim4.getObjectFromElementId(183622).changeColor(new THREE.Color(1, 0, 0))
+        viewer.filterVim(vim4, [vim0.getObjectFromElementId(195095)])
+        vim4.getObjectFromElementId(174811).changeColor(new THREE.Color(1, 0, 0))
+        viewer.filterVim(vim4, undefined)
+      }
+    }
+
+    viewer.loadVim(url,
+      {
+        position: { x: 0, y: 0, z: 0 },
+        rotation: { x: 270, y: 0, z: 0 },
+        transparency: 'all'
+      },
+      (vim) => onLoad())
+
+    viewer.loadVim(url,
+      {
+        position: { x: offset, y: 0, z: 0 },
+        rotation: { x: 270, y: 0, z: 0 },
+        transparency: 'allAsOpaque'
+      },
+      (vim) => onLoad())
+
+    viewer.loadVim(url,
+      {
+        position: { x: offset * 2, y: 0, z: 0 },
+        rotation: { x: 270, y: 0, z: 0 },
+        transparency: 'opaqueOnly'
+      },
+      (vim) => onLoad())
+
+    viewer.loadVim(url,
+      {
+        position: { x: 0, y: 1, z: 0 },
+        rotation: { x: 270, y: 0, z: 0 },
+        transparency: 'transparentOnly'
+      },
+      (vim) => onLoad())
+
+    viewer.loadVim(url,
+      {
+        position: { x: offset, y: 1, z: 0 },
+        rotation: { x: 270, y: 0, z: 0 },
+        transparency: 'all'
+      },
+      (vim) => onLoad())
+
+    globalThis.viewer = viewer
+    globalThis.VIM = VIM
+    globalThis.THREE = THREE
+
+
+    </script> 
+</body>
+</html>
