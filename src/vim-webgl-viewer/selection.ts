@@ -24,8 +24,14 @@ export class Selection {
     this._viewer = viewer
   }
 
+  /**
+   * Returns selected object.
+   */
   get object () { return this._object }
 
+  /**
+   * Select given object
+   */
   select (object: Object) {
     this.clear()
     if (object) {
@@ -35,6 +41,9 @@ export class Selection {
     }
   }
 
+  /**
+   * Clear selection and related highlights
+   */
   clear () {
     this._object = undefined
 

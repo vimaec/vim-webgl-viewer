@@ -401,7 +401,7 @@ export interface ICamera {
    */
   camera: THREE.Camera
   /**
-  * Multiplier for camera velocity.
+  * Multiplier for camera movements.
   */
   speed: number
 
@@ -421,7 +421,7 @@ export interface ICamera {
    */
 
   /**
-   * Smoothly moves the camera in given direction for a short distance.
+   * Nudges the camera in given direction for a short distance.
    * @param impulse impulse vector in camera local space.
    */
   addImpulse (impulse: THREE.Vector3): void
@@ -442,8 +442,8 @@ export interface ICamera {
   move1 (amount: number, axis : 'X' | 'Y' | 'Z') : void
 
   /**
-   * Rotates the camera around the X or Y axis or both.
-   * @param vector where coordinates are in relative screen size. ie [-1, 1]
+   * Rotates the camera around the X or Y axis or both
+   * @param vector where coordinates in range [-1, 1] for rotations of [-180, 180] degrees
    */
   rotate (vector: THREE.Vector2) : void
 

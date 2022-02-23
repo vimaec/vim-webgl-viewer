@@ -22,12 +22,21 @@ import * as THREE from 'three'
  * Viewer and loader for vim files.
  */
 export class Viewer {
-  settings: ViewerSettings
   /**
-   * Interface to manage objects to be rendrered.
+   * Current viewer settings.
+   */
+  settings: ViewerSettings
+
+  /**
+   * Interface to manage objects to be rendered.
    */
   renderer: Renderer
+
+  /**
+   * Interface to manage viewer selection.
+   */
   selection: Selection
+
   /**
    * Interface to manipulate default viewer inputs.
    */
@@ -47,12 +56,12 @@ export class Viewer {
   private _vims: Vim[] = []
 
   /**
-   * Camera interface to manipulate the viewer camera.
+   * Interface to manipulate the viewer camera.
    */
   get camera () { return this._camera as ICamera }
 
   /**
-   * Environement interface to manipulate three elements not directly related to vim.
+   * Interface to manipulate THREE elements not directly related to vim.
    */
   get environment () { return this._environment as IEnvironment }
 
@@ -116,6 +125,10 @@ export class Viewer {
    * Returns vim with given index. Once loaded vims do not change index.
    */
   getVim (index: number = 0) { return this._vims[index] }
+
+  /**
+   * Current loaded vim count
+   */
   get vimCount () { return this._vims.length }
 
   /**
@@ -195,7 +208,7 @@ export class Viewer {
   }
 
   /**
-   * Unload existing vim to get ready to load a new vim
+   * Unload given vim from viewer.
    */
   unloadVim (vim: Vim) {
     this.removeVim(vim)
@@ -205,8 +218,8 @@ export class Viewer {
   }
 
   /**
-   * Unloads all objects not part of the array provided.
-   * @param objects array of objects to keep or undefined to load all objects
+   * Reloads the vim with only objects included in the array.
+   * @param objects array of objects to keep or undefined to load all objects.
    */
   filterVim (vim: Vim, objects: Object[] | undefined) {
     const instances = objects?.flatMap(o => o?.instances)
