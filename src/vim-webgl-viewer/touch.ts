@@ -64,11 +64,11 @@ export class Touch {
   }
 
   onDoubleDrag = (delta: THREE.Vector2) => {
-    this._camera.truckPedestal(delta)
+    this._camera.move2(delta, 'XY')
   }
 
   onPinchOrSpread = (delta: number) => {
-    this._camera.dolly(delta)
+    this._camera.move1(delta, 'Z')
   }
 
   onTouchMove = (event: any) => {

@@ -4,7 +4,7 @@
 
 import * as THREE from 'three'
 import { Viewer } from './viewer'
-import { HitTester } from './hitTester'
+import { Raycaster } from './raycaster'
 import { Keyboard } from './keyboard'
 
 /**
@@ -13,7 +13,7 @@ import { Keyboard } from './keyboard'
 export class Mouse {
   // Dependencies
   private _viewer: Viewer
-  private _hitTester: HitTester
+  private _raycaster: Raycaster
   private _inputKeyboard: Keyboard
 
   private get camera () {
@@ -30,7 +30,7 @@ export class Mouse {
 
   constructor (viewer: Viewer, keyboard: Keyboard) {
     this._viewer = viewer
-    this._hitTester = new HitTester(viewer)
+    this._raycaster = this._viewer.raycaster
     this._inputKeyboard = keyboard
   }
 
@@ -62,10 +62,10 @@ export class Mouse {
 
     if (event.buttons & 2) {
       // right button
-      this.camera.truckPedestal(delta)
+      this.camera.move2(delta, 'XY')
     } else if (event.buttons & 4) {
       // Midle button
-      this.camera.truckDolly(delta)
+      this.camera.move2(delta, 'XZ')
     } else {
       // left button
       this.camera.rotate(delta)
@@ -82,14 +82,14 @@ export class Mouse {
     const scrollValue = Math.sign(event.deltaY)
 
     if (this._inputKeyboard.isCtrlPressed) {
-      this.camera.speedMultiplier -= scrollValue
+      this.camera.speed -= scrollValue
     } else if (this.camera.orbitMode) {
       const impulse = new THREE.Vector3(0, 0, scrollValue)
-      this.camera.addLocalImpulse(impulse)
+      this.camera.addImpulse(impulse)
       // this.camera.updateOrbitalDistance(-scrollValue)
     } else {
       const impulse = new THREE.Vector3(0, 0, scrollValue)
-      this.camera.addLocalImpulse(impulse)
+      this.camera.addImpulse(impulse)
     }
   }
 
@@ -116,7 +116,7 @@ export class Mouse {
   }
 
   onMouseClick = (position: THREE.Vector2, doubleClick: boolean) => {
-    const result = this._hitTester.screenRaycast(position)
+    const result = this._raycaster.screenRaycast(position)
     result.doubleClick = doubleClick
     this._viewer.onMouseClick(result)
   }

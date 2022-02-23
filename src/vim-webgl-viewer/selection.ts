@@ -12,44 +12,45 @@ import { Viewer } from './viewer'
  */
 export class Selection {
   // Dependencies
-  private viewer: Viewer
+  private _viewer: Viewer
 
   // State
-  object: Object | undefined
-  private _boundingSphere: THREE.Sphere | undefined
+  private _object: Object | undefined
 
   // Disposable State
-  private _highlightDisposer: Function | undefined
+  private _highligt: THREE.LineSegments | undefined
 
   constructor (viewer: Viewer) {
-    this.viewer = viewer
+    this._viewer = viewer
   }
 
-  getBoundingSphere (target: THREE.Sphere = new THREE.Sphere()) {
-    return target.copy(this._boundingSphere)
-  }
+  /**
+   * Returns selected object.
+   */
+  get object () { return this._object }
 
-  hasSelection () {
-    return this.object !== undefined
-  }
-
-  clear () {
-    this.object = undefined
-    this._boundingSphere = null
-    this.disposeResources()
-  }
-
-  disposeResources () {
-    this._highlightDisposer?.()
-    this._highlightDisposer = null
-  }
-
+  /**
+   * Select given object
+   */
   select (object: Object) {
     this.clear()
-    this.object = object
-    const wireframe = object.createWireframe()
-    this.viewer.renderer.addObject(wireframe)
-    this._highlightDisposer = () => this.viewer.renderer.removeObject(wireframe)
-    this._boundingSphere = object.getBoundingSphere()
+    if (object) {
+      this._object = object
+      this._highligt = object.createWireframe()
+      this._viewer.renderer.add(this._highligt)
+    }
+  }
+
+  /**
+   * Clear selection and related highlights
+   */
+  clear () {
+    this._object = undefined
+
+    if (this._highligt) {
+      this._highligt.geometry.dispose()
+      this._viewer.renderer.remove(this._highligt)
+      this._highligt = undefined
+    }
   }
 }

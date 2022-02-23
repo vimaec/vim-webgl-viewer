@@ -36,6 +36,20 @@ export class Object {
   }
 
   /**
+   * Internal - Replace this object meshes and apply color as needed.
+   */
+  updateMeshes (meshes: [THREE.Mesh, number][]) {
+    this._meshes = meshes
+    if (meshes) {
+      for (let i = 0; i < meshes.length; i++) {
+        if (this.color) {
+          this.changeColor(this.color)
+        }
+      }
+    }
+  }
+
+  /**
    * Returns Bim data for the element associated with this object.
    */
   getBimElement () {
@@ -92,6 +106,9 @@ export class Object {
    * @param color Color to apply, undefined to revert to default color.
    */
   changeColor (color: THREE.Color | undefined = undefined) {
+    this._color = color
+    if (!this._meshes) return
+
     for (let m = 0; m < this._meshes.length; m++) {
       const [mesh, index] = this._meshes[m]
       if (mesh.userData.merged) {
@@ -100,7 +117,6 @@ export class Object {
         this.changeInstancedMeshColor(mesh as THREE.InstancedMesh, index, color)
       }
     }
-    this._color = color
   }
 
   /**

@@ -4,59 +4,91 @@
 
 // internal
 import { ViewerSettings, ViewerOptions } from './viewerSettings'
-import { Camera } from './camera'
+import { Camera, ICamera } from './camera'
 import { Input } from './input'
 import { Selection } from './selection'
-import { Environment } from './environment'
+import { Environment, IEnvironment } from './environment'
 import { Renderer } from './renderer'
-import { HitTestResult } from './hitTester'
+import { Raycaster, RaycastResult } from './raycaster'
 
 // loader
 import { VimSettings, VimOptions } from '../vim-loader/vimSettings'
 import { Loader } from '../vim-loader/loader'
 import { Vim } from '../vim-loader/vim'
 import { Object } from '../vim-loader/object'
+import * as THREE from 'three'
 
 /**
  * Viewer and loader for vim files.
  */
 export class Viewer {
+  /**
+   * Current viewer settings.
+   */
   settings: ViewerSettings
 
-  environment: Environment
+  /**
+   * Interface to manage objects to be rendered.
+   */
   renderer: Renderer
+
+  /**
+   * Interface to manage viewer selection.
+   */
   selection: Selection
-  camera: Camera
-  controls: Input
-  loader: Loader
+
+  /**
+   * Interface to manipulate default viewer inputs.
+   */
+  inputs: Input
+
+  /**
+   * Interface to raycast into the scene to find objects.
+   */
+  raycaster : Raycaster
+
+  private _environment: Environment
+  private _camera: Camera
+  private _loader: Loader
+  private _clock = new THREE.Clock()
 
   // State
   private _vims: Vim[] = []
 
   /**
+   * Interface to manipulate the viewer camera.
+   */
+  get camera () { return this._camera as ICamera }
+
+  /**
+   * Interface to manipulate THREE elements not directly related to vim.
+   */
+  get environment () { return this._environment as IEnvironment }
+
+  /**
    * Callback for on mouse click. Replace it to override or combine
    * default behaviour with your custom logic.
    */
-  onMouseClick: (hit: HitTestResult) => void
+  onMouseClick: (hit: RaycastResult) => void
 
   constructor (options?: Partial<ViewerOptions.Root>) {
-    this.loader = new Loader()
+    this._loader = new Loader()
     this.settings = new ViewerSettings(options)
 
     const canvas = Viewer.getOrCreateCanvas(this.settings.getCanvasId())
     this.renderer = new Renderer(canvas, this.settings)
+    this._camera = new Camera(this.renderer, this.settings)
 
-    this.camera = new Camera(this.renderer, this.settings)
-
-    this.environment = new Environment(this.settings)
-    this.environment.getObjects().forEach((o) => this.renderer.addObject(o))
+    this._environment = new Environment(this.settings)
+    this._environment.getObjects().forEach((o) => this.renderer.add(o))
 
     // Default mouse click behaviour, can be overriden
     this.onMouseClick = this.defaultOnClick
 
     // Input and Selection
-    this.controls = new Input(this)
-    this.controls.register()
+    this.raycaster = new Raycaster(this)
+    this.inputs = new Input(this, this._camera)
+    this.inputs.register()
     this.selection = new Selection(this)
 
     // Start Loop
@@ -84,8 +116,7 @@ export class Viewer {
     requestAnimationFrame(() => this.animate())
 
     // Camera
-    const timeDelta = this.renderer.clock.getDelta()
-    this.camera.update(timeDelta)
+    this._camera.update(this._clock.getDelta())
     // Rendering
     if (this._vims.length) this.renderer.render()
   }
@@ -93,7 +124,12 @@ export class Viewer {
   /**
    * Returns vim with given index. Once loaded vims do not change index.
    */
-  getVim = (index: number = 0) => this._vims[index]
+  getVim (index: number = 0) { return this._vims[index] }
+
+  /**
+   * Current loaded vim count
+   */
+  get vimCount () { return this._vims.length }
 
   /**
    * Adds given vim to the first empty spot of the vims array
@@ -136,15 +172,13 @@ export class Viewer {
     const settings = new VimSettings(options)
 
     const finish = (vim: Vim) => {
-      const filter = settings.getElementIdsFilter()
-      if (filter) this.filterVim(vim, filter)
-      else this.onVimLoaded(vim, settings)
-      this.frameContent()
+      this.onVimLoaded(vim, settings)
+      this._camera.frame('all')
       onLoad?.(vim)
     }
 
     if (typeof source === 'string') {
-      this.loader.loadFromUrl(
+      this._loader.loadFromUrl(
         source,
         settings.getTransparency(),
         (vim) => finish(vim),
@@ -156,7 +190,7 @@ export class Viewer {
         }
       )
     } else {
-      const vim = this.loader.loadFromArrayBuffer(
+      const vim = this._loader.loadFromArrayBuffer(
         source,
         settings.getTransparency()
       )
@@ -168,105 +202,42 @@ export class Viewer {
     this.addVim(vim)
     vim.applySettings(settings)
 
-    this.renderer.addScene(vim.scene)
-    this.environment.adaptToContent(this.renderer.getBoundingBox())
-    this.camera.adaptToContent(this.renderer.getBoundingSphere())
+    this.renderer.add(vim.scene)
+    this._environment.adaptToContent(this.renderer.getBoundingBox())
+    this._camera.adaptToContent()
   }
 
   /**
-   * Unload existing vim to get ready to load a new vim
+   * Unload given vim from viewer.
    */
   unloadVim (vim: Vim) {
     this.removeVim(vim)
-    this.renderer.removeScene(vim.scene)
+    this.renderer.remove(vim.scene)
+    vim.scene.dispose()
     if (this.selection.object?.vim === vim) this.selection.clear()
   }
 
   /**
-   * Unload existing vim and reloads it without redownloading it
-   * @param options full vim options, same as for loadVim
+   * Reloads the vim with only objects included in the array.
+   * @param objects array of objects to keep or undefined to load all objects.
    */
-  reloadVim (vim: Vim, options: VimOptions.Root) {
-    const settings = new VimSettings(options)
-    const elementIds = settings.getElementIdsFilter()
-
-    const instances = elementIds
-      .flatMap((id) => vim.getObjectFromElementId(id)?.instances)
+  filterVim (vim: Vim, objects: Object[] | undefined) {
+    const instances = objects?.flatMap(o => o?.instances)
       .filter((i): i is number => i !== undefined)
 
-    const newVim = this.loader.loadFromVim(
-      vim.document,
-      settings.getTransparency(),
-      instances
-    )
     this.unloadVim(vim)
-    this.onVimLoaded(newVim, settings)
+    vim.filter(instances)
+    this.onVimLoaded(vim, vim.settings)
   }
 
-  /**
-   * Reloads the current vim with the same settings except it applies a new element filter
-   * @param includedElementIds array of element ids to keep, passing undefined will load the whole vim
-   */
-  filterVim (vim: Vim, includedElementIds: number[] | undefined) {
-    const options = vim.settings.getOptions()
-    options.elementIds = includedElementIds
-    this.reloadVim(vim, options)
-  }
-
-  /**
-   * Select given vim object or clear selection if undefined
-   */
-  selectObject (object: Object | undefined) {
-    if (object) {
-      console.log(`Selected Element Index: ${object.element}`)
-      this.selection.select(object)
-    } else {
-      console.log('Selection Cleared')
-      this.selection.clear()
-    }
-  }
-
-  /**
-   * Look at given object
-   */
-  lookAtObject (object: Object) {
-    this.camera.lookAtPosition(object.getCenter())
-  }
-
-  /**
-   * Look at given object
-   */
-  frameObject (object: Object) {
-    this.camera.frameSphere(object.getBoundingSphere())
-  }
-
-  /**
-   * Move the camera to frame current selection
-   */
-  frameSelection () {
-    if (this.selection.hasSelection()) {
-      this.camera.frameSphere(this.selection.getBoundingSphere())
-    } else {
-      this.frameContent()
-    }
-  }
-
-  /**
-   * Move the camera to frame the whole scene
-   */
-  frameContent () {
-    this.camera.frameSphere(this.renderer.getBoundingSphere())
-  }
-
-  private defaultOnClick (hit: HitTestResult) {
+  private defaultOnClick (hit: RaycastResult) {
     console.log(hit)
     if (!hit.object) return
+    this.selection.select(hit.object)
 
-    this.selectObject(hit.object)
+    this._camera.target(hit.object.getCenter())
 
-    this.camera.setTarget(hit.object.getCenter())
-
-    if (hit.doubleClick) this.frameSelection()
+    if (hit.doubleClick) this._camera.frame(hit.object)
 
     console.log(hit.object.getBimElement())
   }

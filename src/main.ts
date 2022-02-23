@@ -1,4 +1,5 @@
 import * as VIM from './vim'
+import * as THREE from 'three'
 
 // Parse URL
 const params = new URLSearchParams(window.location.search)
@@ -55,7 +56,7 @@ function load2 () {
           rotation: { x: 270, y: 0, z: 0 },
           transparency: transparency
         },
-        (result) => {},
+        (result) => { console.log(result) },
         (progress) => {
           if (progress === 'processing') console.log('Processing')
           else {
@@ -72,3 +73,4 @@ function load2 () {
 
 globalThis.viewer = viewer
 globalThis.VIM = VIM
+globalThis.THREE = THREE

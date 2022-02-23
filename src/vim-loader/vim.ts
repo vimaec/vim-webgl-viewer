@@ -28,6 +28,14 @@ export class Vim {
     this._elementIdToElement = this.mapElementIdToElement()
   }
 
+  filter (instances?: number[]) {
+    this.scene.dispose()
+    this.scene = Scene.createFromG3d(this.document.g3d, this.settings.getTransparency(), instances)
+    for (const [element, object] of this._elementToObject.entries()) {
+      object.updateMeshes(this.getMeshesFromElement(element))
+    }
+  }
+
   private mapElementToInstance (): Map<number, number[]> {
     const map = new Map<number, number[]>()
     const instanceCount = this.document.getInstanceCount()
@@ -119,11 +127,15 @@ export class Vim {
 
     const instances = this._elementToInstance.get(index)
     const meshes = this.getMeshesFromInstances(instances)
-    if (!meshes) return
 
     const result = new Object(this, index, instances, meshes)
     this._elementToObject.set(index, result)
     return result
+  }
+
+  private getMeshesFromElement (index: number) {
+    const instances = this._elementToInstance.get(index)
+    return this.getMeshesFromInstances(instances)
   }
 
   private getMeshesFromInstances (instances: number[]) {

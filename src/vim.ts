@@ -1,6 +1,7 @@
 // Links files to generate package type exports
 export * from './vim-webgl-viewer/viewer'
 export * from './vim-webgl-viewer/viewerSettings'
+export { RaycastResult as HitTestResult } from './vim-webgl-viewer/raycaster'
 
 export * from './vim-loader/bfast'
 export * from './vim-loader/document'

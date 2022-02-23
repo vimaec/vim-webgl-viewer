@@ -10,10 +10,9 @@ import { ViewerSettings } from './viewerSettings'
  * Manages how vim objects are added and removed from the THREE.Scene to be rendered
  */
 export class Renderer {
-  camera: THREE.PerspectiveCamera
   renderer: THREE.WebGLRenderer
-  clock = new THREE.Clock()
   canvas: HTMLCanvasElement
+  camera: THREE.PerspectiveCamera
 
   // state
   scene: THREE.Scene
@@ -30,14 +29,88 @@ export class Renderer {
       logarithmicDepthBuffer: true
     })
     this.canvas = this.renderer.domElement
-
+    this.camera = new THREE.PerspectiveCamera()
     this.renderer.setPixelRatio(window.devicePixelRatio)
     this.renderer.shadowMap.enabled = false
 
-    this.camera = new THREE.PerspectiveCamera()
     this.scene = new THREE.Scene()
     this.fitToCanvas()
     this.setOnResize(this.fitToCanvas, settings.getCanvasResizeDelay())
+  }
+
+  /**
+   * Returns the bounding sphere encompasing all rendererd objects.
+   * @param target sphere in which to copy result, a new instance is created if undefined.
+   */
+  getBoundingSphere (target: THREE.Sphere = new THREE.Sphere()) {
+    return this._boundingBox?.getBoundingSphere(target)
+  }
+
+  /**
+   * Returns the bounding box encompasing all rendererd objects.
+   * @param target box in which to copy result, a new instance is created if undefined.
+   */
+  getBoundingBox (target: THREE.Box3 = new THREE.Box3()) {
+    return target.copy(this._boundingBox)
+  }
+
+  /**
+   * Render what is in camera.
+   */
+  render () {
+    this.renderer.render(this.scene, this.camera)
+  }
+
+  /**
+   * Returns the pixel size of the canvas.
+   */
+  getContainerSize (): [width: number, height: number] {
+    return [
+      this.canvas.parentElement.clientWidth,
+      this.canvas.parentElement.clientHeight
+    ]
+  }
+
+  /**
+   * Add object to be rendered
+   */
+  add (target: Scene | THREE.Object3D) {
+    if (target instanceof Scene) {
+      this.addScene(target)
+    } else {
+      this.scene.add(target)
+    }
+  }
+
+  /**
+   * Remove object from rendering
+   */
+  remove (target: Scene | THREE.Object3D) {
+    if (target instanceof Scene) {
+      for (let i = 0; i < target.meshes.length; i++) {
+        this.scene.remove(target.meshes[i])
+      }
+    } else {
+      this.scene.remove(target)
+    }
+  }
+
+  /**
+   * Removes all rendered objects
+   */
+  clear () {
+    this.scene.clear()
+    this._boundingBox = undefined
+  }
+
+  private addScene (scene: Scene) {
+    scene.meshes.forEach((m) => {
+      this.scene.add(m)
+    })
+
+    this._boundingBox = this._boundingBox
+      ? this._boundingBox.union(scene.boundingBox)
+      : scene.boundingBox.clone()
   }
 
   /**
@@ -60,59 +133,11 @@ export class Renderer {
     })
   }
 
-  getBoundingSphere (target: THREE.Sphere = new THREE.Sphere()) {
-    return this._boundingBox?.getBoundingSphere(target)
-  }
-
-  getBoundingBox (target: THREE.Box3 = new THREE.Box3()) {
-    return target.copy(this._boundingBox)
-  }
-
-  render () {
-    this.renderer.render(this.scene, this.camera)
-  }
-
-  getContainerSize (): [width: number, height: number] {
-    return [
-      this.canvas.parentElement.clientWidth,
-      this.canvas.parentElement.clientHeight
-    ]
-  }
-
-  fitToCanvas = () => {
+  private fitToCanvas = () => {
     const [width, height] = this.getContainerSize()
 
     this.renderer.setSize(width, height)
     this.camera.aspect = width / height
     this.camera.updateProjectionMatrix()
-  }
-
-  addObject (mesh: THREE.Object3D) {
-    this.scene.add(mesh)
-  }
-
-  addScene (scene: Scene) {
-    scene.meshes.forEach((m) => {
-      this.scene.add(m)
-    })
-
-    this._boundingBox = this._boundingBox
-      ? this._boundingBox.union(scene.boundingBox)
-      : scene.boundingBox.clone()
-  }
-
-  removeObject (mesh: THREE.Object3D) {
-    this.scene.remove(mesh)
-  }
-
-  removeScene (scene: Scene) {
-    for (let i = 0; i < scene.meshes.length; i++) {
-      this.scene.remove(scene.meshes[i])
-    }
-  }
-
-  clear () {
-    this.scene.clear()
-    this._boundingBox = undefined
   }
 }

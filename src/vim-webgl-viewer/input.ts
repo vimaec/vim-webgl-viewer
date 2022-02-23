@@ -3,6 +3,7 @@
  */
 
 import { Viewer } from './viewer'
+import { Camera } from './camera'
 import { Keyboard } from './keyboard'
 import { Touch } from './touch'
 import { Mouse } from './mouse'
@@ -20,13 +21,13 @@ export class Input {
   private _mouse: Mouse
   private _keyboard: Keyboard
 
-  constructor (viewer: Viewer) {
+  constructor (viewer: Viewer, camera: Camera) {
     this._canvas = viewer.renderer.canvas
     this._unregisters = []
 
-    this._keyboard = new Keyboard(viewer.camera, viewer)
+    this._keyboard = new Keyboard(camera, viewer)
     this._mouse = new Mouse(viewer, this._keyboard)
-    this._touch = new Touch(viewer.camera, viewer.renderer, this._mouse)
+    this._touch = new Touch(camera, viewer.renderer, this._mouse)
   }
 
   private reg = (
@@ -39,6 +40,9 @@ export class Input {
     this._unregisters.push(() => handler.removeEventListener(type, listener))
   }
 
+  /**
+   * Register inputs handlers for default viewer behavior
+   */
   register () {
     // mouse
     this.reg(this._canvas, 'mousedown', this._mouse.onMouseDown)
@@ -61,11 +65,17 @@ export class Input {
     this.reg(this._canvas, 'contextmenu', (e) => e.preventDefault())
   }
 
+  /**
+   * Unregisters all input handlers
+   */
   unregister = () => {
     this._unregisters.forEach((f) => f())
     this.reset()
   }
 
+  /**
+   * Resets all input state
+   */
   reset () {
     this._mouse.reset()
     this._keyboard.reset()
