@@ -127,7 +127,6 @@ export class Vim {
 
     const instances = this._elementToInstance.get(index)
     const meshes = this.getMeshesFromInstances(instances)
-    if (!meshes) return
 
     const result = new Object(this, index, instances, meshes)
     this._elementToObject.set(index, result)
