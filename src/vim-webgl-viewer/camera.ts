@@ -28,7 +28,7 @@ export class Camera {
 
   private _inputVelocity: THREE.Vector3
   private _velocity: THREE.Vector3
-  private _: THREE.Vector3
+  private _impulse: THREE.Vector3
   speed: number
 
   private _orbitalTarget: THREE.Vector3
@@ -58,7 +58,7 @@ export class Camera {
 
     this._inputVelocity = new THREE.Vector3(0, 0, 0)
     this._velocity = new THREE.Vector3(0, 0, 0)
-    this._ = new THREE.Vector3(0, 0, 0)
+    this._impulse = new THREE.Vector3(0, 0, 0)
     this.speed = 0
     this._sceneSizeMultiplier = 1
     this._orbitalTarget = new THREE.Vector3(0, 0, 0)
@@ -78,7 +78,7 @@ export class Camera {
 
     this._inputVelocity.set(0, 0, 0)
     this._velocity.set(0, 0, 0)
-    this._.set(0, 0, 0)
+    this._impulse.set(0, 0, 0)
 
     this._currentOrbitalDistance = 5
     this._orbitalTarget.set(0, 0, 0)
@@ -196,7 +196,7 @@ export class Camera {
       .clone()
       .multiplyScalar(this.getSpeedMultiplier() * this._wheelSpeed)
     localImpulse.applyQuaternion(this.camera.quaternion)
-    this._.add(localImpulse)
+    this._impulse.add(localImpulse)
   }
 
   /**
@@ -297,7 +297,7 @@ export class Camera {
       this._orbitalTargetDistance * blendFactor
 
     const positionDelta = this._velocity.clone().multiplyScalar(deltaTime)
-    const impulse = this._.clone().multiplyScalar(blendFactor)
+    const impulse = this._impulse.clone().multiplyScalar(blendFactor)
     positionDelta.add(impulse)
 
     const orbitDelta = positionDelta.clone()
@@ -318,7 +318,7 @@ export class Camera {
       this._orbitalTargetDistance = this._currentOrbitalDistance
     }
 
-    this._.multiplyScalar(invBlendFactor)
+    this._impulse.multiplyScalar(invBlendFactor)
     this.camera.position.add(positionDelta)
     this._orbitalTarget.add(orbitDelta)
 
