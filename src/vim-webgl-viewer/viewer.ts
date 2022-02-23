@@ -209,7 +209,7 @@ export class Viewer {
    * @param objects array of objects to keep or undefined to load all objects
    */
   filterVim (vim: Vim, objects: Object[] | undefined) {
-    const instances = objects.flatMap(o => o?.instances)
+    const instances = objects?.flatMap(o => o?.instances)
       .filter((i): i is number => i !== undefined)
 
     this.unloadVim(vim)
