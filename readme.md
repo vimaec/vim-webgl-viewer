@@ -9,8 +9,8 @@ https://vimaec.github.io/vim-webgl-viewer/api/
 # Live Demo
 
 - [Small Model Demo - Residence](https://vimaec.github.io/vim-webgl-viewer)
-- [Medium Model Demo - Medical Tower](https://vimaec.github.io/vim-webgl-viewer?model=https://vim.azureedge.net/samples/skanska.vim)
-- [Large Model Demo - Stadium](https://vimaec.github.io/vim-webgl-viewer?model=https://vim.azureedge.net/samples/stadium.vim) (_Warning_: slow download times)
+- [Medium Model Demo - Medical Tower](https://vimaec.github.io/vim-webgl-viewer?vim=https://vim.azureedge.net/samples/skanska.vim)
+- [Large Model Demo - Stadium](https://vimaec.github.io/vim-webgl-viewer?vim=https://vim.azureedge.net/samples/stadium.vim) (_Warning_: slow download times)
 
 # Overview
 
