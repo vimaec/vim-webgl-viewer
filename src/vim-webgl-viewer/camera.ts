@@ -69,6 +69,11 @@ export class Camera {
     this._orbitalTargetDistance = this._currentOrbitalDistance
   }
 
+  dispose () {
+    this._gizmo.dispose()
+    this._gizmo = null
+  }
+
   /**
    * Resets camera to default state.
    */

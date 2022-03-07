@@ -21,6 +21,11 @@ export class Loader {
     THREE.Cache.enabled = true
   }
 
+  dispose () {
+    THREE.Cache.clear()
+    this._loaded.clear()
+  }
+
   /**
    * Load a vim from a remote or local url
    * @param transparency defines how and if to render objects according to transparency.
@@ -54,9 +59,9 @@ export class Loader {
         onProgress?.('processing')
         // slight hack to avoid multiple load call to share the same data.
         if (this._loaded.has(url)) data = data.slice(0)
-        const vim = Document.createFromArrayBuffer(data)
-        const scene = this.loadFromVim(vim, transparency)
-        onLoad?.(scene)
+        const document = Document.createFromArrayBuffer(data)
+        const vim = this.loadFromVim(document, transparency)
+        onLoad?.(vim)
       },
       onProgress,
       (error) => {

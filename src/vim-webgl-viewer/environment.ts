@@ -89,9 +89,9 @@ export class GroundPlane {
     this._material?.dispose()
     this._texture?.dispose()
 
-    this._geometry = null
-    this._material = null
-    this._texture = null
+    this._geometry = undefined
+    this._material = undefined
+    this._texture = undefined
   }
 }
 
@@ -137,9 +137,19 @@ export class Environment {
   /**
    * Adjust scale so that it matches box dimensions.
    */
-  public adaptToContent (box: Box3) {
+  adaptToContent (box: Box3) {
     // Plane
     this._groundPlane.adaptToContent(box)
+  }
+
+  dispose () {
+    this.sunLight.dispose()
+    this.skyLight.dispose()
+    this._groundPlane.dispose()
+
+    this.sunLight = undefined
+    this.skyLight = undefined
+    this._groundPlane = undefined
   }
 }
 

@@ -22,6 +22,16 @@ export namespace Materials {
       this.transparent = transparent ?? createTransparent()
       this.wireframe = wireframe ?? createWireframe()
     }
+
+    dispose () {
+      this.opaque.dispose()
+      this.transparent.dispose()
+      this.wireframe.dispose()
+
+      this.opaque = null
+      this.transparent = null
+      this.wireframe = null
+    }
   }
 
   /**
@@ -140,7 +150,11 @@ export namespace Materials {
     })
     return material
   }
-
   let materials: Library
   export const getDefaultLibrary = () => materials ?? new Library()
+
+  export function dispose () {
+    materials.dispose()
+    materials = null
+  }
 }

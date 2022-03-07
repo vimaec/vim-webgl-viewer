@@ -28,6 +28,13 @@ export class Vim {
     this._elementIdToElement = this.mapElementIdToElement()
   }
 
+  dispose () {
+    this.scene.dispose()
+    this._elementIdToElement.clear()
+    this._elementIdToElement.clear()
+    this._elementToObject.clear()
+  }
+
   filter (instances?: number[]) {
     this.scene.dispose()
     this.scene = Scene.createFromG3d(this.document.g3d, this.settings.getTransparency(), instances)
@@ -68,7 +75,7 @@ export class Vim {
 
       if (id < 0) {
         if (!negativeReported) {
-          console.error('Ignoring negative element ids. Check source data.')
+          // console.error('Ignoring negative element ids. Check source data.')
           negativeReported = true
         }
 
@@ -76,7 +83,7 @@ export class Vim {
       }
       if (map.has(id)) {
         if (!duplicateReported) {
-          console.error('Ignoring duplicate element ids. Check source data.')
+          // console.error('Ignoring duplicate element ids. Check source data.')
           duplicateReported = true
           continue
         }

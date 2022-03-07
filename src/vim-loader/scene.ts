@@ -174,6 +174,8 @@ export class Scene {
       this.meshes[i].geometry.dispose()
     }
     this.meshes.length = 0
+    this._instanceToThreeMesh.clear()
+    this._threeMeshIdToInstances.clear()
   }
 
   /**

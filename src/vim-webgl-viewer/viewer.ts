@@ -75,8 +75,7 @@ export class Viewer {
     this._loader = new Loader()
     this.settings = new ViewerSettings(options)
 
-    const canvas = Viewer.getOrCreateCanvas(this.settings.getCanvasId())
-    this.renderer = new Renderer(canvas, this.settings)
+    this.renderer = new Renderer(this.settings)
     this._camera = new Camera(this.renderer, this.settings)
 
     this._environment = new Environment(this.settings)
@@ -95,24 +94,22 @@ export class Viewer {
     this.animate()
   }
 
-  /**
-   * Either returns html canvas at provided Id or creates a canvas at root level
-   */
-  private static getOrCreateCanvas (canvasId?: string) {
-    let canvas = canvasId
-      ? (document.getElementById(canvasId) as HTMLCanvasElement)
-      : undefined
-
-    if (!canvas) {
-      canvas = document.createElement('canvas')
-      document.body.appendChild(canvas)
-    }
-
-    return canvas
+  dispose () {
+    this._loader.dispose()
+    this._environment.dispose()
+    this.selection.clear()
+    this._camera.dispose()
+    this.renderer.dispose()
+    this.inputs.unregister()
+    this._vims.forEach(v => v?.dispose())
+    this._vims = undefined
   }
 
   // Calls render, and asks the framework to prepare the next frame
   private animate () {
+    // if viewer was disposed no more animation.
+    if (!this._vims) return
+
     requestAnimationFrame(() => this.animate())
 
     // Camera
@@ -125,7 +122,7 @@ export class Viewer {
    * Returns vim with given index. Once loaded vims do not change index.
    */
   getVim (index: number = 0) { return this._vims[index] }
-
+  get vims () { return this._vims.filter(v => v !== undefined) }
   /**
    * Current loaded vim count
    */
@@ -213,7 +210,7 @@ export class Viewer {
   unloadVim (vim: Vim) {
     this.removeVim(vim)
     this.renderer.remove(vim.scene)
-    vim.scene.dispose()
+    vim.dispose()
     if (this.selection.object?.vim === vim) this.selection.clear()
   }
 
