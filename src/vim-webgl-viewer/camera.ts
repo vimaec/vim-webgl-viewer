@@ -71,7 +71,7 @@ export class Camera {
 
   dispose () {
     this._gizmo.dispose()
-    this._gizmo = null
+    this._gizmo = undefined
   }
 
   /**

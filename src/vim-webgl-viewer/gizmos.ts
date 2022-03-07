@@ -39,13 +39,13 @@ export class CameraGizmo {
     this._wireframe.dispose()
     this._material.dispose()
     this._materialAlways.dispose()
-    this._box = null
-    this._wireframe = null
-    this._material = null
-    this._materialAlways = null
+    this._box = undefined
+    this._wireframe = undefined
+    this._material = undefined
+    this._materialAlways = undefined
 
     this._renderer.remove(this._gizmos)
-    this._gizmos = null
+    this._gizmos = undefined
   }
 
   show (show: boolean = true) {

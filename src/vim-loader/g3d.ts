@@ -130,13 +130,12 @@ class AbstractG3d {
     this.attributes = attributes
   }
 
-  findAttribute (descriptor: string): G3dAttribute | null {
+  findAttribute (descriptor: string): G3dAttribute | undefined {
     const filter = G3dAttributeDescriptor.fromString(descriptor)
     for (let i = 0; i < this.attributes.length; ++i) {
       const attribute = this.attributes[i]
       if (attribute.descriptor.matches(filter)) return attribute
     }
-    return null
   }
 
   // Given a BFAST container (header/names/buffers) constructs a G3D data structure

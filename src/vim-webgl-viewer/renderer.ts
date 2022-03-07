@@ -47,12 +47,12 @@ export class Renderer {
     this.clear()
 
     this._unregisterResize()
-    this._unregisterResize = null
+    this._unregisterResize = undefined
 
     this.renderer.clear()
     this.renderer.forceContextLoss()
     this.renderer.dispose()
-    this.renderer = null
+    this.renderer = undefined
 
     if (this._ownedCanvas) this.canvas.remove()
   }

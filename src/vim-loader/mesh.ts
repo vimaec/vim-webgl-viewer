@@ -137,6 +137,6 @@ export namespace Mesh {
   }
 
   export function dispose () {
-    defaultBuilder = null
+    defaultBuilder = undefined
   }
 }

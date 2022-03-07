@@ -228,7 +228,7 @@ export class Object {
     index: number,
     color: THREE.Color
   ) {
-    if (mesh.instanceColor === null) {
+    if (!mesh.instanceColor) {
       // Add color instance attribute
       const colorSize = mesh.geometry.getAttribute('color').itemSize
       const colors = new Float32Array(mesh.count * colorSize)

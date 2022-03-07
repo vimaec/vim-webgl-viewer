@@ -75,7 +75,7 @@ export class Vim {
 
       if (id < 0) {
         if (!negativeReported) {
-          // console.error('Ignoring negative element ids. Check source data.')
+          console.error('Ignoring negative element ids. Check source data.')
           negativeReported = true
         }
 
@@ -83,7 +83,7 @@ export class Vim {
       }
       if (map.has(id)) {
         if (!duplicateReported) {
-          // console.error('Ignoring duplicate element ids. Check source data.')
+          console.error('Ignoring duplicate element ids. Check source data.')
           duplicateReported = true
           continue
         }

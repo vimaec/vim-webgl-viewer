@@ -144,7 +144,7 @@ export class ViewerSettings {
       },
       groundPlane: {
         show: false,
-        texture: null,
+        texture: undefined,
         opacity: 1,
         color: { r: 0xff, g: 0xff, b: 0xff },
         size: 3

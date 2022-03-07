@@ -67,7 +67,7 @@ export class GroundPlane {
 
     // dispose previous texture
     this._texture?.dispose()
-    this._texture = null
+    this._texture = undefined
 
     // Bail if new texture url, is no texture
     if (!texUrl) return

@@ -28,9 +28,9 @@ export namespace Materials {
       this.transparent.dispose()
       this.wireframe.dispose()
 
-      this.opaque = null
-      this.transparent = null
-      this.wireframe = null
+      this.opaque = undefined
+      this.transparent = undefined
+      this.wireframe = undefined
     }
   }
 
@@ -155,6 +155,6 @@ export namespace Materials {
 
   export function dispose () {
     materials.dispose()
-    materials = null
+    materials = undefined
   }
 }
