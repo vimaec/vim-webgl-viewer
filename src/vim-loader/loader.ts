@@ -16,6 +16,8 @@ import { Transparency } from './geometry'
 export class Loader {
   private _loader: THREE.FileLoader
   private _loaded: Set<string> = new Set<string>()
+  // Idealy we would cancel the load request, but three doesn't currently support it.
+  private _disposed: boolean
   constructor () {
     this._loader = new THREE.FileLoader()
     THREE.Cache.enabled = true
@@ -24,6 +26,7 @@ export class Loader {
   dispose () {
     THREE.Cache.clear()
     this._loaded.clear()
+    this._disposed = true
   }
 
   /**
@@ -48,6 +51,7 @@ export class Loader {
     this._loader.load(
       url,
       (data: string | ArrayBuffer) => {
+        if (this._disposed) return
         if (!data) {
           onError?.(new ErrorEvent('Failed to obtain file at ' + url))
           return
@@ -63,8 +67,12 @@ export class Loader {
         const vim = this.loadFromVim(document, transparency)
         onLoad?.(vim)
       },
-      onProgress,
+      (progress) => {
+        if (this._disposed) return
+        onProgress(progress)
+      },
       (error) => {
+        if (this._disposed) return
         onError?.(error)
       }
     )
