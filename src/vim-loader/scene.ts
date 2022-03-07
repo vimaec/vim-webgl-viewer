@@ -6,6 +6,7 @@ import * as THREE from 'three'
 import { G3d } from './g3d'
 import { Transparency } from './geometry'
 import { Mesh } from './mesh'
+import { Vim } from './vim'
 
 /**
  * A Scene regroups many THREE.Meshes
@@ -56,9 +57,9 @@ export class Scene {
   /**
    * Sets vim index for this scene and all its THREE.Meshes.
    */
-  setIndex (index: number) {
+  setVim (vim: Vim) {
     for (let m = 0; m < this.meshes.length; m++) {
-      this.meshes[m].userData.index = index
+      this.meshes[m].userData.vim = vim
     }
   }
 

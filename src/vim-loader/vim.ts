@@ -16,7 +16,7 @@ export class Vim {
   document: Document
   scene: Scene
   settings: VimSettings
-  private _index: number
+  index: number
   private _elementToInstance: Map<number, number[]>
   private _elementIdToElement: Map<number, number>
   private _elementToObject: Map<number, Object> = new Map<number, Object>()
@@ -24,6 +24,7 @@ export class Vim {
   constructor (vim: Document, scene: Scene) {
     this.document = vim
     this.scene = scene
+    this.scene.setVim(this)
     this._elementToInstance = this.mapElementToInstance()
     this._elementIdToElement = this.mapElementIdToElement()
   }
@@ -97,15 +98,6 @@ export class Vim {
   applySettings (settings: VimSettings) {
     this.settings = settings
     this.scene.applyMatrix4(this.settings.getMatrix())
-  }
-
-  get index () {
-    return this._index
-  }
-
-  set index (index: number) {
-    this._index = index
-    this.scene.setIndex(index)
   }
 
   getMatrix () {

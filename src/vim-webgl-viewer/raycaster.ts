@@ -4,6 +4,7 @@
 
 import * as THREE from 'three'
 import { Object } from '../vim-loader/object'
+import { Vim } from '../vim-loader/vim'
 import { Viewer } from './viewer'
 
 type ThreeIntersectionList = THREE.Intersection<THREE.Object3D<THREE.Event>>[]
@@ -31,7 +32,7 @@ export class RaycastResult {
     intersections: ThreeIntersectionList
   ): THREE.Intersection | undefined {
     for (let i = 0; i < intersections.length; i++) {
-      if (intersections[i].object?.userData?.index !== undefined) {
+      if (intersections[i].object?.userData?.vim) {
         return intersections[i]
       }
     }
@@ -79,14 +80,14 @@ export class Raycaster {
     const hit = r.firstHit
 
     if (hit) {
-      const vimIndex = hit.object.userData.index
+      const vim = hit.object.userData.vim as Vim
+
       // Merged meshes have g3d intance index of each face encoded in uvs
       if (hit.object.userData.merged && hit.uv !== undefined) {
         const instance = Math.round(hit.uv.x)
-        r.object = this._viewer.getVim(vimIndex).getObjectFromInstance(instance)
+        r.object = vim.getObjectFromInstance(instance)
       } else if (hit.instanceId !== undefined) {
-        r.object = this._viewer
-          .getVim(vimIndex)
+        r.object = vim
           .getObjectFromMesh(hit.object as THREE.InstancedMesh, hit.instanceId)
       }
     }

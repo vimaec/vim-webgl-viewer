@@ -119,9 +119,8 @@ export class Viewer {
   }
 
   /**
-   * Returns vim with given index. Once loaded vims do not change index.
+   * Returns an array with all loaded vims.
    */
-  getVim (index: number = 0) { return this._vims[index] }
   get vims () { return this._vims.filter(v => v !== undefined) }
   /**
    * Current loaded vim count
