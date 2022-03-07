@@ -21,7 +21,7 @@ export class Renderer {
   private _ownedCanvas: boolean
 
   constructor (settings: ViewerSettings) {
-    const [canvas, owned] = Renderer.getOrCreateCanvas()
+    const [canvas, owned] = Renderer.getOrCreateCanvas(settings.getCanvasId())
     this._ownedCanvas = owned
     this.renderer = new THREE.WebGLRenderer({
       canvas: canvas,
