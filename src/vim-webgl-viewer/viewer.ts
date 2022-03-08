@@ -69,7 +69,7 @@ export class Viewer {
    * Callback for on mouse click. Replace it to override or combine
    * default behaviour with your custom logic.
    */
-  onMouseClick: (hit: RaycastResult) => void
+  onMouseClick: (hit: RaycastResult) => void | undefined
 
   constructor (options?: Partial<ViewerOptions.Root>) {
     this._loader = new Loader()
@@ -221,9 +221,9 @@ export class Viewer {
     const instances = objects?.flatMap(o => o?.instances)
       .filter((i): i is number => i !== undefined)
 
-    this.unloadVim(vim)
+    this.renderer.remove(vim.scene)
     vim.filter(instances)
-    this.onVimLoaded(vim, vim.settings)
+    this.renderer.add(vim.scene)
   }
 
   private defaultOnClick (hit: RaycastResult) {
