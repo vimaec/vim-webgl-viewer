@@ -69,7 +69,9 @@ export class Viewer {
    * Callback for on mouse click. Replace it to override or combine
    * default behaviour with your custom logic.
    */
-  onMouseClick: (hit: RaycastResult) => void | undefined
+  _onMouseClick: (hit: RaycastResult) => void
+  get onMouseClick () { return this._onMouseClick }
+  set onMouseClick (callback : (hit: RaycastResult) => void) { this._onMouseClick = callback ?? function (hit: RaycastResult) {} }
 
   constructor (options?: Partial<ViewerOptions.Root>) {
     this._loader = new Loader()
@@ -228,7 +230,7 @@ export class Viewer {
 
   private defaultOnClick (hit: RaycastResult) {
     console.log(hit)
-    if (!hit.object) return
+    if (!hit?.object) return
     this.selection.select(hit.object)
 
     this._camera.target(hit.object.getCenter())

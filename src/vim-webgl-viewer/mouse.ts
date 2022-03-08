@@ -118,6 +118,6 @@ export class Mouse {
   onMouseClick = (position: THREE.Vector2, doubleClick: boolean) => {
     const result = this._raycaster.screenRaycast(position)
     result.doubleClick = doubleClick
-    this._viewer.onMouseClick?.call(result)
+    this._viewer.onMouseClick(result)
   }
 }
