@@ -63,28 +63,6 @@ export class Scene {
     }
   }
 
-  swapInstances (mesh: THREE.InstancedMesh, indexA: number, indexB: number) {
-    const array = this._threeMeshIdToInstances.get(mesh.id)
-    if (!array) throw new Error('Could not find mesh with id : ' + mesh.id)
-    if (indexA === indexB) return
-
-    const matrixA = new THREE.Matrix4()
-    const matrixB = new THREE.Matrix4()
-    mesh.getMatrixAt(indexA, matrixA)
-    mesh.getMatrixAt(indexB, matrixB)
-    mesh.setMatrixAt(indexA, matrixB)
-    mesh.setMatrixAt(indexB, matrixA)
-
-    const instanceA = array[indexA]
-    const instanceB = array[indexB]
-
-    this._instanceToThreeMesh.get(instanceA)[1] = indexB
-    this._instanceToThreeMesh.get(instanceB)[1] = indexA
-    array[indexA] = instanceB
-    array[indexB] = instanceA
-    mesh.instanceMatrix.needsUpdate = true
-  }
-
   /**
    * Add an instanced mesh to the Scene and recomputes fields as needed.
    * @param mesh Is expected to have userData.instances = number[]
