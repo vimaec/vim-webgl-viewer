@@ -134,6 +134,14 @@ export class Vim {
     return result
   }
 
+  * getAllObjects () {
+    const [first] = this.document.entities.get('Vim.Element')
+    const elementCount = first[1].length
+    for (let i = 0; i < elementCount; i++) {
+      yield this.getObjectFromElement(i)
+    }
+  }
+
   private getMeshesFromElement (index: number) {
     const instances = this._elementToInstance.get(index)
     return this.getMeshesFromInstances(instances)

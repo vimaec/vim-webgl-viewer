@@ -25,16 +25,30 @@ export class RaycastResult {
   ) {
     this.mousePosition = mousePosition
     this.intersections = intersections
-    this.firstHit = RaycastResult.GetFirstVimHit(intersections)
+    const [hit, obj] = this.GetFirstVimHit(intersections)
+    this.firstHit = hit
+    this.object = obj
   }
 
-  private static GetFirstVimHit (
+  private GetFirstVimHit (
     intersections: ThreeIntersectionList
-  ): THREE.Intersection | undefined {
+  ) : [THREE.Intersection, Object] {
     for (let i = 0; i < intersections.length; i++) {
-      if (intersections[i].object?.userData?.vim) {
-        return intersections[i]
-      }
+      const obj = this.getVimObjectFromHit(intersections[i])
+      if (obj?.visible) return [intersections[i], obj]
+    }
+    return [undefined, undefined]
+  }
+
+  private getVimObjectFromHit (hit: THREE.Intersection) {
+    const vim = hit.object.userData.vim as Vim
+    if (!vim) return
+
+    if (hit.object.userData.merged && hit.uv !== undefined) {
+      const instance = Math.round(hit.uv.x)
+      return vim.getObjectFromInstance(instance)
+    } else if (hit.instanceId !== undefined) {
+      return vim.getObjectFromMesh(hit.object as THREE.InstancedMesh, hit.instanceId)
     }
   }
 
@@ -51,7 +65,7 @@ export class RaycastResult {
     return this.firstHit.point
   }
 
-  get objectId (): number {
+  get threeId (): number {
     return this.firstHit.object.id
   }
 

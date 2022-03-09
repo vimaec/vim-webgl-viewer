@@ -95,8 +95,14 @@ export namespace Materials {
         `
         #include <color_pars_vertex>
         #ifdef USE_INSTANCING_COLOR
-        attribute float useVertexColor;
+          attribute float useVertexColor;
         #endif
+        #ifdef USE_INSTANCING
+          attribute float ignoreInstance;
+        #else
+          attribute float ignoreVertex;
+        #endif
+        varying float vIgnore;
         `
       )
       // Define uvs for instanced meshes
@@ -123,17 +129,35 @@ export namespace Materials {
         #ifdef USE_INSTANCING_COLOR
           vColor.xyz = ((1.0f - useVertexColor) * instanceColor.xyz) + (useVertexColor * color.xyz);
         #endif
+
+        #ifdef USE_INSTANCING
+          vIgnore = ignoreInstance;
+        #else
+          vIgnore = ignoreVertex;
+        #endif
+        
         `
       )
 
     // Draw vertex color instead of phong model when Uv.y = 0
-    shader.fragmentShader = shader.fragmentShader.replace(
-      '#include <output_fragment>',
-      `
-        float d = length(outgoingLight);
-        gl_FragColor = vec4(vColor.xyz * (1.0f - vUv.y) * d + outgoingLight.xyz * vUv.y , diffuseColor.a);
-      `
-    )
+
+    shader.fragmentShader = shader.fragmentShader
+      .replace('#include <clipping_planes_pars_fragment>',
+        `
+        #include <clipping_planes_pars_fragment>
+        varying float vIgnore;
+        `
+      )
+      .replace(
+        '#include <output_fragment>',
+        `
+          if (vIgnore > 0.0)
+            discard;
+
+          float d = length(outgoingLight);
+          gl_FragColor = vec4(vColor.xyz * (1.0f - vUv.y) * d + outgoingLight.xyz * vUv.y , diffuseColor.a);
+        `
+      )
     return shader
   }
 
