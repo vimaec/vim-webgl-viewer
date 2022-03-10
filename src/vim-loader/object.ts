@@ -199,8 +199,12 @@ export class Object {
     index: number,
     visible: boolean
   ) {
-    const attribute = mesh.geometry.getAttribute('ignoreInstance') ?? new InstancedBufferAttribute(new Float32Array(mesh.geometry.index.count * 3), 1)
-    mesh.geometry.setAttribute('ignoreInstance', attribute)
+    let attribute = mesh.geometry.getAttribute('ignoreInstance')
+    if (!attribute) {
+      attribute = new InstancedBufferAttribute(new Float32Array(mesh.count), 1)
+      mesh.geometry.setAttribute('ignoreInstance', attribute)
+    }
+
     attribute.setX(index, visible ? 0 : 1)
     attribute.needsUpdate = true
   }
