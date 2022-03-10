@@ -281,34 +281,33 @@ export class Object {
     if (!mesh.instanceColor) {
       this.addColorAttributes(mesh)
     }
+    const ignoreVertexColor = mesh.geometry.getAttribute('ignoreVertexColor')
     if (color) {
       // Set instance to use instance color provided
-      mesh.instanceColor.setXYZW(index, color.r, color.g, color.b, 1)
-      mesh.geometry.getAttribute('useVertexColor').setX(index, 0)
+      mesh.instanceColor.setXYZ(index, color.r, color.g, color.b)
+      ignoreVertexColor.setX(index, 1)
     } else {
       // Revert to vertex color
-      mesh.geometry.getAttribute('useVertexColor').setX(index, 1)
+      ignoreVertexColor.setX(index, 0)
     }
 
     // Set attributes dirty
-    mesh.geometry.getAttribute('useVertexColor').needsUpdate = true
+    ignoreVertexColor.needsUpdate = true
     mesh.instanceColor.needsUpdate = true
+    // mesh.material = new THREE.MeshBasicMaterial({ color: new THREE.Color(0, 1, 0) })
   }
 
   private addColorAttributes (mesh: THREE.InstancedMesh) {
     const count = mesh.instanceMatrix.count
     // Add color instance attribute
-    const colorSize = mesh.geometry.getAttribute('color').itemSize
-    const colors = new Float32Array(count * colorSize)
-    colors.fill(1)
-    mesh.instanceColor = new THREE.InstancedBufferAttribute(colors, 4)
+    const colors = new Float32Array(count * 3)
+    mesh.instanceColor = new THREE.InstancedBufferAttribute(colors, 3)
 
-    // Add custom useVertexColor instance attribute
-    const useVertexColor = new Float32Array(count)
-    useVertexColor.fill(1)
+    // Add custom ignoreVertexColor instance attribute
+    const ignoreVertexColor = new Float32Array(count)
     mesh.geometry.setAttribute(
-      'useVertexColor',
-      new THREE.InstancedBufferAttribute(useVertexColor, 1)
+      'ignoreVertexColor',
+      new THREE.InstancedBufferAttribute(ignoreVertexColor, 1)
     )
   }
 }
