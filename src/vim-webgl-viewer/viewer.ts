@@ -45,7 +45,7 @@ export class Viewer {
   /**
    * Interface to raycast into the scene to find objects.
    */
-  raycaster : Raycaster
+  raycaster: Raycaster
 
   private _environment: Environment
   private _camera: Camera
@@ -53,25 +53,35 @@ export class Viewer {
   private _clock = new THREE.Clock()
 
   // State
-  private _vims: Vim[] = []
+  private _vims: (Vim | undefined)[] = []
+  private _disposed: boolean = false
 
   /**
    * Interface to manipulate the viewer camera.
    */
-  get camera () { return this._camera as ICamera }
+  get camera () {
+    return this._camera as ICamera
+  }
 
   /**
    * Interface to manipulate THREE elements not directly related to vim.
    */
-  get environment () { return this._environment as IEnvironment }
+  get environment () {
+    return this._environment as IEnvironment
+  }
 
   /**
    * Callback for on mouse click. Replace it to override or combine
    * default behaviour with your custom logic.
    */
-  _onMouseClick: (hit: RaycastResult) => void
-  get onMouseClick () { return this._onMouseClick }
-  set onMouseClick (callback : (hit: RaycastResult) => void) { this._onMouseClick = callback ?? function (hit: RaycastResult) {} }
+  private _onMouseClick: (hit: RaycastResult) => void
+  get onMouseClick () {
+    return this._onMouseClick
+  }
+
+  set onMouseClick (callback: (hit: RaycastResult) => void) {
+    this._onMouseClick = callback ?? function (hit: RaycastResult) {}
+  }
 
   constructor (options?: Partial<ViewerOptions.Root>) {
     this._loader = new Loader()
@@ -84,7 +94,7 @@ export class Viewer {
     this._environment.getObjects().forEach((o) => this.renderer.add(o))
 
     // Default mouse click behaviour, can be overriden
-    this.onMouseClick = this.defaultOnClick
+    this._onMouseClick = this.defaultOnClick
 
     // Input and Selection
     this.raycaster = new Raycaster(this)
@@ -103,14 +113,15 @@ export class Viewer {
     this._camera.dispose()
     this.renderer.dispose()
     this.inputs.unregister()
-    this._vims.forEach(v => v?.dispose())
-    this._vims = undefined
+    this._vims.forEach((v) => v?.dispose())
+    this._vims = []
+    this._disposed = true
   }
 
   // Calls render, and asks the framework to prepare the next frame
   private animate () {
     // if viewer was disposed no more animation.
-    if (!this._vims) return
+    if (this._disposed) return
 
     requestAnimationFrame(() => this.animate())
 
@@ -123,11 +134,16 @@ export class Viewer {
   /**
    * Returns an array with all loaded vims.
    */
-  get vims () { return this._vims.filter(v => v !== undefined) }
+  get vims () {
+    return this._vims.filter((v) => v !== undefined)
+  }
+
   /**
    * Current loaded vim count
    */
-  get vimCount () { return this._vims.length }
+  get vimCount () {
+    return this._vims.length
+  }
 
   /**
    * Adds given vim to the first empty spot of the vims array
@@ -220,7 +236,8 @@ export class Viewer {
    * @param objects array of objects to keep or undefined to load all objects.
    */
   filterVim (vim: Vim, objects: Object[] | undefined) {
-    const instances = objects?.flatMap(o => o?.instances)
+    const instances = objects
+      ?.flatMap((o) => o?.instances)
       .filter((i): i is number => i !== undefined)
 
     this.renderer.remove(vim.scene)

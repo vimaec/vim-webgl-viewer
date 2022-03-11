@@ -60,7 +60,9 @@ export class Renderer {
   /**
    * Either returns html canvas at provided Id or creates a canvas at root level
    */
-  private static getOrCreateCanvas (canvasId?: string) : [HTMLCanvasElement, boolean] {
+  private static getOrCreateCanvas (
+    canvasId?: string
+  ): [HTMLCanvasElement, boolean] {
     let canvas = canvasId
       ? (document.getElementById(canvasId) as HTMLCanvasElement)
       : undefined
@@ -166,7 +168,8 @@ export class Renderer {
       }, timeout)
     }
     window.addEventListener('resize', onResize)
-    this._unregisterResize = () => window.removeEventListener('resize', onResize)
+    this._unregisterResize = () =>
+      window.removeEventListener('resize', onResize)
   }
 
   private fitToCanvas = () => {

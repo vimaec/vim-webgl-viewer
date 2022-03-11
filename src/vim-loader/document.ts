@@ -22,7 +22,7 @@ export class Document {
   entities: Map<string, EntityTable>
   strings: string[]
 
-  private _instanceToElement: number[]
+  private _instanceToElement: number[] | undefined
   constructor (
     header: string,
     assets: BFast,
@@ -106,6 +106,10 @@ export class Document {
       this.getIndexColumn(table, Document.TABLE_ELEMENT, 'Element') ??
       // Backwards compatible call with vim0.9
       table?.get(Document.TABLE_ELEMENT_LEGACY)
+
+    if (!this._instanceToElement) {
+      throw Error('Could not find element table.')
+    }
 
     return this._instanceToElement
   }

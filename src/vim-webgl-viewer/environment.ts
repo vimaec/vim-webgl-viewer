@@ -103,7 +103,9 @@ export class Environment {
   sunLight: THREE.DirectionalLight
   private _groundPlane: GroundPlane
 
-  get groundPlane () { return this._groundPlane.mesh }
+  get groundPlane () {
+    return this._groundPlane.mesh
+  }
 
   constructor (settings: ViewerSettings) {
     this._groundPlane = new GroundPlane()

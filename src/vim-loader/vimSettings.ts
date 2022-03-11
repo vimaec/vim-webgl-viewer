@@ -55,7 +55,7 @@ export class VimSettings {
     }
 
     this.options = options ? deepmerge(fallback, options, undefined) : fallback
-    this.options.transparency = Transparency.isValid(this.options.transparency)
+    this.options.transparency = Transparency.isValid(this.options.transparency!)
       ? this.options.transparency
       : 'all'
   }
@@ -72,7 +72,7 @@ export class VimSettings {
       this.getScale()
     )
 
-  getTransparency = () => this.options.transparency
+  getTransparency = () => this.options.transparency!
 }
 
 function toVec (obj: VimOptions.Vector3): THREE.Vector3 {

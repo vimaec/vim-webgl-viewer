@@ -99,14 +99,19 @@ export class Object {
   }
 
   /**
-  * Changes the display color of this object.
-  * @param color Color to apply, undefined to revert to default color.
-  */
-  get color () { return this._color }
+   * Changes the display color of this object.
+   * @param color Color to apply, undefined to revert to default color.
+   */
+  get color () {
+    return this._color
+  }
+
   set color (color: THREE.Color | undefined) {
-    if (!this._color || !color
-      ? !this._color && !color
-      : this._color.equals(color)) return
+    if (
+      !this._color || !color
+        ? !this._color && !color
+        : this._color.equals(color)
+    ) { return }
     this._color = color
     this.applyColor(color)
   }
@@ -127,15 +132,18 @@ export class Object {
   /**
    * Toggles visibility of this object.
    * @param value true to show object, false to hide object.
-  */
-  get visible () { return this._visible }
+   */
+  get visible () {
+    return this._visible
+  }
+
   set visible (value: boolean) {
     if (this._visible === value) return
     this._visible = value
     this.applyVisible(value)
   }
 
-  private applyVisible (value : boolean) {
+  private applyVisible (value: boolean) {
     if (!this._meshes) return
 
     for (let m = 0; m < this._meshes.length; m++) {
@@ -167,16 +175,17 @@ export class Object {
   }
 
   /**
- * Writes new color to the appropriate section of merged mesh color buffer.
- * @param index index of the merged mesh instance
- * @param color rgb representation of the color to apply
- */
-  private applyMergedVisible (
-    mesh: THREE.Mesh,
-    index: number,
-    show: boolean
-  ) {
-    const attribute = mesh.geometry.getAttribute('ignoreVertex') ?? new Float32BufferAttribute(new Float32Array(mesh.geometry.index.count * 3), 1)
+   * Writes new color to the appropriate section of merged mesh color buffer.
+   * @param index index of the merged mesh instance
+   * @param color rgb representation of the color to apply
+   */
+  private applyMergedVisible (mesh: THREE.Mesh, index: number, show: boolean) {
+    const attribute =
+      mesh.geometry.getAttribute('ignoreVertex') ??
+      new Float32BufferAttribute(
+        new Float32Array(mesh.geometry.index.count * 3),
+        1
+      )
     mesh.geometry.setAttribute('ignoreVertex', attribute)
 
     const start = this.getMergedMeshStart(mesh, index)
@@ -191,9 +200,9 @@ export class Object {
   }
 
   /**
- * Adds an ignoreInstance buffer to the instanced mesh and sets values to 1 to hide instances
- * @param index index of the instanced instance
-  */
+   * Adds an ignoreInstance buffer to the instanced mesh and sets values to 1 to hide instances
+   * @param index index of the instanced instance
+   */
   private applyInstancedVisible (
     mesh: THREE.InstancedMesh,
     index: number,

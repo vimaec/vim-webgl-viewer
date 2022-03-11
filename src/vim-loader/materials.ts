@@ -155,7 +155,8 @@ export namespace Materials {
 
     shader.fragmentShader = shader.fragmentShader
       // Adding declarations for varying defined in vertex shader
-      .replace('#include <clipping_planes_pars_fragment>',
+      .replace(
+        '#include <clipping_planes_pars_fragment>',
         `
         #include <clipping_planes_pars_fragment>
         varying float vIgnore;

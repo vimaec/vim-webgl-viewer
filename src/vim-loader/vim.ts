@@ -38,7 +38,11 @@ export class Vim {
 
   filter (instances?: number[]) {
     this.scene.dispose()
-    this.scene = Scene.createFromG3d(this.document.g3d, this.settings.getTransparency(), instances)
+    this.scene = Scene.createFromG3d(
+      this.document.g3d,
+      this.settings.getTransparency(),
+      instances
+    )
     this.scene.applyMatrix4(this.settings.getMatrix())
     this.scene.setVim(this)
     for (const [element, object] of this._elementToObject.entries()) {

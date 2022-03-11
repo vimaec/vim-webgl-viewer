@@ -32,7 +32,7 @@ export class RaycastResult {
 
   private GetFirstVimHit (
     intersections: ThreeIntersectionList
-  ) : [THREE.Intersection, Object] {
+  ): [THREE.Intersection, Object] {
     for (let i = 0; i < intersections.length; i++) {
       const obj = this.getVimObjectFromHit(intersections[i])
       if (obj?.visible) return [intersections[i], obj]
@@ -48,7 +48,10 @@ export class RaycastResult {
       const instance = Math.round(hit.uv.x)
       return vim.getObjectFromInstance(instance)
     } else if (hit.instanceId !== undefined) {
-      return vim.getObjectFromMesh(hit.object as THREE.InstancedMesh, hit.instanceId)
+      return vim.getObjectFromMesh(
+        hit.object as THREE.InstancedMesh,
+        hit.instanceId
+      )
     }
   }
 
@@ -101,8 +104,10 @@ export class Raycaster {
         const instance = Math.round(hit.uv.x)
         r.object = vim.getObjectFromInstance(instance)
       } else if (hit.instanceId !== undefined) {
-        r.object = vim
-          .getObjectFromMesh(hit.object as THREE.InstancedMesh, hit.instanceId)
+        r.object = vim.getObjectFromMesh(
+          hit.object as THREE.InstancedMesh,
+          hit.instanceId
+        )
       }
     }
     return r
@@ -116,6 +121,8 @@ export class Raycaster {
       new THREE.Vector2(x, y),
       this._viewer.camera.camera
     )
-    return this._raycaster.intersectObjects(this._viewer.renderer.scene.children)
+    return this._raycaster.intersectObjects(
+      this._viewer.renderer.scene.children
+    )
   }
 }
