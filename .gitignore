@@ -1,5 +1,9 @@
 #ignore config folders
 .*
+!.eslintignore
+!.eslintrc.cjs
+!.eslintrc.json
+!.prettierrc.json
 
 #ignore build
 dist/*
