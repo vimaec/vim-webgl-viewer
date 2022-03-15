@@ -18,7 +18,7 @@ export class Vim {
   settings: VimSettings
   index: number
   private _elementToInstance: Map<number, number[]>
-  private _elementIdToElement: Map<number, number>
+  private _elementIdToElements: Map<number, number[]>
   private _elementToObject: Map<number, Object> = new Map<number, Object>()
 
   constructor (vim: Document, scene: Scene) {
@@ -26,13 +26,12 @@ export class Vim {
     this.scene = scene
     this.scene.setVim(this)
     this._elementToInstance = this.mapElementToInstance()
-    this._elementIdToElement = this.mapElementIdToElement()
+    this._elementIdToElements = this.mapElementIdToElement()
   }
 
   dispose () {
     this.scene.dispose()
-    this._elementIdToElement.clear()
-    this._elementIdToElement.clear()
+    this._elementIdToElements.clear()
     this._elementToObject.clear()
   }
 
@@ -68,15 +67,14 @@ export class Vim {
     return map
   }
 
-  private mapElementIdToElement (): Map<number, number> {
-    const map = new Map<number, number>()
+  private mapElementIdToElement () {
+    const map = new Map<number, number[]>()
     const elementIds = this.document.getIntColumn(
       this.document.getElementTable(),
       'Id'
     )
 
     let negativeReported = false
-    let duplicateReported = false
     for (let element = 0; element < elementIds.length; element++) {
       const id = elementIds[element]
 
@@ -85,18 +83,14 @@ export class Vim {
           console.error('Ignoring negative element ids. Check source data.')
           negativeReported = true
         }
-
         continue
       }
-      if (map.has(id)) {
-        if (!duplicateReported) {
-          console.error('Ignoring duplicate element ids. Check source data.')
-          duplicateReported = true
-          continue
-        }
-      }
 
-      map.set(id, element)
+      if (!map.has(id)) {
+        map.set(id, [element])
+      } else {
+        map.get(id).push(element)
+      }
     }
     return map
   }
@@ -120,9 +114,9 @@ export class Vim {
     return this.getObjectFromElement(element)
   }
 
-  getObjectFromElementId (id: number) {
-    const element = this._elementIdToElement.get(id)
-    return this.getObjectFromElement(element)
+  getObjectsFromElementId (id: number) {
+    const elements = this._elementIdToElements.get(id)
+    return elements?.map((e) => this.getObjectFromElement(e))
   }
 
   getObjectFromElement (index: number) {
