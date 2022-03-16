@@ -32,6 +32,22 @@ export class CameraGizmo {
     this._renderer = renderer
   }
 
+  dispose () {
+    clearTimeout(this._timeout)
+
+    this._box.dispose()
+    this._wireframe.dispose()
+    this._material.dispose()
+    this._materialAlways.dispose()
+    this._box = undefined
+    this._wireframe = undefined
+    this._material = undefined
+    this._materialAlways = undefined
+
+    this._renderer.remove(this._gizmos)
+    this._gizmos = undefined
+  }
+
   show (show: boolean = true) {
     if (!this._active) return
 
@@ -87,19 +103,5 @@ export class CameraGizmo {
     this._renderer.add(this._gizmos)
 
     this.setScale(this._scale)
-  }
-
-  dispose () {
-    this._box.dispose()
-    this._wireframe.dispose()
-    this._material.dispose()
-    this._materialAlways.dispose()
-    this._box = null
-    this._wireframe = null
-    this._material = null
-    this._materialAlways = null
-
-    this._renderer.remove(this._gizmos)
-    this._gizmos = null
   }
 }

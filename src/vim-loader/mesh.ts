@@ -135,4 +135,8 @@ export namespace Mesh {
   export function getDefaultBuilder () {
     return defaultBuilder ?? (defaultBuilder = new Builder())
   }
+
+  export function dispose () {
+    defaultBuilder = undefined
+  }
 }

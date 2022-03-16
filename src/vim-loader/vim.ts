@@ -16,7 +16,7 @@ export class Vim {
   document: Document
   scene: Scene
   settings: VimSettings
-  private _index: number
+  index: number
   private _elementToInstance: Map<number, number[]>
   private _elementIdToElement: Map<number, number>
   private _elementToObject: Map<number, Object> = new Map<number, Object>()
@@ -24,13 +24,27 @@ export class Vim {
   constructor (vim: Document, scene: Scene) {
     this.document = vim
     this.scene = scene
+    this.scene.setVim(this)
     this._elementToInstance = this.mapElementToInstance()
     this._elementIdToElement = this.mapElementIdToElement()
   }
 
+  dispose () {
+    this.scene.dispose()
+    this._elementIdToElement.clear()
+    this._elementIdToElement.clear()
+    this._elementToObject.clear()
+  }
+
   filter (instances?: number[]) {
     this.scene.dispose()
-    this.scene = Scene.createFromG3d(this.document.g3d, this.settings.getTransparency(), instances)
+    this.scene = Scene.createFromG3d(
+      this.document.g3d,
+      this.settings.getTransparency(),
+      instances
+    )
+    this.scene.applyMatrix4(this.settings.getMatrix())
+    this.scene.setVim(this)
     for (const [element, object] of this._elementToObject.entries()) {
       object.updateMeshes(this.getMeshesFromElement(element))
     }
@@ -92,15 +106,6 @@ export class Vim {
     this.scene.applyMatrix4(this.settings.getMatrix())
   }
 
-  get index () {
-    return this._index
-  }
-
-  set index (index: number) {
-    this._index = index
-    this.scene.setIndex(index)
-  }
-
   getMatrix () {
     return this.settings.getMatrix()
   }
@@ -131,6 +136,14 @@ export class Vim {
     const result = new Object(this, index, instances, meshes)
     this._elementToObject.set(index, result)
     return result
+  }
+
+  * getAllObjects () {
+    const [first] = this.document.entities.get('Vim.Element')
+    const elementCount = first[1].length
+    for (let i = 0; i < elementCount; i++) {
+      yield this.getObjectFromElement(i)
+    }
   }
 
   private getMeshesFromElement (index: number) {

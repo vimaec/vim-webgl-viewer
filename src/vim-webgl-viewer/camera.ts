@@ -69,6 +69,11 @@ export class Camera {
     this._orbitalTargetDistance = this._currentOrbitalDistance
   }
 
+  dispose () {
+    this._gizmo.dispose()
+    this._gizmo = undefined
+  }
+
   /**
    * Resets camera to default state.
    */
@@ -125,7 +130,8 @@ export class Camera {
    * Sets Orbit mode target and moves camera accordingly
    */
   target (target: Object | THREE.Vector3) {
-    const position = target instanceof THREE.Vector3 ? target : target.getCenter()
+    const position =
+      target instanceof THREE.Vector3 ? target : target.getCenter()
     this._orbitalTarget = position
     this._orbitalTargetDistance = this.camera.position.distanceTo(position)
     this.startLerp(0.4)
@@ -144,10 +150,11 @@ export class Camera {
   }
 
   /**
- * Rotates the camera to look at target
- */
+   * Rotates the camera to look at target
+   */
   lookAt (target: Object | THREE.Vector3) {
-    const position = target instanceof THREE.Vector3 ? target : target.getCenter()
+    const position =
+      target instanceof THREE.Vector3 ? target : target.getCenter()
     this.camera.lookAt(position)
   }
 
@@ -217,13 +224,13 @@ export class Camera {
   /**
    * Moves the camera along two axis
    */
-  move2 (vector: THREE.Vector2, axes : 'XY' | 'XZ') {
+  move2 (vector: THREE.Vector2, axes: 'XY' | 'XZ') {
     const direction =
-     axes === 'XY'
-       ? new THREE.Vector3(-vector.x, vector.y, 0)
-       : axes === 'XZ'
-         ? new THREE.Vector3(-vector.x, 0, vector.y)
-         : undefined
+      axes === 'XY'
+        ? new THREE.Vector3(-vector.x, vector.y, 0)
+        : axes === 'XZ'
+          ? new THREE.Vector3(-vector.x, 0, vector.y)
+          : undefined
 
     this.move3(direction)
   }
@@ -231,7 +238,7 @@ export class Camera {
   /**
    * Moves the camera along one axis
    */
-  move1 (amount: number, axis : 'X' | 'Y' | 'Z') {
+  move1 (amount: number, axis: 'X' | 'Y' | 'Z') {
     const direction = new THREE.Vector3(
       axis === 'X' ? -amount : 0,
       axis === 'Y' ? amount : 0,
@@ -369,9 +376,7 @@ export class Camera {
 
   private getSpeedMultiplier () {
     return (
-      Math.pow(1.25, this.speed) *
-      this._sceneSizeMultiplier *
-      this._moveSpeed
+      Math.pow(1.25, this.speed) * this._sceneSizeMultiplier * this._moveSpeed
     )
   }
 
@@ -401,20 +406,20 @@ export interface ICamera {
    */
   camera: THREE.Camera
   /**
-  * Multiplier for camera movements.
-  */
+   * Multiplier for camera movements.
+   */
   speed: number
 
   /**
-  * True: Camera orbit around target mode.
-  * False: First person free camera mode.
-  */
-  orbitMode : boolean
+   * True: Camera orbit around target mode.
+   * False: First person free camera mode.
+   */
+  orbitMode: boolean
 
   /**
    * Current local velocity
    */
-  localVelocity : THREE.Vector3
+  localVelocity: THREE.Vector3
   /**
    * Rotates the camera around the X or Y axis or both
    * @param vector where coordinates are in relative screen size. ie [-1, 1]
@@ -424,41 +429,41 @@ export interface ICamera {
    * Nudges the camera in given direction for a short distance.
    * @param impulse impulse vector in camera local space.
    */
-  addImpulse (impulse: THREE.Vector3): void
+  addImpulse(impulse: THREE.Vector3): void
 
   /**
    * Moves the camera along all three axes.
    */
-  move3 (vector: THREE.Vector3) : void
+  move3(vector: THREE.Vector3): void
 
   /**
    * Moves the camera along two axes.
    */
-  move2 (vector: THREE.Vector2, axes : 'XY' | 'XZ') : void
+  move2(vector: THREE.Vector2, axes: 'XY' | 'XZ'): void
 
   /**
    * Moves the camera along one axis.
    */
-  move1 (amount: number, axis : 'X' | 'Y' | 'Z') : void
+  move1(amount: number, axis: 'X' | 'Y' | 'Z'): void
 
   /**
    * Rotates the camera around the X or Y axis or both
    * @param vector where coordinates in range [-1, 1] for rotations of [-180, 180] degrees
    */
-  rotate (vector: THREE.Vector2) : void
+  rotate(vector: THREE.Vector2): void
 
   /**
    * Sets orbit mode target and moves camera accordingly
    */
-  target (target: Object | THREE.Vector3) : void
+  target(target: Object | THREE.Vector3): void
 
   /**
    * Rotates the camera to look at target
    */
-  lookAt (target: Object | THREE.Vector3)
+  lookAt(target: Object | THREE.Vector3)
 
   /**
    * Moves and rotates the camera so that target is well framed.
    */
-  frame (target: Object | THREE.Sphere | 'all') : void
+  frame(target: Object | THREE.Sphere | 'all'): void
 }

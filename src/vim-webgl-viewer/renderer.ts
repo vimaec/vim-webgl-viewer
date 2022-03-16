@@ -17,8 +17,12 @@ export class Renderer {
   // state
   scene: THREE.Scene
   private _boundingBox: THREE.Box3
+  private _unregisterResize: Function
+  private _ownedCanvas: boolean
 
-  constructor (canvas: HTMLCanvasElement, settings: ViewerSettings) {
+  constructor (settings: ViewerSettings) {
+    const [canvas, owned] = Renderer.getOrCreateCanvas(settings.getCanvasId())
+    this._ownedCanvas = owned
     this.renderer = new THREE.WebGLRenderer({
       canvas: canvas,
       antialias: true,
@@ -28,6 +32,7 @@ export class Renderer {
       powerPreference: 'high-performance',
       logarithmicDepthBuffer: true
     })
+
     this.canvas = this.renderer.domElement
     this.camera = new THREE.PerspectiveCamera()
     this.renderer.setPixelRatio(window.devicePixelRatio)
@@ -36,6 +41,37 @@ export class Renderer {
     this.scene = new THREE.Scene()
     this.fitToCanvas()
     this.setOnResize(this.fitToCanvas, settings.getCanvasResizeDelay())
+  }
+
+  dispose () {
+    this.clear()
+
+    this._unregisterResize()
+    this._unregisterResize = undefined
+
+    this.renderer.clear()
+    this.renderer.forceContextLoss()
+    this.renderer.dispose()
+    this.renderer = undefined
+
+    if (this._ownedCanvas) this.canvas.remove()
+  }
+
+  /**
+   * Either returns html canvas at provided Id or creates a canvas at root level
+   */
+  private static getOrCreateCanvas (
+    canvasId?: string
+  ): [HTMLCanvasElement, boolean] {
+    let canvas = canvasId
+      ? (document.getElementById(canvasId) as HTMLCanvasElement)
+      : undefined
+
+    if (canvas) return [canvas, false]
+
+    canvas = document.createElement('canvas')
+    document.body.appendChild(canvas)
+    return [canvas, true]
   }
 
   /**
@@ -121,7 +157,7 @@ export class Renderer {
    */
   private setOnResize (callback, timeout) {
     let timerId
-    window.addEventListener('resize', function () {
+    const onResize = function () {
       if (timerId !== undefined) {
         clearTimeout(timerId)
         timerId = undefined
@@ -130,7 +166,10 @@ export class Renderer {
         timerId = undefined
         callback()
       }, timeout)
-    })
+    }
+    window.addEventListener('resize', onResize)
+    this._unregisterResize = () =>
+      window.removeEventListener('resize', onResize)
   }
 
   private fitToCanvas = () => {
