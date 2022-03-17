@@ -235,7 +235,7 @@ export class Viewer {
    * Unloads all vim from viewer.
    */
   clear () {
-    this._vims.forEach(this.unloadVim)
+    this._vims.forEach((v) => this.unloadVim(v))
   }
 
   /**
