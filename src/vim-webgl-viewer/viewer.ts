@@ -232,6 +232,13 @@ export class Viewer {
   }
 
   /**
+   * Unloads all vim from viewer.
+   */
+  clear () {
+    this._vims.forEach(this.unloadVim)
+  }
+
+  /**
    * Reloads the vim with only objects included in the array.
    * @param objects array of objects to keep or undefined to load all objects.
    */

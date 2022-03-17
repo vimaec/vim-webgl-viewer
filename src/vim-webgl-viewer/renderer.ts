@@ -16,6 +16,7 @@ export class Renderer {
 
   // state
   scene: THREE.Scene
+  private _scenes: Scene[] = []
   private _boundingBox: THREE.Box3
   private _unregisterResize: Function
   private _ownedCanvas: boolean
@@ -123,9 +124,7 @@ export class Renderer {
    */
   remove (target: Scene | THREE.Object3D) {
     if (target instanceof Scene) {
-      for (let i = 0; i < target.meshes.length; i++) {
-        this.scene.remove(target.meshes[i])
-      }
+      this.removeScene(target)
     } else {
       this.scene.remove(target)
     }
@@ -140,13 +139,33 @@ export class Renderer {
   }
 
   private addScene (scene: Scene) {
+    this._scenes.push(scene)
     scene.meshes.forEach((m) => {
       this.scene.add(m)
     })
 
+    // Recompute bounding box
     this._boundingBox = this._boundingBox
       ? this._boundingBox.union(scene.boundingBox)
       : scene.boundingBox.clone()
+  }
+
+  private removeScene (scene: Scene) {
+    // Remove from array
+    this._scenes = this._scenes.filter((f) => f !== scene)
+
+    // Remove all meshes from three scene
+    for (let i = 0; i < scene.meshes.length; i++) {
+      this.scene.remove(scene.meshes[i])
+    }
+
+    // Recompute bounding box
+    this._boundingBox =
+      this._scenes.length > 0
+        ? this._scenes
+          .map((s) => s.boundingBox.clone())
+          .reduce((b1, b2) => b1.union(b2))
+        : undefined
   }
 
   /**
