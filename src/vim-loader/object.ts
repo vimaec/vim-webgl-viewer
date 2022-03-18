@@ -33,6 +33,10 @@ export class Object {
     this._meshes = meshes
   }
 
+  get hasMesh () {
+    return this._meshes?.length!!
+  }
+
   /**
    * Internal - Replace this object meshes and apply color as needed.
    */
@@ -90,12 +94,23 @@ export class Object {
    * Creates a new three wireframe Line object from the object geometry
    */
   createWireframe () {
+    if (!this._meshes) return
     const wireframe = Mesh.getDefaultBuilder().createWireframe(
       this.vim.document.g3d,
       this.instances
     )
     wireframe.applyMatrix4(this.vim.getMatrix())
     return wireframe
+  }
+
+  createGeometry () {
+    if (!this._meshes) return
+    const geometry = Geometry.createGeometryFromInstances(
+      this.vim.document.g3d,
+      this.instances
+    )
+    geometry.applyMatrix4(this.vim.getMatrix())
+    return geometry
   }
 
   /**
@@ -111,7 +126,9 @@ export class Object {
       !this._color || !color
         ? !this._color && !color
         : this._color.equals(color)
-    ) { return }
+    ) {
+      return
+    }
     this._color = color
     this.applyColor(color)
   }

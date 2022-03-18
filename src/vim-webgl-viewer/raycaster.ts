@@ -44,8 +44,12 @@ export class RaycastResult {
     const vim = hit.object.userData.vim as Vim
     if (!vim) return
 
-    if (hit.object.userData.merged && hit.uv !== undefined) {
-      const instance = Math.round(hit.uv.x)
+    if (hit.object.userData.merged) {
+      const index = this.binarySearch(
+        hit.object.userData.submeshes,
+        hit.faceIndex * 3
+      )
+      const instance = hit.object.userData.instances[index]
       return vim.getObjectFromInstance(instance)
     } else if (hit.instanceId !== undefined) {
       return vim.getObjectFromMesh(
@@ -53,6 +57,23 @@ export class RaycastResult {
         hit.instanceId
       )
     }
+  }
+
+  private binarySearch (array: number[], element: number) {
+    let m = 0
+    let n = array.length - 1
+    while (m <= n) {
+      const k = (n + m) >> 1
+      const cmp = element - array[k]
+      if (cmp > 0) {
+        m = k + 1
+      } else if (cmp < 0) {
+        n = k - 1
+      } else {
+        return k
+      }
+    }
+    return m - 1
   }
 
   // Convenience functions and mnemonics

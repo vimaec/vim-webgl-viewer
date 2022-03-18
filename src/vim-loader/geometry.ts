@@ -117,7 +117,6 @@ export namespace Geometry {
     private _indices: Uint32Array
     private _vertices: Float32Array
     private _colors: Float32Array
-    private _uvs: Float32Array
     private _instances: number[]
     private _submeshes: number[]
 
@@ -138,7 +137,6 @@ export namespace Geometry {
       this._indices = new Uint32Array(indexCount)
       this._vertices = new Float32Array(vertexCount * this._g3d.POSITION_SIZE)
       this._colors = new Float32Array(vertexCount * this._colorSize)
-      this._uvs = new Float32Array(vertexCount * 2)
       this._submeshes = new Array(this._instances.length)
     }
 
@@ -218,13 +216,11 @@ export namespace Geometry {
      * Vertex position is transformed with the relevent matrix at it is copied
      * Index is offset to match the vertices in the concatenated vertex buffer
      * Color is expanded from submehes to vertex color into a concatenated array
-     * UVs are used to track which instance eache vertex came from
      * Returns a BufferGeometry from the concatenated array
      */
     private merge () {
       let index = 0
       let vertex = 0
-      let uv = 0
       let offset = 0
 
       // matrix and vector is reused to avoid needless allocations
@@ -273,10 +269,6 @@ export namespace Geometry {
           vector.toArray(this._vertices, vertex)
 
           vertex += this._g3d.POSITION_SIZE
-
-          // Fill uvs with instances at the same time as vertices. Used for picking
-          this._uvs[uv++] = instance
-          this._uvs[uv++] = 1
         }
 
         // Keep offset for next mesh
@@ -294,8 +286,7 @@ export namespace Geometry {
         this._vertices,
         this._indices,
         this._colors,
-        this._colorSize,
-        this._uvs
+        this._colorSize
       )
       return geometry
     }
@@ -307,15 +298,13 @@ export namespace Geometry {
    * @param indices index data with 3 indices per face
    * @param vertexColors color data with 3 or 4 number per vertex. RBG or RGBA
    * @param colorSize specify whether to treat colors as RGB or RGBA
-   * @param uvs uv data with 2 number per vertex (XY)
    * @returns a BufferGeometry
    */
   export function createGeometryFromArrays (
     vertices: Float32Array,
     indices: Uint32Array,
     vertexColors: Float32Array | undefined = undefined,
-    colorSize: number = 3,
-    uvs: Float32Array | undefined = undefined
+    colorSize: number = 3
   ): THREE.BufferGeometry {
     const geometry = new THREE.BufferGeometry()
 
@@ -331,9 +320,6 @@ export namespace Geometry {
         'color',
         new THREE.BufferAttribute(vertexColors, colorSize)
       )
-      if (uvs) {
-        geometry.setAttribute('uv', new THREE.Float32BufferAttribute(uvs, 2))
-      }
     }
 
     return geometry

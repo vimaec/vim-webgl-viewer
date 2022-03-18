@@ -6,7 +6,6 @@ import * as THREE from 'three'
 import { CameraGizmo } from './gizmos'
 import { Renderer } from './renderer'
 import { ViewerSettings } from './viewerSettings'
-import { DEG2RAD } from 'three/src/math/MathUtils'
 import { Object } from '../vim'
 
 export const DIRECTIONS = {
@@ -53,7 +52,7 @@ export class Camera {
   constructor (renderer: Renderer, settings: ViewerSettings) {
     this.camera = renderer.camera
     this._renderer = renderer
-    this._gizmo = new CameraGizmo(renderer)
+    this._gizmo = new CameraGizmo(renderer, renderer.camera)
     this.applySettings(settings)
 
     this._inputVelocity = new THREE.Vector3(0, 0, 0)
@@ -135,6 +134,7 @@ export class Camera {
     this._orbitalTarget = position
     this._orbitalTargetDistance = this.camera.position.distanceTo(position)
     this.startLerp(0.4)
+    this._gizmo.show(true)
   }
 
   frame (target: Object | THREE.Sphere | 'all') {
@@ -147,6 +147,7 @@ export class Camera {
     if (target instanceof THREE.Sphere) {
       this.frameSphere(target)
     }
+    this._gizmo.show(true)
   }
 
   /**
@@ -187,12 +188,6 @@ export class Camera {
   adaptToContent () {
     const sphere = this._renderer.getBoundingSphere()
     this._sceneSizeMultiplier = sphere.radius / this._vimReferenceSize
-    // Gizmo
-    const gizmoSize =
-      Math.tan((DEG2RAD * this.camera.fov) / 2) *
-      (this._sceneSizeMultiplier / 10)
-    this._gizmo.setScale(gizmoSize)
-    this._gizmo.show(this.orbitMode)
   }
 
   /**
@@ -338,7 +333,6 @@ export class Camera {
         const frames = this._lerpSecondsDuration / deltaTime
         const alpha = 1 - Math.pow(0.01, 1 / frames)
         this.camera.position.lerp(target, alpha)
-        this._gizmo.show(false)
       } else {
         this.camera.position.copy(target)
         if (this.isSignificant(positionDelta)) {

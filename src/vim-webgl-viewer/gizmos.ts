@@ -3,6 +3,7 @@
  */
 
 import * as THREE from 'three'
+import { MathUtils } from 'three'
 import { Renderer } from './renderer'
 import { ViewerSettings } from './viewerSettings'
 
@@ -12,6 +13,7 @@ import { ViewerSettings } from './viewerSettings'
 export class CameraGizmo {
   // Dependencies
   private _renderer: Renderer
+  private _camera: THREE.Camera
 
   // Settings
   private _scale: number
@@ -28,8 +30,9 @@ export class CameraGizmo {
   private _timeout: ReturnType<typeof setTimeout>
   private _active: boolean
 
-  constructor (renderer: Renderer) {
+  constructor (renderer: Renderer, camera: THREE.Camera) {
     this._renderer = renderer
+    this._camera = camera
   }
 
   dispose () {
@@ -64,7 +67,9 @@ export class CameraGizmo {
   }
 
   setPosition (position: THREE.Vector3) {
-    this._gizmos?.position.copy(position)
+    if (!this._gizmos) return
+    this._gizmos.position.copy(position)
+    this.updateScale()
   }
 
   applySettings (settings: ViewerSettings) {
@@ -72,9 +77,10 @@ export class CameraGizmo {
     this._fov = settings.getCameraFov()
   }
 
-  setScale (scale: number = 1) {
-    this._gizmos?.scale.set(scale, scale, scale)
-    this._scale = scale
+  private updateScale () {
+    const dist = this._camera.position.clone().distanceTo(this._gizmos.position)
+    const h = dist * Math.tan(MathUtils.degToRad(this._fov) / 100)
+    this._gizmos?.scale.set(h, h, h)
   }
 
   private createGizmo () {
@@ -101,7 +107,6 @@ export class CameraGizmo {
       new THREE.LineSegments(this._wireframe, this._materialAlways)
     )
     this._renderer.add(this._gizmos)
-
-    this.setScale(this._scale)
+    this.updateScale()
   }
 }
