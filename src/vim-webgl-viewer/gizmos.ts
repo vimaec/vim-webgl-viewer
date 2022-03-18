@@ -3,7 +3,7 @@
  */
 
 import * as THREE from 'three'
-import { MathUtils } from 'three'
+import { Color, MathUtils } from 'three'
 import { Renderer } from './renderer'
 import { ViewerSettings } from './viewerSettings'
 
@@ -16,14 +16,15 @@ export class CameraGizmo {
   private _camera: THREE.Camera
 
   // Settings
-  private _scale: number
+  private _size: number
   private _fov: number
+  private _color: Color
 
   // Resources
   private _box: THREE.BufferGeometry
   private _wireframe: THREE.BufferGeometry
-  private _material: THREE.Material
-  private _materialAlways: THREE.Material
+  private _material: THREE.LineBasicMaterial
+  private _materialAlways: THREE.LineBasicMaterial
   private _gizmos: THREE.Group
 
   // State
@@ -72,14 +73,26 @@ export class CameraGizmo {
     this.updateScale()
   }
 
+  setSize (size: number) {
+    this._size = size
+  }
+
+  setColor (color: Color) {
+    this._color = color
+    if (!this._gizmos) return
+    this._material.color = color
+    this._materialAlways.color = color
+  }
+
   applySettings (settings: ViewerSettings) {
-    this._active = settings.getCameraShowGizmo()
+    this._active = settings.getCameraGizmoEnable()
     this._fov = settings.getCameraFov()
+    this.setColor(settings.getCameraGizmoColor())
   }
 
   private updateScale () {
     const dist = this._camera.position.clone().distanceTo(this._gizmos.position)
-    const h = dist * Math.tan(MathUtils.degToRad(this._fov) / 100)
+    const h = dist * Math.tan(MathUtils.degToRad(this._fov) * this._size)
     this._gizmos?.scale.set(h, h, h)
   }
 
@@ -90,13 +103,13 @@ export class CameraGizmo {
     this._material = new THREE.LineBasicMaterial({
       depthTest: true,
       opacity: 0.5,
-      color: new THREE.Color(0x0000ff),
+      color: this._color,
       transparent: true
     })
     this._materialAlways = new THREE.LineBasicMaterial({
       depthTest: false,
       opacity: 0.05,
-      color: new THREE.Color(0x0000ff),
+      color: this._color,
       transparent: true
     })
 

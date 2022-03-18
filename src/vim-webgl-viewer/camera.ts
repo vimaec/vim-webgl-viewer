@@ -22,8 +22,8 @@ export const DIRECTIONS = {
  */
 export class Camera {
   camera: THREE.PerspectiveCamera
+  gizmo: CameraGizmo
   private _renderer: Renderer
-  private _gizmo: CameraGizmo
 
   private _inputVelocity: THREE.Vector3
   private _velocity: THREE.Vector3
@@ -52,7 +52,7 @@ export class Camera {
   constructor (renderer: Renderer, settings: ViewerSettings) {
     this.camera = renderer.camera
     this._renderer = renderer
-    this._gizmo = new CameraGizmo(renderer, renderer.camera)
+    this.gizmo = new CameraGizmo(renderer, renderer.camera)
     this.applySettings(settings)
 
     this._inputVelocity = new THREE.Vector3(0, 0, 0)
@@ -69,8 +69,8 @@ export class Camera {
   }
 
   dispose () {
-    this._gizmo.dispose()
-    this._gizmo = undefined
+    this.gizmo.dispose()
+    this.gizmo = undefined
   }
 
   /**
@@ -122,7 +122,7 @@ export class Camera {
    */
   public set orbitMode (value: boolean) {
     this._orbitMode = value
-    this._gizmo.show(value)
+    this.gizmo.show(value)
   }
 
   /**
@@ -134,7 +134,7 @@ export class Camera {
     this._orbitalTarget = position
     this._orbitalTargetDistance = this.camera.position.distanceTo(position)
     this.startLerp(0.4)
-    this._gizmo.show(true)
+    this.gizmo.show(true)
   }
 
   frame (target: Object | THREE.Sphere | 'all') {
@@ -147,7 +147,7 @@ export class Camera {
     if (target instanceof THREE.Sphere) {
       this.frameSphere(target)
     }
-    this._gizmo.show(true)
+    this.gizmo.show(true)
   }
 
   /**
@@ -176,7 +176,7 @@ export class Camera {
     this._orbitSpeed = settings.getCameraOrbitSpeed()
 
     // Gizmo
-    this._gizmo.applySettings(settings)
+    this.gizmo.applySettings(settings)
 
     // Values
     this._vimReferenceSize = settings.getCameraReferenceVimSize()
@@ -210,7 +210,7 @@ export class Camera {
     v.multiplyScalar(this.getSpeedMultiplier())
 
     this._orbitalTarget.add(v)
-    this._gizmo.show()
+    this.gizmo.show()
     if (!this.orbitMode) {
       this.camera.position.add(v)
     }
@@ -336,12 +336,12 @@ export class Camera {
       } else {
         this.camera.position.copy(target)
         if (this.isSignificant(positionDelta)) {
-          this._gizmo.show()
+          this.gizmo.show()
         }
       }
     }
 
-    this._gizmo.setPosition(this._orbitalTarget)
+    this.gizmo.setPosition(this._orbitalTarget)
   }
 
   /**
