@@ -66,7 +66,8 @@ export namespace ViewerOptions {
     enable: boolean
     size: number
     color: ColorRGB
-    colorAlways: ColorRGB
+    opacity: number
+    opacityAlways: number
   }
 
   /** Camera related options */
@@ -151,8 +152,10 @@ export class ViewerSettings {
         },
         gizmo: {
           enable: true,
-          size: 0.001,
-          color: { r: 0x00, g: 0x00, b: 0xff }
+          size: 0.01,
+          color: { r: 0x00, g: 0x00, b: 0xff },
+          opacity: 0.5,
+          opacityAlways: 0.05
         }
       },
       groundPlane: {
@@ -216,6 +219,8 @@ export class ViewerSettings {
   getCameraGizmoEnable = () => this.camera.gizmo.enable
   getCameraGizmoSize = () => this.camera.gizmo.size
   getCameraGizmoColor = () => toRGBColor(this.camera.gizmo.color)
+  getCameraGizmoOpacity = () => this.camera.gizmo.opacity
+  getCameraGizmoOpacityAlways = () => this.camera.gizmo.opacityAlways
 
   // Camera Controls
   private get cameraControls () {

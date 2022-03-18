@@ -16,9 +16,11 @@ export class CameraGizmo {
   private _camera: THREE.Camera
 
   // Settings
-  private _size: number
-  private _fov: number
-  private _color: Color
+  private _size: number = 0.01
+  private _fov: number = 50
+  private _color: Color = new THREE.Color('blue')
+  private _opacity: number
+  private _opacityAlways: number
 
   // Resources
   private _box: THREE.BufferGeometry
@@ -77,6 +79,14 @@ export class CameraGizmo {
     this._size = size
   }
 
+  setOpacity (opacity: number, opacityAlways: number) {
+    this._opacity = opacity
+    this._opacityAlways = opacityAlways
+    if (!this._gizmos) return
+    this._material.opacity = opacity
+    this._materialAlways.opacity = opacityAlways
+  }
+
   setColor (color: Color) {
     this._color = color
     if (!this._gizmos) return
@@ -88,6 +98,11 @@ export class CameraGizmo {
     this._active = settings.getCameraGizmoEnable()
     this._fov = settings.getCameraFov()
     this.setColor(settings.getCameraGizmoColor())
+    this.setSize(settings.getCameraGizmoSize())
+    this.setOpacity(
+      settings.getCameraGizmoOpacity(),
+      settings.getCameraGizmoOpacityAlways()
+    )
   }
 
   private updateScale () {
@@ -102,13 +117,13 @@ export class CameraGizmo {
 
     this._material = new THREE.LineBasicMaterial({
       depthTest: true,
-      opacity: 0.5,
+      opacity: this._opacity,
       color: this._color,
       transparent: true
     })
     this._materialAlways = new THREE.LineBasicMaterial({
       depthTest: false,
-      opacity: 0.05,
+      opacity: this._opacityAlways,
       color: this._color,
       transparent: true
     })
