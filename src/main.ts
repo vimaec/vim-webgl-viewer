@@ -15,7 +15,6 @@ if (params.has('transparency')) {
 
 // Create Viewer
 const viewer = new VIM.Viewer({
-  camera: { showGizmo: true },
   groundPlane: {
     show: true,
     texture:
