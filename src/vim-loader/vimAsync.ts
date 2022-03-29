@@ -3,7 +3,7 @@
  */
 
 import * as THREE from 'three'
-import { Document } from './document'
+import { DocumentAsync } from './documentAsync'
 import { Scene } from './scene'
 import { VimSettings } from './vimSettings'
 import { Object } from './object'
@@ -12,27 +12,21 @@ import { Object } from './object'
  * Container for the built three meshes and the vim data from which it was built.
  * Dispenses Objects for high level scene manipulation
  */
-export class Vim {
-  document: Document
+export class VimAsync {
+  document: DocumentAsync
   scene: Scene
   settings: VimSettings
   index: number
-  private _elementToInstance: Map<number, number[]>
-  private _elementIdToElements: Map<number, number[]>
   private _elementToObject: Map<number, Object> = new Map<number, Object>()
 
-  constructor (vim: Document, scene: Scene) {
+  constructor (vim: DocumentAsync, scene: Scene) {
     this.document = vim
     this.scene = scene
     this.scene.setVim(this)
-    this._elementToInstance = this.mapElementToInstance()
-    this._elementIdToElements = this.mapElementIdToElement()
   }
 
   dispose () {
     this.scene.dispose()
-    this._elementIdToElements.clear()
-    this._elementToObject.clear()
   }
 
   filter (instances?: number[]) {
@@ -47,52 +41,6 @@ export class Vim {
     for (const [element, object] of this._elementToObject.entries()) {
       object.updateMeshes(this.getMeshesFromElement(element))
     }
-  }
-
-  private mapElementToInstance (): Map<number, number[]> {
-    const map = new Map<number, number[]>()
-    const instanceCount = this.document.getInstanceCount()
-
-    for (let instance = 0; instance < instanceCount; instance++) {
-      const element = this.document.getElementFromInstance(instance)
-      if (element === undefined) continue
-
-      const instances = map.get(element)
-      if (instances) {
-        instances.push(instance)
-      } else {
-        map.set(element, [instance])
-      }
-    }
-    return map
-  }
-
-  private mapElementIdToElement () {
-    const map = new Map<number, number[]>()
-    const elementIds = this.document.getIntColumn(
-      this.document.getElementTable(),
-      'Id'
-    )
-
-    let negativeReported = false
-    for (let element = 0; element < elementIds.length; element++) {
-      const id = elementIds[element]
-
-      if (id < 0) {
-        if (!negativeReported) {
-          console.error('Ignoring negative element ids. Check source data.')
-          negativeReported = true
-        }
-        continue
-      }
-
-      if (!map.has(id)) {
-        map.set(id, [element])
-      } else {
-        map.get(id).push(element)
-      }
-    }
-    return map
   }
 
   applySettings (settings: VimSettings) {
@@ -115,33 +63,31 @@ export class Vim {
   }
 
   getObjectsFromElementId (id: number) {
-    const elements = this._elementIdToElements.get(id)
+    const elements = this.document._elementIdToElement.get(id)
     return elements?.map((e) => this.getObjectFromElement(e))
   }
 
-  getObjectFromElement (index: number) {
-    if (this._elementToObject.has(index)) {
-      return this._elementToObject.get(index)
+  getObjectFromElement (element: number) {
+    if (this._elementToObject.has(element)) {
+      return this._elementToObject.get(element)
     }
 
-    const instances = this._elementToInstance.get(index)
+    const instances = this.document.getInstanceFromElement(element)
     const meshes = this.getMeshesFromInstances(instances)
 
-    const result = new Object(this, index, instances, meshes)
-    this._elementToObject.set(index, result)
+    const result = new Object(this, element, instances, meshes)
+    this._elementToObject.set(element, result)
     return result
   }
 
   * getAllObjects () {
-    const [first] = this.document.entities.get('Vim.Element')
-    const elementCount = first[1].length
-    for (let i = 0; i < elementCount; i++) {
-      yield this.getObjectFromElement(i)
+    for (const e of this.document.getAllElements()) {
+      yield this.getObjectFromElement(e)
     }
   }
 
   private getMeshesFromElement (index: number) {
-    const instances = this._elementToInstance.get(index)
+    const instances = this.document.getInstanceFromElement(index)
     return this.getMeshesFromInstances(instances)
   }
 

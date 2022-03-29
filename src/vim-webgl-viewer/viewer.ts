@@ -14,9 +14,10 @@ import { Raycaster, RaycastResult } from './raycaster'
 // loader
 import { VimSettings, VimOptions } from '../vim-loader/vimSettings'
 import { Loader } from '../vim-loader/loader'
-import { Vim } from '../vim-loader/vim'
 import { Object } from '../vim-loader/object'
 import * as THREE from 'three'
+import { BFastRemote } from '../vim-loader/bfastRemote'
+import { VimAsync } from '../vim-loader/vimAsync'
 
 /**
  * Viewer and loader for vim files.
@@ -53,7 +54,7 @@ export class Viewer {
   private _clock = new THREE.Clock()
 
   // State
-  private _vims: (Vim | undefined)[] = []
+  private _vims: (VimAsync | undefined)[] = []
   private _disposed: boolean = false
 
   /**
@@ -148,7 +149,7 @@ export class Viewer {
   /**
    * Adds given vim to the first empty spot of the vims array
    */
-  private addVim (vim: Vim) {
+  private addVim (vim: VimAsync) {
     for (let i = 0; i <= this._vims.length; i++) {
       if (this._vims[i] === undefined) {
         this._vims[i] = vim
@@ -161,7 +162,7 @@ export class Viewer {
   /**
    * Remove given vim from the vims array and leaves an undefined spot.
    */
-  private removeVim (vim: Vim) {
+  private removeVim (vim: VimAsync) {
     this._vims[vim.index] = undefined
     vim.index = -1
   }
@@ -179,13 +180,13 @@ export class Viewer {
       | string
       | ArrayBuffer = 'https://vim.azureedge.net/samples/residence.vim',
     options?: Partial<VimOptions.Root>,
-    onLoad?: (response: Vim) => void,
+    onLoad?: (response: VimAsync) => void,
     onProgress?: (request: ProgressEvent | 'processing') => void,
     onError?: (event: ErrorEvent) => void
   ) {
     const settings = new VimSettings(options)
 
-    const finish = (vim: Vim) => {
+    const finish = (vim: VimAsync) => {
       this.onVimLoaded(vim, settings)
       this._camera.frame('all')
       onLoad?.(vim)
@@ -204,15 +205,24 @@ export class Viewer {
         }
       )
     } else {
+      /*
       const vim = this._loader.loadFromArrayBuffer(
         source,
         settings.getTransparency()
       )
       finish(vim)
+      */
     }
   }
 
-  private onVimLoaded (vim: Vim, settings: VimSettings) {
+  async loadAsync (url: string, options: VimOptions.Root) {
+    const bfast = new BFastRemote(url, 0, 'vim')
+    const vim = await this._loader.loadAsync(bfast, 'all')
+    this.onVimLoaded(vim, new VimSettings(options))
+    this.camera.frame('all')
+  }
+
+  private onVimLoaded (vim: VimAsync, settings: VimSettings) {
     this.addVim(vim)
     vim.applySettings(settings)
 
@@ -224,7 +234,7 @@ export class Viewer {
   /**
    * Unload given vim from viewer.
    */
-  unloadVim (vim: Vim) {
+  unloadVim (vim: VimAsync) {
     this.removeVim(vim)
     this.renderer.remove(vim.scene)
     vim.dispose()
@@ -242,7 +252,7 @@ export class Viewer {
    * Reloads the vim with only objects included in the array.
    * @param objects array of objects to keep or undefined to load all objects.
    */
-  filterVim (vim: Vim, objects: Object[] | undefined) {
+  filterVim (vim: VimAsync, objects: Object[] | undefined) {
     const instances = objects
       ?.flatMap((o) => o?.instances)
       .filter((i): i is number => i !== undefined)
@@ -261,6 +271,11 @@ export class Viewer {
 
     if (hit.doubleClick) this._camera.frame(hit.object)
 
-    console.log(hit.object.getBimElement())
+    const element = hit.object.getBimElement()
+    if (element instanceof Map) {
+      console.log(element)
+    } else {
+      element.then((e) => console.log(e))
+    }
   }
 }

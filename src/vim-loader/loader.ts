@@ -4,10 +4,12 @@
 
 import * as THREE from 'three'
 
-import { Vim } from './vim'
-import { Document } from './document'
+import { DocumentAsync } from './documentAsync'
 import { Scene } from './scene'
 import { Transparency } from './geometry'
+import { BFastRemote } from './bfastRemote'
+import { G3d } from './g3d'
+import { VimAsync } from './vimAsync'
 
 /**
  * Loader for the Vim File format.
@@ -39,7 +41,7 @@ export class Loader {
   loadFromUrl (
     url: string,
     transparency: Transparency.Mode = 'all',
-    onLoad?: (response: Vim) => void,
+    onLoad?: (response: VimAsync) => void,
     onProgress?: (progress: ProgressEvent | 'processing') => void,
     onError?: (event: ErrorEvent) => void
   ) {
@@ -63,9 +65,9 @@ export class Loader {
         onProgress?.('processing')
         // slight hack to avoid multiple load call to share the same data.
         if (this._loaded.has(url)) data = data.slice(0)
-        const document = Document.createFromArrayBuffer(data)
-        const vim = this.loadFromVim(document, transparency)
-        onLoad?.(vim)
+        // const document = Document.createFromArrayBuffer(data)
+        // const vim = this.loadFromVim(document, transparency)
+        // onLoad?.(vim)
       },
       (progress) => {
         if (this._disposed) return
@@ -76,6 +78,15 @@ export class Loader {
         onError?.(error)
       }
     )
+  }
+
+  async loadAsync (bfast: BFastRemote, transparency: Transparency.Mode) {
+    const geometry = await bfast.getBfast('geometry')
+    const g3d = await G3d.createFromBfastAsync(geometry)
+    const scene = Scene.createFromG3d(g3d, transparency)
+    const document = await DocumentAsync.createFromBfast(bfast)
+    const vim = new VimAsync(document, scene)
+    return vim
   }
 
   /**
@@ -90,8 +101,8 @@ export class Loader {
     transparency: Transparency.Mode,
     instances?: number[]
   ) {
-    const vim = Document.createFromArrayBuffer(data)
-    return this.loadFromVim(vim, transparency, instances)
+    // const vim = Document.createFromArrayBuffer(data)
+    // return this.loadFromVim(vim, transparency, instances)
   }
 
   /**
@@ -101,11 +112,11 @@ export class Loader {
    * @returns a vim instance
    */
   loadFromVim (
-    vim: Document,
+    vim: DocumentAsync,
     transparency: Transparency.Mode,
     instances?: number[]
-  ): Vim {
+  ): VimAsync {
     const scene = Scene.createFromG3d(vim.g3d, transparency, instances)
-    return new Vim(vim, scene)
+    return new VimAsync(vim, scene)
   }
 }
