@@ -16,8 +16,8 @@ import { VimSettings, VimOptions } from '../vim-loader/vimSettings'
 import { Loader } from '../vim-loader/loader'
 import { Object } from '../vim-loader/object'
 import * as THREE from 'three'
-import { BFastRemote } from '../vim-loader/bfastRemote'
-import { VimAsync } from '../vim-loader/vimAsync'
+import { BFast } from '../vim-loader/bfast'
+import { Vim } from '../vim-loader/vim'
 
 /**
  * Viewer and loader for vim files.
@@ -54,7 +54,7 @@ export class Viewer {
   private _clock = new THREE.Clock()
 
   // State
-  private _vims: (VimAsync | undefined)[] = []
+  private _vims: (Vim | undefined)[] = []
   private _disposed: boolean = false
 
   /**
@@ -149,7 +149,7 @@ export class Viewer {
   /**
    * Adds given vim to the first empty spot of the vims array
    */
-  private addVim (vim: VimAsync) {
+  private addVim (vim: Vim) {
     for (let i = 0; i <= this._vims.length; i++) {
       if (this._vims[i] === undefined) {
         this._vims[i] = vim
@@ -162,7 +162,7 @@ export class Viewer {
   /**
    * Remove given vim from the vims array and leaves an undefined spot.
    */
-  private removeVim (vim: VimAsync) {
+  private removeVim (vim: Vim) {
     this._vims[vim.index] = undefined
     vim.index = -1
   }
@@ -175,54 +175,28 @@ export class Viewer {
    * @param onProgress callback on download progresss and on processing started
    * @param onError callback on error
    */
-  public loadVim (
-    source:
-      | string
-      | ArrayBuffer = 'https://vim.azureedge.net/samples/residence.vim',
-    options?: Partial<VimOptions.Root>,
-    onLoad?: (response: VimAsync) => void,
+  async loadAsync (
+    source: string | ArrayBuffer,
+    options: VimOptions.Root,
+    onLoad?: (response: Vim) => void,
     onProgress?: (request: ProgressEvent | 'processing') => void,
     onError?: (event: ErrorEvent) => void
   ) {
-    const settings = new VimSettings(options)
-
-    const finish = (vim: VimAsync) => {
-      this.onVimLoaded(vim, settings)
-      this._camera.frame('all')
-      onLoad?.(vim)
+    const bfast = new BFast(source, 0, 'vim')
+    let vim: Vim
+    try {
+      onProgress?.call('processing')
+      vim = await this._loader.loadAsync(bfast, 'all')
+      this.onVimLoaded(vim, new VimSettings(options))
+    } catch (error) {
+      onError?.call(error)
     }
 
-    if (typeof source === 'string') {
-      this._loader.loadFromUrl(
-        source,
-        settings.getTransparency(),
-        (vim) => finish(vim),
-        (progress) => {
-          onProgress?.(progress)
-        },
-        (error) => {
-          onError?.(error)
-        }
-      )
-    } else {
-      /*
-      const vim = this._loader.loadFromArrayBuffer(
-        source,
-        settings.getTransparency()
-      )
-      finish(vim)
-      */
-    }
-  }
-
-  async loadAsync (url: string, options: VimOptions.Root) {
-    const bfast = new BFastRemote(url, 0, 'vim')
-    const vim = await this._loader.loadAsync(bfast, 'all')
-    this.onVimLoaded(vim, new VimSettings(options))
     this.camera.frame('all')
+    onLoad?.call(vim)
   }
 
-  private onVimLoaded (vim: VimAsync, settings: VimSettings) {
+  private onVimLoaded (vim: Vim, settings: VimSettings) {
     this.addVim(vim)
     vim.applySettings(settings)
 
@@ -234,7 +208,7 @@ export class Viewer {
   /**
    * Unload given vim from viewer.
    */
-  unloadVim (vim: VimAsync) {
+  unloadVim (vim: Vim) {
     this.removeVim(vim)
     this.renderer.remove(vim.scene)
     vim.dispose()
@@ -252,7 +226,7 @@ export class Viewer {
    * Reloads the vim with only objects included in the array.
    * @param objects array of objects to keep or undefined to load all objects.
    */
-  filterVim (vim: VimAsync, objects: Object[] | undefined) {
+  filterVim (vim: Vim, objects: Object[] | undefined) {
     const instances = objects
       ?.flatMap((o) => o?.instances)
       .filter((i): i is number => i !== undefined)

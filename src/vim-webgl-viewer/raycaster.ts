@@ -4,7 +4,7 @@
 
 import * as THREE from 'three'
 import { Object } from '../vim-loader/object'
-import { VimAsync } from '../vim-loader/vimAsync'
+import { Vim } from '../vim-loader/vim'
 import { Viewer } from './viewer'
 
 type ThreeIntersectionList = THREE.Intersection<THREE.Object3D<THREE.Event>>[]
@@ -41,7 +41,7 @@ export class RaycastResult {
   }
 
   private getVimObjectFromHit (hit: THREE.Intersection) {
-    const vim = hit.object.userData.vim as VimAsync
+    const vim = hit.object.userData.vim as Vim
     if (!vim) return
 
     if (hit.object.userData.merged) {
@@ -118,7 +118,7 @@ export class Raycaster {
     const hit = r.firstHit
 
     if (hit) {
-      const vim = hit.object.userData.vim as VimAsync
+      const vim = hit.object.userData.vim as Vim
 
       // Merged meshes have g3d intance index of each face encoded in uvs
       if (hit.object.userData.merged && hit.uv !== undefined) {

@@ -1,48 +1,44 @@
-import { BFastRemote } from './bfastRemote'
+import { BFast } from './bfast'
 import { G3d } from './g3d'
 
-export class DocumentAsync {
+export class Document {
   g3d: G3d
-  entitie: BFastRemote
+  entitie: BFast
   private _strings: string[]
   private _instanceToElement: number[]
   private _elementToInstance: Map<number, number[]>
-  _elementIdToElement: Map<number, number[]>
+  private _elementIdToElement: Map<number, number[]>
 
   private constructor (
     g3d: G3d,
-    entities: BFastRemote,
+    entities: BFast,
     strings: string[],
     instanceToElement: number[],
-    elementToInstance: Map<number, number[]>,
-    elementIdToElement: Map<number, number[]>
+    elementToInstances: Map<number, number[]>,
+    elementIdToElements: Map<number, number[]>
   ) {
     this.g3d = g3d
     this.entitie = entities
     this._strings = strings
     this._instanceToElement = instanceToElement
-    this._elementToInstance = elementToInstance
-    this._elementIdToElement = elementIdToElement
+    this._elementToInstance = elementToInstances
+    this._elementIdToElement = elementIdToElements
   }
 
-  static async createFromBfast (bfast: BFastRemote) {
+  static async createFromBfast (bfast: BFast) {
     let g3d: G3d
-    let entitie: BFastRemote
+    let entitie: BFast
     let strings: string[]
 
     await Promise.all([
-      DocumentAsync.requestG3d(bfast).then((g) => (g3d = g)),
-      DocumentAsync.requestStrings(bfast).then((strs) => (strings = strs)),
+      Document.requestG3d(bfast).then((g) => (g3d = g)),
+      Document.requestStrings(bfast).then((strs) => (strings = strs)),
       bfast.getBfast('entities').then((ets) => (entitie = ets))
     ])
-    const instanceToElement = await DocumentAsync.requestInstanceToElement(
-      entitie
-    )
-    const elementToInstance = DocumentAsync.invert(instanceToElement)
-    const elementIdToElement = await DocumentAsync.requestElementIdToElement(
-      entitie
-    )
-    return new DocumentAsync(
+    const instanceToElement = await Document.requestInstanceToElement(entitie)
+    const elementToInstance = Document.invert(instanceToElement)
+    const elementIdToElement = await Document.requestElementIdToElement(entitie)
+    return new Document(
       g3d,
       entitie,
       strings,
@@ -52,19 +48,19 @@ export class DocumentAsync {
     )
   }
 
-  private static async requestG3d (bfast: BFastRemote) {
+  private static async requestG3d (bfast: BFast) {
     const geometry = await bfast.getBfast('geometry')
     const g3d = await G3d.createFromBfastAsync(geometry)
     return g3d
   }
 
-  private static async requestStrings (bfast: BFastRemote) {
+  private static async requestStrings (bfast: BFast) {
     const buffer = await bfast.getBuffer('strings')
     const strings = new TextDecoder('utf-8').decode(buffer).split('\0')
     return strings
   }
 
-  private static async requestInstanceToElement (entities: BFastRemote) {
+  private static async requestInstanceToElement (entities: BFast) {
     const nodes = await entities.getBfast('Vim.Node')
     const instances = await nodes.getArray('index:Vim.Element:Element')
     return instances
@@ -83,12 +79,12 @@ export class DocumentAsync {
     return result
   }
 
-  private static async requestElementIdToElement (entities: BFastRemote) {
+  private static async requestElementIdToElement (entities: BFast) {
     const elements = await entities.getBfast('Vim.Element')
     const ids =
       (await elements.getArray('int:Id')) ??
       (await elements.getArray('numeric:Id'))
-    const result = DocumentAsync.invert(ids)
+    const result = Document.invert(ids)
     return result
   }
 
@@ -111,12 +107,16 @@ export class DocumentAsync {
    * @param instance g3d instance index
    * @returns element index or -1 if not found
    */
-  getElementFromInstance (instance: number): number {
+  getElementFromInstance (instance: number) {
     return this._instanceToElement[instance]
   }
 
   getInstanceCount () {
     return this._instanceToElement.length
+  }
+
+  getElementFromElementId (instance: number) {
+    return this._elementIdToElement[instance]
   }
 
   async getEntity (name: string, index: number) {

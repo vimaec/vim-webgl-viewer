@@ -3,7 +3,7 @@
  */
 
 import * as THREE from 'three'
-import { DocumentAsync } from './documentAsync'
+import { Document } from './document'
 import { Scene } from './scene'
 import { VimSettings } from './vimSettings'
 import { Object } from './object'
@@ -12,14 +12,14 @@ import { Object } from './object'
  * Container for the built three meshes and the vim data from which it was built.
  * Dispenses Objects for high level scene manipulation
  */
-export class VimAsync {
-  document: DocumentAsync
+export class Vim {
+  document: Document
   scene: Scene
   settings: VimSettings
   index: number
   private _elementToObject: Map<number, Object> = new Map<number, Object>()
 
-  constructor (vim: DocumentAsync, scene: Scene) {
+  constructor (vim: Document, scene: Scene) {
     this.document = vim
     this.scene = scene
     this.scene.setVim(this)
@@ -63,7 +63,7 @@ export class VimAsync {
   }
 
   getObjectsFromElementId (id: number) {
-    const elements = this.document._elementIdToElement.get(id)
+    const elements = this.document.getElementFromElementId(id)
     return elements?.map((e) => this.getObjectFromElement(e))
   }
 

@@ -2,7 +2,7 @@
  * @module vim-loader
  */
 
-import { IBFast } from './bfast'
+import { BFast } from './bfast'
 
 class G3dAttributeDescriptor {
   // original descriptor string
@@ -138,7 +138,7 @@ class AbstractG3d {
     }
   }
 
-  static createFromBfast (bfast: IBFast) {
+  static createFromBfast (bfast: BFast) {
     const promises = VimAttributes.all.map((a) =>
       bfast
         .getBytes(a)
@@ -412,7 +412,7 @@ export class G3d {
     )
   }
 
-  static createFromBfastAsync (bfast: IBFast) {
+  static createFromBfastAsync (bfast: BFast) {
     return AbstractG3d.createFromBfast(bfast).then((g3d) => new G3d(g3d))
   }
 

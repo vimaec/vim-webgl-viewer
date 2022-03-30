@@ -7,13 +7,13 @@ import * as THREE from 'three'
 import { Mesh } from './mesh'
 import { Geometry } from './geometry'
 import { Float32BufferAttribute, InstancedBufferAttribute } from 'three'
-import { VimAsync } from './vimAsync'
+import { Vim } from './vim'
 
 /**
  * High level api to interact with the loaded vim geometry and data.
  */
 export class Object {
-  vim: VimAsync
+  vim: Vim
   element: number
   instances: number[]
   private _color: THREE.Color | undefined
@@ -22,7 +22,7 @@ export class Object {
   private _meshes: [THREE.Mesh, number][]
 
   constructor (
-    vim: VimAsync,
+    vim: Vim,
     element: number,
     instances: number[],
     meshes: [THREE.Mesh, number][]
