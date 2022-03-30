@@ -15,7 +15,7 @@ export class RemoteValue<T> {
   get (): Promise<T> {
     if (this._value) {
       // console.log(this.label + ' returning cached value ')
-      return new Promise((resolve, reject) => resolve(this._value))
+      return Promise.resolve(this._value)
     }
 
     if (this._request) {

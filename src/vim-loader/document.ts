@@ -3,11 +3,11 @@ import { G3d } from './g3d'
 
 export class Document {
   g3d: G3d
-  private _entitie: BFast
+  private _entity: BFast
   private _strings: string[]
   private _instanceToElement: number[]
-  private _elementToInstance: Map<number, number[]>
-  private _elementIdToElement: Map<number, number[]>
+  private _elementToInstances: Map<number, number[]>
+  private _elementIdToElements: Map<number, number[]>
 
   private constructor (
     g3d: G3d,
@@ -18,11 +18,11 @@ export class Document {
     elementIdToElements: Map<number, number[]>
   ) {
     this.g3d = g3d
-    this._entitie = entities
+    this._entity = entities
     this._strings = strings
     this._instanceToElement = instanceToElement
-    this._elementToInstance = elementToInstances
-    this._elementIdToElement = elementIdToElements
+    this._elementToInstances = elementToInstances
+    this._elementIdToElements = elementIdToElements
   }
 
   /**
@@ -30,7 +30,7 @@ export class Document {
    */
   static async createFromBfast (bfast: BFast) {
     let g3d: G3d
-    let entitie: BFast
+    let entity: BFast
     let strings: string[]
 
     let instanceToElement: number[]
@@ -41,7 +41,7 @@ export class Document {
       Document.requestStrings(bfast).then((strs) => (strings = strs)),
       bfast
         .getBfast('entities')
-        .then((ets) => (entitie = ets))
+        .then((ets) => (entity = ets))
         .then((ets) =>
           Promise.all([
             Document.requestInstanceToElement(ets).then(
@@ -57,7 +57,7 @@ export class Document {
     const elementToInstance = Document.invert(instanceToElement)
     return new Document(
       g3d,
-      entitie,
+      entity,
       strings,
       instanceToElement,
       elementToInstance,
@@ -109,7 +109,7 @@ export class Document {
    * Returns all element indices of the vim
    */
   * getAllElements () {
-    for (let i = 0; i < this._elementToInstance.size; i++) {
+    for (let i = 0; i < this._elementToInstances.size; i++) {
       yield i
     }
   }
@@ -119,7 +119,7 @@ export class Document {
    * @param element vim element index
    */
   getInstanceFromElement (element: number) {
-    return this._elementToInstance.get(element)
+    return this._elementToInstances.get(element)
   }
 
   /**
@@ -145,7 +145,7 @@ export class Document {
    * @returns element index or -1 if not found
    */
   getElementFromElementId (elementId: number) {
-    return this._elementIdToElement[elementId]
+    return this._elementIdToElements[elementId]
   }
 
   /**
@@ -154,7 +154,7 @@ export class Document {
    * @param index row index
    */
   async getEntity (name: string, index: number) {
-    const elements = await this._entitie.getBfast(name)
+    const elements = await this._entity.getBfast(name)
     const row = await elements.getRow(index)
     this.resolveStrings(row)
     return row
