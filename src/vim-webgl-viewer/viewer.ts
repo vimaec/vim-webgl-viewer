@@ -183,8 +183,8 @@ export class Viewer {
   ) {
     const bfast = new BFast(source, 0, 'vim')
     let vim: Vim
+    onProgress?.call('processing')
     try {
-      onProgress?.call('processing')
       vim = await this._loader.load(bfast, 'all')
       this.onVimLoaded(vim, new VimSettings(options))
     } catch (error) {
