@@ -108,7 +108,6 @@ export class Viewer {
   }
 
   dispose () {
-    this._loader.dispose()
     this._environment.dispose()
     this.selection.clear()
     this._camera.dispose()
@@ -175,7 +174,7 @@ export class Viewer {
    * @param onProgress callback on download progresss and on processing started
    * @param onError callback on error
    */
-  async loadAsync (
+  async loadVim (
     source: string | ArrayBuffer,
     options: VimOptions.Root,
     onLoad?: (response: Vim) => void,
@@ -186,7 +185,7 @@ export class Viewer {
     let vim: Vim
     try {
       onProgress?.call('processing')
-      vim = await this._loader.loadAsync(bfast, 'all')
+      vim = await this._loader.load(bfast, 'all')
       this.onVimLoaded(vim, new VimSettings(options))
     } catch (error) {
       onError?.call(error)

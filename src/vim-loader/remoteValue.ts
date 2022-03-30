@@ -1,3 +1,6 @@
+/**
+ * Returns a value from cache or queue up existing request or start a new requests
+ */
 export class RemoteValue<T> {
   label: string
   private _value: T

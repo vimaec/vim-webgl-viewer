@@ -3,7 +3,7 @@ import { G3d } from './g3d'
 
 export class Document {
   g3d: G3d
-  entitie: BFast
+  private _entitie: BFast
   private _strings: string[]
   private _instanceToElement: number[]
   private _elementToInstance: Map<number, number[]>
@@ -18,26 +18,43 @@ export class Document {
     elementIdToElements: Map<number, number[]>
   ) {
     this.g3d = g3d
-    this.entitie = entities
+    this._entitie = entities
     this._strings = strings
     this._instanceToElement = instanceToElement
     this._elementToInstance = elementToInstances
     this._elementIdToElement = elementIdToElements
   }
 
+  /**
+   * Creates document by fetching all required data from bfast.
+   */
   static async createFromBfast (bfast: BFast) {
     let g3d: G3d
     let entitie: BFast
     let strings: string[]
 
+    let instanceToElement: number[]
+    let elementIdToElement: Map<number, number[]>
+
     await Promise.all([
       Document.requestG3d(bfast).then((g) => (g3d = g)),
       Document.requestStrings(bfast).then((strs) => (strings = strs)),
-      bfast.getBfast('entities').then((ets) => (entitie = ets))
+      bfast
+        .getBfast('entities')
+        .then((ets) => (entitie = ets))
+        .then((ets) =>
+          Promise.all([
+            Document.requestInstanceToElement(ets).then(
+              (v) => (instanceToElement = v)
+            ),
+            Document.requestElementIdToElement(ets).then(
+              (v) => (elementIdToElement = v)
+            )
+          ])
+        )
     ])
-    const instanceToElement = await Document.requestInstanceToElement(entitie)
+
     const elementToInstance = Document.invert(instanceToElement)
-    const elementIdToElement = await Document.requestElementIdToElement(entitie)
     return new Document(
       g3d,
       entitie,
@@ -50,7 +67,7 @@ export class Document {
 
   private static async requestG3d (bfast: BFast) {
     const geometry = await bfast.getBfast('geometry')
-    const g3d = await G3d.createFromBfastAsync(geometry)
+    const g3d = await G3d.createFromBfast(geometry)
     return g3d
   }
 
@@ -88,16 +105,27 @@ export class Document {
     return result
   }
 
+  /**
+   * Returns all element indices of the vim
+   */
   * getAllElements () {
     for (let i = 0; i < this._elementToInstance.size; i++) {
       yield i
     }
   }
 
+  /**
+   * Returns instance indez associated with vim element index
+   * @param element vim element index
+   */
   getInstanceFromElement (element: number) {
     return this._elementToInstance.get(element)
   }
 
+  /**
+   * Returns all fields of element at given index
+   * @param element vim element index
+   */
   async getElement (element: number) {
     return this.getEntity('Vim.Element', element)
   }
@@ -111,21 +139,30 @@ export class Document {
     return this._instanceToElement[instance]
   }
 
-  getInstanceCount () {
-    return this._instanceToElement.length
+  /**
+   * Returns the element index associated with element Id.
+   * @param elementId vim element Id
+   * @returns element index or -1 if not found
+   */
+  getElementFromElementId (elementId: number) {
+    return this._elementIdToElement[elementId]
   }
 
-  getElementFromElementId (instance: number) {
-    return this._elementIdToElement[instance]
-  }
-
+  /**
+   * Returns all fields at given indices from buffer with given name
+   * @param name buffer name
+   * @param index row index
+   */
   async getEntity (name: string, index: number) {
-    const elements = await this.entitie.getBfast(name)
+    const elements = await this._entitie.getBfast(name)
     const row = await elements.getRow(index)
     this.resolveStrings(row)
     return row
   }
 
+  /**
+   * Associate all string indices with their related strings.
+   */
   private resolveStrings (map: Map<string, number>) {
     const result = <Map<string, string | number>>map
     for (const key of map.keys()) {

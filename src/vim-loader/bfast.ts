@@ -4,21 +4,14 @@
 
 import { RemoteValue } from './remoteValue'
 
-export type ArrayConstructor =
+type ArrayConstructor =
   | Int8ArrayConstructor
   | Int16ArrayConstructor
   | Float32ArrayConstructor
   | Float64ArrayConstructor
   | Int32ArrayConstructor
 
-export type Array =
-  | Int8Array
-  | Int16Array
-  | Float32Array
-  | Float64Array
-  | Int32Array
-
-export class Range {
+class Range {
   start: number
   end: number
   get count () {
@@ -31,7 +24,7 @@ export class Range {
   }
 }
 
-export function typeSize (type: string) {
+function typeSize (type: string) {
   switch (type) {
     case 'byte':
       return 1
@@ -48,7 +41,7 @@ export function typeSize (type: string) {
   }
 }
 
-export function typeConstructor (type: string): ArrayConstructor {
+function typeConstructor (type: string): ArrayConstructor {
   switch (type) {
     case 'byte':
       return Int8Array
@@ -83,16 +76,16 @@ export class Header {
     numArrays: number
   ) {
     if (magic !== 0xbfa5) {
-      throw new Error('Not a BFAST file, or endianness is swapped')
+      throw new Error('Invalid Bfast. Invalid Magic number')
     }
     if (dataStart <= 32 || dataStart > Number.MAX_SAFE_INTEGER) {
-      throw new Error('Data start is out of valid range')
+      throw new Error('Invalid Bfast. Data start is out of valid range')
     }
     if (dataEnd < dataStart || dataEnd > Number.MAX_SAFE_INTEGER) {
-      throw new Error('Data end is out of valid range')
+      throw new Error('Invalid Bfast. Data end is out of valid range')
     }
     if (numArrays < 0 || numArrays > dataEnd) {
-      throw new Error('Number of arrays is invalid')
+      throw new Error('Invalid Bfast. Number of arrays is invalid')
     }
 
     this.magic = magic
@@ -105,10 +98,18 @@ export class Header {
     // Check validity of data
     // TODO: check endianness
 
-    if (array[1] !== 0) throw new Error('Expected 0 in byte position 0')
-    if (array[3] !== 0) throw new Error('Expected 0 in byte position 8')
-    if (array[5] !== 0) throw new Error('Expected 0 in position 16')
-    if (array[7] !== 0) throw new Error('Expected 0 in position 24')
+    if (array[1] !== 0) {
+      throw new Error('Invalid Bfast. Expected 0 in byte position 0')
+    }
+    if (array[3] !== 0) {
+      throw new Error('Invalid Bfast. Expected 0 in byte position 8')
+    }
+    if (array[5] !== 0) {
+      throw new Error('Invalid Bfast. Expected 0 in position 16')
+    }
+    if (array[7] !== 0) {
+      throw new Error('Invalid Bfast. Expected 0 in position 24')
+    }
 
     return new this(array[0], array[2], array[4], array[6])
   }
@@ -118,6 +119,12 @@ export class Header {
   }
 }
 
+/**
+ * See https://github.com/vimaec/bfast for bfast format spec
+ * This implementation can either lazily request content as needed from http
+ * Or it can serve the data directly from an ArrayBuffer
+ * Remote mode can transition to buffer mode if server doesnt support partial http request
+ */
 export class BFast {
   source: string | ArrayBuffer
   offset: number
@@ -140,14 +147,25 @@ export class BFast {
     this._ranges = new RemoteValue(() => this.requestRanges(), name + '.ranges')
   }
 
+  /**
+   * @returns Bfast Header
+   */
   async getHeader () {
     return this._header.get()
   }
 
+  /**
+   * @returns a map of all buffers by names
+   */
   async getRanges () {
     return this._ranges.get()
   }
 
+  /**
+   * Returns the buffer associated with name as a new bfast.
+   * This value is cached for future requests.
+   * @param name buffer name
+   */
   async getBfast (name: string) {
     if (!this._children.has(name)) {
       this._children.set(name, new RemoteValue(() => this.requestBfast(name)))
@@ -155,6 +173,11 @@ export class BFast {
     return this._children.get(name).get()
   }
 
+  /**
+   * Returns the raw buffer associated with a name
+   * This value is not cached.
+   * @param name buffer name
+   */
   async getBuffer (name: string) {
     const ranges = await this.getRanges()
     const range = ranges.get(name)
@@ -164,6 +187,10 @@ export class BFast {
     return buffer
   }
 
+  /**
+   * Returns a number array from the buffer associated with name
+   * @param name buffer name
+   */
   async getArray (name: string) {
     const buffer = await this.getBuffer(name)
     const type = name.split(':')[0]
@@ -172,6 +199,11 @@ export class BFast {
     return Array.from(array)
   }
 
+  /**
+   * Returns a single value from given buffer name
+   * @param name buffer name
+   * @param index row index
+   */
   async getValue (name: string, index: number) {
     const ranges = await this.getRanges()
     const range = ranges.get(name)
@@ -189,12 +221,20 @@ export class BFast {
     return array[0]
   }
 
+  /**
+   * Returns the buffer with given name as a byte array
+   * @param name buffer name
+   */
   async getBytes (name: string) {
     const buffer = await this.getBuffer(name)
     const array = new Uint8Array(buffer)
     return array
   }
 
+  /**
+   * Returns a map of name-values with the same index from all buffers.
+   * @param name buffer name
+   */
   async getRow (index: number) {
     const ranges = await this.getRanges()
     if (!ranges) return
@@ -235,12 +275,15 @@ export class BFast {
     const array = new Uint32Array(buffer)
     const ranges: Range[] = []
     for (let i = 0; i < array.length; i += 4) {
+      if (array[i + 1] !== 0 || array[i + 3] !== 0) {
+        throw new Error('Invalid Bfast. 64 bit ranges not supported')
+      }
       ranges.push(new Range(array[i], array[i + 2]))
     }
 
     const names = await this.requestNames(ranges[0])
     if (ranges.length !== names.length + 1) {
-      throw new Error('Mismatched ranges and names')
+      throw new Error('Mismatched ranges and names count')
     }
 
     // Map ranges and names
@@ -266,10 +309,16 @@ export class BFast {
   }
 
   private async request (range: Range, label: string): Promise<ArrayBuffer> {
+    // Return from cache if present, then try partial http, fallback to full http
     const buffer =
       this.local(range, label) ??
       (await this.http(range, label)) ??
       (await this.http(undefined, label))
+
+    if (!buffer) {
+      throw new Error(`Could not load vim at ${this.source}`)
+    }
+
     if (buffer.byteLength > range.count) {
       this.source = buffer
     }

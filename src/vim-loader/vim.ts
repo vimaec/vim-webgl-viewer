@@ -27,8 +27,13 @@ export class Vim {
 
   dispose () {
     this.scene.dispose()
+    this.scene = undefined
   }
 
+  /**
+   * Reloads the vim with only the instances provided
+   * @param instances g3d instance indices to keep
+   */
   filter (instances?: number[]) {
     this.scene.dispose()
     this.scene = Scene.createFromG3d(
@@ -43,30 +48,53 @@ export class Vim {
     }
   }
 
+  /**
+   * Applies new settings to the vim
+   */
   applySettings (settings: VimSettings) {
     this.settings = settings
     this.scene.applyMatrix4(this.settings.getMatrix())
   }
 
+  /**
+   * Returns vim matrix
+   */
   getMatrix () {
     return this.settings.getMatrix()
   }
 
+  /**
+   * Returns vim object from given mesh and index
+   * @param mesh three mesh
+   * @param index instanced mesh index or merged mesh submesh index
+   */
   getObjectFromMesh (mesh: THREE.Mesh, index: number) {
     const element = this.getElementFromMesh(mesh, index)
     return this.getObjectFromElement(element)
   }
 
+  /**
+   * Returns vim object from given instance
+   * @param instance g3d instance index
+   */
   getObjectFromInstance (instance: number) {
     const element = this.document.getElementFromInstance(instance)
     return this.getObjectFromElement(element)
   }
 
+  /**
+   * Returns vim object from given vim element Id
+   * @param id vim element Id
+   */
   getObjectsFromElementId (id: number) {
     const elements = this.document.getElementFromElementId(id)
     return elements?.map((e) => this.getObjectFromElement(e))
   }
 
+  /**
+   * Returns vim object from given vim element index
+   * @param element vim element index
+   */
   getObjectFromElement (element: number) {
     if (this._elementToObject.has(element)) {
       return this._elementToObject.get(element)
@@ -80,6 +108,9 @@ export class Vim {
     return result
   }
 
+  /**
+   * Enumerates all objects of the vim
+   */
   * getAllObjects () {
     for (const e of this.document.getAllElements()) {
       yield this.getObjectFromElement(e)

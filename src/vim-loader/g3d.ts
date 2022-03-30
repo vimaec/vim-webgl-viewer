@@ -138,6 +138,9 @@ class AbstractG3d {
     }
   }
 
+  /**
+   * Create g3d from bfast by requesting all necessary buffers individually.
+   */
   static createFromBfast (bfast: BFast) {
     const promises = VimAttributes.all.map((a) =>
       bfast
@@ -412,7 +415,7 @@ export class G3d {
     )
   }
 
-  static createFromBfastAsync (bfast: BFast) {
+  static async createFromBfast (bfast: BFast) {
     return AbstractG3d.createFromBfast(bfast).then((g3d) => new G3d(g3d))
   }
 
