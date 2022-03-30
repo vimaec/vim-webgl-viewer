@@ -27,7 +27,7 @@
     "release-patch": "npm version patch && git push && npm publish",
     "release-dev": "npm run build && npm run bump-dev && git push && npm run publish-dev",
     "eslint": "eslint --ext .js,.ts src --fix",
-    "documentation": "typedoc --entryPointStrategy expand --mergeModulesMergeMode module --out docs/api --excludePrivate ./src/vim-webgl-viewer/ ./src/vim-loader/",
+    "documentation": "typedoc --entryPointStrategy expand --mergeModulesMergeMode module --out docs/api --excludePrivate ./src/vim-webgl-viewer/ ./src/vim-loader/ && git add ./docs/",
     "declarations": "tsc --declaration --emitDeclarationOnly --outdir ./dist/types"
   },
   "devDependencies": {
