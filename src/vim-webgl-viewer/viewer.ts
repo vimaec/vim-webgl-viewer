@@ -170,29 +170,13 @@ export class Viewer {
    * Loads a vim into the viewer from local or remote location
    * @param source if string downloads the vim from url then loads it, if ArrayBuffer directly loads the vim
    * @param options vim options
-   * @param onLoad callback on vim loaded
-   * @param onProgress callback on download progresss and on processing started
-   * @param onError callback on error
    */
-  async loadVim (
-    source: string | ArrayBuffer,
-    options: VimOptions.Root,
-    onLoad?: (response: Vim) => void,
-    onProgress?: (request: ProgressEvent | 'processing') => void,
-    onError?: (event: ErrorEvent) => void
-  ) {
+  async loadVim (source: string | ArrayBuffer, options: VimOptions.Root) {
     const bfast = new BFast(source, 0, 'vim')
-    let vim: Vim
-    onProgress?.call(this, 'processing')
-    try {
-      vim = await this._loader.load(bfast, 'all')
-      this.onVimLoaded(vim, new VimSettings(options))
-    } catch (error) {
-      onError?.call(this, error)
-    }
-
+    const vim = await this._loader.load(bfast, 'all')
+    this.onVimLoaded(vim, new VimSettings(options))
     this.camera.frame('all')
-    onLoad?.call(this, vim)
+    return vim
   }
 
   private onVimLoaded (vim: Vim, settings: VimSettings) {
