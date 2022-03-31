@@ -96,6 +96,8 @@ export class Vim {
    * @param element vim element index
    */
   getObjectFromElement (element: number) {
+    if (element === undefined) return
+
     if (this._elementToObject.has(element)) {
       return this._elementToObject.get(element)
     }

@@ -94,7 +94,8 @@ export class Object {
    * Creates a new three wireframe Line object from the object geometry
    */
   createWireframe () {
-    if (!this._meshes) return
+    if (!this.instances) return
+
     const wireframe = Mesh.getDefaultBuilder().createWireframe(
       this.vim.document.g3d,
       this.instances
@@ -104,7 +105,8 @@ export class Object {
   }
 
   createGeometry () {
-    if (!this._meshes) return
+    if (!this.instances) return
+
     const geometry = Geometry.createGeometryFromInstances(
       this.vim.document.g3d,
       this.instances
