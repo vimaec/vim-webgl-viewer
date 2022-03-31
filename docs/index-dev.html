@@ -57,14 +57,7 @@
           {
             rotation: { x: 270, y: 0, z: 0 },
             transparency: transparency,
-          },
-          (result) => {},
-          (progress) => {
-            if (progress === 'processing') console.log('Processing')
-            else console.log(`Downloading: ${progress.loaded / 1000000} MB`)
-          },
-          (error) => console.error(`Failed to load vim: ${error}`)
-        )
+          }
       }
 
       // Add load file button
