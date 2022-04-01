@@ -94,9 +94,9 @@ export class RemoteBuffer {
 
     if (range) {
       xhr.setRequestHeader('Range', `bytes=${range.start}-${range.end - 1}`)
-      // console.log(`${field} : [${start}, ${end}] of ${this.source}`)
+      console.log(`${label} : [${range.start}, ${range.start}] of ${this.url}`)
     } else {
-      // console.log(`${field} of ${this.source}`)
+      console.log(`${label} of ${this.url}`)
     }
 
     return new Promise<ArrayBuffer>((resolve, reject) => {
