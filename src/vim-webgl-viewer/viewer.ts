@@ -18,6 +18,7 @@ import { Object } from '../vim-loader/object'
 import * as THREE from 'three'
 import { BFast } from '../vim-loader/bfast'
 import { Vim } from '../vim-loader/vim'
+import { IProgressLogs, RemoteBuffer } from '../vim-loader/remoteBuffer'
 
 /**
  * Viewer and loader for vim files.
@@ -171,8 +172,19 @@ export class Viewer {
    * @param source if string downloads the vim from url then loads it, if ArrayBuffer directly loads the vim
    * @param options vim options
    */
-  async loadVim (source: string | ArrayBuffer, options: VimOptions.Root) {
-    const bfast = new BFast(source, 0, 'vim')
+  async loadVim (
+    source: string | ArrayBuffer,
+    options: VimOptions.Root,
+    onProgress?: (logger: IProgressLogs) => void
+  ) {
+    let buffer: RemoteBuffer | ArrayBuffer
+    if (typeof source === 'string') {
+      buffer = new RemoteBuffer(source)
+      buffer.logger.onUpdate = (log) => onProgress?.(log)
+    } else buffer = source
+
+    const bfast = new BFast(buffer, 0, 'vim')
+
     const vim = await this._loader.load(bfast, 'all')
     this.onVimLoaded(vim, new VimSettings(options))
     this.camera.frame('all')

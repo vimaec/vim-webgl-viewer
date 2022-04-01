@@ -31,7 +31,7 @@ export class Camera {
   speed: number
 
   private _orbitalTarget: THREE.Vector3
-  private _minOrbitalDistance: number = 0.02
+  private _minOrbitalDistance: number = 1
   private _currentOrbitalDistance: number
   private _orbitalTargetDistance: number
 

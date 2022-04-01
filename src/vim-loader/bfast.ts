@@ -3,6 +3,7 @@
  */
 
 import { RemoteValue } from './remoteValue'
+import { RemoteBuffer } from './remoteBuffer'
 
 type ArrayConstructor =
   | Int8ArrayConstructor
@@ -11,7 +12,7 @@ type ArrayConstructor =
   | Float64ArrayConstructor
   | Int32ArrayConstructor
 
-class Range {
+export class Range {
   start: number
   end: number
   get count () {
@@ -21,6 +22,10 @@ class Range {
   constructor (start: number, end: number) {
     this.start = start
     this.end = end
+  }
+
+  offset (offset: number) {
+    return new Range(this.start + offset, this.end + offset)
   }
 }
 
@@ -126,7 +131,7 @@ export class Header {
  * Remote mode can transition to buffer mode if server doesnt support partial http request
  */
 export class BFast {
-  source: string | ArrayBuffer
+  source: RemoteBuffer | ArrayBuffer
   offset: number
   name: string
   private _header: RemoteValue<Header>
@@ -134,7 +139,7 @@ export class BFast {
   private _children: Map<string, RemoteValue<BFast>>
 
   constructor (
-    source: string | ArrayBuffer,
+    source: RemoteBuffer | ArrayBuffer,
     offset: number = 0,
     name: string = ''
   ) {
@@ -312,8 +317,8 @@ export class BFast {
     // Return from cache if present, then try partial http, fallback to full http
     const buffer =
       this.local(range, label) ??
-      (await this.http(range, label)) ??
-      (await this.http(undefined, label))
+      (await this.remote(range, label)) ??
+      (await this.remote(undefined, label))
 
     if (!buffer) {
       throw new Error(`Could not load vim at ${this.source}`)
@@ -325,38 +330,16 @@ export class BFast {
     return buffer
   }
 
-  private async http (range: Range, label: string) {
-    if (typeof this.source !== 'string') return
-    const xhr = new XMLHttpRequest()
-    xhr.open('GET', this.source)
-    xhr.responseType = 'arraybuffer'
-    const str = `WebRequest ${this.name}.${label}`
-
-    if (range) {
-      const start = this.offset + range.start
-      const end = this.offset + range.end
-      xhr.setRequestHeader('Range', `bytes=${start}-${end - 1}`)
-      console.log(`${str} : [${start}, ${end}] of ${this.source}`)
-    } else {
-      console.log(`${str} of ${this.source}`)
-    }
-
-    return new Promise<ArrayBuffer>((resolve, reject) => {
-      xhr.send()
-      xhr.onprogress = (e) =>
-        console.log(`${str} : ${Math.round(e.loaded / 1000000)} MB`)
-      xhr.onload = () => resolve(xhr.response)
-      xhr.onerror = (_) => {
-        resolve(undefined)
-      }
-    })
+  private local (range: Range, label: string) {
+    if (!(this.source instanceof ArrayBuffer)) return
+    console.log(`Returning local ${this.name}.${label}`)
+    const r = range.offset(this.offset)
+    return this.source.slice(r.start, r.end)
   }
 
-  private local (range: Range, label: string) {
-    if (typeof this.source === 'string') return
-    console.log(`Returning local ${this.name}.${label}`)
-    const start = this.offset + range.start
-    const end = this.offset + range.end
-    return this.source.slice(start, end)
+  private remote (range: Range, label: string) {
+    if (!(this.source instanceof RemoteBuffer)) return
+    const r = range.offset(this.offset)
+    return this.source.http(r, `${this.name}.${label}`)
   }
 }
