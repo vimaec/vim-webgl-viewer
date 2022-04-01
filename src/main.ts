@@ -1,5 +1,6 @@
 import * as VIM from './vim'
 import * as THREE from 'three'
+import { RequestLogger } from './vim'
 
 // Parse URL
 const params = new URLSearchParams(window.location.search)
@@ -50,12 +51,18 @@ function load2 (vim: string | ArrayBuffer) {
   const COUNT = 1
   for (let i = 0; i < COUNT; i++) {
     for (let j = 0; j < COUNT; j++) {
-      viewer.loadVim(vim, {
-        position: { x: 0, y: 0, z: 0 },
-        rotation: { x: 270, y: 0, z: 0 },
-        scale: 0.01,
-        transparency: transparency
-      })
+      viewer.loadVim(
+        vim,
+        {
+          position: { x: 0, y: 0, z: 0 },
+          rotation: { x: 270, y: 0, z: 0 },
+          scale: 0.01,
+          transparency: transparency
+        },
+        (progress) => {
+          console.log(`Loading : ${progress.loaded} / ${progress.total}`)
+        }
+      )
     }
   }
 }
