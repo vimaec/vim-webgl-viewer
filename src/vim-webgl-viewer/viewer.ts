@@ -184,6 +184,7 @@ export class Viewer {
     } else buffer = source
 
     const bfast = new BFast(buffer, 0, 'vim')
+    if (options.forceDownload) await bfast.forceDownload()
 
     const vim = await this._loader.load(bfast, 'all')
     this.onVimLoaded(vim, new VimSettings(options))

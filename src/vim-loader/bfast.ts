@@ -254,6 +254,10 @@ export class BFast {
     return result
   }
 
+  async forceDownload () {
+    this.source = await this.remote(undefined, this.name)
+  }
+
   private async requestBfast (name: string) {
     const ranges = await this.getRanges()
 
@@ -339,7 +343,7 @@ export class BFast {
 
   private remote (range: Range, label: string) {
     if (!(this.source instanceof RemoteBuffer)) return
-    const r = range.offset(this.offset)
+    const r = range?.offset(this.offset)
     return this.source.http(r, `${this.name}.${label}`)
   }
 }
