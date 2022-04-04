@@ -14,9 +14,11 @@ import { Raycaster, RaycastResult } from './raycaster'
 // loader
 import { VimSettings, VimOptions } from '../vim-loader/vimSettings'
 import { Loader } from '../vim-loader/loader'
-import { Vim } from '../vim-loader/vim'
 import { Object } from '../vim-loader/object'
 import * as THREE from 'three'
+import { BFast } from '../vim-loader/bfast'
+import { Vim } from '../vim-loader/vim'
+import { IProgressLogs, RemoteBuffer } from '../vim-loader/remoteBuffer'
 
 /**
  * Viewer and loader for vim files.
@@ -107,7 +109,6 @@ export class Viewer {
   }
 
   dispose () {
-    this._loader.dispose()
     this._environment.dispose()
     this.selection.clear()
     this._camera.dispose()
@@ -170,46 +171,25 @@ export class Viewer {
    * Loads a vim into the viewer from local or remote location
    * @param source if string downloads the vim from url then loads it, if ArrayBuffer directly loads the vim
    * @param options vim options
-   * @param onLoad callback on vim loaded
-   * @param onProgress callback on download progresss and on processing started
-   * @param onError callback on error
    */
-  public loadVim (
-    source:
-      | string
-      | ArrayBuffer = 'https://vim.azureedge.net/samples/residence.vim',
-    options?: Partial<VimOptions.Root>,
-    onLoad?: (response: Vim) => void,
-    onProgress?: (request: ProgressEvent | 'processing') => void,
-    onError?: (event: ErrorEvent) => void
+  async loadVim (
+    source: string | ArrayBuffer,
+    options: VimOptions.Root,
+    onProgress?: (logger: IProgressLogs) => void
   ) {
-    const settings = new VimSettings(options)
-
-    const finish = (vim: Vim) => {
-      this.onVimLoaded(vim, settings)
-      this._camera.frame('all')
-      onLoad?.(vim)
-    }
-
+    let buffer: RemoteBuffer | ArrayBuffer
     if (typeof source === 'string') {
-      this._loader.loadFromUrl(
-        source,
-        settings.getTransparency(),
-        (vim) => finish(vim),
-        (progress) => {
-          onProgress?.(progress)
-        },
-        (error) => {
-          onError?.(error)
-        }
-      )
-    } else {
-      const vim = this._loader.loadFromArrayBuffer(
-        source,
-        settings.getTransparency()
-      )
-      finish(vim)
-    }
+      buffer = new RemoteBuffer(source)
+      buffer.logger.onUpdate = (log) => onProgress?.(log)
+    } else buffer = source
+
+    const bfast = new BFast(buffer, 0, 'vim')
+    if (options.forceDownload) await bfast.forceDownload()
+
+    const vim = await this._loader.load(bfast, 'all')
+    this.onVimLoaded(vim, new VimSettings(options))
+    this.camera.frame('all')
+    return vim
   }
 
   private onVimLoaded (vim: Vim, settings: VimSettings) {
@@ -229,6 +209,13 @@ export class Viewer {
     this.renderer.remove(vim.scene)
     vim.dispose()
     if (this.selection.object?.vim === vim) this.selection.clear()
+  }
+
+  /**
+   * Unloads all vim from viewer.
+   */
+  clear () {
+    this._vims.forEach((v) => this.unloadVim(v))
   }
 
   /**
@@ -254,6 +241,11 @@ export class Viewer {
 
     if (hit.doubleClick) this._camera.frame(hit.object)
 
-    console.log(hit.object.getBimElement())
+    const element = hit.object.getBimElement()
+    if (element instanceof Map) {
+      console.log(element)
+    } else {
+      element.then((e) => console.log(e))
+    }
   }
 }

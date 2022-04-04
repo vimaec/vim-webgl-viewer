@@ -61,6 +61,15 @@ export namespace ViewerOptions {
     moveSpeed: number
   }
 
+  /** Camera Gizmo related options */
+  export type CameraGizmo = {
+    enable: boolean
+    size: number
+    color: ColorRGB
+    opacity: number
+    opacityAlways: number
+  }
+
   /** Camera related options */
   export type Camera = {
     /** Near clipping plane distance */
@@ -73,7 +82,8 @@ export namespace ViewerOptions {
     zoom: number
     /** See ControlOptions */
     controls: Partial<CameraControls>
-    showGizmo: boolean
+    /** See CameraGizmo */
+    gizmo: Partial<CameraGizmo>
   }
 
   export type SunLight = {
@@ -140,7 +150,13 @@ export class ViewerSettings {
           orbitSpeed: 1,
           moveSpeed: 1
         },
-        showGizmo: true
+        gizmo: {
+          enable: true,
+          size: 0.01,
+          color: { r: 0x00, g: 0x00, b: 0xff },
+          opacity: 0.5,
+          opacityAlways: 0.05
+        }
       },
       groundPlane: {
         show: false,
@@ -200,7 +216,11 @@ export class ViewerSettings {
   getCameraFar = () => this.camera.far
   getCameraFov = () => this.camera.fov
   getCameraZoom = () => this.camera.zoom
-  getCameraShowGizmo = () => this.camera.showGizmo
+  getCameraGizmoEnable = () => this.camera.gizmo.enable
+  getCameraGizmoSize = () => this.camera.gizmo.size
+  getCameraGizmoColor = () => toRGBColor(this.camera.gizmo.color)
+  getCameraGizmoOpacity = () => this.camera.gizmo.opacity
+  getCameraGizmoOpacityAlways = () => this.camera.gizmo.opacityAlways
 
   // Camera Controls
   private get cameraControls () {
