@@ -19,6 +19,7 @@ import * as THREE from 'three'
 import { BFast } from '../vim-loader/bfast'
 import { Vim } from '../vim-loader/vim'
 import { IProgressLogs, RemoteBuffer } from '../vim-loader/remoteBuffer'
+import { Materials } from '../vim-loader/materials'
 
 /**
  * Viewer and loader for vim files.
@@ -103,6 +104,8 @@ export class Viewer {
     this.inputs = new Input(this, this._camera)
     this.inputs.register()
     this.selection = new Selection(this)
+
+    this.applyMaterialSettings(this.settings)
 
     // Start Loop
     this.animate()
@@ -230,6 +233,12 @@ export class Viewer {
     this.renderer.remove(vim.scene)
     vim.filter(instances)
     this.renderer.add(vim.scene)
+  }
+
+  applyMaterialSettings (settings: ViewerSettings) {
+    const lib = Materials.getDefaultLibrary()
+    lib.wireframe.color = settings.getHighlightColor()
+    lib.wireframe.opacity = settings.getHighlightOpacity()
   }
 
   private defaultOnClick (hit: RaycastResult) {
