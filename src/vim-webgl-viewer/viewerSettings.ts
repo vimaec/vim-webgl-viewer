@@ -61,6 +61,15 @@ export namespace ViewerOptions {
     moveSpeed: number
   }
 
+  /** Camera Gizmo related options */
+  export type CameraGizmo = {
+    enable: boolean
+    size: number
+    color: ColorRGB
+    opacity: number
+    opacityAlways: number
+  }
+
   /** Camera related options */
   export type Camera = {
     /** Near clipping plane distance */
@@ -73,7 +82,8 @@ export namespace ViewerOptions {
     zoom: number
     /** See ControlOptions */
     controls: Partial<CameraControls>
-    showGizmo: boolean
+    /** See CameraGizmo */
+    gizmo: Partial<CameraGizmo>
   }
 
   export type SunLight = {
@@ -86,6 +96,11 @@ export namespace ViewerOptions {
     skyColor: ColorHSL
     groundColor: ColorHSL
     intensity: number
+  }
+
+  export type Highlight = {
+    color: ColorRGB
+    opacity: number
   }
 
   /** Viewer related options independant from vims */
@@ -111,6 +126,8 @@ export namespace ViewerOptions {
      * Sunlight (directional light) options
      */
     sunLight: Partial<SunLight>
+
+    highlight: Partial<Highlight>
   }
 }
 
@@ -140,11 +157,17 @@ export class ViewerSettings {
           orbitSpeed: 1,
           moveSpeed: 1
         },
-        showGizmo: true
+        gizmo: {
+          enable: true,
+          size: 0.005,
+          color: { r: 0xff, g: 0xff, b: 0xff },
+          opacity: 0.5,
+          opacityAlways: 0.125
+        }
       },
       groundPlane: {
         show: false,
-        texture: null,
+        texture: undefined,
         opacity: 1,
         color: { r: 0xff, g: 0xff, b: 0xff },
         size: 3
@@ -163,6 +186,10 @@ export class ViewerSettings {
         color: { h: 0.1, s: 1, l: 0.95 },
         // color: { h: 1, s: 1, l: 1 },
         intensity: 1
+      },
+      highlight: {
+        color: { r: 0x6a, g: 0xd2, b: 0xff },
+        opacity: 0.5
       }
     }
 
@@ -175,35 +202,50 @@ export class ViewerSettings {
 
   // Plane
   getGroundPlaneShow = () => this.options.groundPlane.show
-  getGroundPlaneColor = () => toRGBColor(this.options.groundPlane.color)
+  getGroundPlaneColor = () => toRGBColor(this.options.groundPlane.color!)
   getGroundPlaneTextureUrl = () => this.options.groundPlane.texture
   getGroundPlaneOpacity = () => this.options.groundPlane.opacity
   getGroundPlaneSize = () => this.options.groundPlane.size
 
   // Skylight
-  getSkylightColor = () => toHSLColor(this.options.skylight.skyColor)
-  getSkylightGroundColor = () => toHSLColor(this.options.skylight.groundColor)
+  getSkylightColor = () => toHSLColor(this.options.skylight.skyColor!)
+  getSkylightGroundColor = () => toHSLColor(this.options.skylight.groundColor!)
+
   getSkylightIntensity = () => this.options.skylight.intensity
 
   // Sunlight
-  getSunlightColor = () => toHSLColor(this.options.sunLight.color)
-  getSunlightPosition = () => toVec(this.options.sunLight.position)
+  getSunlightColor = () => toHSLColor(this.options.sunLight.color!)
+  getSunlightPosition = () => toVec(this.options.sunLight.position!)
   getSunlightIntensity = () => this.options.sunLight.intensity
 
+  getHighlightColor = () => toRGBColor(this.options.highlight.color)
+  getHighlightOpacity = () => this.options.highlight.opacity
+
   // Camera
-  getCameraNear = () => this.options.camera.near
-  getCameraFar = () => this.options.camera.far
-  getCameraFov = () => this.options.camera.fov
-  getCameraZoom = () => this.options.camera.zoom
-  getCameraShowGizmo = () => this.options.camera.showGizmo
+  private get camera () {
+    return this.options.camera
+  }
+
+  getCameraNear = () => this.camera.near
+  getCameraFar = () => this.camera.far
+  getCameraFov = () => this.camera.fov
+  getCameraZoom = () => this.camera.zoom
+  getCameraGizmoEnable = () => this.camera.gizmo.enable
+  getCameraGizmoSize = () => this.camera.gizmo.size
+  getCameraGizmoColor = () => toRGBColor(this.camera.gizmo.color)
+  getCameraGizmoOpacity = () => this.camera.gizmo.opacity
+  getCameraGizmoOpacityAlways = () => this.camera.gizmo.opacityAlways
 
   // Camera Controls
-  getCameraIsOrbit = () => this.options.camera.controls.orbit
-  getCameraMoveSpeed = () => this.options.camera.controls.moveSpeed
-  getCameraRotateSpeed = () => this.options.camera.controls.rotateSpeed
-  getCameraOrbitSpeed = () => this.options.camera.controls.orbitSpeed
-  getCameraReferenceVimSize = () =>
-    this.options.camera.controls.vimReferenceSize
+  private get cameraControls () {
+    return this.camera.controls!
+  }
+
+  getCameraIsOrbit = () => this.cameraControls.orbit
+  getCameraMoveSpeed = () => this.cameraControls.moveSpeed
+  getCameraRotateSpeed = () => this.cameraControls.rotateSpeed
+  getCameraOrbitSpeed = () => this.cameraControls.orbitSpeed
+  getCameraReferenceVimSize = () => this.cameraControls.vimReferenceSize
 }
 
 function toRGBColor (c: ViewerOptions.ColorRGB): THREE.Color {

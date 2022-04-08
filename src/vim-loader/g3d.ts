@@ -130,43 +130,26 @@ class AbstractG3d {
     this.attributes = attributes
   }
 
-  findAttribute (descriptor: string): G3dAttribute | null {
+  findAttribute (descriptor: string): G3dAttribute | undefined {
     const filter = G3dAttributeDescriptor.fromString(descriptor)
     for (let i = 0; i < this.attributes.length; ++i) {
       const attribute = this.attributes[i]
       if (attribute.descriptor.matches(filter)) return attribute
     }
-    return null
   }
 
-  // Given a BFAST container (header/names/buffers) constructs a G3D data structure
-  static fromBfast (bfast: BFast): AbstractG3d {
-    if (bfast.buffers.length < 2) {
-      throw new Error('G3D requires at least two BFast buffers')
-    }
-
-    // Parse first buffer as Meta
-    const metaBuffer = bfast.buffers[0]
-    if (bfast.names[0] !== 'meta') {
-      throw new Error(
-        "First G3D buffer must be named 'meta', but was named: " +
-          bfast.names[0]
-      )
-    }
-    const meta = new TextDecoder('utf-8').decode(metaBuffer)
-
-    // Parse remaining buffers as Attributes
-    const attributes: G3dAttribute[] = []
-    const nDescriptors = bfast.buffers.length - 1
-    for (let i = 0; i < nDescriptors; ++i) {
-      const attribute = G3dAttribute.fromString(
-        bfast.names[i + 1],
-        bfast.buffers[i + 1]
-      )
-      attributes.push(attribute)
-    }
-
-    return new AbstractG3d(meta, attributes)
+  /**
+   * Create g3d from bfast by requesting all necessary buffers individually.
+   */
+  static createFromBfast (bfast: BFast) {
+    const promises = VimAttributes.all.map((a) =>
+      bfast
+        .getBytes(a)
+        .then((b) => new G3dAttribute(G3dAttributeDescriptor.fromString(a), b))
+    )
+    return Promise.all(promises).then(
+      (attributes) => new AbstractG3d('meta', attributes)
+    )
   }
 }
 /**
@@ -181,6 +164,17 @@ class VimAttributes {
   static submeshIndexOffsets = 'g3d:submesh:indexoffset:0:int32:1'
   static submeshMaterials = 'g3d:submesh:material:0:int32:1'
   static materialColors = 'g3d:material:color:0:float32:4'
+
+  static all = [
+    VimAttributes.positions,
+    VimAttributes.indices,
+    VimAttributes.instanceMeshes,
+    VimAttributes.instanceTransforms,
+    VimAttributes.meshSubmeshes,
+    VimAttributes.submeshIndexOffsets,
+    VimAttributes.submeshMaterials,
+    VimAttributes.materialColors
+  ]
 }
 
 /**
@@ -421,12 +415,8 @@ export class G3d {
     )
   }
 
-  /**
-   * Parses a new instance of G3d from a bfast reprensatation of the format.
-   */
-  static createFromBfast (bfast: BFast): G3d {
-    const base = AbstractG3d.fromBfast(bfast)
-    return new G3d(base)
+  static async createFromBfast (bfast: BFast) {
+    return AbstractG3d.createFromBfast(bfast).then((g3d) => new G3d(g3d))
   }
 
   validate () {

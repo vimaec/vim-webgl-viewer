@@ -5,24 +5,27 @@
     For more information and the latest version see: http://www.github.com/vimaec/vim-webgl-viewer
 -->
 <html>
-<head>
-  <style>
-    /*Makes full screen and remove scrollbars*/
-    html,
-    body {
-      height: 100%;
-      margin: 0;
-      padding: 0;
-      overflow: hidden;
-      background: radial-gradient(circle at center, #F0F0FF, #999999);
-    }
-  </style>
+  <head>
+    <style>
+      /*Makes full screen and remove scrollbars*/
+      html,
+      body {
+        height: 100%;
+        margin: 0;
+        padding: 0;
+        overflow: hidden;
+        background: radial-gradient(circle at center, #d8d8e6, #8a8a8a);
+      }
+    </style>
     <title>VIM 3D Model Viewer</title>
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-</head>
-<body>
+    <meta
+      name="viewport"
+      content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no"
+    />
+  </head>
+  <body>
     <script src="https://unpkg.com/three@0.133.1/build/three.min.js"></script>
-    <script src="https://unpkg.com/vim-webgl-viewer@1.1.31"></script>
+    <script src="https://unpkg.com/vim-webgl-viewer@1.2.2-dev.3"></script>
     <script>
       // Parse URL
       const params = new URLSearchParams(window.location.search)
@@ -38,32 +41,50 @@
 
       // Create Viewer
       const viewer = new VIM.Viewer({
-        camera: { showGizmo: true },
         groundPlane: {
           show: true,
           texture:
             'https://vimdevelopment01storage.blob.core.windows.net/textures/vim-floor-soft.png',
           opacity: 1,
-          size: 5
-        }
+          size: 5,
+        },
       })
 
-      viewer.loadVim(
-        url,
-        {
-          rotation: { x: 270, y: 0, z: 0 },
-          transparency: transparency
-        },
-        (result) => {},
-        (progress) => {
-          if (progress === 'processing') console.log('Processing')
-          else console.log(`Downloading: ${(progress.loaded) / 1000000} MB`)
-        },
-        (error) => console.error(`Failed to load vim: ${error}`)
-      )
+      // Load function string | arrayBuffer
+      function load(vim) {
+        viewer.loadVim(
+          vim,
+          {
+            rotation: { x: 270, y: 0, z: 0 },
+            transparency: transparency,
+          }
+        )
+      }
+
+      // Add load file button
+      const input = document.createElement('input')
+      input.type = 'file'
+      document.body.prepend(input)
+
+      input.onchange = (e) => {
+        viewer.clear()
+        // getting a hold of the file reference
+        const file = e.target.files[0]
+
+        // setting up the reader
+        const reader = new FileReader()
+        reader.readAsArrayBuffer(file)
+
+        // Load vim once file is read.
+        reader.onload = (readerEvent) => {
+          load(readerEvent.target.result)
+        }
+      }
+
+      // load default model
+      load(url)
 
       globalThis.viewer = viewer
-
-    </script> 
-</body>
+    </script>
+  </body>
 </html>

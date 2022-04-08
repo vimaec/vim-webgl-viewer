@@ -14,9 +14,12 @@ import { Raycaster, RaycastResult } from './raycaster'
 // loader
 import { VimSettings, VimOptions } from '../vim-loader/vimSettings'
 import { Loader } from '../vim-loader/loader'
-import { Vim } from '../vim-loader/vim'
 import { Object } from '../vim-loader/object'
 import * as THREE from 'three'
+import { BFast } from '../vim-loader/bfast'
+import { Vim } from '../vim-loader/vim'
+import { IProgressLogs, RemoteBuffer } from '../vim-loader/remoteBuffer'
+import { Materials } from '../vim-loader/materials'
 
 /**
  * Viewer and loader for vim files.
@@ -45,7 +48,7 @@ export class Viewer {
   /**
    * Interface to raycast into the scene to find objects.
    */
-  raycaster : Raycaster
+  raycaster: Raycaster
 
   private _environment: Environment
   private _camera: Camera
@@ -53,37 +56,48 @@ export class Viewer {
   private _clock = new THREE.Clock()
 
   // State
-  private _vims: Vim[] = []
+  private _vims: (Vim | undefined)[] = []
+  private _disposed: boolean = false
 
   /**
    * Interface to manipulate the viewer camera.
    */
-  get camera () { return this._camera as ICamera }
+  get camera () {
+    return this._camera as ICamera
+  }
 
   /**
    * Interface to manipulate THREE elements not directly related to vim.
    */
-  get environment () { return this._environment as IEnvironment }
+  get environment () {
+    return this._environment as IEnvironment
+  }
 
   /**
    * Callback for on mouse click. Replace it to override or combine
    * default behaviour with your custom logic.
    */
-  onMouseClick: (hit: RaycastResult) => void
+  private _onMouseClick: (hit: RaycastResult) => void
+  get onMouseClick () {
+    return this._onMouseClick
+  }
+
+  set onMouseClick (callback: (hit: RaycastResult) => void) {
+    this._onMouseClick = callback ?? function (hit: RaycastResult) {}
+  }
 
   constructor (options?: Partial<ViewerOptions.Root>) {
     this._loader = new Loader()
     this.settings = new ViewerSettings(options)
 
-    const canvas = Viewer.getOrCreateCanvas(this.settings.getCanvasId())
-    this.renderer = new Renderer(canvas, this.settings)
+    this.renderer = new Renderer(this.settings)
     this._camera = new Camera(this.renderer, this.settings)
 
     this._environment = new Environment(this.settings)
     this._environment.getObjects().forEach((o) => this.renderer.add(o))
 
     // Default mouse click behaviour, can be overriden
-    this.onMouseClick = this.defaultOnClick
+    this._onMouseClick = this.defaultOnClick
 
     // Input and Selection
     this.raycaster = new Raycaster(this)
@@ -91,28 +105,28 @@ export class Viewer {
     this.inputs.register()
     this.selection = new Selection(this)
 
+    this.applyMaterialSettings(this.settings)
+
     // Start Loop
     this.animate()
   }
 
-  /**
-   * Either returns html canvas at provided Id or creates a canvas at root level
-   */
-  private static getOrCreateCanvas (canvasId?: string) {
-    let canvas = canvasId
-      ? (document.getElementById(canvasId) as HTMLCanvasElement)
-      : undefined
-
-    if (!canvas) {
-      canvas = document.createElement('canvas')
-      document.body.appendChild(canvas)
-    }
-
-    return canvas
+  dispose () {
+    this._environment.dispose()
+    this.selection.clear()
+    this._camera.dispose()
+    this.renderer.dispose()
+    this.inputs.unregister()
+    this._vims.forEach((v) => v?.dispose())
+    this._vims = []
+    this._disposed = true
   }
 
   // Calls render, and asks the framework to prepare the next frame
   private animate () {
+    // if viewer was disposed no more animation.
+    if (this._disposed) return
+
     requestAnimationFrame(() => this.animate())
 
     // Camera
@@ -122,14 +136,18 @@ export class Viewer {
   }
 
   /**
-   * Returns vim with given index. Once loaded vims do not change index.
+   * Returns an array with all loaded vims.
    */
-  getVim (index: number = 0) { return this._vims[index] }
+  get vims () {
+    return this._vims.filter((v) => v !== undefined)
+  }
 
   /**
    * Current loaded vim count
    */
-  get vimCount () { return this._vims.length }
+  get vimCount () {
+    return this._vims.length
+  }
 
   /**
    * Adds given vim to the first empty spot of the vims array
@@ -156,46 +174,25 @@ export class Viewer {
    * Loads a vim into the viewer from local or remote location
    * @param source if string downloads the vim from url then loads it, if ArrayBuffer directly loads the vim
    * @param options vim options
-   * @param onLoad callback on vim loaded
-   * @param onProgress callback on download progresss and on processing started
-   * @param onError callback on error
    */
-  public loadVim (
-    source:
-      | string
-      | ArrayBuffer = 'https://vim.azureedge.net/samples/residence.vim',
-    options?: Partial<VimOptions.Root>,
-    onLoad?: (response: Vim) => void,
-    onProgress?: (request: ProgressEvent | 'processing') => void,
-    onError?: (event: ErrorEvent) => void
+  async loadVim (
+    source: string | ArrayBuffer,
+    options: VimOptions.Root,
+    onProgress?: (logger: IProgressLogs) => void
   ) {
-    const settings = new VimSettings(options)
-
-    const finish = (vim: Vim) => {
-      this.onVimLoaded(vim, settings)
-      this._camera.frame('all')
-      onLoad?.(vim)
-    }
-
+    let buffer: RemoteBuffer | ArrayBuffer
     if (typeof source === 'string') {
-      this._loader.loadFromUrl(
-        source,
-        settings.getTransparency(),
-        (vim) => finish(vim),
-        (progress) => {
-          onProgress?.(progress)
-        },
-        (error) => {
-          onError?.(error)
-        }
-      )
-    } else {
-      const vim = this._loader.loadFromArrayBuffer(
-        source,
-        settings.getTransparency()
-      )
-      finish(vim)
-    }
+      buffer = new RemoteBuffer(source)
+      buffer.logger.onUpdate = (log) => onProgress?.(log)
+    } else buffer = source
+
+    const bfast = new BFast(buffer, 0, 'vim')
+    if (options.forceDownload) await bfast.forceDownload()
+
+    const vim = await this._loader.load(bfast, 'all')
+    this.onVimLoaded(vim, new VimSettings(options))
+    this.camera.frame('all')
+    return vim
   }
 
   private onVimLoaded (vim: Vim, settings: VimSettings) {
@@ -213,8 +210,15 @@ export class Viewer {
   unloadVim (vim: Vim) {
     this.removeVim(vim)
     this.renderer.remove(vim.scene)
-    vim.scene.dispose()
+    vim.dispose()
     if (this.selection.object?.vim === vim) this.selection.clear()
+  }
+
+  /**
+   * Unloads all vim from viewer.
+   */
+  clear () {
+    this._vims.forEach((v) => this.unloadVim(v))
   }
 
   /**
@@ -222,23 +226,35 @@ export class Viewer {
    * @param objects array of objects to keep or undefined to load all objects.
    */
   filterVim (vim: Vim, objects: Object[] | undefined) {
-    const instances = objects?.flatMap(o => o?.instances)
+    const instances = objects
+      ?.flatMap((o) => o?.instances)
       .filter((i): i is number => i !== undefined)
 
-    this.unloadVim(vim)
+    this.renderer.remove(vim.scene)
     vim.filter(instances)
-    this.onVimLoaded(vim, vim.settings)
+    this.renderer.add(vim.scene)
+  }
+
+  applyMaterialSettings (settings: ViewerSettings) {
+    const lib = Materials.getDefaultLibrary()
+    lib.wireframe.color = settings.getHighlightColor()
+    lib.wireframe.opacity = settings.getHighlightOpacity()
   }
 
   private defaultOnClick (hit: RaycastResult) {
     console.log(hit)
-    if (!hit.object) return
+    if (!hit?.object) return
     this.selection.select(hit.object)
 
     this._camera.target(hit.object.getCenter())
 
     if (hit.doubleClick) this._camera.frame(hit.object)
 
-    console.log(hit.object.getBimElement())
+    const element = hit.object.getBimElement()
+    if (element instanceof Map) {
+      console.log(element)
+    } else {
+      element.then((e) => console.log(e))
+    }
   }
 }

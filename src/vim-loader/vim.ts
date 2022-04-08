@@ -16,125 +16,111 @@ export class Vim {
   document: Document
   scene: Scene
   settings: VimSettings
-  private _index: number
-  private _elementToInstance: Map<number, number[]>
-  private _elementIdToElement: Map<number, number>
+  index: number
   private _elementToObject: Map<number, Object> = new Map<number, Object>()
 
   constructor (vim: Document, scene: Scene) {
     this.document = vim
     this.scene = scene
-    this._elementToInstance = this.mapElementToInstance()
-    this._elementIdToElement = this.mapElementIdToElement()
+    this.scene.setVim(this)
   }
 
+  dispose () {
+    this.scene.dispose()
+    this.scene = undefined
+  }
+
+  /**
+   * Reloads the vim with only the instances provided
+   * @param instances g3d instance indices to keep
+   */
   filter (instances?: number[]) {
     this.scene.dispose()
-    this.scene = Scene.createFromG3d(this.document.g3d, this.settings.getTransparency(), instances)
+    this.scene = Scene.createFromG3d(
+      this.document.g3d,
+      this.settings.getTransparency(),
+      instances
+    )
+    this.scene.applyMatrix4(this.settings.getMatrix())
+    this.scene.setVim(this)
     for (const [element, object] of this._elementToObject.entries()) {
       object.updateMeshes(this.getMeshesFromElement(element))
     }
   }
 
-  private mapElementToInstance (): Map<number, number[]> {
-    const map = new Map<number, number[]>()
-    const instanceCount = this.document.getInstanceCount()
-
-    for (let instance = 0; instance < instanceCount; instance++) {
-      const element = this.document.getElementFromInstance(instance)
-      if (element === undefined) continue
-
-      const instances = map.get(element)
-      if (instances) {
-        instances.push(instance)
-      } else {
-        map.set(element, [instance])
-      }
-    }
-    return map
-  }
-
-  private mapElementIdToElement (): Map<number, number> {
-    const map = new Map<number, number>()
-    const elementIds = this.document.getIntColumn(
-      this.document.getElementTable(),
-      'Id'
-    )
-
-    let negativeReported = false
-    let duplicateReported = false
-    for (let element = 0; element < elementIds.length; element++) {
-      const id = elementIds[element]
-
-      if (id < 0) {
-        if (!negativeReported) {
-          console.error('Ignoring negative element ids. Check source data.')
-          negativeReported = true
-        }
-
-        continue
-      }
-      if (map.has(id)) {
-        if (!duplicateReported) {
-          console.error('Ignoring duplicate element ids. Check source data.')
-          duplicateReported = true
-          continue
-        }
-      }
-
-      map.set(id, element)
-    }
-    return map
-  }
-
+  /**
+   * Applies new settings to the vim
+   */
   applySettings (settings: VimSettings) {
     this.settings = settings
     this.scene.applyMatrix4(this.settings.getMatrix())
   }
 
-  get index () {
-    return this._index
-  }
-
-  set index (index: number) {
-    this._index = index
-    this.scene.setIndex(index)
-  }
-
+  /**
+   * Returns vim matrix
+   */
   getMatrix () {
     return this.settings.getMatrix()
   }
 
+  /**
+   * Returns vim object from given mesh and index
+   * @param mesh three mesh
+   * @param index instanced mesh index or merged mesh submesh index
+   */
   getObjectFromMesh (mesh: THREE.Mesh, index: number) {
     const element = this.getElementFromMesh(mesh, index)
     return this.getObjectFromElement(element)
   }
 
+  /**
+   * Returns vim object from given instance
+   * @param instance g3d instance index
+   */
   getObjectFromInstance (instance: number) {
     const element = this.document.getElementFromInstance(instance)
     return this.getObjectFromElement(element)
   }
 
-  getObjectFromElementId (id: number) {
-    const element = this._elementIdToElement.get(id)
-    return this.getObjectFromElement(element)
+  /**
+   * Returns vim object from given vim element Id
+   * @param id vim element Id
+   */
+  getObjectsFromElementId (id: number) {
+    const elements = this.document.getElementFromElementId(id)
+    return elements?.map((e) => this.getObjectFromElement(e))
   }
 
-  getObjectFromElement (index: number) {
-    if (this._elementToObject.has(index)) {
-      return this._elementToObject.get(index)
+  /**
+   * Returns vim object from given vim element index
+   * @param element vim element index
+   */
+  getObjectFromElement (element: number) {
+    if (element === undefined) return
+
+    if (this._elementToObject.has(element)) {
+      return this._elementToObject.get(element)
     }
 
-    const instances = this._elementToInstance.get(index)
+    const instances = this.document.getInstanceFromElement(element)
     const meshes = this.getMeshesFromInstances(instances)
 
-    const result = new Object(this, index, instances, meshes)
-    this._elementToObject.set(index, result)
+    const result = new Object(this, element, instances, meshes)
+    this._elementToObject.set(element, result)
     return result
   }
 
+  /**
+   * Enumerates all objects of the vim
+   */
+  * getAllObjects () {
+    for (const e of this.document.getAllElements()) {
+      yield this.getObjectFromElement(e)
+    }
+  }
+
   private getMeshesFromElement (index: number) {
-    const instances = this._elementToInstance.get(index)
+    const instances = this.document.getInstanceFromElement(index)
     return this.getMeshesFromInstances(instances)
   }
 

@@ -6,7 +6,6 @@ import * as THREE from 'three'
 import { CameraGizmo } from './gizmos'
 import { Renderer } from './renderer'
 import { ViewerSettings } from './viewerSettings'
-import { DEG2RAD } from 'three/src/math/MathUtils'
 import { Object } from '../vim'
 
 export const DIRECTIONS = {
@@ -23,8 +22,8 @@ export const DIRECTIONS = {
  */
 export class Camera {
   camera: THREE.PerspectiveCamera
+  gizmo: CameraGizmo
   private _renderer: Renderer
-  private _gizmo: CameraGizmo
 
   private _inputVelocity: THREE.Vector3
   private _velocity: THREE.Vector3
@@ -32,7 +31,7 @@ export class Camera {
   speed: number
 
   private _orbitalTarget: THREE.Vector3
-  private _minOrbitalDistance: number = 0.02
+  private _minOrbitalDistance: number = 0.05
   private _currentOrbitalDistance: number
   private _orbitalTargetDistance: number
 
@@ -48,12 +47,12 @@ export class Camera {
   private _moveSpeed: number = 0.8
   private _rotateSpeed: number = 1
   private _orbitSpeed: number = 1
-  private _wheelSpeed: number = 0.2
+  private _zoomSpeed: number = 0.2
 
   constructor (renderer: Renderer, settings: ViewerSettings) {
     this.camera = renderer.camera
     this._renderer = renderer
-    this._gizmo = new CameraGizmo(renderer)
+    this.gizmo = new CameraGizmo(renderer, renderer.camera)
     this.applySettings(settings)
 
     this._inputVelocity = new THREE.Vector3(0, 0, 0)
@@ -67,6 +66,11 @@ export class Camera {
       .sub(this._orbitalTarget)
       .length()
     this._orbitalTargetDistance = this._currentOrbitalDistance
+  }
+
+  dispose () {
+    this.gizmo.dispose()
+    this.gizmo = undefined
   }
 
   /**
@@ -118,17 +122,18 @@ export class Camera {
    */
   public set orbitMode (value: boolean) {
     this._orbitMode = value
-    this._gizmo.show(value)
+    this.gizmo.show(value)
   }
 
   /**
    * Sets Orbit mode target and moves camera accordingly
    */
   target (target: Object | THREE.Vector3) {
-    const position = target instanceof THREE.Vector3 ? target : target.getCenter()
+    const position =
+      target instanceof THREE.Vector3 ? target : target.getCenter()
     this._orbitalTarget = position
-    this._orbitalTargetDistance = this.camera.position.distanceTo(position)
     this.startLerp(0.4)
+    this.gizmo.show(true)
   }
 
   frame (target: Object | THREE.Sphere | 'all') {
@@ -141,13 +146,15 @@ export class Camera {
     if (target instanceof THREE.Sphere) {
       this.frameSphere(target)
     }
+    this.gizmo.show(true)
   }
 
   /**
- * Rotates the camera to look at target
- */
+   * Rotates the camera to look at target
+   */
   lookAt (target: Object | THREE.Vector3) {
-    const position = target instanceof THREE.Vector3 ? target : target.getCenter()
+    const position =
+      target instanceof THREE.Vector3 ? target : target.getCenter()
     this.camera.lookAt(position)
   }
 
@@ -168,7 +175,7 @@ export class Camera {
     this._orbitSpeed = settings.getCameraOrbitSpeed()
 
     // Gizmo
-    this._gizmo.applySettings(settings)
+    this.gizmo.applySettings(settings)
 
     // Values
     this._vimReferenceSize = settings.getCameraReferenceVimSize()
@@ -180,12 +187,16 @@ export class Camera {
   adaptToContent () {
     const sphere = this._renderer.getBoundingSphere()
     this._sceneSizeMultiplier = sphere.radius / this._vimReferenceSize
-    // Gizmo
-    const gizmoSize =
-      Math.tan((DEG2RAD * this.camera.fov) / 2) *
-      (this._sceneSizeMultiplier / 10)
-    this._gizmo.setScale(gizmoSize)
-    this._gizmo.show(this.orbitMode)
+  }
+
+  /**
+   * Moves the camera closer or farther away from orbit target.
+   * @param amount movement size.
+   */
+  zoom (amount: number) {
+    const next = this._orbitalTargetDistance + amount * this._zoomSpeed
+    this._orbitalTargetDistance = Math.max(next, this._minOrbitalDistance)
+    this.gizmo.show()
   }
 
   /**
@@ -194,7 +205,7 @@ export class Camera {
   addImpulse (impulse: THREE.Vector3) {
     const localImpulse = impulse
       .clone()
-      .multiplyScalar(this.getSpeedMultiplier() * this._wheelSpeed)
+      .multiplyScalar(this.getSpeedMultiplier() * this._zoomSpeed)
     localImpulse.applyQuaternion(this.camera.quaternion)
     this._impulse.add(localImpulse)
   }
@@ -208,7 +219,7 @@ export class Camera {
     v.multiplyScalar(this.getSpeedMultiplier())
 
     this._orbitalTarget.add(v)
-    this._gizmo.show()
+    this.gizmo.show()
     if (!this.orbitMode) {
       this.camera.position.add(v)
     }
@@ -217,13 +228,13 @@ export class Camera {
   /**
    * Moves the camera along two axis
    */
-  move2 (vector: THREE.Vector2, axes : 'XY' | 'XZ') {
+  move2 (vector: THREE.Vector2, axes: 'XY' | 'XZ') {
     const direction =
-     axes === 'XY'
-       ? new THREE.Vector3(-vector.x, vector.y, 0)
-       : axes === 'XZ'
-         ? new THREE.Vector3(-vector.x, 0, vector.y)
-         : undefined
+      axes === 'XY'
+        ? new THREE.Vector3(-vector.x, vector.y, 0)
+        : axes === 'XZ'
+          ? new THREE.Vector3(-vector.x, 0, vector.y)
+          : undefined
 
     this.move3(direction)
   }
@@ -231,7 +242,7 @@ export class Camera {
   /**
    * Moves the camera along one axis
    */
-  move1 (amount: number, axis : 'X' | 'Y' | 'Z') {
+  move1 (amount: number, axis: 'X' | 'Y' | 'Z') {
     const direction = new THREE.Vector3(
       axis === 'X' ? -amount : 0,
       axis === 'Y' ? amount : 0,
@@ -301,22 +312,6 @@ export class Camera {
     positionDelta.add(impulse)
 
     const orbitDelta = positionDelta.clone()
-    if (this.orbitMode) {
-      // compute local space forward component of movement
-      const inv = this.camera.quaternion.clone().invert()
-      const local = positionDelta.clone().applyQuaternion(inv)
-      // remove z component
-      orbitDelta.set(local.x, local.y, 0)
-      // compute back to world space
-      orbitDelta.applyQuaternion(this.camera.quaternion)
-
-      // apply local space z to orbit distance,
-      this._currentOrbitalDistance = Math.max(
-        this._currentOrbitalDistance + local.z,
-        this._minOrbitalDistance * this._sceneSizeMultiplier
-      )
-      this._orbitalTargetDistance = this._currentOrbitalDistance
-    }
 
     this._impulse.multiplyScalar(invBlendFactor)
     this.camera.position.add(positionDelta)
@@ -331,16 +326,15 @@ export class Camera {
         const frames = this._lerpSecondsDuration / deltaTime
         const alpha = 1 - Math.pow(0.01, 1 / frames)
         this.camera.position.lerp(target, alpha)
-        this._gizmo.show(false)
       } else {
         this.camera.position.copy(target)
         if (this.isSignificant(positionDelta)) {
-          this._gizmo.show()
+          this.gizmo.show()
         }
       }
     }
 
-    this._gizmo.setPosition(this._orbitalTarget)
+    this.gizmo.setPosition(this._orbitalTarget)
   }
 
   /**
@@ -360,6 +354,7 @@ export class Camera {
     )
     this.camera.lookAt(sphere.center)
     this._orbitalTarget = sphere.center
+
     this._currentOrbitalDistance = this._orbitalTarget
       .clone()
       .sub(this.camera.position)
@@ -369,9 +364,7 @@ export class Camera {
 
   private getSpeedMultiplier () {
     return (
-      Math.pow(1.25, this.speed) *
-      this._sceneSizeMultiplier *
-      this._moveSpeed
+      Math.pow(1.25, this.speed) * this._sceneSizeMultiplier * this._moveSpeed
     )
   }
 
@@ -401,20 +394,20 @@ export interface ICamera {
    */
   camera: THREE.Camera
   /**
-  * Multiplier for camera movements.
-  */
+   * Multiplier for camera movements.
+   */
   speed: number
 
   /**
-  * True: Camera orbit around target mode.
-  * False: First person free camera mode.
-  */
-  orbitMode : boolean
+   * True: Camera orbit around target mode.
+   * False: First person free camera mode.
+   */
+  orbitMode: boolean
 
   /**
    * Current local velocity
    */
-  localVelocity : THREE.Vector3
+  localVelocity: THREE.Vector3
   /**
    * Rotates the camera around the X or Y axis or both
    * @param vector where coordinates are in relative screen size. ie [-1, 1]
@@ -424,41 +417,47 @@ export interface ICamera {
    * Nudges the camera in given direction for a short distance.
    * @param impulse impulse vector in camera local space.
    */
-  addImpulse (impulse: THREE.Vector3): void
+  addImpulse(impulse: THREE.Vector3): void
+
+  /**
+   * Moves the camera closer or farther away from orbit target.
+   * @param amount movement size.
+   */
+  zoom(amount: number): void
 
   /**
    * Moves the camera along all three axes.
    */
-  move3 (vector: THREE.Vector3) : void
+  move3(vector: THREE.Vector3): void
 
   /**
    * Moves the camera along two axes.
    */
-  move2 (vector: THREE.Vector2, axes : 'XY' | 'XZ') : void
+  move2(vector: THREE.Vector2, axes: 'XY' | 'XZ'): void
 
   /**
    * Moves the camera along one axis.
    */
-  move1 (amount: number, axis : 'X' | 'Y' | 'Z') : void
+  move1(amount: number, axis: 'X' | 'Y' | 'Z'): void
 
   /**
    * Rotates the camera around the X or Y axis or both
    * @param vector where coordinates in range [-1, 1] for rotations of [-180, 180] degrees
    */
-  rotate (vector: THREE.Vector2) : void
+  rotate(vector: THREE.Vector2): void
 
   /**
    * Sets orbit mode target and moves camera accordingly
    */
-  target (target: Object | THREE.Vector3) : void
+  target(target: Object | THREE.Vector3): void
 
   /**
    * Rotates the camera to look at target
    */
-  lookAt (target: Object | THREE.Vector3)
+  lookAt(target: Object | THREE.Vector3)
 
   /**
    * Moves and rotates the camera so that target is well framed.
    */
-  frame (target: Object | THREE.Sphere | 'all') : void
+  frame(target: Object | THREE.Sphere | 'all'): void
 }

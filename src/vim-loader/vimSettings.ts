@@ -35,6 +35,8 @@ export namespace VimOptions {
      * Defines how to draw or not to draw objects according to their transparency
      */
     transparency?: Transparency.Mode
+
+    forceDownload?: boolean
   }
 }
 
@@ -51,11 +53,12 @@ export class VimSettings {
       position: { x: 0, y: 0, z: 0 },
       rotation: { x: 0, y: 0, z: 0 },
       scale: 0.01,
-      transparency: 'all'
+      transparency: 'all',
+      forceDownload: false
     }
 
     this.options = options ? deepmerge(fallback, options, undefined) : fallback
-    this.options.transparency = Transparency.isValid(this.options.transparency)
+    this.options.transparency = Transparency.isValid(this.options.transparency!)
       ? this.options.transparency
       : 'all'
   }
@@ -72,7 +75,7 @@ export class VimSettings {
       this.getScale()
     )
 
-  getTransparency = () => this.options.transparency
+  getTransparency = () => this.options.transparency!
 }
 
 function toVec (obj: VimOptions.Vector3): THREE.Vector3 {

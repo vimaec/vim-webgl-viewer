@@ -11,16 +11,26 @@ export namespace Materials {
   export class Library {
     opaque: THREE.Material
     transparent: THREE.Material | undefined
-    wireframe: THREE.Material | undefined
+    wireframe: THREE.LineBasicMaterial | undefined
 
     constructor (
       opaque?: THREE.Material,
       transparent?: THREE.Material,
-      wireframe?: THREE.Material
+      wireframe?: THREE.LineBasicMaterial
     ) {
       this.opaque = opaque ?? createOpaque()
       this.transparent = transparent ?? createTransparent()
       this.wireframe = wireframe ?? createWireframe()
+    }
+
+    dispose () {
+      this.opaque.dispose()
+      this.transparent.dispose()
+      this.wireframe.dispose()
+
+      this.opaque = undefined
+      this.transparent = undefined
+      this.wireframe = undefined
     }
   }
 
@@ -64,7 +74,6 @@ export namespace Materials {
    * Developed and tested for Phong material, but might work for other materials.
    */
   export function patchMaterial (material: THREE.Material) {
-    material.defines = { USE_UV: true }
     material.onBeforeCompile = (shader) => {
       patchShader(shader)
       material.userData.shader = shader
@@ -79,51 +88,96 @@ export namespace Materials {
    */
   export function patchShader (shader: THREE.Shader) {
     shader.vertexShader = shader.vertexShader
-      // Add useVertexColor when instanced colors are used.
+      // Adding declarations for attributes and varying for visibility and coloring.
       .replace(
         '#include <color_pars_vertex>',
         `
         #include <color_pars_vertex>
-        #ifdef USE_INSTANCING_COLOR
-        attribute float useVertexColor;
-        #endif
-        `
-      )
-      // Define uvs for instanced meshes
-      .replace(
-        '#include <uv_vertex>',
-        `
-        #include <uv_vertex>
+        
+        // COLORING
 
+        // Vertex attribute for color override
         #ifdef USE_INSTANCING
-          #ifdef USE_INSTANCING_COLOR
-            vUv = vec2(uv.x, useVertexColor);
-          #else
-            vUv = vec2(uv.x, 1.0);
-          #endif
+          attribute float ignoreVertexColor;
+        #endif
+
+        // There seems to be an issue where setting mehs.instanceColor
+        // doesn't properly set USE_INSTANCING_COLOR
+        // so we always use it as a fix
+        #ifndef USE_INSTANCING_COLOR
+        attribute vec3 instanceColor;
+        #endif
+
+        // Passed to fragment to ignore phong model
+        varying float vIgnorePhong;
+        
+        // VISIBILITY
+      
+        // Passed to fragment to discard them
+        varying float vIgnore;
+
+        // Instance or vertex attribute to hide objects 
+        #ifdef USE_INSTANCING
+          attribute float ignoreInstance;
+        #else
+          attribute float ignoreVertex;
         #endif
         `
       )
-      // Ignore vertex colors when useVertexColor = 0 in instanced meshes
+      // Adding vertex shader logic for visility and coloring
       .replace(
         '#include <color_vertex>',
         `
-        #include <color_vertex>
+          vColor = color;
+          vIgnorePhong = 0.0f;
 
-        #ifdef USE_INSTANCING_COLOR
-          vColor.xyz = ((1.0f - useVertexColor) * instanceColor.xyz) + (useVertexColor * color.xyz);
-        #endif
+          // COLORING
+
+          // ignoreVertexColor == 1 -> instance color
+          // ignoreVertexColor == 0 -> vertex color
+          #ifdef USE_INSTANCING
+            vIgnorePhong = ignoreVertexColor;
+            vColor.xyz = ignoreVertexColor * instanceColor.xyz + (1.0f - ignoreVertexColor) * color.xyz;
+          #endif
+
+
+          // VISIBILITY
+
+          // Set frag ignore from instance or vertex attribute
+          #ifdef USE_INSTANCING
+            vIgnore = ignoreInstance;
+          #else
+            vIgnore = ignoreVertex;
+          #endif
+
         `
       )
 
-    // Draw vertex color instead of phong model when Uv.y = 0
-    shader.fragmentShader = shader.fragmentShader.replace(
-      '#include <output_fragment>',
-      `
-        float d = length(outgoingLight);
-        gl_FragColor = vec4(vColor.xyz * (1.0f - vUv.y) * d + outgoingLight.xyz * vUv.y , diffuseColor.a);
-      `
-    )
+    shader.fragmentShader = shader.fragmentShader
+      // Adding declarations for varying defined in vertex shader
+      .replace(
+        '#include <clipping_planes_pars_fragment>',
+        `
+        #include <clipping_planes_pars_fragment>
+        varying float vIgnore;
+        varying float vIgnorePhong;
+        `
+      )
+      // Adding fragment shader logic for visibility and coloring.
+      .replace(
+        '#include <output_fragment>',
+        `
+          // VISIBILITY
+          if (vIgnore > 0.0f)
+            discard;
+         
+          // COLORING
+          // vIgnorePhong == 1 -> Vertex Color * light 
+          // vIgnorePhong == 0 -> Phong Color 
+          float d = length(outgoingLight);
+          gl_FragColor = vec4(vIgnorePhong * vColor.xyz * d + (1.0f - vIgnorePhong) * outgoingLight.xyz, diffuseColor.a);
+        `
+      )
     return shader
   }
 
@@ -131,16 +185,23 @@ export namespace Materials {
    * Creates a new instance of the default wireframe material
    * @returns a THREE.LineBasicMaterial
    */
-  export function createWireframe (): THREE.Material {
+  export function createWireframe () {
     const material = new THREE.LineBasicMaterial({
       depthTest: false,
-      opacity: 0.5,
+      opacity: 1,
       color: new THREE.Color(0x0000ff),
       transparent: true
     })
     return material
   }
-
   let materials: Library
-  export const getDefaultLibrary = () => materials ?? new Library()
+  export function getDefaultLibrary () {
+    materials = materials ?? new Library()
+    return materials
+  }
+
+  export function dispose () {
+    materials.dispose()
+    materials = undefined
+  }
 }

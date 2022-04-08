@@ -174,7 +174,7 @@ All raw `G3d` and `BIM` data is stored using the `BFast` format.
 
 **Frame camera on an element**
 ```javascript
-const vim = viewer.getVim(VIM_INDEX)
+const vim = viewer.vims[0] // or keep vim reference from load
 const object =  vim.getObjectFromElementId(ELEMENT_ID)
 viewer.camera.frame(object)
 ```

@@ -27,7 +27,9 @@ export class Selection {
   /**
    * Returns selected object.
    */
-  get object () { return this._object }
+  get object () {
+    return this._object
+  }
 
   /**
    * Select given object

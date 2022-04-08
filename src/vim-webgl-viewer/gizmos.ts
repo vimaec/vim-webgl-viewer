@@ -3,6 +3,7 @@
  */
 
 import * as THREE from 'three'
+import { Color, MathUtils } from 'three'
 import { Renderer } from './renderer'
 import { ViewerSettings } from './viewerSettings'
 
@@ -12,24 +13,48 @@ import { ViewerSettings } from './viewerSettings'
 export class CameraGizmo {
   // Dependencies
   private _renderer: Renderer
+  private _camera: THREE.Camera
 
   // Settings
-  private _scale: number
-  private _fov: number
+  private _size: number = 0.01
+  private _fov: number = 50
+  private _color: Color = new THREE.Color('blue')
+  private _opacity: number
+  private _opacityAlways: number
+  private _fadeDurationMs: number = 200
+  private _showDurationMs: number = 1000
 
   // Resources
   private _box: THREE.BufferGeometry
   private _wireframe: THREE.BufferGeometry
-  private _material: THREE.Material
-  private _materialAlways: THREE.Material
+  private _material: THREE.LineBasicMaterial
+  private _materialAlways: THREE.LineBasicMaterial
   private _gizmos: THREE.Group
 
   // State
   private _timeout: ReturnType<typeof setTimeout>
+  private _fadeEnd: number
   private _active: boolean
 
-  constructor (renderer: Renderer) {
+  constructor (renderer: Renderer, camera: THREE.Camera) {
     this._renderer = renderer
+    this._camera = camera
+  }
+
+  dispose () {
+    clearTimeout(this._timeout)
+
+    this._box.dispose()
+    this._wireframe.dispose()
+    this._material.dispose()
+    this._materialAlways.dispose()
+    this._box = undefined
+    this._wireframe = undefined
+    this._material = undefined
+    this._materialAlways = undefined
+
+    this._renderer.remove(this._gizmos)
+    this._gizmos = undefined
   }
 
   show (show: boolean = true) {
@@ -43,22 +68,71 @@ export class CameraGizmo {
     this._gizmos.visible = show
     // Hide after one second since last request
     if (show) {
-      this._timeout = setTimeout(() => (this._gizmos.visible = false), 1000)
+      this._timeout = setTimeout(() => this.fadeOut(), this._showDurationMs)
+    }
+  }
+
+  fadeOut (fading?: boolean) {
+    const now = new Date().getTime()
+
+    if (!fading) {
+      this._fadeEnd = now + this._fadeDurationMs
+    }
+
+    if (now > this._fadeEnd) {
+      // restore opacity values and hide for good
+      this._gizmos.visible = false
+      this._material.opacity = this._opacity
+      this._materialAlways.opacity = this._opacityAlways
+    } else {
+      // lerp and loop until fade is over
+      requestAnimationFrame(() => this.fadeOut(true))
+      const t = Math.pow((this._fadeEnd - now) / this._fadeDurationMs, 4)
+      this._material.opacity = MathUtils.lerp(0, this._opacity, t)
+      this._materialAlways.opacity = MathUtils.lerp(0, this._opacityAlways, t)
     }
   }
 
   setPosition (position: THREE.Vector3) {
-    this._gizmos?.position.copy(position)
+    if (!this._gizmos) return
+    this._gizmos.position.copy(position)
+    this.updateScale()
+  }
+
+  setSize (size: number) {
+    this._size = size
+  }
+
+  setOpacity (opacity: number, opacityAlways: number) {
+    this._opacity = opacity
+    this._opacityAlways = opacityAlways
+    if (!this._gizmos) return
+    this._material.opacity = opacity
+    this._materialAlways.opacity = opacityAlways
+  }
+
+  setColor (color: Color) {
+    this._color = color
+    if (!this._gizmos) return
+    this._material.color = color
+    this._materialAlways.color = color
   }
 
   applySettings (settings: ViewerSettings) {
-    this._active = settings.getCameraShowGizmo()
+    this._active = settings.getCameraGizmoEnable()
     this._fov = settings.getCameraFov()
+    this.setColor(settings.getCameraGizmoColor())
+    this.setSize(settings.getCameraGizmoSize())
+    this.setOpacity(
+      settings.getCameraGizmoOpacity(),
+      settings.getCameraGizmoOpacityAlways()
+    )
   }
 
-  setScale (scale: number = 1) {
-    this._gizmos?.scale.set(scale, scale, scale)
-    this._scale = scale
+  private updateScale () {
+    const dist = this._camera.position.clone().distanceTo(this._gizmos.position)
+    const h = dist * Math.tan(MathUtils.degToRad(this._fov) * this._size)
+    this._gizmos?.scale.set(h, h, h)
   }
 
   private createGizmo () {
@@ -67,14 +141,14 @@ export class CameraGizmo {
 
     this._material = new THREE.LineBasicMaterial({
       depthTest: true,
-      opacity: 0.5,
-      color: new THREE.Color(0x0000ff),
+      opacity: this._opacity,
+      color: this._color,
       transparent: true
     })
     this._materialAlways = new THREE.LineBasicMaterial({
       depthTest: false,
-      opacity: 0.05,
-      color: new THREE.Color(0x0000ff),
+      opacity: this._opacityAlways,
+      color: this._color,
       transparent: true
     })
 
@@ -85,21 +159,6 @@ export class CameraGizmo {
       new THREE.LineSegments(this._wireframe, this._materialAlways)
     )
     this._renderer.add(this._gizmos)
-
-    this.setScale(this._scale)
-  }
-
-  dispose () {
-    this._box.dispose()
-    this._wireframe.dispose()
-    this._material.dispose()
-    this._materialAlways.dispose()
-    this._box = null
-    this._wireframe = null
-    this._material = null
-    this._materialAlways = null
-
-    this._renderer.remove(this._gizmos)
-    this._gizmos = null
+    this.updateScale()
   }
 }

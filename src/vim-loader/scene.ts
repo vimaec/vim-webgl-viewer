@@ -6,6 +6,7 @@ import * as THREE from 'three'
 import { G3d } from './g3d'
 import { Transparency } from './geometry'
 import { Mesh } from './mesh'
+import { Vim } from './vim'
 
 /**
  * A Scene regroups many THREE.Meshes
@@ -56,32 +57,10 @@ export class Scene {
   /**
    * Sets vim index for this scene and all its THREE.Meshes.
    */
-  setIndex (index: number) {
+  setVim (vim: Vim) {
     for (let m = 0; m < this.meshes.length; m++) {
-      this.meshes[m].userData.index = index
+      this.meshes[m].userData.vim = vim
     }
-  }
-
-  swapInstances (mesh: THREE.InstancedMesh, indexA: number, indexB: number) {
-    const array = this._threeMeshIdToInstances.get(mesh.id)
-    if (!array) throw new Error('Could not find mesh with id : ' + mesh.id)
-    if (indexA === indexB) return
-
-    const matrixA = new THREE.Matrix4()
-    const matrixB = new THREE.Matrix4()
-    mesh.getMatrixAt(indexA, matrixA)
-    mesh.getMatrixAt(indexB, matrixB)
-    mesh.setMatrixAt(indexA, matrixB)
-    mesh.setMatrixAt(indexB, matrixA)
-
-    const instanceA = array[indexA]
-    const instanceB = array[indexB]
-
-    this._instanceToThreeMesh.get(instanceA)[1] = indexB
-    this._instanceToThreeMesh.get(instanceB)[1] = indexA
-    array[indexA] = instanceB
-    array[indexB] = instanceA
-    mesh.instanceMatrix.needsUpdate = true
   }
 
   /**
@@ -174,6 +153,8 @@ export class Scene {
       this.meshes[i].geometry.dispose()
     }
     this.meshes.length = 0
+    this._instanceToThreeMesh.clear()
+    this._threeMeshIdToInstances.clear()
   }
 
   /**

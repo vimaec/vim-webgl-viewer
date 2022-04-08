@@ -67,7 +67,7 @@ export class GroundPlane {
 
     // dispose previous texture
     this._texture?.dispose()
-    this._texture = null
+    this._texture = undefined
 
     // Bail if new texture url, is no texture
     if (!texUrl) return
@@ -89,9 +89,9 @@ export class GroundPlane {
     this._material?.dispose()
     this._texture?.dispose()
 
-    this._geometry = null
-    this._material = null
-    this._texture = null
+    this._geometry = undefined
+    this._material = undefined
+    this._texture = undefined
   }
 }
 
@@ -103,7 +103,9 @@ export class Environment {
   sunLight: THREE.DirectionalLight
   private _groundPlane: GroundPlane
 
-  get groundPlane () { return this._groundPlane.mesh }
+  get groundPlane () {
+    return this._groundPlane.mesh
+  }
 
   constructor (settings: ViewerSettings) {
     this._groundPlane = new GroundPlane()
@@ -137,9 +139,19 @@ export class Environment {
   /**
    * Adjust scale so that it matches box dimensions.
    */
-  public adaptToContent (box: Box3) {
+  adaptToContent (box: Box3) {
     // Plane
     this._groundPlane.adaptToContent(box)
+  }
+
+  dispose () {
+    this.sunLight.dispose()
+    this.skyLight.dispose()
+    this._groundPlane.dispose()
+
+    this.sunLight = undefined
+    this.skyLight = undefined
+    this._groundPlane = undefined
   }
 }
 
