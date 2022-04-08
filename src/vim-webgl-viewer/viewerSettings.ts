@@ -160,7 +160,7 @@ export class ViewerSettings {
         gizmo: {
           enable: true,
           size: 0.005,
-          color: { r: 0xff, g: 0xf4, b: 0xd8 },
+          color: { r: 0xff, g: 0xff, b: 0xff },
           opacity: 0.5,
           opacityAlways: 0.125
         }
