@@ -98,6 +98,11 @@ export namespace ViewerOptions {
     intensity: number
   }
 
+  export type Highlight = {
+    color: ColorRGB
+    opacity: number
+  }
+
   /** Viewer related options independant from vims */
   export type Root = {
     /**
@@ -121,6 +126,8 @@ export namespace ViewerOptions {
      * Sunlight (directional light) options
      */
     sunLight: Partial<SunLight>
+
+    highlight: Partial<Highlight>
   }
 }
 
@@ -152,10 +159,10 @@ export class ViewerSettings {
         },
         gizmo: {
           enable: true,
-          size: 0.01,
-          color: { r: 0x00, g: 0x00, b: 0xff },
+          size: 0.005,
+          color: { r: 0xff, g: 0xff, b: 0xff },
           opacity: 0.5,
-          opacityAlways: 0.05
+          opacityAlways: 0.125
         }
       },
       groundPlane: {
@@ -179,6 +186,10 @@ export class ViewerSettings {
         color: { h: 0.1, s: 1, l: 0.95 },
         // color: { h: 1, s: 1, l: 1 },
         intensity: 1
+      },
+      highlight: {
+        color: { r: 0x6a, g: 0xd2, b: 0xff },
+        opacity: 0.5
       }
     }
 
@@ -206,6 +217,9 @@ export class ViewerSettings {
   getSunlightColor = () => toHSLColor(this.options.sunLight.color!)
   getSunlightPosition = () => toVec(this.options.sunLight.position!)
   getSunlightIntensity = () => this.options.sunLight.intensity
+
+  getHighlightColor = () => toRGBColor(this.options.highlight.color)
+  getHighlightOpacity = () => this.options.highlight.opacity
 
   // Camera
   private get camera () {

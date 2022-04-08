@@ -11,12 +11,12 @@ export namespace Materials {
   export class Library {
     opaque: THREE.Material
     transparent: THREE.Material | undefined
-    wireframe: THREE.Material | undefined
+    wireframe: THREE.LineBasicMaterial | undefined
 
     constructor (
       opaque?: THREE.Material,
       transparent?: THREE.Material,
-      wireframe?: THREE.Material
+      wireframe?: THREE.LineBasicMaterial
     ) {
       this.opaque = opaque ?? createOpaque()
       this.transparent = transparent ?? createTransparent()
@@ -185,17 +185,20 @@ export namespace Materials {
    * Creates a new instance of the default wireframe material
    * @returns a THREE.LineBasicMaterial
    */
-  export function createWireframe (): THREE.Material {
+  export function createWireframe () {
     const material = new THREE.LineBasicMaterial({
       depthTest: false,
-      opacity: 0.5,
+      opacity: 1,
       color: new THREE.Color(0x0000ff),
       transparent: true
     })
     return material
   }
   let materials: Library
-  export const getDefaultLibrary = () => materials ?? new Library()
+  export function getDefaultLibrary () {
+    materials = materials ?? new Library()
+    return materials
+  }
 
   export function dispose () {
     materials.dispose()

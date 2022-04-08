@@ -31,7 +31,7 @@ export class Camera {
   speed: number
 
   private _orbitalTarget: THREE.Vector3
-  private _minOrbitalDistance: number = 1
+  private _minOrbitalDistance: number = 0.05
   private _currentOrbitalDistance: number
   private _orbitalTargetDistance: number
 
@@ -47,7 +47,7 @@ export class Camera {
   private _moveSpeed: number = 0.8
   private _rotateSpeed: number = 1
   private _orbitSpeed: number = 1
-  private _wheelSpeed: number = 0.2
+  private _zoomSpeed: number = 0.2
 
   constructor (renderer: Renderer, settings: ViewerSettings) {
     this.camera = renderer.camera
@@ -132,7 +132,6 @@ export class Camera {
     const position =
       target instanceof THREE.Vector3 ? target : target.getCenter()
     this._orbitalTarget = position
-    this._orbitalTargetDistance = this.camera.position.distanceTo(position)
     this.startLerp(0.4)
     this.gizmo.show(true)
   }
@@ -191,12 +190,22 @@ export class Camera {
   }
 
   /**
+   * Moves the camera closer or farther away from orbit target.
+   * @param amount movement size.
+   */
+  zoom (amount: number) {
+    const next = this._orbitalTargetDistance + amount * this._zoomSpeed
+    this._orbitalTargetDistance = Math.max(next, this._minOrbitalDistance)
+    this.gizmo.show()
+  }
+
+  /**
    * Smoothly moves the camera in given direction for a short distance.
    */
   addImpulse (impulse: THREE.Vector3) {
     const localImpulse = impulse
       .clone()
-      .multiplyScalar(this.getSpeedMultiplier() * this._wheelSpeed)
+      .multiplyScalar(this.getSpeedMultiplier() * this._zoomSpeed)
     localImpulse.applyQuaternion(this.camera.quaternion)
     this._impulse.add(localImpulse)
   }
@@ -303,22 +312,6 @@ export class Camera {
     positionDelta.add(impulse)
 
     const orbitDelta = positionDelta.clone()
-    if (this.orbitMode) {
-      // compute local space forward component of movement
-      const inv = this.camera.quaternion.clone().invert()
-      const local = positionDelta.clone().applyQuaternion(inv)
-      // remove z component
-      orbitDelta.set(local.x, local.y, 0)
-      // compute back to world space
-      orbitDelta.applyQuaternion(this.camera.quaternion)
-
-      // apply local space z to orbit distance,
-      this._currentOrbitalDistance = Math.max(
-        this._currentOrbitalDistance + local.z,
-        this._minOrbitalDistance * this._sceneSizeMultiplier
-      )
-      this._orbitalTargetDistance = this._currentOrbitalDistance
-    }
 
     this._impulse.multiplyScalar(invBlendFactor)
     this.camera.position.add(positionDelta)
@@ -361,6 +354,7 @@ export class Camera {
     )
     this.camera.lookAt(sphere.center)
     this._orbitalTarget = sphere.center
+
     this._currentOrbitalDistance = this._orbitalTarget
       .clone()
       .sub(this.camera.position)
@@ -424,6 +418,12 @@ export interface ICamera {
    * @param impulse impulse vector in camera local space.
    */
   addImpulse(impulse: THREE.Vector3): void
+
+  /**
+   * Moves the camera closer or farther away from orbit target.
+   * @param amount movement size.
+   */
+  zoom(amount: number): void
 
   /**
    * Moves the camera along all three axes.

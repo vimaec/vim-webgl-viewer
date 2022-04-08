@@ -21,6 +21,8 @@ export class CameraGizmo {
   private _color: Color = new THREE.Color('blue')
   private _opacity: number
   private _opacityAlways: number
+  private _fadeDurationMs: number = 200
+  private _showDurationMs: number = 1000
 
   // Resources
   private _box: THREE.BufferGeometry
@@ -31,6 +33,7 @@ export class CameraGizmo {
 
   // State
   private _timeout: ReturnType<typeof setTimeout>
+  private _fadeEnd: number
   private _active: boolean
 
   constructor (renderer: Renderer, camera: THREE.Camera) {
@@ -65,7 +68,28 @@ export class CameraGizmo {
     this._gizmos.visible = show
     // Hide after one second since last request
     if (show) {
-      this._timeout = setTimeout(() => (this._gizmos.visible = false), 1000)
+      this._timeout = setTimeout(() => this.fadeOut(), this._showDurationMs)
+    }
+  }
+
+  fadeOut (fading?: boolean) {
+    const now = new Date().getTime()
+
+    if (!fading) {
+      this._fadeEnd = now + this._fadeDurationMs
+    }
+
+    if (now > this._fadeEnd) {
+      // restore opacity values and hide for good
+      this._gizmos.visible = false
+      this._material.opacity = this._opacity
+      this._materialAlways.opacity = this._opacityAlways
+    } else {
+      // lerp and loop until fade is over
+      requestAnimationFrame(() => this.fadeOut(true))
+      const t = Math.pow((this._fadeEnd - now) / this._fadeDurationMs, 4)
+      this._material.opacity = MathUtils.lerp(0, this._opacity, t)
+      this._materialAlways.opacity = MathUtils.lerp(0, this._opacityAlways, t)
     }
   }
 
