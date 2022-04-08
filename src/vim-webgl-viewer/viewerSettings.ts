@@ -159,10 +159,10 @@ export class ViewerSettings {
         },
         gizmo: {
           enable: true,
-          size: 0.01,
-          color: { r: 0x00, g: 0x00, b: 0xff },
+          size: 0.005,
+          color: { r: 0xff, g: 0xf4, b: 0xd8 },
           opacity: 0.5,
-          opacityAlways: 0.05
+          opacityAlways: 0.125
         }
       },
       groundPlane: {
@@ -188,8 +188,8 @@ export class ViewerSettings {
         intensity: 1
       },
       highlight: {
-        color: { r: 0, g: 0, b: 255 },
-        opacity: 1
+        color: { r: 0x6a, g: 0xd2, b: 0xff },
+        opacity: 0.5
       }
     }
 
