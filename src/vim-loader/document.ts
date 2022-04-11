@@ -112,7 +112,7 @@ export class Document {
    * Returns all element indices of the vim
    */
   * getAllElements () {
-    for (let i = 0; i < this._elementToInstances.size; i++) {
+    for (let i = 0; i < this._elementIds.length; i++) {
       yield i
     }
   }
