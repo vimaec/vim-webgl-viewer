@@ -5,8 +5,10 @@ export class Document {
   g3d: G3d
   private _entity: BFast
   private _strings: string[]
+
   private _instanceToElement: number[]
   private _elementToInstances: Map<number, number[]>
+  private _elementIds: number[]
   private _elementIdToElements: Map<number, number[]>
 
   private constructor (
@@ -15,6 +17,7 @@ export class Document {
     strings: string[],
     instanceToElement: number[],
     elementToInstances: Map<number, number[]>,
+    elementIds: number[],
     elementIdToElements: Map<number, number[]>
   ) {
     this.g3d = g3d
@@ -22,6 +25,7 @@ export class Document {
     this._strings = strings
     this._instanceToElement = instanceToElement
     this._elementToInstances = elementToInstances
+    this._elementIds = elementIds
     this._elementIdToElements = elementIdToElements
   }
 
@@ -34,7 +38,7 @@ export class Document {
     let strings: string[]
 
     let instanceToElement: number[]
-    let elementIdToElement: Map<number, number[]>
+    let elementIds: number[]
 
     await Promise.all([
       Document.requestG3d(bfast).then((g) => (g3d = g)),
@@ -47,21 +51,21 @@ export class Document {
             Document.requestInstanceToElement(ets).then(
               (v) => (instanceToElement = v)
             ),
-            Document.requestElementIdToElement(ets).then(
-              (v) => (elementIdToElement = v)
-            )
+            Document.requestElementIds(ets).then((v) => (elementIds = v))
           ])
         )
     ])
 
     const elementToInstance = Document.invert(instanceToElement)
+    const elementIdToElements = Document.invert(elementIds)
     return new Document(
       g3d,
       entity,
       strings,
       instanceToElement,
       elementToInstance,
-      elementIdToElement
+      elementIds,
+      elementIdToElements
     )
   }
 
@@ -96,13 +100,12 @@ export class Document {
     return result
   }
 
-  private static async requestElementIdToElement (entities: BFast) {
+  private static async requestElementIds (entities: BFast) {
     const elements = await entities.getBfast('Vim.Element')
     const ids =
       (await elements.getArray('int:Id')) ??
       (await elements.getArray('numeric:Id'))
-    const result = Document.invert(ids)
-    return result
+    return ids
   }
 
   /**
@@ -145,7 +148,11 @@ export class Document {
    * @returns element index or -1 if not found
    */
   getElementFromElementId (elementId: number) {
-    return this._elementIdToElements[elementId]
+    return this._elementIdToElements.get(elementId)
+  }
+
+  getElementId (element: number) {
+    return this._elementIds[element]
   }
 
   /**

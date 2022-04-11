@@ -57,6 +57,10 @@ export class Object {
     return this.vim.document.getElement(this.element)
   }
 
+  get elementId () {
+    return this.vim.document.getElementId(this.element)
+  }
+
   /**
    * returns the bounding box of the object from cache or computed if needed.
    */
