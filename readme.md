@@ -181,31 +181,34 @@ viewer.camera.frame(object)
 
 **Highlight an element**
 ```javascript
+const vim = viewer.vims[0] // or keep vim reference from load
+const object =  vim.getObjectFromElementId(ELEMENT_ID)
 const wireframe = object.createWireframe()
 this.viewer.renderer.add(wireframe)
 
 // To remove hightlight
 // this.viewer.renderer.removeObject(wireframe)
+// wireframe.geometry.dispose()
 ```
 
 **Change Color of an element**
 ```javascript
-const vim = viewer.getVim(VIM_INDEX)
+const vim = viewer.vims[0] // or keep vim reference from load
 const object =  vim.getObjectFromElementId(ELEMENT_ID)
-object.changeColor(new THREE.Color(1,0,0))
+object.color = new THREE.Color(1,0,0)
 
 // Revert to original color
-// object.changeColor()
+// object.color = undefined
 ```
 
 **Replace or add behavior on click**
 ```javascript
 // Capture default behavior
-const defaultClick = viewer.onMouseClick
+const defaultClick = viewer.onMouseClick.bind(viewer)
 // Override the onClick callback
 viewer.onMouseClick = (hit) => {
   // Call the default behavior
-  defaultClick.bind(viewer)(hit)
+  defaultClick(hit)
 
   // Add extra logic here
   console.log('My extra behaviour with this entity')

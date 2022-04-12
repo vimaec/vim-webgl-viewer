@@ -1,3 +1,7 @@
+/**
+ * @module vim-loader
+ */
+
 import { BFast } from './bfast'
 import { G3d } from './g3d'
 
@@ -87,6 +91,9 @@ export class Document {
     return instances
   }
 
+  /**
+   * Returns a map where data[i] -> i
+   */
   private static invert (data: number[]) {
     const result = new Map<number, number[]>()
     for (let i = 0; i < data.length; i++) {
@@ -100,6 +107,9 @@ export class Document {
     return result
   }
 
+  /**
+   * Request element id table from remote with support for legacy name
+   */
   private static async requestElementIds (entities: BFast) {
     const elements = await entities.getBfast('Vim.Element')
     const ids =
@@ -151,6 +161,10 @@ export class Document {
     return this._elementIdToElements.get(elementId)
   }
 
+  /**
+   * Returns element id from element index
+   * @param element element index
+   */
   getElementId (element: number) {
     return this._elementIds[element]
   }

@@ -195,11 +195,18 @@ export namespace Materials {
     return material
   }
   let materials: Library
+
+  /**
+   * Get or create a singleton material library with default materials
+   */
   export function getDefaultLibrary () {
     materials = materials ?? new Library()
     return materials
   }
 
+  /**
+   * Disposes the singleton material library
+   */
   export function dispose () {
     materials.dispose()
     materials = undefined

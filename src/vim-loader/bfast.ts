@@ -254,10 +254,16 @@ export class BFast {
     return result
   }
 
+  /**
+   * Forces download of the full underlying buffer, from now on all calls will be local.
+   */
   async forceDownload () {
     this.source = await this.remote(undefined, this.name)
   }
 
+  /**
+   * Downloads the appropriate range and cast it as a new sub bfast.
+   */
   private async requestBfast (name: string) {
     const ranges = await this.getRanges()
 
@@ -273,6 +279,9 @@ export class BFast {
     return result
   }
 
+  /**
+   * Downloads and parses ranges as a map of name->range
+   */
   private async requestRanges () {
     const header = await this.getHeader()
     const buffer = await this.request(
@@ -304,6 +313,9 @@ export class BFast {
     return map
   }
 
+  /**
+   * Downloads and parse names from remote.
+   */
   private async requestNames (range: Range) {
     const buffer = await this.request(range, 'Names')
     const names = new TextDecoder('utf-8').decode(buffer)
@@ -311,14 +323,21 @@ export class BFast {
     return result
   }
 
+  /**
+   * Downloads and parse header from remote.
+   */
   private async requestHeader () {
     const buffer = await this.request(new Range(0, 32), 'Header')
     const result = Header.createFromBuffer(buffer)
     return result
   }
 
+  /**
+   * Gets array buffer from from cache, or partial http, fallback to full http
+   * @param range range to get, or get full resource if undefined
+   * @param label label for logs
+   */
   private async request (range: Range, label: string): Promise<ArrayBuffer> {
-    // Return from cache if present, then try partial http, fallback to full http
     const buffer =
       this.local(range, label) ??
       (await this.remote(range, label)) ??
@@ -334,6 +353,9 @@ export class BFast {
     return buffer
   }
 
+  /**
+   * returns requested range from cache.
+   */
   private local (range: Range, label: string) {
     if (!(this.source instanceof ArrayBuffer)) return
     console.log(`Returning local ${this.name}.${label}`)
@@ -341,6 +363,9 @@ export class BFast {
     return this.source.slice(r.start, r.end)
   }
 
+  /**
+   * returns requested range from remote.
+   */
   private remote (range: Range, label: string) {
     if (!(this.source instanceof RemoteBuffer)) return
     const r = range?.offset(this.offset)

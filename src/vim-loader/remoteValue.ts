@@ -1,4 +1,8 @@
 /**
+ * @module vim-loader
+ */
+
+/**
  * Returns a value from cache or queue up existing request or start a new requests
  */
 export class RemoteValue<T> {
@@ -12,6 +16,9 @@ export class RemoteValue<T> {
     this.label = label
   }
 
+  /**
+   * Returns a value from cache or queue up existing request or start a new requests
+   */
   get (): Promise<T> {
     if (this._value) {
       // console.log(this.label + ' returning cached value ')

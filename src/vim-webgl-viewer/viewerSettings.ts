@@ -127,6 +127,9 @@ export namespace ViewerOptions {
      */
     sunLight: Partial<SunLight>
 
+    /**
+     * Object highlight on click options
+     */
     highlight: Partial<Highlight>
   }
 }

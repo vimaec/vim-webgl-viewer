@@ -36,6 +36,10 @@ export namespace VimOptions {
      */
     transparency?: Transparency.Mode
 
+    /**
+     * Forces the viewer to download the whole data at once.
+     * Otherwise bim data will be requested on per need basis.
+     */
     forceDownload?: boolean
   }
 }

@@ -108,6 +108,9 @@ export class Object {
     return wireframe
   }
 
+  /**
+   * Creates a new THREE.BufferGeometry for this object
+   */
   createGeometry () {
     if (!this.instances) return
 

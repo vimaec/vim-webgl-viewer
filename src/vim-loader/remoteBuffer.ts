@@ -1,5 +1,12 @@
+/**
+ * @module vim-loader
+ */
+
 import { Range } from './bfast'
 
+/**
+ * Represents the state of a single web request
+ */
 class Request {
   status: 'active' | 'completed' | 'failed' = 'active'
   field: string
@@ -12,6 +19,11 @@ class Request {
   }
 }
 
+/**
+ * Represents a collection of webrequests
+ * Will only send update signal at most every delay
+ * Provides convenient aggregation of metrics.
+ */
 export interface IProgressLogs {
   get loaded(): number
   get total(): number
@@ -24,12 +36,19 @@ export class RequestLogger {
   lastUpdate: number
   delay: 500
   sleeping: boolean
+
+  /**
+   * callback on update, called at most every delay time.
+   */
   onUpdate: (self: RequestLogger) => void
 
   constructor (source: string) {
     this.source = source
   }
 
+  /**
+   * Returns the sum of .loaded across all requests
+   */
   get loaded () {
     let result = 0
     this.all.forEach((request) => {
@@ -38,6 +57,9 @@ export class RequestLogger {
     return result
   }
 
+  /**
+   * Returns the sum of .total across all requests
+   */
   get total () {
     let result = 0
     this.all.forEach((request) => {
@@ -46,11 +68,17 @@ export class RequestLogger {
     return result
   }
 
+  /**
+   * Starts tracking a new web request
+   */
   start (field: string) {
     this.all.set(field, new Request(field))
     this.signal()
   }
 
+  /**
+   * Update an existing web request
+   */
   update (field: string, progress: ProgressEvent) {
     const r = this.all.get(field)
     if (r.status !== 'active') return
@@ -60,11 +88,17 @@ export class RequestLogger {
     this.signal()
   }
 
+  /**
+   * Notify a webrequest of failure
+   */
   fail (field: string) {
     this.all.get(field).status = 'failed'
     this.signal()
   }
 
+  /**
+   * Notify a webrequest of success
+   */
   end (field: string) {
     this.all.get(field).status = 'completed'
     this.signal()
@@ -78,6 +112,9 @@ export class RequestLogger {
   }
 }
 
+/**
+ * Wrapper to provide tracking for all webrequests via request logger.
+ */
 export class RemoteBuffer {
   url: string
   logger: RequestLogger
