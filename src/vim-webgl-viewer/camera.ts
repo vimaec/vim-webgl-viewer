@@ -194,7 +194,8 @@ export class Camera {
    * @param amount movement size.
    */
   zoom (amount: number) {
-    const next = this._orbitalTargetDistance + amount * this._zoomSpeed
+    const multiplier = this._zoomSpeed * this.getSpeedMultiplier()
+    const next = this._orbitalTargetDistance + amount * multiplier
     this._orbitalTargetDistance = Math.max(next, this._minOrbitalDistance)
     this.gizmo.show()
   }
