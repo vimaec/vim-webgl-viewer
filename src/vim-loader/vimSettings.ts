@@ -21,15 +21,15 @@ export namespace VimOptions {
     /**
      * Position offset for the vim
      */
-    position: Vector3
+    position?: Vector3
     /**
      * Rotation for the vim
      */
-    rotation: Vector3
+    rotation?: Vector3
     /**
      * Scale factor for the vim
      */
-    scale: number
+    scale?: number
 
     /**
      * Defines how to draw or not to draw objects according to their transparency
@@ -52,7 +52,7 @@ export class VimSettings {
     const fallback: VimOptions.Root = {
       position: { x: 0, y: 0, z: 0 },
       rotation: { x: 0, y: 0, z: 0 },
-      scale: 0.01,
+      scale: 1,
       transparency: 'all',
       forceDownload: false
     }
