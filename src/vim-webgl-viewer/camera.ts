@@ -88,6 +88,7 @@ export interface ICamera {
 
   /**
    * Moves and rotates the camera so that target is well framed.
+   * if center is true -> camera.y = target.y
    */
   frame(target: Object | THREE.Sphere | 'all', center?: boolean): void
 }
@@ -131,8 +132,6 @@ export class Camera implements ICamera {
     settings: ViewerSettings
   ) {
     this.camera = new THREE.PerspectiveCamera()
-    this.camera.position.set(0, 100, -100)
-    this.camera.lookAt(new THREE.Vector3(0, 0, 0))
     this._scene = scene
     this._viewport = viewport
     this._viewport.onResize(() => {
