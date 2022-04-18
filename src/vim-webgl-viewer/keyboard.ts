@@ -3,9 +3,7 @@
  */
 
 import * as THREE from 'three'
-
-import { Camera } from './camera'
-import { Selection } from './selection'
+import { Viewer } from './viewer'
 
 export const KEYS = {
   KEY_0: 48,
@@ -106,8 +104,15 @@ export class Keyboard {
   private SHIFT_MULTIPLIER: number = 3.0
 
   // Dependencies
-  private _camera: Camera
-  private _selection: Selection
+  private _viewer: Viewer
+
+  private get camera () {
+    return this._viewer.camera
+  }
+
+  private get selection () {
+    return this._viewer.selection
+  }
 
   // State
   isUpPressed: boolean
@@ -119,9 +124,8 @@ export class Keyboard {
   isShiftPressed: boolean = false
   isCtrlPressed: boolean
 
-  constructor (camera: Camera, selection: Selection) {
-    this._camera = camera
-    this._selection = selection
+  constructor (viewer: Viewer) {
+    this._viewer = viewer
   }
 
   reset = () => {
@@ -149,31 +153,31 @@ export class Keyboard {
       switch (event.keyCode) {
         case KEYS.KEY_ADD:
         case KEYS.KEY_OEM_PLUS:
-          this._camera.speed += 1
+          this.camera.speed += 1
           event.preventDefault()
           break
         case KEYS.KEY_SUBTRACT:
         case KEYS.KEY_OEM_MINUS:
-          this._camera.speed -= 1
+          this.camera.speed -= 1
           event.preventDefault()
           break
         case KEYS.KEY_F8:
         case KEYS.KEY_SPACE:
-          this._camera.orbitMode = !this._camera.orbitMode
+          this.camera.orbitMode = !this.camera.orbitMode
           event.preventDefault()
           break
         case KEYS.KEY_HOME:
-          this._camera.frame('all')
+          this.camera.frame('all', true)
           event.preventDefault()
           break
         // Selection
         case KEYS.KEY_ESCAPE:
-          this._selection.clear()
+          this.selection.clear()
           event.preventDefault()
           break
         case KEYS.KEY_Z:
         case KEYS.KEY_F:
-          this._camera.frame(this._selection.object)
+          this.camera.frame(this.selection.object)
           event.preventDefault()
           break
       }
@@ -236,6 +240,6 @@ export class Keyboard {
     )
     const speed = this.isShiftPressed ? this.SHIFT_MULTIPLIER : 1
     move.multiplyScalar(speed)
-    this._camera.localVelocity = move
+    this.camera.localVelocity = move
   }
 }

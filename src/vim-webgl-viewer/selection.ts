@@ -4,7 +4,7 @@
 
 import * as THREE from 'three'
 import { Object } from '../vim-loader/object'
-import { Viewer } from './viewer'
+import { Renderer } from './renderer'
 
 // TODO: Fix circular dependency
 /**
@@ -12,7 +12,7 @@ import { Viewer } from './viewer'
  */
 export class Selection {
   // Dependencies
-  private _viewer: Viewer
+  private _renderer: Renderer
 
   // State
   private _object: Object | undefined
@@ -20,8 +20,8 @@ export class Selection {
   // Disposable State
   private _highligt: THREE.LineSegments | undefined
 
-  constructor (viewer: Viewer) {
-    this._viewer = viewer
+  constructor (renderer: Renderer) {
+    this._renderer = renderer
   }
 
   /**
@@ -39,7 +39,7 @@ export class Selection {
     if (object) {
       this._object = object
       this._highligt = object.createWireframe()
-      this._viewer.renderer.add(this._highligt)
+      this._renderer.add(this._highligt)
     }
   }
 
@@ -51,7 +51,7 @@ export class Selection {
 
     if (this._highligt) {
       this._highligt.geometry.dispose()
-      this._viewer.renderer.remove(this._highligt)
+      this._renderer.remove(this._highligt)
       this._highligt = undefined
     }
   }

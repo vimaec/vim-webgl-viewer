@@ -3,7 +3,6 @@
  */
 
 import { Viewer } from './viewer'
-import { Camera } from './camera'
 import { Keyboard } from './keyboard'
 import { Touch } from './touch'
 import { Mouse } from './mouse'
@@ -21,13 +20,13 @@ export class Input {
   private _mouse: Mouse
   private _keyboard: Keyboard
 
-  constructor (viewer: Viewer, camera: Camera) {
+  constructor (viewer: Viewer) {
     this._canvas = viewer.viewport.canvas
     this._unregisters = []
 
-    this._keyboard = new Keyboard(camera, viewer.selection)
+    this._keyboard = new Keyboard(viewer)
     this._mouse = new Mouse(viewer, this._keyboard)
-    this._touch = new Touch(camera, viewer.viewport, this._mouse)
+    this._touch = new Touch(viewer, this._mouse)
   }
 
   private reg = (

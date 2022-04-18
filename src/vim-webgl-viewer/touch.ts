@@ -3,9 +3,8 @@
  */
 
 import * as THREE from 'three'
-import { Camera } from './camera'
 import { Mouse } from './mouse'
-import { Viewport } from './viewport'
+import { Viewer } from './viewer'
 
 /**
  * Manages user touch inputs.
@@ -14,9 +13,16 @@ export class Touch {
   TAP_DURATION_MS: number = 500
 
   // Dependencies
-  private _camera: Camera
-  private _viewport: Viewport
+  private _viewer: Viewer
   private _mouse: Mouse
+
+  private get camera () {
+    return this._viewer.camera
+  }
+
+  private get viewport () {
+    return this._viewer.viewport
+  }
 
   // State
   private _touchStart: THREE.Vector2 | undefined = undefined // When one touch occurs this is the value, when two or more touches occur it is the average of the first two.
@@ -24,9 +30,8 @@ export class Touch {
   private _touchStart2: THREE.Vector2 | undefined = undefined // The second touch when multiple touches occur, otherwise left undefined
   private _touchStartTime: number | undefined = undefined // In ms since epoch
 
-  constructor (camera: Camera, viewport: Viewport, mouse: Mouse) {
-    this._camera = camera
-    this._viewport = viewport
+  constructor (viewer: Viewer, mouse: Mouse) {
+    this._viewer = viewer
     this._mouse = mouse
   }
 
@@ -60,15 +65,15 @@ export class Touch {
   }
 
   onDrag = (delta: THREE.Vector2) => {
-    this._camera.rotate(delta)
+    this.camera.rotate(delta)
   }
 
   onDoubleDrag = (delta: THREE.Vector2) => {
-    this._camera.move2(delta, 'XY')
+    this.camera.move2(delta, 'XY')
   }
 
   onPinchOrSpread = (delta: number) => {
-    this._camera.move1(delta, 'Z')
+    this.camera.move1(delta, 'Z')
   }
 
   onTouchMove = (event: any) => {
@@ -78,7 +83,7 @@ export class Touch {
 
     if (event.touches.length === 1) {
       const pos = this.touchToVector(event.touches[0])
-      const [width, height] = this._viewport.getSize()
+      const [width, height] = this.viewport.getSize()
       const delta = pos
         .clone()
         .sub(this._touchStart)
@@ -94,7 +99,7 @@ export class Touch {
       const p1 = this.touchToVector(event.touches[0])
       const p2 = this.touchToVector(event.touches[1])
       const p = this.average(p1, p2)
-      const [width, height] = this._viewport.getSize()
+      const [width, height] = this.viewport.getSize()
       const moveDelta = this._touchStart
         .clone()
         .sub(p)

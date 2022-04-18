@@ -115,10 +115,10 @@ export class Viewer {
     this._onMouseClick = this.defaultOnClick
 
     // Input and Selection
-    this.raycaster = new Raycaster(this)
-    this.inputs = new Input(this, this._camera)
+    this.selection = new Selection(this.renderer)
+    this.raycaster = new Raycaster(this.viewport, this._camera, scene)
+    this.inputs = new Input(this)
     this.inputs.register()
-    this.selection = new Selection(this)
 
     this.applyMaterialSettings(this.settings)
 

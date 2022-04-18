@@ -5,7 +5,9 @@
 import * as THREE from 'three'
 import { Object } from '../vim-loader/object'
 import { Vim } from '../vim-loader/vim'
-import { Viewer } from './viewer'
+import { RenderScene } from './renderScene'
+import { Viewport } from './viewport'
+import { Camera } from './camera'
 
 type ThreeIntersectionList = THREE.Intersection<THREE.Object3D<THREE.Event>>[]
 
@@ -99,11 +101,16 @@ export class RaycastResult {
 }
 
 export class Raycaster {
-  private _viewer: Viewer
+  private _viewport: Viewport
+  private _camera: Camera
+  private _scene: RenderScene
+
   private _raycaster = new THREE.Raycaster()
 
-  constructor (viewer: Viewer) {
-    this._viewer = viewer
+  constructor (viewport: Viewport, camera: Camera, scene: RenderScene) {
+    this._viewport = viewport
+    this._camera = camera
+    this._scene = scene
   }
 
   /**
@@ -135,15 +142,10 @@ export class Raycaster {
   }
 
   private raycast (position: THREE.Vector2): ThreeIntersectionList {
-    const [width, height] = this._viewer.viewport.getSize()
+    const [width, height] = this._viewport.getSize()
     const x = (position.x / width) * 2 - 1
     const y = -(position.y / height) * 2 + 1
-    this._raycaster.setFromCamera(
-      new THREE.Vector2(x, y),
-      this._viewer.camera.camera
-    )
-    return this._raycaster.intersectObjects(
-      this._viewer.renderer.scene.scene.children
-    )
+    this._raycaster.setFromCamera(new THREE.Vector2(x, y), this._camera.camera)
+    return this._raycaster.intersectObjects(this._scene.scene.children)
   }
 }
