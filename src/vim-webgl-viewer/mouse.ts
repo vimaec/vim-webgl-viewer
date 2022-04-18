@@ -24,6 +24,10 @@ export class Mouse {
     return this._viewer.renderer
   }
 
+  private get viewport () {
+    return this._viewer.viewport
+  }
+
   // State
   isMouseDown: Boolean = false
   hasMouseMoved: Boolean = false
@@ -54,7 +58,7 @@ export class Mouse {
       event.movementX || event.mozMovementX || event.webkitMovementX || 0
     const deltaY =
       event.movementY || event.mozMovementY || event.webkitMovementY || 0
-    const [width, height] = this.renderer.getContainerSize()
+    const [width, height] = this.viewport.getSize()
     const delta = new THREE.Vector2(deltaX / width, deltaY / height)
 
     this.hasMouseMoved =
@@ -98,7 +102,7 @@ export class Mouse {
 
     // Manually set the focus since calling preventDefault above
     // prevents the browser from setting it automatically.
-    this.renderer.canvas.focus()
+    this.viewport.canvas.focus()
   }
 
   onMouseUp = (event: any) => {

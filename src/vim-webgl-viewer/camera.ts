@@ -4,9 +4,10 @@
 
 import * as THREE from 'three'
 import { CameraGizmo } from './gizmos'
-import { Renderer } from './renderer'
+import { Viewport } from './viewport'
 import { ViewerSettings } from './viewerSettings'
 import { Object } from '../vim'
+import { RenderScene } from './renderScene'
 
 export const DIRECTIONS = {
   forward: new THREE.Vector3(0, 0, -1),
@@ -21,9 +22,10 @@ export const DIRECTIONS = {
  * Manages viewer camera movement and position
  */
 export class Camera {
-  camera: THREE.PerspectiveCamera
+  camera: THREE.PerspectiveCamera | THREE.OrthographicCamera
   gizmo: CameraGizmo
-  private _renderer: Renderer
+  scene: RenderScene
+  viewport: Viewport
 
   private _inputVelocity: THREE.Vector3
   private _velocity: THREE.Vector3
@@ -49,10 +51,20 @@ export class Camera {
   private _orbitSpeed: number = 1
   private _zoomSpeed: number = 0.2
 
-  constructor (renderer: Renderer, settings: ViewerSettings) {
-    this.camera = renderer.camera
-    this._renderer = renderer
-    this.gizmo = new CameraGizmo(renderer, renderer.camera)
+  constructor (
+    scene: RenderScene,
+    viewport: Viewport,
+    settings: ViewerSettings
+  ) {
+    this.camera = new THREE.PerspectiveCamera()
+    this.camera.position.set(0, 50, -100)
+    this.camera.lookAt(new THREE.Vector3(0, 0, 0))
+    this.scene = scene
+    this.viewport = viewport
+    this.viewport.onResize(() => {
+      console.log('onresize!')
+      this.updateProjection(this.scene.getBoundingSphere())
+    })
     this.applySettings(settings)
 
     this._inputVelocity = new THREE.Vector3(0, 0, 0)
@@ -69,7 +81,7 @@ export class Camera {
   }
 
   dispose () {
-    this.gizmo.dispose()
+    this.gizmo?.dispose()
     this.gizmo = undefined
   }
 
@@ -93,7 +105,7 @@ export class Camera {
     const result = this._velocity.clone()
     result.applyQuaternion(this.camera.quaternion.clone().invert())
     result.setZ(-result.z)
-    result.multiplyScalar(1 / this.getSpeedMultiplier())
+    result.multiplyScalar((1 / this.getSpeedMultiplier()) * this._moveSpeed)
     return result
   }
 
@@ -104,7 +116,7 @@ export class Camera {
     const move = vector.clone()
     move.setZ(-move.z)
     move.applyQuaternion(this.camera.quaternion)
-    move.multiplyScalar(this.getSpeedMultiplier())
+    move.multiplyScalar(this.getSpeedMultiplier() * this._moveSpeed)
     this._inputVelocity.copy(move)
   }
 
@@ -122,7 +134,7 @@ export class Camera {
    */
   public set orbitMode (value: boolean) {
     this._orbitMode = value
-    this.gizmo.show(value)
+    this.gizmo?.show(value)
   }
 
   /**
@@ -133,12 +145,12 @@ export class Camera {
       target instanceof THREE.Vector3 ? target : target.getCenter()
     this._orbitalTarget = position
     this.startLerp(0.4)
-    this.gizmo.show(true)
+    this.gizmo?.show(true)
   }
 
   frame (target: Object | THREE.Sphere | 'all') {
     if (target === 'all') {
-      this.frameSphere(this._renderer.getBoundingSphere())
+      this.frameSphere(this.scene.getBoundingSphere())
     }
     if (target instanceof Object) {
       this.frameSphere(target.getBoundingSphere())
@@ -146,7 +158,7 @@ export class Camera {
     if (target instanceof THREE.Sphere) {
       this.frameSphere(target)
     }
-    this.gizmo.show(true)
+    this.gizmo?.show(true)
   }
 
   /**
@@ -163,11 +175,13 @@ export class Camera {
     this.orbitMode = settings.getCameraIsOrbit()
 
     // Camera
-    this.camera.fov = settings.getCameraFov()
-    this.camera.zoom = settings.getCameraZoom()
-    this.camera.near = settings.getCameraNear()
-    this.camera.far = settings.getCameraFar()
-    this.camera.updateProjectionMatrix()
+    if (this.camera instanceof THREE.PerspectiveCamera) {
+      this.camera.fov = settings.getCameraFov()
+      this.camera.zoom = settings.getCameraZoom()
+      this.camera.near = settings.getCameraNear()
+      this.camera.far = settings.getCameraFar()
+      this.camera.updateProjectionMatrix()
+    }
 
     // Controls
     this._moveSpeed = settings.getCameraMoveSpeed()
@@ -175,7 +189,7 @@ export class Camera {
     this._orbitSpeed = settings.getCameraOrbitSpeed()
 
     // Gizmo
-    this.gizmo.applySettings(settings)
+    this.gizmo?.applySettings(settings)
 
     // Values
     this._vimReferenceSize = settings.getCameraReferenceVimSize()
@@ -185,8 +199,10 @@ export class Camera {
    * Adapts camera speed to be faster for large model and slower for small models.
    */
   adaptToContent () {
-    const sphere = this._renderer.getBoundingSphere()
-    this._sceneSizeMultiplier = sphere.radius / this._vimReferenceSize
+    const sphere = this.scene.getBoundingSphere()
+    this._sceneSizeMultiplier = sphere
+      ? sphere.radius / this._vimReferenceSize
+      : 1
   }
 
   /**
@@ -194,10 +210,22 @@ export class Camera {
    * @param amount movement size.
    */
   zoom (amount: number) {
-    const multiplier = this._zoomSpeed * this.getSpeedMultiplier()
-    const next = this._orbitalTargetDistance + amount * multiplier
-    this._orbitalTargetDistance = Math.max(next, this._minOrbitalDistance)
-    this.gizmo.show()
+    if (this.camera instanceof THREE.PerspectiveCamera) {
+      const multiplier = this._zoomSpeed * this.getSpeedMultiplier()
+      const next = this._orbitalTargetDistance + amount * multiplier
+      this._orbitalTargetDistance = Math.max(next, this._minOrbitalDistance)
+      this.gizmo?.show()
+    } else {
+      const multiplier = this._zoomSpeed * this.getBaseMultiplier()
+      const padX = (this.camera.right - this.camera.left) * amount * multiplier
+      const padY = (this.camera.top - this.camera.bottom) * amount * multiplier
+
+      this.camera.left -= padX
+      this.camera.right += padX
+      this.camera.bottom -= padY
+      this.camera.top += padY
+      this.camera.updateProjectionMatrix()
+    }
   }
 
   /**
@@ -217,10 +245,10 @@ export class Camera {
   move3 (vector: THREE.Vector3) {
     const v = vector.clone()
     v.applyQuaternion(this.camera.quaternion)
-    v.multiplyScalar(this.getSpeedMultiplier())
+    v.multiplyScalar(this.getSpeedMultiplier() * this._moveSpeed)
 
     this._orbitalTarget.add(v)
-    this.gizmo.show()
+    this.gizmo?.show()
     if (!this.orbitMode) {
       this.camera.position.add(v)
     }
@@ -330,12 +358,12 @@ export class Camera {
       } else {
         this.camera.position.copy(target)
         if (this.isSignificant(positionDelta)) {
-          this.gizmo.show()
+          this.gizmo?.show()
         }
       }
     }
 
-    this.gizmo.setPosition(this._orbitalTarget)
+    this.gizmo?.setPosition(this._orbitalTarget)
   }
 
   /**
@@ -348,25 +376,52 @@ export class Camera {
       return
     }
 
-    this.camera.position.copy(
-      sphere.center
-        .clone()
-        .add(new THREE.Vector3(0, sphere.radius, -2 * sphere.radius))
-    )
     this.camera.lookAt(sphere.center)
+    this._currentOrbitalDistance = sphere.radius * 3
+    this._orbitalTargetDistance = sphere.radius * 3
     this._orbitalTarget = sphere.center
+    this.updateProjection(sphere)
+  }
 
-    this._currentOrbitalDistance = this._orbitalTarget
-      .clone()
-      .sub(this.camera.position)
-      .length()
-    this._orbitalTargetDistance = this._currentOrbitalDistance
+  updateProjection (sphere: THREE.Sphere) {
+    const aspect = this.viewport.getAspectRatio()
+    if (this.camera instanceof THREE.PerspectiveCamera) {
+      this.camera.aspect = aspect
+    } else {
+      this.camera.left = -sphere.radius * aspect
+      this.camera.right = sphere.radius * aspect
+      this.camera.top = sphere.radius
+      this.camera.bottom = -sphere.radius
+      this.camera.near = 0.1
+      this.camera.far = sphere.radius * 10
+    }
+    this.camera.updateProjectionMatrix()
+  }
+
+  get orthographic () {
+    return this.camera instanceof THREE.OrthographicCamera
+  }
+
+  set orthographic (value: boolean) {
+    if (value === this.orthographic) return
+
+    const cam = value
+      ? new THREE.OrthographicCamera(-1, 1, 1, -1, -1, 1)
+      : new THREE.PerspectiveCamera()
+
+    cam.position.copy(this.camera.position)
+    cam.rotation.copy(this.camera.rotation)
+    this.camera = cam
+
+    this.updateProjection(this.scene.getBoundingSphere())
+  }
+
+  private getBaseMultiplier () {
+    return Math.pow(1.25, this.speed)
   }
 
   private getSpeedMultiplier () {
-    return (
-      Math.pow(1.25, this.speed) * this._sceneSizeMultiplier * this._moveSpeed
-    )
+    return this.getBaseMultiplier() * this._sceneSizeMultiplier
   }
 
   private isLerping () {

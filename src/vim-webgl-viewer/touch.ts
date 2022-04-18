@@ -5,7 +5,7 @@
 import * as THREE from 'three'
 import { Camera } from './camera'
 import { Mouse } from './mouse'
-import { Renderer } from './renderer'
+import { Viewport } from './viewport'
 
 /**
  * Manages user touch inputs.
@@ -15,7 +15,7 @@ export class Touch {
 
   // Dependencies
   private _camera: Camera
-  private _renderer: Renderer
+  private _viewport: Viewport
   private _mouse: Mouse
 
   // State
@@ -24,9 +24,9 @@ export class Touch {
   private _touchStart2: THREE.Vector2 | undefined = undefined // The second touch when multiple touches occur, otherwise left undefined
   private _touchStartTime: number | undefined = undefined // In ms since epoch
 
-  constructor (camera: Camera, renderer: Renderer, mouse: Mouse) {
+  constructor (camera: Camera, viewport: Viewport, mouse: Mouse) {
     this._camera = camera
-    this._renderer = renderer
+    this._viewport = viewport
     this._mouse = mouse
   }
 
@@ -78,7 +78,7 @@ export class Touch {
 
     if (event.touches.length === 1) {
       const pos = this.touchToVector(event.touches[0])
-      const [width, height] = this._renderer.getContainerSize()
+      const [width, height] = this._viewport.getSize()
       const delta = pos
         .clone()
         .sub(this._touchStart)
@@ -94,7 +94,7 @@ export class Touch {
       const p1 = this.touchToVector(event.touches[0])
       const p2 = this.touchToVector(event.touches[1])
       const p = this.average(p1, p2)
-      const [width, height] = this._renderer.getContainerSize()
+      const [width, height] = this._viewport.getSize()
       const moveDelta = this._touchStart
         .clone()
         .sub(p)

@@ -5,7 +5,7 @@
 import * as THREE from 'three'
 
 import { Camera } from './camera'
-import { Viewer } from './viewer'
+import { Selection } from './selection'
 
 export const KEYS = {
   KEY_0: 48,
@@ -107,7 +107,7 @@ export class Keyboard {
 
   // Dependencies
   private _camera: Camera
-  private _viewer: Viewer
+  private _selection: Selection
 
   // State
   isUpPressed: boolean
@@ -119,9 +119,9 @@ export class Keyboard {
   isShiftPressed: boolean = false
   isCtrlPressed: boolean
 
-  constructor (camera: Camera, viewer: Viewer) {
+  constructor (camera: Camera, selection: Selection) {
     this._camera = camera
-    this._viewer = viewer
+    this._selection = selection
   }
 
   reset = () => {
@@ -163,17 +163,17 @@ export class Keyboard {
           event.preventDefault()
           break
         case KEYS.KEY_HOME:
-          this._viewer.camera.frame('all')
+          this._camera.frame('all')
           event.preventDefault()
           break
         // Selection
         case KEYS.KEY_ESCAPE:
-          this._viewer.selection.clear()
+          this._selection.clear()
           event.preventDefault()
           break
         case KEYS.KEY_Z:
         case KEYS.KEY_F:
-          this._viewer.camera.frame(this._viewer.selection.object)
+          this._camera.frame(this._selection.object)
           event.preventDefault()
           break
       }

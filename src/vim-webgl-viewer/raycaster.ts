@@ -135,7 +135,7 @@ export class Raycaster {
   }
 
   private raycast (position: THREE.Vector2): ThreeIntersectionList {
-    const [width, height] = this._viewer.renderer.getContainerSize()
+    const [width, height] = this._viewer.viewport.getSize()
     const x = (position.x / width) * 2 - 1
     const y = -(position.y / height) * 2 + 1
     this._raycaster.setFromCamera(
@@ -143,7 +143,7 @@ export class Raycaster {
       this._viewer.camera.camera
     )
     return this._raycaster.intersectObjects(
-      this._viewer.renderer.scene.children
+      this._viewer.renderer.scene.scene.children
     )
   }
 }

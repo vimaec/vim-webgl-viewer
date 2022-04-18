@@ -10,6 +10,7 @@ import { Selection } from './selection'
 import { Environment, IEnvironment } from './environment'
 import { Renderer } from './renderer'
 import { Raycaster, RaycastResult } from './raycaster'
+import { CameraGizmo } from './gizmos'
 
 // loader
 import { VimSettings, VimOptions } from '../vim-loader/vimSettings'
@@ -20,6 +21,8 @@ import { BFast } from '../vim-loader/bfast'
 import { Vim } from '../vim-loader/vim'
 import { IProgressLogs, RemoteBuffer } from '../vim-loader/remoteBuffer'
 import { Materials } from '../vim-loader/materials'
+import { RenderScene } from './renderScene'
+import { Viewport } from './viewport'
 
 /**
  * Viewer and loader for vim files.
@@ -34,6 +37,11 @@ export class Viewer {
    * Interface to manage objects to be rendered.
    */
   renderer: Renderer
+
+  /**
+   * Interface to manage html canvas.
+   */
+  viewport: Viewport
 
   /**
    * Interface to manage viewer selection.
@@ -90,8 +98,11 @@ export class Viewer {
     this._loader = new Loader()
     this.settings = new ViewerSettings(options)
 
-    this.renderer = new Renderer(this.settings)
-    this._camera = new Camera(this.renderer, this.settings)
+    const scene = new RenderScene()
+    this.viewport = new Viewport(this.settings)
+    this._camera = new Camera(scene, this.viewport, this.settings)
+    this.renderer = new Renderer(scene, this.viewport)
+    this._camera.gizmo = new CameraGizmo(this.renderer, this.camera.camera)
 
     this._environment = new Environment(this.settings)
     this._environment.getObjects().forEach((o) => this.renderer.add(o))
@@ -115,6 +126,7 @@ export class Viewer {
     this._environment.dispose()
     this.selection.clear()
     this._camera.dispose()
+    this.viewport.dispose()
     this.renderer.dispose()
     this.inputs.unregister()
     this._vims.forEach((v) => v?.dispose())
@@ -132,7 +144,7 @@ export class Viewer {
     // Camera
     this._camera.update(this._clock.getDelta())
     // Rendering
-    if (this._vims.length) this.renderer.render()
+    if (this._vims.length) this.renderer.render(this.camera.camera)
   }
 
   /**
