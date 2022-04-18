@@ -207,7 +207,7 @@ export class Viewer {
 
     const vim = await this._loader.load(bfast, 'all')
     this.onVimLoaded(vim, new VimSettings(options))
-    this.camera.frame('all')
+    this.camera.frame('all', true)
     return vim
   }
 

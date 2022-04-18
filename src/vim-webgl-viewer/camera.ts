@@ -18,10 +18,84 @@ export const DIRECTIONS = {
   down: new THREE.Vector3(0, -1, 0)
 }
 
+export interface ICamera {
+  /**
+   * Wrapped Three.js camera
+   */
+  camera: THREE.Camera
+  /**
+   * Multiplier for camera movements.
+   */
+  speed: number
+
+  /**
+   * True: Camera orbit around target mode.
+   * False: First person free camera mode.
+   */
+  orbitMode: boolean
+
+  /**
+   * Current local velocity
+   */
+  localVelocity: THREE.Vector3
+  /**
+   * Rotates the camera around the X or Y axis or both
+   * @param vector where coordinates are in relative screen size. ie [-1, 1]
+   */
+
+  /**
+   * Nudges the camera in given direction for a short distance.
+   * @param impulse impulse vector in camera local space.
+   */
+  addImpulse(impulse: THREE.Vector3): void
+
+  /**
+   * Moves the camera closer or farther away from orbit target.
+   * @param amount movement size.
+   */
+  zoom(amount: number): void
+
+  /**
+   * Moves the camera along all three axes.
+   */
+  move3(vector: THREE.Vector3): void
+
+  /**
+   * Moves the camera along two axes.
+   */
+  move2(vector: THREE.Vector2, axes: 'XY' | 'XZ'): void
+
+  /**
+   * Moves the camera along one axis.
+   */
+  move1(amount: number, axis: 'X' | 'Y' | 'Z'): void
+
+  /**
+   * Rotates the camera around the X or Y axis or both
+   * @param vector where coordinates in range [-1, 1] for rotations of [-180, 180] degrees
+   */
+  rotate(vector: THREE.Vector2): void
+
+  /**
+   * Sets orbit mode target and moves camera accordingly
+   */
+  target(target: Object | THREE.Vector3): void
+
+  /**
+   * Rotates the camera to look at target
+   */
+  lookAt(target: Object | THREE.Vector3)
+
+  /**
+   * Moves and rotates the camera so that target is well framed.
+   */
+  frame(target: Object | THREE.Sphere | 'all', center?: boolean): void
+}
+
 /**
  * Manages viewer camera movement and position
  */
-export class Camera {
+export class Camera implements ICamera {
   camera: THREE.PerspectiveCamera | THREE.OrthographicCamera
   gizmo: CameraGizmo
   private _viewport: Viewport
@@ -57,12 +131,11 @@ export class Camera {
     settings: ViewerSettings
   ) {
     this.camera = new THREE.PerspectiveCamera()
-    this.camera.position.set(0, 50, -100)
+    this.camera.position.set(0, 100, -100)
     this.camera.lookAt(new THREE.Vector3(0, 0, 0))
     this._scene = scene
     this._viewport = viewport
     this._viewport.onResize(() => {
-      console.log('onresize!')
       this.updateProjection(this._scene.getBoundingSphere())
     })
     this.applySettings(settings)
@@ -148,15 +221,15 @@ export class Camera {
     this.gizmo?.show(true)
   }
 
-  frame (target: Object | THREE.Sphere | 'all') {
+  frame (target: Object | THREE.Sphere | 'all', center: boolean = false) {
     if (target === 'all') {
-      this.frameSphere(this._scene.getBoundingSphere())
+      this.frameSphere(this._scene.getBoundingSphere(), center)
     }
     if (target instanceof Object) {
-      this.frameSphere(target.getBoundingSphere())
+      this.frameSphere(target.getBoundingSphere(), center)
     }
     if (target instanceof THREE.Sphere) {
-      this.frameSphere(target)
+      this.frameSphere(target, center)
     }
     this.gizmo?.show(true)
   }
@@ -367,10 +440,14 @@ export class Camera {
    * Rotates the camera so that it looks at sphere
    * Adjusts distance so that the sphere is well framed
    */
-  private frameSphere (sphere?: THREE.Sphere) {
+  private frameSphere (sphere: THREE.Sphere, center: boolean) {
     if (!sphere) {
       this.reset()
       return
+    }
+
+    if (center) {
+      this.camera.position.setY(sphere.center.y)
     }
 
     this.camera.lookAt(sphere.center)
@@ -439,78 +516,4 @@ export class Camera {
       Math.abs(vector.z) > min
     )
   }
-}
-
-export interface ICamera {
-  /**
-   * Wrapped Three.js camera
-   */
-  camera: THREE.Camera
-  /**
-   * Multiplier for camera movements.
-   */
-  speed: number
-
-  /**
-   * True: Camera orbit around target mode.
-   * False: First person free camera mode.
-   */
-  orbitMode: boolean
-
-  /**
-   * Current local velocity
-   */
-  localVelocity: THREE.Vector3
-  /**
-   * Rotates the camera around the X or Y axis or both
-   * @param vector where coordinates are in relative screen size. ie [-1, 1]
-   */
-
-  /**
-   * Nudges the camera in given direction for a short distance.
-   * @param impulse impulse vector in camera local space.
-   */
-  addImpulse(impulse: THREE.Vector3): void
-
-  /**
-   * Moves the camera closer or farther away from orbit target.
-   * @param amount movement size.
-   */
-  zoom(amount: number): void
-
-  /**
-   * Moves the camera along all three axes.
-   */
-  move3(vector: THREE.Vector3): void
-
-  /**
-   * Moves the camera along two axes.
-   */
-  move2(vector: THREE.Vector2, axes: 'XY' | 'XZ'): void
-
-  /**
-   * Moves the camera along one axis.
-   */
-  move1(amount: number, axis: 'X' | 'Y' | 'Z'): void
-
-  /**
-   * Rotates the camera around the X or Y axis or both
-   * @param vector where coordinates in range [-1, 1] for rotations of [-180, 180] degrees
-   */
-  rotate(vector: THREE.Vector2): void
-
-  /**
-   * Sets orbit mode target and moves camera accordingly
-   */
-  target(target: Object | THREE.Vector3): void
-
-  /**
-   * Rotates the camera to look at target
-   */
-  lookAt(target: Object | THREE.Vector3)
-
-  /**
-   * Moves and rotates the camera so that target is well framed.
-   */
-  frame(target: Object | THREE.Sphere | 'all'): void
 }
