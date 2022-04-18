@@ -2,6 +2,8 @@
  @module viw-webgl-viewer
 */
 
+import * as THREE from 'three'
+
 // internal
 import { ViewerSettings, ViewerOptions } from './viewerSettings'
 import { Camera, ICamera } from './camera'
@@ -11,18 +13,17 @@ import { Environment, IEnvironment } from './environment'
 import { Renderer } from './renderer'
 import { Raycaster, RaycastResult } from './raycaster'
 import { CameraGizmo } from './gizmos'
+import { RenderScene } from './renderScene'
+import { Viewport } from './viewport'
 
 // loader
 import { VimSettings, VimOptions } from '../vim-loader/vimSettings'
 import { Loader } from '../vim-loader/loader'
 import { Object } from '../vim-loader/object'
-import * as THREE from 'three'
 import { BFast } from '../vim-loader/bfast'
 import { Vim } from '../vim-loader/vim'
 import { IProgressLogs, RemoteBuffer } from '../vim-loader/remoteBuffer'
 import { Materials } from '../vim-loader/materials'
-import { RenderScene } from './renderScene'
-import { Viewport } from './viewport'
 
 /**
  * Viewer and loader for vim files.
