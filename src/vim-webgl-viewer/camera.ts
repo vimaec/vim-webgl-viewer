@@ -24,8 +24,8 @@ export const DIRECTIONS = {
 export class Camera {
   camera: THREE.PerspectiveCamera | THREE.OrthographicCamera
   gizmo: CameraGizmo
-  scene: RenderScene
-  viewport: Viewport
+  private _viewport: Viewport
+  private _scene: RenderScene
 
   private _inputVelocity: THREE.Vector3
   private _velocity: THREE.Vector3
@@ -59,11 +59,11 @@ export class Camera {
     this.camera = new THREE.PerspectiveCamera()
     this.camera.position.set(0, 50, -100)
     this.camera.lookAt(new THREE.Vector3(0, 0, 0))
-    this.scene = scene
-    this.viewport = viewport
-    this.viewport.onResize(() => {
+    this._scene = scene
+    this._viewport = viewport
+    this._viewport.onResize(() => {
       console.log('onresize!')
-      this.updateProjection(this.scene.getBoundingSphere())
+      this.updateProjection(this._scene.getBoundingSphere())
     })
     this.applySettings(settings)
 
@@ -150,7 +150,7 @@ export class Camera {
 
   frame (target: Object | THREE.Sphere | 'all') {
     if (target === 'all') {
-      this.frameSphere(this.scene.getBoundingSphere())
+      this.frameSphere(this._scene.getBoundingSphere())
     }
     if (target instanceof Object) {
       this.frameSphere(target.getBoundingSphere())
@@ -188,9 +188,6 @@ export class Camera {
     this._rotateSpeed = settings.getCameraRotateSpeed()
     this._orbitSpeed = settings.getCameraOrbitSpeed()
 
-    // Gizmo
-    this.gizmo?.applySettings(settings)
-
     // Values
     this._vimReferenceSize = settings.getCameraReferenceVimSize()
   }
@@ -199,7 +196,7 @@ export class Camera {
    * Adapts camera speed to be faster for large model and slower for small models.
    */
   adaptToContent () {
-    const sphere = this.scene.getBoundingSphere()
+    const sphere = this._scene.getBoundingSphere()
     this._sceneSizeMultiplier = sphere
       ? sphere.radius / this._vimReferenceSize
       : 1
@@ -384,7 +381,7 @@ export class Camera {
   }
 
   updateProjection (sphere: THREE.Sphere) {
-    const aspect = this.viewport.getAspectRatio()
+    const aspect = this._viewport.getAspectRatio()
     if (this.camera instanceof THREE.PerspectiveCamera) {
       this.camera.aspect = aspect
     } else {
@@ -413,7 +410,7 @@ export class Camera {
     cam.rotation.copy(this.camera.rotation)
     this.camera = cam
 
-    this.updateProjection(this.scene.getBoundingSphere())
+    this.updateProjection(this._scene.getBoundingSphere())
   }
 
   private getBaseMultiplier () {

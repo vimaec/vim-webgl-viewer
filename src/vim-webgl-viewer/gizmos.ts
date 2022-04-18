@@ -3,8 +3,9 @@
  */
 
 import * as THREE from 'three'
-import { Color, MathUtils } from 'three'
+import { MathUtils } from 'three'
 import { Renderer } from './renderer'
+import { Camera } from './camera'
 import { ViewerSettings } from './viewerSettings'
 
 /**
@@ -13,12 +14,12 @@ import { ViewerSettings } from './viewerSettings'
 export class CameraGizmo {
   // Dependencies
   private _renderer: Renderer
-  private _camera: THREE.Camera
+  private _camera: Camera
 
   // Settings
   private _size: number = 0.01
   private _fov: number = 50
-  private _color: Color = new THREE.Color('blue')
+  private _color: THREE.Color = new THREE.Color('blue')
   private _opacity: number
   private _opacityAlways: number
   private _fadeDurationMs: number = 200
@@ -36,9 +37,10 @@ export class CameraGizmo {
   private _fadeEnd: number
   private _active: boolean
 
-  constructor (renderer: Renderer, camera: THREE.Camera) {
+  constructor (renderer: Renderer, camera: Camera, settings: ViewerSettings) {
     this._renderer = renderer
     this._camera = camera
+    this.applySettings(settings)
   }
 
   dispose () {
@@ -111,7 +113,7 @@ export class CameraGizmo {
     this._materialAlways.opacity = opacityAlways
   }
 
-  setColor (color: Color) {
+  setColor (color: THREE.Color) {
     this._color = color
     if (!this._gizmos) return
     this._material.color = color
@@ -130,7 +132,10 @@ export class CameraGizmo {
   }
 
   private updateScale () {
-    const dist = this._camera.position.clone().distanceTo(this._gizmos.position)
+    const dist = this._camera.camera.position
+      .clone()
+      .distanceTo(this._gizmos.position)
+    // computes scale such that gizmo screen size remains constant
     const h = dist * Math.tan(MathUtils.degToRad(this._fov) * this._size)
     this._gizmos?.scale.set(h, h, h)
   }

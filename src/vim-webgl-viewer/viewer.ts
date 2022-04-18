@@ -102,7 +102,11 @@ export class Viewer {
     this.viewport = new Viewport(this.settings)
     this._camera = new Camera(scene, this.viewport, this.settings)
     this.renderer = new Renderer(scene, this.viewport)
-    this._camera.gizmo = new CameraGizmo(this.renderer, this.camera.camera)
+    this._camera.gizmo = new CameraGizmo(
+      this.renderer,
+      this._camera,
+      this.settings
+    )
 
     this._environment = new Environment(this.settings)
     this._environment.getObjects().forEach((o) => this.renderer.add(o))
