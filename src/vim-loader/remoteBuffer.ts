@@ -92,6 +92,7 @@ export class RequestLogger {
    * Notify a webrequest of failure
    */
   fail (field: string) {
+    console.log(`${field} failed`)
     this.all.get(field).status = 'failed'
     this.signal()
   }
@@ -100,6 +101,7 @@ export class RequestLogger {
    * Notify a webrequest of success
    */
   end (field: string) {
+    console.log(`${field} completed`)
     this.all.get(field).status = 'completed'
     this.signal()
   }
