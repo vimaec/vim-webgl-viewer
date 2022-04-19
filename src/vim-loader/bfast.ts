@@ -349,6 +349,7 @@ export class BFast {
 
     if (buffer.byteLength > range.count) {
       this.source = buffer
+      return this.local(range, label)
     }
     return buffer
   }
