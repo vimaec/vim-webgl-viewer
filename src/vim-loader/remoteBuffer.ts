@@ -131,7 +131,7 @@ export class RemoteBuffer {
 
     if (range) {
       xhr.setRequestHeader('Range', `bytes=${range.start}-${range.end - 1}`)
-      console.log(`${label} : [${range.start}, ${range.start}] of ${this.url}`)
+      console.log(`${label} : [${range.start}, ${range.end}] of ${this.url}`)
     } else {
       console.log(`${label} of ${this.url}`)
     }
