@@ -20,10 +20,6 @@ export class Mouse {
     return this._viewer.camera
   }
 
-  private get renderer () {
-    return this._viewer.renderer
-  }
-
   private get viewport () {
     return this._viewer.viewport
   }
