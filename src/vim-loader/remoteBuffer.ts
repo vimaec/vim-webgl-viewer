@@ -120,6 +120,7 @@ export class RequestLogger {
 export class RemoteBuffer {
   url: string
   logger: RequestLogger
+  queue: [XMLHttpRequest, string][] = []
 
   constructor (url: string, logger: RequestLogger = new RequestLogger(url)) {
     this.url = url
@@ -133,13 +134,14 @@ export class RemoteBuffer {
 
     if (range) {
       xhr.setRequestHeader('Range', `bytes=${range.start}-${range.end - 1}`)
-      console.log(`${label} : [${range.start}, ${range.end}] of ${this.url}`)
-    } else {
-      console.log(`${label} of ${this.url}`)
     }
+    const msg = range
+      ? `${label} : [${range.start}, ${range.end}] of ${this.url}`
+      : `${label} of ${this.url}`
+
+    this.enqueue(xhr, msg)
 
     return new Promise<ArrayBuffer>((resolve, reject) => {
-      xhr.send()
       this.logger.start(label)
       xhr.onprogress = (e) => {
         this.logger.update(label, e)
@@ -147,11 +149,32 @@ export class RemoteBuffer {
       xhr.onload = () => {
         this.logger.end(label)
         resolve(xhr.response)
+        this.next()
       }
       xhr.onerror = (_) => {
         this.logger.fail(label)
         resolve(undefined)
+        this.next()
       }
     })
+  }
+
+  private enqueue (xhr: XMLHttpRequest, msg: string) {
+    this.queue.push([xhr, msg])
+    if (this.queue.length === 1) {
+      console.log('Starting ' + msg)
+      xhr.send()
+    } else {
+      console.log('Queuing ' + msg)
+    }
+  }
+
+  private next () {
+    this.queue.shift()
+    if (this.queue.length > 0) {
+      const [request, m] = this.queue[0]
+      console.log('Starting ' + m)
+      request.send()
+    }
   }
 }
