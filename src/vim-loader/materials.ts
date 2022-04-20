@@ -96,7 +96,9 @@ export namespace Materials {
         
         // COLORING
 
-        // Vertex attribute for color override
+        // attribute for color override
+        // merged meshes use it as vertex attribute
+        // instanced meshes use it as an instance attribute
         attribute float colored;
 
         // There seems to be an issue where setting mehs.instanceColor
