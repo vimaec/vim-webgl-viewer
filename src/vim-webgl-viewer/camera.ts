@@ -132,6 +132,8 @@ export class Camera implements ICamera {
     settings: ViewerSettings
   ) {
     this.camera = new THREE.PerspectiveCamera()
+    this.camera.position.set(0, 0, -1000)
+    this.camera.lookAt(0, 0, 0)
     this._scene = scene
     this._viewport = viewport
     this._viewport.onResize(() => {
