@@ -35,6 +35,12 @@ export interface ICamera {
   orbitMode: boolean
 
   /**
+   * True: Orthographic camera.
+   * False: Perspective camera.
+   */
+  orthographic: boolean
+
+  /**
    * Current local velocity
    */
   localVelocity: THREE.Vector3
