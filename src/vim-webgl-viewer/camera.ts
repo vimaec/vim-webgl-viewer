@@ -197,6 +197,7 @@ export class Camera implements ICamera {
     move.setZ(-move.z)
     move.applyQuaternion(this.camera.quaternion)
     move.multiplyScalar(this.getSpeedMultiplier() * this._moveSpeed)
+
     this._inputVelocity.copy(move)
   }
 
@@ -288,7 +289,11 @@ export class Camera implements ICamera {
    */
   zoom (amount: number) {
     if (this.camera instanceof THREE.PerspectiveCamera) {
-      const multiplier = this._zoomSpeed * this.getSpeedMultiplier()
+      const multiplier =
+        this._zoomSpeed *
+        this.getBaseMultiplier() *
+        (this._orbitalTargetDistance / this._vimReferenceSize)
+
       const next = this._orbitalTargetDistance + amount * multiplier
       this._orbitalTargetDistance = Math.max(next, this._minOrbitalDistance)
       this.gizmo?.show()
@@ -502,8 +507,14 @@ export class Camera implements ICamera {
   }
 
   private getSpeedMultiplier () {
-    return this.getBaseMultiplier() * this._sceneSizeMultiplier
+    return (
+      this.getBaseMultiplier() *
+      // (dist / size) * (size / ref). Size gets canceled.
+      (this._orbitalTargetDistance / this._vimReferenceSize)
+    )
   }
+
+  private getDistanceMultiplier () {}
 
   private isLerping () {
     return new Date().getTime() < this._lerpMsEndtime
