@@ -1,4 +1,6 @@
 // Links files to generate package type exports
+export * as THREE from 'three'
+
 export * from './vim-webgl-viewer/viewer'
 export * from './vim-webgl-viewer/viewerSettings'
 export { RaycastResult as HitTestResult } from './vim-webgl-viewer/raycaster'
