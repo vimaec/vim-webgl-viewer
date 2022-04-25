@@ -89,13 +89,15 @@ export class Object {
   /**
    * Returns the center position of this object
    * @param target Vector3 where to copy data. A new instance is created if none provided.
+   * Returns undefined if object has no geometry.
    */
   public getCenter (target: THREE.Vector3 = new THREE.Vector3()) {
-    return this.getBoundingBox().getCenter(target)
+    return this.getBoundingBox()?.getCenter(target)
   }
 
   /**
    * returns the bounding sphere of the object from cache or computed if needed.
+   * Returns undefined if object has no geometry.
    */
   getBoundingSphere (target: THREE.Sphere = new THREE.Sphere()) {
     return this.getBoundingBox()?.getBoundingSphere(target)
@@ -117,6 +119,7 @@ export class Object {
 
   /**
    * Creates a new THREE.BufferGeometry for this object
+   * Returns undefined if object has no geometry.
    */
   createGeometry () {
     if (!this.instances) return
