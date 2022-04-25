@@ -68,8 +68,10 @@ export class Object {
 
   /**
    * returns the bounding box of the object from cache or computed if needed.
+   * Returns undefined if object has no geometry.
    */
   getBoundingBox () {
+    if (!this.instances) return
     if (this._boundingBox) return this._boundingBox
 
     const geometry = Geometry.createGeometryFromInstances(
@@ -96,7 +98,7 @@ export class Object {
    * returns the bounding sphere of the object from cache or computed if needed.
    */
   getBoundingSphere (target: THREE.Sphere = new THREE.Sphere()) {
-    return this.getBoundingBox().getBoundingSphere(target)
+    return this.getBoundingBox()?.getBoundingSphere(target)
   }
 
   /**
