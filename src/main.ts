@@ -1,6 +1,5 @@
 import * as VIM from './vim'
 import * as THREE from 'three'
-import { RequestLogger } from './vim'
 
 // Parse URL
 const params = new URLSearchParams(window.location.search)

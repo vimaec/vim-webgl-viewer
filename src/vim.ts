@@ -1,5 +1,5 @@
 // Links files to generate package type exports
-export * as THREE from 'three'
+// export * as THREE from 'three'
 
 export * from './vim-webgl-viewer/viewer'
 export * from './vim-webgl-viewer/viewerSettings'
