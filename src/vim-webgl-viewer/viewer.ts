@@ -207,6 +207,7 @@ export class Viewer {
     if (options.forceDownload) await bfast.forceDownload()
 
     const vim = await this._loader.load(bfast, 'all')
+    if (buffer instanceof RemoteBuffer) buffer.logger.onUpdate = undefined
     this.onVimLoaded(vim, new VimSettings(options))
     this.camera.frame('all', true)
     return vim
