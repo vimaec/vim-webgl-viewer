@@ -96,10 +96,10 @@ export namespace Materials {
         
         // COLORING
 
-        // Vertex attribute for color override
-        #ifdef USE_INSTANCING
-          attribute float ignoreVertexColor;
-        #endif
+        // attribute for color override
+        // merged meshes use it as vertex attribute
+        // instanced meshes use it as an instance attribute
+        attribute float colored;
 
         // There seems to be an issue where setting mehs.instanceColor
         // doesn't properly set USE_INSTANCING_COLOR
@@ -109,12 +109,9 @@ export namespace Materials {
         #endif
 
         // Passed to fragment to ignore phong model
-        varying float vIgnorePhong;
+        varying float vColored;
         
         // VISIBILITY
-      
-        // Passed to fragment to discard them
-        varying float vIgnore;
 
         // Instance or vertex attribute to hide objects 
         #ifdef USE_INSTANCING
@@ -122,6 +119,10 @@ export namespace Materials {
         #else
           attribute float ignoreVertex;
         #endif
+
+        // Passed to fragment to discard them
+        varying float vIgnore;
+
         `
       )
       // Adding vertex shader logic for visility and coloring
@@ -129,15 +130,14 @@ export namespace Materials {
         '#include <color_vertex>',
         `
           vColor = color;
-          vIgnorePhong = 0.0f;
+          vColored = colored;
 
           // COLORING
 
-          // ignoreVertexColor == 1 -> instance color
-          // ignoreVertexColor == 0 -> vertex color
+          // colored == 1 -> instance color
+          // colored == 0 -> vertex color
           #ifdef USE_INSTANCING
-            vIgnorePhong = ignoreVertexColor;
-            vColor.xyz = ignoreVertexColor * instanceColor.xyz + (1.0f - ignoreVertexColor) * color.xyz;
+            vColor.xyz = colored * instanceColor.xyz + (1.0f - colored) * color.xyz;
           #endif
 
 
@@ -160,7 +160,7 @@ export namespace Materials {
         `
         #include <clipping_planes_pars_fragment>
         varying float vIgnore;
-        varying float vIgnorePhong;
+        varying float vColored;
         `
       )
       // Adding fragment shader logic for visibility and coloring.
@@ -172,10 +172,10 @@ export namespace Materials {
             discard;
          
           // COLORING
-          // vIgnorePhong == 1 -> Vertex Color * light 
-          // vIgnorePhong == 0 -> Phong Color 
+          // vColored == 1 -> Vertex Color * light 
+          // vColored == 0 -> Phong Color 
           float d = length(outgoingLight);
-          gl_FragColor = vec4(vIgnorePhong * vColor.xyz * d + (1.0f - vIgnorePhong) * outgoingLight.xyz, diffuseColor.a);
+          gl_FragColor = vec4(vColored * vColor.xyz * d + (1.0f - vColored) * outgoingLight.xyz, diffuseColor.a);
         `
       )
     return shader

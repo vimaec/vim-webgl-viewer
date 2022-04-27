@@ -6,7 +6,12 @@
 import * as THREE from 'three'
 import { Mesh } from './mesh'
 import { Geometry } from './geometry'
-import { Float32BufferAttribute, InstancedBufferAttribute } from 'three'
+import {
+  BufferAttribute,
+  Float32BufferAttribute,
+  InstancedBufferAttribute,
+  InstancedMesh
+} from 'three'
 import { Vim } from './vim'
 
 /**
@@ -63,8 +68,10 @@ export class Object {
 
   /**
    * returns the bounding box of the object from cache or computed if needed.
+   * Returns undefined if object has no geometry.
    */
   getBoundingBox () {
+    if (!this.instances) return
     if (this._boundingBox) return this._boundingBox
 
     const geometry = Geometry.createGeometryFromInstances(
@@ -82,16 +89,18 @@ export class Object {
   /**
    * Returns the center position of this object
    * @param target Vector3 where to copy data. A new instance is created if none provided.
+   * Returns undefined if object has no geometry.
    */
   public getCenter (target: THREE.Vector3 = new THREE.Vector3()) {
-    return this.getBoundingBox().getCenter(target)
+    return this.getBoundingBox()?.getCenter(target)
   }
 
   /**
    * returns the bounding sphere of the object from cache or computed if needed.
+   * Returns undefined if object has no geometry.
    */
   getBoundingSphere (target: THREE.Sphere = new THREE.Sphere()) {
-    return this.getBoundingBox().getBoundingSphere(target)
+    return this.getBoundingBox()?.getBoundingSphere(target)
   }
 
   /**
@@ -110,6 +119,7 @@ export class Object {
 
   /**
    * Creates a new THREE.BufferGeometry for this object
+   * Returns undefined if object has no geometry.
    */
   createGeometry () {
     if (!this.instances) return
@@ -263,17 +273,17 @@ export class Object {
     const end = this.getMergedMeshEnd(mesh, index)
 
     const colors = mesh.geometry.getAttribute('color')
-    const uvs = mesh.geometry.getAttribute('uv')
+    const colored = this.getOrAddColoredAttribute(mesh)
     const indices = mesh.geometry.getIndex()
 
     for (let i = start; i < end; i++) {
       const v = indices.getX(i)
       // alpha is left to its current value
       colors.setXYZ(v, color.r, color.g, color.b)
-      uvs.setY(v, 0)
+      colored.setX(v, 1)
     }
     colors.needsUpdate = true
-    uvs.needsUpdate = true
+    colored.needsUpdate = true
   }
 
   /**
@@ -282,7 +292,7 @@ export class Object {
    */
   private resetMergedColor (mesh: THREE.Mesh, index: number) {
     const colors = mesh.geometry.getAttribute('color')
-    const uvs = mesh.geometry.getAttribute('uv')
+    const colored = this.getOrAddColoredAttribute(mesh)
     const indices = mesh.geometry.getIndex()
     let mergedIndex = this.getMergedMeshStart(mesh, index)
 
@@ -299,12 +309,12 @@ export class Object {
       for (let i = start; i < end; i++) {
         const v = indices.getX(mergedIndex)
         colors.setXYZ(v, color[0], color[1], color[2])
-        uvs.setY(v, 1)
+        colored.setX(v, 0)
         mergedIndex++
       }
     }
     colors.needsUpdate = true
-    uvs.needsUpdate = true
+    colored.needsUpdate = true
   }
 
   /**
@@ -317,36 +327,52 @@ export class Object {
     index: number,
     color: THREE.Color
   ) {
-    if (!mesh.instanceColor) {
-      this.addColorAttributes(mesh)
-    }
-    const ignoreVertexColor = mesh.geometry.getAttribute('ignoreVertexColor')
+    const colors = this.getOrAddInstanceColorAttribute(mesh)
+    const colored = this.getOrAddColoredAttribute(mesh)
     if (color) {
       // Set instance to use instance color provided
-      mesh.instanceColor.setXYZ(index, color.r, color.g, color.b)
-      ignoreVertexColor.setX(index, 1)
+      colors.setXYZ(index, color.r, color.g, color.b)
+      colored.setX(index, 1)
     } else {
       // Revert to vertex color
-      ignoreVertexColor.setX(index, 0)
+      colored.setX(index, 0)
     }
 
     // Set attributes dirty
-    ignoreVertexColor.needsUpdate = true
-    mesh.instanceColor.needsUpdate = true
-    // mesh.material = new THREE.MeshBasicMaterial({ color: new THREE.Color(0, 1, 0) })
+    colored.needsUpdate = true
+    colors.needsUpdate = true
   }
 
-  private addColorAttributes (mesh: THREE.InstancedMesh) {
+  private getOrAddInstanceColorAttribute (mesh: THREE.InstancedMesh) {
+    if (mesh.instanceColor) return mesh.instanceColor
     const count = mesh.instanceMatrix.count
     // Add color instance attribute
     const colors = new Float32Array(count * 3)
-    mesh.instanceColor = new THREE.InstancedBufferAttribute(colors, 3)
+    const attribute = new THREE.InstancedBufferAttribute(colors, 3)
+    mesh.instanceColor = attribute
+    return attribute
+  }
 
-    // Add custom ignoreVertexColor instance attribute
-    const ignoreVertexColor = new Float32Array(count)
-    mesh.geometry.setAttribute(
-      'ignoreVertexColor',
-      new THREE.InstancedBufferAttribute(ignoreVertexColor, 1)
-    )
+  private getOrAddColoredAttribute (mesh: THREE.Mesh) {
+    const colored = mesh.geometry.getAttribute('colored')
+    if (colored) {
+      return colored
+    }
+
+    const count =
+      mesh instanceof InstancedMesh
+        ? mesh.instanceMatrix.count
+        : mesh.geometry.getAttribute('position').count
+
+    const array = new Float32Array(count)
+    const attribute =
+      mesh instanceof InstancedMesh
+        ? new THREE.InstancedBufferAttribute(array, 1)
+        : new BufferAttribute(array, 1)
+
+    // Add custom colored instance attribute
+    mesh.geometry.setAttribute('colored', attribute)
+
+    return attribute
   }
 }
