@@ -112,7 +112,7 @@ export class Viewer {
     )
 
     // TODO add options
-    this._gizmoAxes = new GizmoAxes(this._camera.camera, this.camera)
+    this._gizmoAxes = new GizmoAxes(this.camera)
     this.viewport.canvas.parentElement.prepend(this._gizmoAxes.canvas)
     this._gizmoAxes.canvas.style.position = 'fixed'
     this._gizmoAxes.canvas.style.right = '10px'
