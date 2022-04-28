@@ -15,6 +15,7 @@ import { Raycaster, RaycastResult } from './raycaster'
 import { CameraGizmo } from './gizmos'
 import { RenderScene } from './renderScene'
 import { Viewport } from './viewport'
+import { GizmoAxes } from './gizmoAxes'
 
 // loader
 import { VimSettings, VimOptions } from '../vim-loader/vimSettings'
@@ -63,6 +64,7 @@ export class Viewer {
   private _camera: Camera
   private _loader: Loader
   private _clock = new THREE.Clock()
+  private _gizmoAxes: GizmoAxes
 
   // State
   private _vims: (Vim | undefined)[] = []
@@ -108,6 +110,13 @@ export class Viewer {
       this._camera,
       this.settings
     )
+
+    // TODO add options
+    this._gizmoAxes = new GizmoAxes(this._camera.camera, this.camera)
+    this.viewport.canvas.parentElement.prepend(this._gizmoAxes.canvas)
+    this._gizmoAxes.canvas.style.position = 'fixed'
+    this._gizmoAxes.canvas.style.right = '10px'
+    this._gizmoAxes.canvas.style.top = '10px'
 
     this._environment = new Environment(this.settings)
     this._environment.getObjects().forEach((o) => this.renderer.add(o))
@@ -261,9 +270,12 @@ export class Viewer {
 
   private defaultOnClick (hit: RaycastResult) {
     console.log(hit)
-    if (!hit?.object) return
-    this.selection.select(hit.object)
+    if (!hit?.object || hit.object === this.selection.object) {
+      this.selection.select(undefined)
+      return
+    }
 
+    this.selection.select(hit.object)
     this._camera.target(hit.object.getCenter())
 
     if (hit.doubleClick) this._camera.frame(hit.object)

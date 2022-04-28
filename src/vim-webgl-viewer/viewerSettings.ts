@@ -176,18 +176,13 @@ export class ViewerSettings {
         size: 3
       },
       skylight: {
-        // skyColor: { h: 1, s: 1, l: 1 },
         skyColor: { h: 0.6, s: 1, l: 0.6 },
         groundColor: { h: 0.095, s: 1, l: 0.75 },
-        // groundColor: { h: 1, s: 1, l: 1 },
-        intensity: 0.6
-        // intensity: 1
+        intensity: 0.8
       },
       sunLight: {
         position: { x: -47.0, y: 22, z: -45 },
-        // position: { x: 0, y: 0, z: -1000 },
         color: { h: 0.1, s: 1, l: 0.95 },
-        // color: { h: 1, s: 1, l: 1 },
         intensity: 1
       },
       highlight: {

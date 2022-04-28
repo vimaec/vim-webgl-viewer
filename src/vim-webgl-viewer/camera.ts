@@ -97,6 +97,8 @@ export interface ICamera {
    * if center is true -> camera.y = target.y
    */
   frame(target: Object | THREE.Sphere | 'all', center?: boolean): void
+
+  forward: THREE.Vector3
 }
 
 /**
@@ -131,6 +133,7 @@ export class Camera implements ICamera {
   private _rotateSpeed: number = 1
   private _orbitSpeed: number = 1
   private _zoomSpeed: number = 0.2
+  private _firstPersonSpeed = 10
 
   constructor (
     scene: RenderScene,
@@ -187,6 +190,24 @@ export class Camera implements ICamera {
     result.setZ(-result.z)
     result.multiplyScalar((1 / this.getSpeedMultiplier()) * this._moveSpeed)
     return result
+  }
+
+  get forward () {
+    return this.camera.getWorldDirection(new THREE.Vector3())
+  }
+
+  set forward (value: THREE.Vector3) {
+    const direction = value.clone()
+    if (direction.y !== 0 && direction.x === 0 && direction.z === 0) {
+      direction.x = 0.02
+      // direction.setZ(-direction.z)
+    }
+    const pos = this._orbitalTarget.clone()
+    const delta = direction
+      .normalize()
+      .multiplyScalar(this._currentOrbitalDistance)
+    this.camera.position.copy(pos.add(delta))
+    this.camera.lookAt(this._orbitalTarget)
   }
 
   /**
@@ -510,7 +531,9 @@ export class Camera implements ICamera {
     return (
       this.getBaseMultiplier() *
       // (dist / size) * (size / ref). Size gets canceled.
-      (this._orbitalTargetDistance / this._vimReferenceSize)
+      (this.orbitMode
+        ? this._orbitalTargetDistance / this._vimReferenceSize
+        : this._firstPersonSpeed)
     )
   }
 
