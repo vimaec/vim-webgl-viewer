@@ -367,9 +367,14 @@ export class BFast {
   /**
    * returns requested range from remote.
    */
-  private remote (range: Range, label: string) {
+  private async remote (range: Range, label: string) {
     if (!(this.source instanceof RemoteBuffer)) return
     const r = range?.offset(this.offset)
-    return this.source.http(r, `${this.name}.${label}`)
+    const buffer = await this.source.http(r, `${this.name}.${label}`)
+    if (range && buffer.byteLength < range.count) {
+      console.log('Range request request failed.')
+      return
+    }
+    return buffer
   }
 }
