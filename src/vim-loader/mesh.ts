@@ -33,12 +33,15 @@ export namespace Mesh {
     ): THREE.InstancedMesh[] {
       const result: THREE.InstancedMesh[] = []
       const set = instances ? new Set(instances) : undefined
+
       for (let mesh = 0; mesh < g3d.getMeshCount(); mesh++) {
         let meshInstances = g3d.meshInstances[mesh]
         if (!meshInstances) continue
+
         meshInstances = set
           ? meshInstances.filter((i) => set.has(i))
-          : meshInstances
+          : meshInstances.filter((i) => (g3d.instanceFlags[i] & 1) === 0)
+
         if (meshInstances.length <= 1) continue
         if (!Transparency.match(transparency, g3d.meshTransparent[mesh])) {
           continue
