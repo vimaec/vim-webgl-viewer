@@ -268,7 +268,10 @@ export class Viewer {
     lib.wireframe.opacity = settings.getHighlightOpacity()
   }
 
-  private defaultOnClick (hit: RaycastResult) {
+  /**
+   * Default click behaviour.
+   */
+  public defaultOnClick (hit: RaycastResult) {
     console.log(hit)
     if (!hit?.object || hit.object === this.selection.object) {
       this.selection.select(undefined)
