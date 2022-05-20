@@ -19,7 +19,7 @@
     "url": "https://github.com/vimaec/vim-webgl-viewer.git"
   },
   "scripts": {
-    "dev": "vite",
+    "dev": "vite --host",
     "build": "vite build && npm run declarations",
     "bump-dev": "npm version prerelease --preid=dev",
     "publish-dev": "npm publish --tag=dev",
