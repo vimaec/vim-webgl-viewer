@@ -2,7 +2,7 @@ import { ViewerSettings } from './viewerSettings'
 
 export class Viewport {
   canvas: HTMLCanvasElement
-  private _unregisterResize: Function
+  private _unregisterResize: Function | undefined
   private _ownedCanvas: boolean
   private _resizeCallbacks: (() => void)[] = []
 
@@ -31,7 +31,7 @@ export class Viewport {
   }
 
   dispose () {
-    this._unregisterResize()
+    this._unregisterResize?.()
     this._unregisterResize = undefined
 
     if (this._ownedCanvas) this.canvas.remove()
@@ -42,8 +42,8 @@ export class Viewport {
    */
   getParentSize (): [width: number, height: number] {
     return [
-      this.canvas.parentElement.clientWidth,
-      this.canvas.parentElement.clientHeight
+      this.canvas.parentElement!.clientWidth,
+      this.canvas.parentElement!.clientHeight
     ]
   }
 
@@ -56,13 +56,12 @@ export class Viewport {
 
   getAspectRatio () {
     return (
-      this.canvas.parentElement.clientWidth /
-      this.canvas.parentElement.clientHeight
+      this.canvas.parentElement!.clientWidth /
+      this.canvas.parentElement!.clientHeight
     )
   }
 
   onResize (callback: () => void) {
-    console.log('register callbakc')
     this._resizeCallbacks.push(callback)
   }
 
@@ -72,8 +71,8 @@ export class Viewport {
    * @param callback code to be called
    * @param timeout time after the last resize before code will be called
    */
-  private registerResize (timeout) {
-    let timerId
+  private registerResize (timeout: number) {
+    let timerId: number | undefined
     const onResize = () => {
       if (timerId !== undefined) {
         clearTimeout(timerId)

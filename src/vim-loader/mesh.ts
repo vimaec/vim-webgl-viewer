@@ -15,7 +15,7 @@ export namespace Mesh {
   export class Builder {
     materials: Materials.Library
 
-    constructor (materials: Materials.Library = undefined) {
+    constructor (materials?: Materials.Library) {
       this.materials = materials ?? Materials.getDefaultLibrary()
     }
 
@@ -134,7 +134,7 @@ export namespace Mesh {
     }
   }
 
-  let defaultBuilder: Builder
+  let defaultBuilder: Builder | undefined
   export function getDefaultBuilder () {
     return defaultBuilder ?? (defaultBuilder = new Builder())
   }

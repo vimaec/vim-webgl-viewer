@@ -6,7 +6,7 @@ export class RenderScene {
 
   // state
   private _scenes: Scene[] = []
-  private _boundingBox: THREE.Box3
+  private _boundingBox: THREE.Box3 | undefined
 
   constructor () {
     this.scene = new THREE.Scene()
@@ -17,7 +17,10 @@ export class RenderScene {
    * @param target sphere in which to copy result, a new instance is created if undefined.
    */
   getBoundingSphere (target: THREE.Sphere = new THREE.Sphere()) {
-    return this._boundingBox?.getBoundingSphere(target)
+    return (
+      this._boundingBox?.getBoundingSphere(target) ??
+      target.set(new THREE.Vector3(0, 0, 0), 1)
+    )
   }
 
   /**
@@ -25,7 +28,9 @@ export class RenderScene {
    * @param target box in which to copy result, a new instance is created if undefined.
    */
   getBoundingBox (target: THREE.Box3 = new THREE.Box3()) {
-    return target?.copy(this._boundingBox)
+    return this._boundingBox
+      ? target.copy(this._boundingBox)
+      : target.set(new THREE.Vector3(-1, -1, -1), new THREE.Vector3(1, 1, 1))
   }
 
   /**

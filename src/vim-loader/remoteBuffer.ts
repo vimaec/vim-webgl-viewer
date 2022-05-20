@@ -33,14 +33,14 @@ export interface IProgressLogs {
 export class RequestLogger {
   source: string
   all: Map<string, Request> = new Map<string, Request>()
-  lastUpdate: number
-  delay: 500
-  sleeping: boolean
+  lastUpdate: number = 0
+  delay: number = 500
+  sleeping: boolean = false
 
   /**
    * callback on update, called at most every delay time.
    */
-  onUpdate: (self: RequestLogger) => void
+  onUpdate: ((self: RequestLogger) => void) | undefined = undefined
 
   constructor (source: string) {
     this.source = source
@@ -81,6 +81,7 @@ export class RequestLogger {
    */
   update (field: string, progress: ProgressEvent) {
     const r = this.all.get(field)
+    if (!r) throw new Error('Updating missing download')
     if (r.status !== 'active') return
     r.loaded = progress.loaded
     r.total = progress.total
@@ -93,7 +94,9 @@ export class RequestLogger {
    */
   fail (field: string) {
     console.log(`${field} failed`)
-    this.all.get(field).status = 'failed'
+    const download = this.all.get(field)
+    if (!download) throw new Error('Failing missing download')
+    download.status = 'failed'
     this.signal()
   }
 
@@ -102,7 +105,9 @@ export class RequestLogger {
    */
   end (field: string) {
     console.log(`${field} completed`)
-    this.all.get(field).status = 'completed'
+    const download = this.all.get(field)
+    if (!download) throw new Error('Failing missing download')
+    download.status = 'completed'
     this.signal()
   }
 
@@ -127,7 +132,7 @@ export class RemoteBuffer {
     this.logger = logger
   }
 
-  async http (range: Range, label: string) {
+  async http (range: Range | undefined, label: string) {
     const xhr = new XMLHttpRequest()
     xhr.open('GET', this.url)
     xhr.responseType = 'arraybuffer'
@@ -141,7 +146,7 @@ export class RemoteBuffer {
 
     this.enqueue(xhr, msg)
 
-    return new Promise<ArrayBuffer>((resolve, reject) => {
+    return new Promise<ArrayBuffer | undefined>((resolve, reject) => {
       this.logger.start(label)
       xhr.onprogress = (e) => {
         this.logger.update(label, e)

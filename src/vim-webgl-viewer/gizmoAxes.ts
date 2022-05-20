@@ -7,19 +7,23 @@ class Axis {
   size: number
   color: string
   colorSub: string
-  line: number
-  label: string
   position: THREE.Vector3
 
-  constructor (init: Partial<Axis>) {
+  // Optional
+  label: string | undefined
+  line: number | undefined
+
+  constructor (init: Axis) {
     this.axis = init.axis
     this.direction = init.direction
     this.size = init.size
+    this.position = init.position
     this.color = init.color
     this.colorSub = init.colorSub
+
+    // Optional
     this.line = init.line
     this.label = init.label
-    this.position = init.position
   }
 }
 
@@ -47,7 +51,7 @@ class GizmoOptions {
   colorZSub: string = '#0e5490'
   // colorZSub: string = '#ffffff'
 
-  constructor (init: Partial<GizmoOptions>) {
+  constructor (init?: Partial<GizmoOptions>) {
     this.size = init?.size ?? this.size
     this.padding = init?.padding ?? this.padding
     this.bubbleSizePrimary = init?.bubbleSizePrimary ?? this.bubbleSizePrimary
@@ -87,7 +91,7 @@ export class GizmoAxes {
   mouse: THREE.Vector3
   center: THREE.Vector3
   invRotMat: THREE.Matrix4 = new THREE.Matrix4()
-  selectedAxis: Axis
+  selectedAxis: Axis | null
 
   constructor (controller: ICamera, options?: Partial<GizmoOptions>) {
     this.options = new GizmoOptions(options)
@@ -106,6 +110,8 @@ export class GizmoAxes {
     this.isDragging = false
 
     this.canvas = this.createCanvas()
+    this.context = this.canvas.getContext('2d')!
+    this.rect = this.canvas.getBoundingClientRect()
 
     this.animate()
   }
@@ -153,6 +159,8 @@ export class GizmoAxes {
         size: this.options.bubbleSizeSecondary,
         color: this.options.colorX,
         colorSub: this.options.colorXSub,
+        line: undefined,
+        label: undefined,
         position: new THREE.Vector3(0, 0, 0)
       }),
       new Axis({
@@ -161,6 +169,8 @@ export class GizmoAxes {
         size: this.options.bubbleSizeSecondary,
         color: this.options.colorY,
         colorSub: this.options.colorYSub,
+        line: undefined,
+        label: undefined,
         position: new THREE.Vector3(0, 0, 0)
       }),
       new Axis({
@@ -170,6 +180,8 @@ export class GizmoAxes {
         size: this.options.bubbleSizeSecondary,
         color: this.options.colorZ,
         colorSub: this.options.colorZSub,
+        line: undefined,
+        label: undefined,
         position: new THREE.Vector3(0, 0, 0)
       })
     ]
@@ -186,12 +198,37 @@ export class GizmoAxes {
     canvas.addEventListener('pointermove', this.onPointerMove, false)
     canvas.addEventListener('click', this.onMouseClick, false)
 
-    this.context = canvas.getContext('2d')
+    canvas.addEventListener('touchstart', this.onTouchStart, false)
 
     return canvas
   }
 
-  onPointerDown = (e) => {
+  onTouchStart = (e: TouchEvent) => {
+    e.preventDefault()
+    if (e.touches.length > 1) return
+    const touch = e.touches[0]
+
+    this.dragStart.set(touch.clientX, touch.clientY)
+    window.addEventListener('touchmove', this.onTouchMove, false)
+    window.addEventListener('touchend', this.onTouchEnd, false)
+  }
+
+  onTouchMove = (e: TouchEvent) => {
+    e.preventDefault()
+    if (e.touches.length > 1) return
+    const touch = e.touches[0]
+
+    this.onDragAny(touch.clientX, touch.clientY)
+  }
+
+  onTouchEnd = (e: TouchEvent) => {
+    e.preventDefault()
+    setTimeout(() => (this.isDragging = false), 0)
+    window.removeEventListener('touchmove', this.onTouchMove, false)
+    window.removeEventListener('touchend', this.onTouchEnd, false)
+  }
+
+  onPointerDown = (e: MouseEvent) => {
     this.dragStart.set(e.clientX, e.clientY)
     window.addEventListener('pointermove', this.onDrag, false)
     window.addEventListener('pointerup', this.onPointerUp, false)
@@ -208,7 +245,8 @@ export class GizmoAxes {
     this.rect = this.canvas.getBoundingClientRect()
   }
 
-  onPointerMove = (e) => {
+  // Hover
+  onPointerMove = (e: MouseEvent) => {
     if (this.isDragging) return
 
     const currentAxis = this.selectedAxis
@@ -228,14 +266,18 @@ export class GizmoAxes {
     if (currentAxis !== this.selectedAxis) this.drawLayers(false)
   }
 
-  onDrag = (e) => {
-    if (!this.isDragging) this.canvas.classList.add('dragging')
+  onDrag = (e: MouseEvent) => {
+    this.onDragAny(e.clientX, e.clientY)
+  }
+
+  onDragAny (x: number, y: number) {
+    if (!this.isDragging) {
+      this.canvas.classList.add('dragging')
+    }
 
     this.isDragging = true
-
     this.selectedAxis = null
-
-    this.dragEnd.set(e.clientX, e.clientY)
+    this.dragEnd.set(x, y)
 
     this.drag.subVectors(this.dragEnd, this.dragStart)
 
@@ -253,9 +295,9 @@ export class GizmoAxes {
     this.selectedAxis = null
   }
 
-  drawCircle (p, radius = 10, color = '#FF0000') {
+  drawCircle (pos: THREE.Vector3, radius = 10, color = '#FF0000') {
     this.context.beginPath()
-    this.context.arc(p.x, p.y, radius, 0, 2 * Math.PI, false)
+    this.context.arc(pos.x, pos.y, radius, 0, 2 * Math.PI, false)
     this.context.fillStyle = color
     this.context.fill()
     this.context.closePath()
@@ -312,7 +354,7 @@ export class GizmoAxes {
     }
   }
 
-  setAxisPosition (axis) {
+  setAxisPosition (axis: Axis) {
     const position = axis.direction.clone().applyMatrix4(this.invRotMat)
     const size = axis.size
     axis.position.set(

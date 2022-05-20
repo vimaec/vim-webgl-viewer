@@ -16,10 +16,10 @@ type ThreeIntersectionList = THREE.Intersection<THREE.Object3D<THREE.Event>>[]
  */
 export class RaycastResult {
   mousePosition: THREE.Vector2
-  doubleClick: boolean
-  object: Object
+  doubleClick: boolean = false
+  object: Object | undefined
   intersections: ThreeIntersectionList
-  firstHit: THREE.Intersection
+  firstHit: THREE.Intersection | undefined
 
   constructor (
     mousePosition: THREE.Vector2,
@@ -34,12 +34,12 @@ export class RaycastResult {
 
   private GetFirstVimHit (
     intersections: ThreeIntersectionList
-  ): [THREE.Intersection, Object] {
+  ): [THREE.Intersection, Object] | [] {
     for (let i = 0; i < intersections.length; i++) {
       const obj = this.getVimObjectFromHit(intersections[i])
       if (obj?.visible) return [intersections[i], obj]
     }
-    return [undefined, undefined]
+    return []
   }
 
   private getVimObjectFromHit (hit: THREE.Intersection) {
@@ -47,6 +47,9 @@ export class RaycastResult {
     if (!vim) return
 
     if (hit.object.userData.merged) {
+      if (!hit.faceIndex) {
+        throw new Error('Raycast hit has no face index.')
+      }
       const index = this.binarySearch(
         hit.object.userData.submeshes,
         hit.faceIndex * 3
@@ -83,20 +86,20 @@ export class RaycastResult {
     return !!this.firstHit
   }
 
-  get distance (): number {
-    return this.firstHit.distance
+  get distance () {
+    return this.firstHit?.distance
   }
 
-  get position (): THREE.Vector3 {
-    return this.firstHit.point
+  get position () {
+    return this.firstHit?.point
   }
 
-  get threeId (): number {
-    return this.firstHit.object.id
+  get threeId () {
+    return this.firstHit?.object?.id
   }
 
-  get faceIndex (): number {
-    return this.firstHit.faceIndex
+  get faceIndex () {
+    return this.firstHit?.faceIndex
   }
 }
 

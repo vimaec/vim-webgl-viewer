@@ -113,7 +113,7 @@ export class Viewer {
 
     // TODO add options
     this._gizmoAxes = new GizmoAxes(this.camera)
-    this.viewport.canvas.parentElement.prepend(this._gizmoAxes.canvas)
+    this.viewport.canvas.parentElement?.prepend(this._gizmoAxes.canvas)
     this._gizmoAxes.canvas.style.position = 'fixed'
     this._gizmoAxes.canvas.style.right = '10px'
     this._gizmoAxes.canvas.style.top = '10px'
@@ -165,7 +165,7 @@ export class Viewer {
    * Returns an array with all loaded vims.
    */
   get vims () {
-    return this._vims.filter((v) => v !== undefined)
+    return this._vims.filter((v): v is Vim => v !== undefined)
   }
 
   /**
@@ -207,16 +207,20 @@ export class Viewer {
     onProgress?: (logger: IProgressLogs) => void
   ) {
     let buffer: RemoteBuffer | ArrayBuffer
+
     if (typeof source === 'string') {
       buffer = new RemoteBuffer(source)
+      // Add progress listener
       buffer.logger.onUpdate = (log) => onProgress?.(log)
     } else buffer = source
 
+    const settings = new VimSettings(options)
     const bfast = new BFast(buffer, 0, 'vim')
-    if (options.forceDownload) await bfast.forceDownload()
+    const vim = await this._loader.load(bfast, settings)
 
-    const vim = await this._loader.load(bfast, 'all')
+    // Remove progress listener
     if (buffer instanceof RemoteBuffer) buffer.logger.onUpdate = undefined
+
     this.onVimLoaded(vim, new VimSettings(options))
     this.camera.frame('all', true)
     return vim
@@ -224,10 +228,10 @@ export class Viewer {
 
   private onVimLoaded (vim: Vim, settings: VimSettings) {
     this.addVim(vim)
-    vim.applySettings(settings)
 
     this.renderer.add(vim.scene)
-    this._environment.adaptToContent(this.renderer.getBoundingBox())
+    const box = this.renderer.getBoundingBox()
+    if (box) this._environment.adaptToContent(box)
     this._camera.adaptToContent()
   }
 
@@ -245,7 +249,7 @@ export class Viewer {
    * Unloads all vim from viewer.
    */
   clear () {
-    this._vims.forEach((v) => this.unloadVim(v))
+    this.vims.forEach((v) => this.unloadVim(v))
   }
 
   /**
@@ -277,9 +281,14 @@ export class Viewer {
       this.selection.select(undefined)
       return
     }
+    /*
+    if (!hit.object.hasMesh) {
+      throw new Error('Clicked a mesh with no geometry. Something is wrong.')
+    }
+    */
 
     this.selection.select(hit.object)
-    this._camera.target(hit.object.getCenter())
+    this._camera.target(hit.object.getCenter()!)
 
     if (hit.doubleClick) this._camera.frame(hit.object)
 

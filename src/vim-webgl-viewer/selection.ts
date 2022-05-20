@@ -18,7 +18,7 @@ export class Selection {
   private _object: Object | undefined
 
   // Disposable State
-  private _highligt: THREE.LineSegments | undefined
+  private _highlight: THREE.LineSegments | undefined
 
   constructor (renderer: Renderer) {
     this._renderer = renderer
@@ -34,12 +34,12 @@ export class Selection {
   /**
    * Select given object
    */
-  select (object: Object) {
+  select (object: Object | undefined) {
     this.clear()
     if (object) {
       this._object = object
-      this._highligt = object.createWireframe()
-      this._renderer.add(this._highligt)
+      this._highlight = object.createWireframe()
+      if (this._highlight) this._renderer.add(this._highlight)
     }
   }
 
@@ -49,10 +49,10 @@ export class Selection {
   clear () {
     this._object = undefined
 
-    if (this._highligt) {
-      this._highligt.geometry.dispose()
-      this._renderer.remove(this._highligt)
-      this._highligt = undefined
+    if (this._highlight) {
+      this._highlight.geometry.dispose()
+      this._renderer.remove(this._highlight)
+      this._highlight = undefined
     }
   }
 }

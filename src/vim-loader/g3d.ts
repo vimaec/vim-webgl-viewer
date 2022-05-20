@@ -154,10 +154,18 @@ class AbstractG3d {
     const promises = VimAttributes.all.map((a) =>
       bfast
         .getBytes(a)
-        .then((b) => new G3dAttribute(G3dAttributeDescriptor.fromString(a), b))
+        .then((bytes) =>
+          bytes
+            ? new G3dAttribute(G3dAttributeDescriptor.fromString(a), bytes)
+            : undefined
+        )
     )
     return Promise.all(promises).then(
-      (attributes) => new AbstractG3d('meta', attributes)
+      (attributes) =>
+        new AbstractG3d(
+          'meta',
+          attributes.filter((a): a is G3dAttribute => a !== undefined)
+        )
     )
   }
 }
@@ -229,6 +237,7 @@ export class G3d {
       ?.data as Float32Array
 
     const tmp = g3d.findAttribute(VimAttributes.indices)?.data
+    if (!tmp) throw new Error('No Index Buffer Found')
     this.indices = new Uint32Array(tmp.buffer, tmp.byteOffset, tmp.length)
 
     this.meshSubmeshes = g3d.findAttribute(VimAttributes.meshSubmeshes)
@@ -251,8 +260,9 @@ export class G3d {
       VimAttributes.instanceTransforms
     )?.data as Float32Array
 
-    this.instanceFlags = g3d.findAttribute(VimAttributes.instanceFlags)
-      ?.data as Uint16Array
+    this.instanceFlags =
+      (g3d.findAttribute(VimAttributes.instanceFlags)?.data as Uint16Array) ??
+      new Uint16Array(this.instanceMeshes.length)
 
     this.meshVertexOffsets = this.computeMeshVertexOffsets()
     this.rebaseIndices()
