@@ -115,14 +115,14 @@ export class Keyboard {
   }
 
   // State
-  isUpPressed: boolean
-  isDownPressed: boolean
-  isLeftPressed: boolean
-  isRightPressed: boolean
-  isEPressed: boolean
-  isQPressed: boolean
+  isUpPressed: boolean = false
+  isDownPressed: boolean = false
+  isLeftPressed: boolean = false
+  isRightPressed: boolean = false
+  isEPressed: boolean = false
+  isQPressed: boolean = false
   isShiftPressed: boolean = false
-  isCtrlPressed: boolean
+  isCtrlPressed: boolean = false
 
   constructor (viewer: Viewer) {
     this._viewer = viewer
@@ -177,7 +177,11 @@ export class Keyboard {
           break
         case KEYS.KEY_Z:
         case KEYS.KEY_F:
-          this.camera.frame(this.selection.object)
+          if (this.selection.object) {
+            this.camera.frame(this.selection.object)
+          } else {
+            this.camera.frame('all')
+          }
           event.preventDefault()
           break
       }

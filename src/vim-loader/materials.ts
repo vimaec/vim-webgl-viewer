@@ -10,8 +10,8 @@ export namespace Materials {
    */
   export class Library {
     opaque: THREE.Material
-    transparent: THREE.Material | undefined
-    wireframe: THREE.LineBasicMaterial | undefined
+    transparent: THREE.Material
+    wireframe: THREE.LineBasicMaterial
 
     constructor (
       opaque?: THREE.Material,
@@ -27,10 +27,6 @@ export namespace Materials {
       this.opaque.dispose()
       this.transparent.dispose()
       this.wireframe.dispose()
-
-      this.opaque = undefined
-      this.transparent = undefined
-      this.wireframe = undefined
     }
   }
 
@@ -209,6 +205,5 @@ export namespace Materials {
    */
   export function dispose () {
     materials.dispose()
-    materials = undefined
   }
 }

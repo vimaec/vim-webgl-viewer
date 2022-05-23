@@ -20,17 +20,17 @@ import { Vim } from './vim'
 export class Object {
   vim: Vim
   element: number
-  instances: number[]
+  instances: number[] | undefined
   private _color: THREE.Color | undefined
   private _visible: boolean = true
   private _boundingBox: THREE.Box3 | undefined
-  private _meshes: [THREE.Mesh, number][]
+  private _meshes: [THREE.Mesh, number][] | undefined
 
   constructor (
     vim: Vim,
     element: number,
-    instances: number[],
-    meshes: [THREE.Mesh, number][]
+    instances: number[] | undefined,
+    meshes: [THREE.Mesh, number][] | undefined
   ) {
     this.vim = vim
     this.element = element
@@ -45,7 +45,7 @@ export class Object {
   /**
    * Internal - Replace this object meshes and apply color as needed.
    */
-  updateMeshes (meshes: [THREE.Mesh, number][]) {
+  updateMeshes (meshes: [THREE.Mesh, number][] | undefined) {
     this._meshes = meshes
     if (!meshes) return
 
@@ -81,7 +81,7 @@ export class Object {
     geometry.applyMatrix4(this.vim.getMatrix())
 
     geometry.computeBoundingBox()
-    this._boundingBox = geometry.boundingBox
+    this._boundingBox = geometry.boundingBox ?? undefined
     geometry.dispose()
     return this._boundingBox
   }
@@ -207,7 +207,7 @@ export class Object {
   private getMergedMeshEnd (mesh: THREE.Mesh, index: number) {
     return index + 1 < mesh.userData.submeshes.length
       ? mesh.userData.submeshes[index + 1]
-      : mesh.geometry.getIndex().count
+      : mesh.geometry.index!.count
   }
 
   /**
@@ -219,14 +219,14 @@ export class Object {
     const attribute =
       mesh.geometry.getAttribute('ignoreVertex') ??
       new Float32BufferAttribute(
-        new Float32Array(mesh.geometry.index.count * 3),
+        new Float32Array(mesh.geometry.index!.count * 3),
         1
       )
     mesh.geometry.setAttribute('ignoreVertex', attribute)
 
     const start = this.getMergedMeshStart(mesh, index)
     const end = this.getMergedMeshEnd(mesh, index)
-    const indices = mesh.geometry.getIndex()
+    const indices = mesh.geometry.index!
 
     for (let i = start; i < end; i++) {
       const v = indices.getX(i)
@@ -274,7 +274,7 @@ export class Object {
 
     const colors = mesh.geometry.getAttribute('color')
     const colored = this.getOrAddColoredAttribute(mesh)
-    const indices = mesh.geometry.getIndex()
+    const indices = mesh.geometry.index!
 
     for (let i = start; i < end; i++) {
       const v = indices.getX(i)
@@ -293,7 +293,7 @@ export class Object {
   private resetMergedColor (mesh: THREE.Mesh, index: number) {
     const colors = mesh.geometry.getAttribute('color')
     const colored = this.getOrAddColoredAttribute(mesh)
-    const indices = mesh.geometry.getIndex()
+    const indices = mesh.geometry.index!
     let mergedIndex = this.getMergedMeshStart(mesh, index)
 
     const instance = this.vim.scene.getInstanceFromMesh(mesh, index)
@@ -325,7 +325,7 @@ export class Object {
   private applyInstancedColor (
     mesh: THREE.InstancedMesh,
     index: number,
-    color: THREE.Color
+    color: THREE.Color | undefined
   ) {
     const colors = this.getOrAddInstanceColorAttribute(mesh)
     const colored = this.getOrAddColoredAttribute(mesh)

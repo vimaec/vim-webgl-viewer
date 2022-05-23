@@ -176,18 +176,13 @@ export class ViewerSettings {
         size: 3
       },
       skylight: {
-        // skyColor: { h: 1, s: 1, l: 1 },
         skyColor: { h: 0.6, s: 1, l: 0.6 },
         groundColor: { h: 0.095, s: 1, l: 0.75 },
-        // groundColor: { h: 1, s: 1, l: 1 },
-        intensity: 0.6
-        // intensity: 1
+        intensity: 0.8
       },
       sunLight: {
         position: { x: -47.0, y: 22, z: -45 },
-        // position: { x: 0, y: 0, z: -1000 },
         color: { h: 0.1, s: 1, l: 0.95 },
-        // color: { h: 1, s: 1, l: 1 },
         intensity: 1
       },
       highlight: {
@@ -200,55 +195,55 @@ export class ViewerSettings {
   }
 
   // Canvas
-  getCanvasResizeDelay = () => this.options.canvas.resizeDelay
+  getCanvasResizeDelay = () => this.options.canvas.resizeDelay!
   getCanvasId = () => this.options.canvas.id
 
   // Plane
-  getGroundPlaneShow = () => this.options.groundPlane.show
+  getGroundPlaneShow = () => this.options.groundPlane.show!
   getGroundPlaneColor = () => toRGBColor(this.options.groundPlane.color!)
-  getGroundPlaneTextureUrl = () => this.options.groundPlane.texture
-  getGroundPlaneOpacity = () => this.options.groundPlane.opacity
-  getGroundPlaneSize = () => this.options.groundPlane.size
+  getGroundPlaneTextureUrl = () => this.options.groundPlane.texture!
+  getGroundPlaneOpacity = () => this.options.groundPlane.opacity!
+  getGroundPlaneSize = () => this.options.groundPlane.size!
 
   // Skylight
   getSkylightColor = () => toHSLColor(this.options.skylight.skyColor!)
   getSkylightGroundColor = () => toHSLColor(this.options.skylight.groundColor!)
 
-  getSkylightIntensity = () => this.options.skylight.intensity
+  getSkylightIntensity = () => this.options.skylight.intensity!
 
   // Sunlight
   getSunlightColor = () => toHSLColor(this.options.sunLight.color!)
   getSunlightPosition = () => toVec(this.options.sunLight.position!)
-  getSunlightIntensity = () => this.options.sunLight.intensity
+  getSunlightIntensity = () => this.options.sunLight.intensity!
 
-  getHighlightColor = () => toRGBColor(this.options.highlight.color)
-  getHighlightOpacity = () => this.options.highlight.opacity
+  getHighlightColor = () => toRGBColor(this.options.highlight.color!)
+  getHighlightOpacity = () => this.options.highlight.opacity!
 
   // Camera
   private get camera () {
     return this.options.camera
   }
 
-  getCameraNear = () => this.camera.near
-  getCameraFar = () => this.camera.far
-  getCameraFov = () => this.camera.fov
-  getCameraZoom = () => this.camera.zoom
-  getCameraGizmoEnable = () => this.camera.gizmo.enable
-  getCameraGizmoSize = () => this.camera.gizmo.size
-  getCameraGizmoColor = () => toRGBColor(this.camera.gizmo.color)
-  getCameraGizmoOpacity = () => this.camera.gizmo.opacity
-  getCameraGizmoOpacityAlways = () => this.camera.gizmo.opacityAlways
+  getCameraNear = () => this.camera.near!
+  getCameraFar = () => this.camera.far!
+  getCameraFov = () => this.camera.fov!
+  getCameraZoom = () => this.camera.zoom!
+  getCameraGizmoEnable = () => this.camera.gizmo!.enable!
+  getCameraGizmoSize = () => this.camera.gizmo!.size!
+  getCameraGizmoColor = () => toRGBColor(this.camera.gizmo!.color!)
+  getCameraGizmoOpacity = () => this.camera.gizmo!.opacity!
+  getCameraGizmoOpacityAlways = () => this.camera.gizmo!.opacityAlways!
 
   // Camera Controls
   private get cameraControls () {
     return this.camera.controls!
   }
 
-  getCameraIsOrbit = () => this.cameraControls.orbit
-  getCameraMoveSpeed = () => this.cameraControls.moveSpeed
-  getCameraRotateSpeed = () => this.cameraControls.rotateSpeed
-  getCameraOrbitSpeed = () => this.cameraControls.orbitSpeed
-  getCameraReferenceVimSize = () => this.cameraControls.vimReferenceSize
+  getCameraIsOrbit = () => this.cameraControls.orbit!
+  getCameraMoveSpeed = () => this.cameraControls.moveSpeed!
+  getCameraRotateSpeed = () => this.cameraControls.rotateSpeed!
+  getCameraOrbitSpeed = () => this.cameraControls.orbitSpeed!
+  getCameraReferenceVimSize = () => this.cameraControls.vimReferenceSize!
 }
 
 function toRGBColor (c: ViewerOptions.ColorRGB): THREE.Color {

@@ -69,9 +69,9 @@ export class VimSettings {
 
   getOptions = () => cloneDeep(this.options) as VimOptions.Root
 
-  getPosition = () => toVec(this.options.position)
-  getRotation = () => toQuaternion(this.options.rotation)
-  getScale = () => scalarToVec(this.options.scale)
+  getPosition = () => toVec(this.options.position!)
+  getRotation = () => toQuaternion(this.options.rotation!)
+  getScale = () => scalarToVec(this.options.scale!)
   getMatrix = () =>
     new THREE.Matrix4().compose(
       this.getPosition(),
@@ -80,6 +80,7 @@ export class VimSettings {
     )
 
   getTransparency = () => this.options.transparency!
+  getForceDownload = () => this.options.forceDownload!
 }
 
 function toVec (obj: VimOptions.Vector3): THREE.Vector3 {

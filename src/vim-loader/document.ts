@@ -47,48 +47,75 @@ export class Document {
     await Promise.all([
       Document.requestG3d(bfast).then((g) => (g3d = g)),
       Document.requestStrings(bfast).then((strs) => (strings = strs)),
-      bfast
-        .getBfast('entities')
+      Document.requestEntities(bfast)
         .then((ets) => (entity = ets))
         .then((ets) =>
           Promise.all([
             Document.requestInstanceToElement(ets).then(
-              (v) => (instanceToElement = v)
+              (array) => (instanceToElement = array)
             ),
             Document.requestElementIds(ets).then((v) => (elementIds = v))
           ])
         )
     ])
 
-    const elementToInstance = Document.invert(instanceToElement)
-    const elementIdToElements = Document.invert(elementIds)
+    const elementToInstance = Document.invert(instanceToElement!)
+    const elementIdToElements = Document.invert(elementIds!)
     return new Document(
-      g3d,
-      entity,
-      strings,
-      instanceToElement,
+      g3d!,
+      entity!,
+      strings!,
+      instanceToElement!,
       elementToInstance,
-      elementIds,
+      elementIds!,
       elementIdToElements
     )
   }
 
   private static async requestG3d (bfast: BFast) {
     const geometry = await bfast.getBfast('geometry')
+    if (!geometry) {
+      throw new Error('Could not get G3d Data from VIM file.')
+    }
     const g3d = await G3d.createFromBfast(geometry)
     return g3d
   }
 
   private static async requestStrings (bfast: BFast) {
     const buffer = await bfast.getBuffer('strings')
+    if (!buffer) throw new Error('Could not get String Data from VIM file.')
     const strings = new TextDecoder('utf-8').decode(buffer).split('\0')
     return strings
   }
 
+  private static async requestEntities (bfast: BFast) {
+    const entities = await bfast.getBfast('entities')
+    if (!entities) throw new Error('Could not get Entities Data from VIM file.')
+    return entities
+  }
+
   private static async requestInstanceToElement (entities: BFast) {
     const nodes = await entities.getBfast('Vim.Node')
-    const instances = await nodes.getArray('index:Vim.Element:Element')
+    const instances = await nodes?.getArray('index:Vim.Element:Element')
+    if (!instances) {
+      throw new Error('Could not get InstanceToElement from VIM file.')
+    }
     return instances
+  }
+
+  /**
+   * Request element id table from remote with support for legacy name
+   */
+  private static async requestElementIds (entities: BFast) {
+    const elements = await entities.getBfast('Vim.Element')
+    const ids =
+      (await elements?.getArray('int:Id')) ??
+      (await elements?.getArray('numeric:Id'))
+
+    if (!ids) {
+      throw new Error('Could not get ElementIds from VIM file.')
+    }
+    return ids
   }
 
   /**
@@ -98,24 +125,14 @@ export class Document {
     const result = new Map<number, number[]>()
     for (let i = 0; i < data.length; i++) {
       const value = data[i]
-      if (!result.has(value)) {
-        result.set(value, [i])
+      const list = result.get(value)
+      if (list) {
+        list.push(i)
       } else {
-        result.get(value).push(i)
+        result.set(value, [i])
       }
     }
     return result
-  }
-
-  /**
-   * Request element id table from remote with support for legacy name
-   */
-  private static async requestElementIds (entities: BFast) {
-    const elements = await entities.getBfast('Vim.Element')
-    const ids =
-      (await elements.getArray('int:Id')) ??
-      (await elements.getArray('numeric:Id'))
-    return ids
   }
 
   /**
@@ -128,7 +145,7 @@ export class Document {
   }
 
   /**
-   * Returns instance indez associated with vim element index
+   * Returns instance indices associated with vim element index
    * @param element vim element index
    */
   getInstanceFromElement (element: number) {
@@ -176,7 +193,8 @@ export class Document {
    */
   async getEntity (name: string, index: number) {
     const elements = await this._entity.getBfast(name)
-    const row = await elements.getRow(index)
+    const row = await elements?.getRow(index)
+    if (!row) return
     this.resolveStrings(row)
     return row
   }
@@ -184,12 +202,12 @@ export class Document {
   /**
    * Associate all string indices with their related strings.
    */
-  private resolveStrings (map: Map<string, number>) {
-    const result = <Map<string, string | number>>map
+  private resolveStrings (map: Map<string, number | undefined>) {
+    const result = <Map<string, string | number | undefined>>map
     for (const key of map.keys()) {
       if (key.startsWith('string:')) {
         const v = map.get(key)
-        result.set(key, this._strings[v])
+        result.set(key, v ? this._strings[v] : undefined)
       }
     }
   }

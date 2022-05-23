@@ -42,7 +42,6 @@ export class Renderer {
     this.renderer.clear()
     this.renderer.forceContextLoss()
     this.renderer.dispose()
-    this.renderer = undefined
   }
 
   /**

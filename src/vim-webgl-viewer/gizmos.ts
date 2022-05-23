@@ -20,22 +20,22 @@ export class CameraGizmo {
   private _size: number = 0.01
   private _fov: number = 50
   private _color: THREE.Color = new THREE.Color('blue')
-  private _opacity: number
-  private _opacityAlways: number
+  private _opacity: number = 0.2
+  private _opacityAlways: number = 0.5
   private _fadeDurationMs: number = 200
   private _showDurationMs: number = 1000
 
   // Resources
-  private _box: THREE.BufferGeometry
-  private _wireframe: THREE.BufferGeometry
-  private _material: THREE.LineBasicMaterial
-  private _materialAlways: THREE.LineBasicMaterial
-  private _gizmos: THREE.Group
+  private _box: THREE.BufferGeometry | undefined
+  private _wireframe: THREE.BufferGeometry | undefined
+  private _material: THREE.LineBasicMaterial | undefined
+  private _materialAlways: THREE.LineBasicMaterial | undefined
+  private _gizmos: THREE.Group | undefined
 
   // State
-  private _timeout: ReturnType<typeof setTimeout>
-  private _fadeEnd: number
-  private _active: boolean
+  private _timeout: ReturnType<typeof setTimeout> | undefined
+  private _fadeEnd: number = 0
+  private _active: boolean = true
 
   constructor (renderer: Renderer, camera: Camera, settings: ViewerSettings) {
     this._renderer = renderer
@@ -46,17 +46,19 @@ export class CameraGizmo {
   dispose () {
     clearTimeout(this._timeout)
 
-    this._box.dispose()
-    this._wireframe.dispose()
-    this._material.dispose()
-    this._materialAlways.dispose()
+    this._box?.dispose()
+    this._wireframe?.dispose()
+    this._material?.dispose()
+    this._materialAlways?.dispose()
     this._box = undefined
     this._wireframe = undefined
     this._material = undefined
     this._materialAlways = undefined
 
-    this._renderer.remove(this._gizmos)
-    this._gizmos = undefined
+    if (this._gizmos) {
+      this._renderer.remove(this._gizmos)
+      this._gizmos = undefined
+    }
   }
 
   show (show: boolean = true) {
@@ -67,14 +69,14 @@ export class CameraGizmo {
     }
 
     clearTimeout(this._timeout)
-    this._gizmos.visible = show
+    this._gizmos!.visible = show
     // Hide after one second since last request
     if (show) {
       this._timeout = setTimeout(() => this.fadeOut(), this._showDurationMs)
     }
   }
 
-  fadeOut (fading?: boolean) {
+  private fadeOut (fading?: boolean) {
     const now = new Date().getTime()
 
     if (!fading) {
@@ -83,21 +85,20 @@ export class CameraGizmo {
 
     if (now > this._fadeEnd) {
       // restore opacity values and hide for good
-      this._gizmos.visible = false
-      this._material.opacity = this._opacity
-      this._materialAlways.opacity = this._opacityAlways
+      this._gizmos!.visible = false
+      this._material!.opacity = this._opacity
+      this._materialAlways!.opacity = this._opacityAlways
     } else {
       // lerp and loop until fade is over
       requestAnimationFrame(() => this.fadeOut(true))
       const t = Math.pow((this._fadeEnd - now) / this._fadeDurationMs, 4)
-      this._material.opacity = MathUtils.lerp(0, this._opacity, t)
-      this._materialAlways.opacity = MathUtils.lerp(0, this._opacityAlways, t)
+      this._material!.opacity = MathUtils.lerp(0, this._opacity, t)
+      this._materialAlways!.opacity = MathUtils.lerp(0, this._opacityAlways, t)
     }
   }
 
   setPosition (position: THREE.Vector3) {
-    if (!this._gizmos) return
-    this._gizmos.position.copy(position)
+    this._gizmos?.position.copy(position)
     this.updateScale()
   }
 
@@ -109,15 +110,15 @@ export class CameraGizmo {
     this._opacity = opacity
     this._opacityAlways = opacityAlways
     if (!this._gizmos) return
-    this._material.opacity = opacity
-    this._materialAlways.opacity = opacityAlways
+    this._material!.opacity = opacity
+    this._materialAlways!.opacity = opacityAlways
   }
 
   setColor (color: THREE.Color) {
     this._color = color
     if (!this._gizmos) return
-    this._material.color = color
-    this._materialAlways.color = color
+    this._material!.color = color
+    this._materialAlways!.color = color
   }
 
   applySettings (settings: ViewerSettings) {
@@ -132,12 +133,13 @@ export class CameraGizmo {
   }
 
   private updateScale () {
+    if (!this._gizmos) return
     const dist = this._camera.camera.position
       .clone()
       .distanceTo(this._gizmos.position)
     // computes scale such that gizmo screen size remains constant
     const h = dist * Math.tan(MathUtils.degToRad(this._fov) * this._size)
-    this._gizmos?.scale.set(h, h, h)
+    this._gizmos.scale.set(h, h, h)
   }
 
   private createGizmo () {

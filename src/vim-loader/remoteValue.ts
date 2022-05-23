@@ -7,13 +7,13 @@
  */
 export class RemoteValue<T> {
   label: string
-  private _value: T
   private _getter: () => Promise<T>
-  private _request: Promise<T>
+  private _value: T | undefined
+  private _request: Promise<T> | undefined
 
   constructor (getter: () => Promise<T>, label?: string) {
     this._getter = getter
-    this.label = label
+    this.label = label ?? ''
   }
 
   /**
@@ -33,7 +33,7 @@ export class RemoteValue<T> {
     // console.log(this.label + ' creating new request')
     this._request = this._getter().then((value) => {
       this._value = value
-      this._request = null
+      this._request = undefined
       return this._value
     })
     return this._request

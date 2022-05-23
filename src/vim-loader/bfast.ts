@@ -136,7 +136,7 @@ export class BFast {
   name: string
   private _header: RemoteValue<Header>
   private _ranges: RemoteValue<Map<string, Range>>
-  private _children: Map<string, RemoteValue<BFast>>
+  private _children: Map<string, RemoteValue<BFast | undefined>>
 
   constructor (
     source: RemoteBuffer | ArrayBuffer,
@@ -172,10 +172,12 @@ export class BFast {
    * @param name buffer name
    */
   async getBfast (name: string) {
-    if (!this._children.has(name)) {
-      this._children.set(name, new RemoteValue(() => this.requestBfast(name)))
+    let request = this._children.get(name)
+    if (!request) {
+      request = new RemoteValue(() => this.requestBfast(name))
+      this._children.set(name, request)
     }
-    return this._children.get(name).get()
+    return request.get()
   }
 
   /**
@@ -198,6 +200,7 @@ export class BFast {
    */
   async getArray (name: string) {
     const buffer = await this.getBuffer(name)
+    if (!buffer) return
     const type = name.split(':')[0]
     const Ctor = typeConstructor(type)
     const array = new Ctor(buffer)
@@ -221,6 +224,7 @@ export class BFast {
       new Range(start, start + size),
       `${name}[${index.toString()}]`
     )
+    if (!buffer) return
     const Ctor = typeConstructor(type)
     const array = new Ctor(buffer)
     return array[0]
@@ -232,6 +236,7 @@ export class BFast {
    */
   async getBytes (name: string) {
     const buffer = await this.getBuffer(name)
+    if (!buffer) return
     const array = new Uint8Array(buffer)
     return array
   }
@@ -243,7 +248,7 @@ export class BFast {
   async getRow (index: number) {
     const ranges = await this.getRanges()
     if (!ranges) return
-    const result = new Map<string, number>()
+    const result = new Map<string, number | undefined>()
     const promises = []
     for (const name of ranges.keys()) {
       const p = this.getValue(name, index).then((v) => result.set(name, v))
@@ -258,7 +263,9 @@ export class BFast {
    * Forces download of the full underlying buffer, from now on all calls will be local.
    */
   async forceDownload () {
-    this.source = await this.remote(undefined, this.name)
+    const buffer = await this.remote(undefined, this.name)
+    if (!buffer) throw new Error('Failed to download BFAST.')
+    this.source = buffer
   }
 
   /**
@@ -288,6 +295,7 @@ export class BFast {
       new Range(32, 32 + header.numArrays * 16),
       'Ranges'
     )
+    if (!buffer) throw new Error('Could not get BFAST Ranges.')
 
     // Parse range
     const array = new Uint32Array(buffer)
@@ -328,6 +336,7 @@ export class BFast {
    */
   private async requestHeader () {
     const buffer = await this.request(new Range(0, 32), 'Header')
+    if (!buffer) throw new Error('Could not get BFAST Header')
     const result = Header.createFromBuffer(buffer)
     return result
   }
@@ -337,7 +346,7 @@ export class BFast {
    * @param range range to get, or get full resource if undefined
    * @param label label for logs
    */
-  private async request (range: Range, label: string): Promise<ArrayBuffer> {
+  private async request (range: Range, label: string) {
     const buffer =
       this.local(range, label) ??
       (await this.remote(range, label)) ??
@@ -367,9 +376,14 @@ export class BFast {
   /**
    * returns requested range from remote.
    */
-  private remote (range: Range, label: string) {
+  private async remote (range: Range | undefined, label: string) {
     if (!(this.source instanceof RemoteBuffer)) return
     const r = range?.offset(this.offset)
-    return this.source.http(r, `${this.name}.${label}`)
+    const buffer = await this.source.http(r, `${this.name}.${label}`)
+    if (range && (buffer?.byteLength ?? 0) < range.count) {
+      console.log('Range request request failed.')
+      return
+    }
+    return buffer
   }
 }

@@ -90,13 +90,15 @@ export interface ICamera {
   /**
    * Rotates the camera to look at target
    */
-  lookAt(target: Object | THREE.Vector3)
+  lookAt(target: Object | THREE.Vector3): void
 
   /**
    * Moves and rotates the camera so that target is well framed.
    * if center is true -> camera.y = target.y
    */
   frame(target: Object | THREE.Sphere | 'all', center?: boolean): void
+
+  forward: THREE.Vector3
 }
 
 /**
@@ -104,7 +106,7 @@ export interface ICamera {
  */
 export class Camera implements ICamera {
   camera: THREE.PerspectiveCamera | THREE.OrthographicCamera
-  gizmo: CameraGizmo
+  gizmo: CameraGizmo | undefined
   private _viewport: Viewport
   private _scene: RenderScene
 
@@ -118,19 +120,20 @@ export class Camera implements ICamera {
   private _currentOrbitalDistance: number
   private _orbitalTargetDistance: number
 
-  private _lerpSecondsDuration: number
-  private _lerpMsEndtime: number
+  private _lerpSecondsDuration: number = 0
+  private _lerpMsEndtime: number = 0
 
   private _orbitMode: boolean = false
 
   // Settings
-  private _vimReferenceSize: number
+  private _vimReferenceSize: number = 1
   private _sceneSizeMultiplier: number = 1
   private _velocityBlendFactor: number = 0.0001
   private _moveSpeed: number = 0.8
   private _rotateSpeed: number = 1
   private _orbitSpeed: number = 1
   private _zoomSpeed: number = 0.2
+  private _firstPersonSpeed = 10
 
   constructor (
     scene: RenderScene,
@@ -189,6 +192,24 @@ export class Camera implements ICamera {
     return result
   }
 
+  get forward () {
+    return this.camera.getWorldDirection(new THREE.Vector3())
+  }
+
+  set forward (value: THREE.Vector3) {
+    const direction = value.clone()
+    if (direction.y !== 0 && direction.x === 0 && direction.z === 0) {
+      direction.x = 0.02
+      // direction.setZ(-direction.z)
+    }
+    const pos = this._orbitalTarget.clone()
+    const delta = direction
+      .normalize()
+      .multiplyScalar(this._currentOrbitalDistance)
+    this.camera.position.copy(pos.add(delta))
+    this.camera.lookAt(this._orbitalTarget)
+  }
+
   /**
    * Set current velocity of the camera.
    */
@@ -222,8 +243,13 @@ export class Camera implements ICamera {
    * Sets Orbit mode target and moves camera accordingly
    */
   target (target: Object | THREE.Vector3) {
+    if (target instanceof Object && !target.hasMesh) {
+      throw new Error('Attempting to target a mesh with no geometry.')
+    }
+
     const position =
-      target instanceof THREE.Vector3 ? target : target.getCenter()
+      target instanceof THREE.Vector3 ? target : target.getCenter()!
+
     this._orbitalTarget = position
     this.startLerp(0.4)
     this.gizmo?.show(true)
@@ -234,7 +260,8 @@ export class Camera implements ICamera {
       this.frameSphere(this._scene.getBoundingSphere(), center)
     }
     if (target instanceof Object) {
-      this.frameSphere(target.getBoundingSphere(), center)
+      const sphere = target.getBoundingSphere()
+      if (sphere) this.frameSphere(sphere, center)
     }
     if (target instanceof THREE.Sphere) {
       this.frameSphere(target, center)
@@ -248,7 +275,7 @@ export class Camera implements ICamera {
   lookAt (target: Object | THREE.Vector3) {
     const position =
       target instanceof THREE.Vector3 ? target : target.getCenter()
-    this.camera.lookAt(position)
+    if (position) this.camera.lookAt(position)
   }
 
   applySettings (settings: ViewerSettings) {
@@ -347,7 +374,7 @@ export class Camera implements ICamera {
           ? new THREE.Vector3(-vector.x, 0, vector.y)
           : undefined
 
-    this.move3(direction)
+    if (direction) this.move3(direction)
   }
 
   /**
@@ -453,11 +480,6 @@ export class Camera implements ICamera {
    * Adjusts distance so that the sphere is well framed
    */
   private frameSphere (sphere: THREE.Sphere, center: boolean) {
-    if (!sphere) {
-      this.reset()
-      return
-    }
-
     if (center) {
       this.camera.position.setY(sphere.center.y)
     }
@@ -510,7 +532,9 @@ export class Camera implements ICamera {
     return (
       this.getBaseMultiplier() *
       // (dist / size) * (size / ref). Size gets canceled.
-      (this._orbitalTargetDistance / this._vimReferenceSize)
+      (this.orbitMode
+        ? this._orbitalTargetDistance / this._vimReferenceSize
+        : this._firstPersonSpeed)
     )
   }
 

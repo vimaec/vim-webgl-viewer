@@ -12,14 +12,13 @@ import { Box3 } from 'three'
 export class GroundPlane {
   mesh: THREE.Mesh
 
-  private _source: string
-
-  private _size: number
+  private _source: string | undefined
+  private _size: number = 1
 
   // disposable
   private _geometry: THREE.PlaneBufferGeometry
   private _material: THREE.MeshBasicMaterial
-  private _texture: THREE.Texture
+  private _texture: THREE.Texture | undefined
 
   constructor () {
     this._geometry = new THREE.PlaneBufferGeometry()
@@ -89,8 +88,6 @@ export class GroundPlane {
     this._material?.dispose()
     this._texture?.dispose()
 
-    this._geometry = undefined
-    this._material = undefined
     this._texture = undefined
   }
 }
@@ -148,10 +145,6 @@ export class Environment {
     this.sunLight.dispose()
     this.skyLight.dispose()
     this._groundPlane.dispose()
-
-    this.sunLight = undefined
-    this.skyLight = undefined
-    this._groundPlane = undefined
   }
 }
 

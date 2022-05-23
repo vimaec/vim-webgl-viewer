@@ -159,6 +159,7 @@ export namespace Geometry {
         if (!Transparency.match(transparency, g3d.meshTransparent[mesh])) {
           continue
         }
+        if ((g3d.instanceFlags[meshInstances[0]] & 1) > 0) continue
 
         vertexCount += g3d.getMeshVertexCount(mesh)
         indexCount += g3d.getMeshIndexCount(mesh)

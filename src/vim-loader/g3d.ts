@@ -60,10 +60,18 @@ class G3dAttributeDescriptor {
   }
 }
 
+type TypedArray =
+  | Uint8Array
+  | Int16Array
+  | Uint16Array
+  | Int32Array
+  | Float32Array
+  | Float64Array
+
 class G3dAttribute {
   descriptor: G3dAttributeDescriptor
   bytes: Uint8Array
-  data: Uint8Array | Int16Array | Int32Array | Float32Array | Float64Array
+  data: TypedArray
 
   constructor (descriptor: G3dAttributeDescriptor, bytes: Uint8Array) {
     this.descriptor = descriptor
@@ -76,12 +84,7 @@ class G3dAttribute {
   }
 
   // Converts a VIM attribute into a typed array from its raw data
-  static castData (
-    bytes: Uint8Array,
-    dataType: string
-  ): Uint8Array | Int16Array | Int32Array | Float32Array | Float64Array {
-    // This is a UInt8 array
-
+  static castData (bytes: Uint8Array, dataType: string): TypedArray {
     switch (dataType) {
       case 'float32':
         return new Float32Array(
@@ -99,6 +102,12 @@ class G3dAttribute {
         return bytes
       case 'int16':
         return new Int16Array(
+          bytes.buffer,
+          bytes.byteOffset,
+          bytes.byteLength / 2
+        )
+      case 'uint16':
+        return new Uint16Array(
           bytes.buffer,
           bytes.byteOffset,
           bytes.byteLength / 2
@@ -145,10 +154,18 @@ class AbstractG3d {
     const promises = VimAttributes.all.map((a) =>
       bfast
         .getBytes(a)
-        .then((b) => new G3dAttribute(G3dAttributeDescriptor.fromString(a), b))
+        .then((bytes) =>
+          bytes
+            ? new G3dAttribute(G3dAttributeDescriptor.fromString(a), bytes)
+            : undefined
+        )
     )
     return Promise.all(promises).then(
-      (attributes) => new AbstractG3d('meta', attributes)
+      (attributes) =>
+        new AbstractG3d(
+          'meta',
+          attributes.filter((a): a is G3dAttribute => a !== undefined)
+        )
     )
   }
 }
@@ -160,6 +177,7 @@ class VimAttributes {
   static indices = 'g3d:corner:index:0:int32:1'
   static instanceMeshes = 'g3d:instance:mesh:0:int32:1'
   static instanceTransforms = 'g3d:instance:transform:0:float32:16'
+  static instanceFlags = 'g3d:instance:flags:0:uint16:1'
   static meshSubmeshes = 'g3d:mesh:submeshoffset:0:int32:1'
   static submeshIndexOffsets = 'g3d:submesh:indexoffset:0:int32:1'
   static submeshMaterials = 'g3d:submesh:material:0:int32:1'
@@ -170,6 +188,7 @@ class VimAttributes {
     VimAttributes.indices,
     VimAttributes.instanceMeshes,
     VimAttributes.instanceTransforms,
+    VimAttributes.instanceFlags,
     VimAttributes.meshSubmeshes,
     VimAttributes.submeshIndexOffsets,
     VimAttributes.submeshMaterials,
@@ -190,6 +209,7 @@ export class G3d {
 
   instanceMeshes: Int32Array
   instanceTransforms: Float32Array
+  instanceFlags: Uint16Array
   meshSubmeshes: Int32Array
   submeshIndexOffset: Int32Array
   submeshMaterial: Int32Array
@@ -217,6 +237,7 @@ export class G3d {
       ?.data as Float32Array
 
     const tmp = g3d.findAttribute(VimAttributes.indices)?.data
+    if (!tmp) throw new Error('No Index Buffer Found')
     this.indices = new Uint32Array(tmp.buffer, tmp.byteOffset, tmp.length)
 
     this.meshSubmeshes = g3d.findAttribute(VimAttributes.meshSubmeshes)
@@ -238,6 +259,10 @@ export class G3d {
     this.instanceTransforms = g3d.findAttribute(
       VimAttributes.instanceTransforms
     )?.data as Float32Array
+
+    this.instanceFlags =
+      (g3d.findAttribute(VimAttributes.instanceFlags)?.data as Uint16Array) ??
+      new Uint16Array(this.instanceMeshes.length)
 
     this.meshVertexOffsets = this.computeMeshVertexOffsets()
     this.rebaseIndices()
@@ -302,7 +327,6 @@ export class G3d {
     for (let m = 0; m < result.length; m++) {
       const subStart = this.getMeshSubmeshStart(m)
       const subEnd = this.getMeshSubmeshEnd(m)
-      // const [subStart, subEnd] = this.getMeshSubmeshRange(m)
       for (let s = subStart; s < subEnd; s++) {
         const material = this.submeshMaterial[s]
         const alpha =

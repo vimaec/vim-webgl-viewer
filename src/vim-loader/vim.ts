@@ -16,18 +16,19 @@ export class Vim {
   document: Document
   scene: Scene
   settings: VimSettings
-  index: number
+  index: number = -1
   private _elementToObject: Map<number, Object> = new Map<number, Object>()
 
-  constructor (vim: Document, scene: Scene) {
+  constructor (vim: Document, scene: Scene, settings: VimSettings) {
     this.document = vim
     this.scene = scene
     this.scene.setVim(this)
+    this.settings = settings
+    this.scene.applyMatrix4(this.settings.getMatrix())
   }
 
   dispose () {
     this.scene.dispose()
-    this.scene = undefined
   }
 
   /**
@@ -124,7 +125,7 @@ export class Vim {
     return this.getMeshesFromInstances(instances)
   }
 
-  private getMeshesFromInstances (instances: number[]) {
+  private getMeshesFromInstances (instances: number[] | undefined) {
     if (!instances?.length) return
 
     const meshes: [THREE.Mesh, number][] = []
@@ -132,7 +133,7 @@ export class Vim {
       const instance = instances[i]
       if (instance < 0) continue
       const [mesh, index] = this.scene.getMeshFromInstance(instance)
-      if (!mesh) continue
+      if (!mesh || index === undefined) continue
       meshes.push([mesh, index])
     }
     if (meshes.length === 0) return
