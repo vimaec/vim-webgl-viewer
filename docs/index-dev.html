@@ -39,6 +39,11 @@
         transparency = geometry.transparencyIsValid(t) ? t : 'all'
       }
 
+      let forceDownload = false
+      if (params.has('forceDownload')) {
+        forceDownload = params.get('forceDownload')
+      }
+
       // Create Viewer
       const viewer = new VIM.Viewer({
         groundPlane: {
@@ -57,6 +62,7 @@
           {
             rotation: { x: 270, y: 0, z: 0 },
             transparency: transparency,
+            forceDownload: forceDownload
           }
         )
       }
