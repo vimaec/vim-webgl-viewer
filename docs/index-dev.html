@@ -41,7 +41,7 @@
 
       let forceDownload = false
       if (params.has('forceDownload')) {
-        forceDownload = params.get('forceDownload')
+        forceDownload = params.get('forceDownload') === 'true'
       }
 
       // Create Viewer
