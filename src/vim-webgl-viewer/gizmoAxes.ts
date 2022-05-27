@@ -78,7 +78,7 @@ export class GizmoAxes {
   axes: Axis[]
 
   // dependencies
-  controller: ICamera
+  camera: ICamera
   canvas: HTMLCanvasElement
   context: CanvasRenderingContext2D
   rect: DOMRect
@@ -93,9 +93,9 @@ export class GizmoAxes {
   invRotMat: THREE.Matrix4 = new THREE.Matrix4()
   selectedAxis: Axis | null
 
-  constructor (controller: ICamera, options?: Partial<GizmoOptions>) {
+  constructor (camera: ICamera, options?: Partial<GizmoOptions>) {
     this.options = new GizmoOptions(options)
-    this.controller = controller
+    this.camera = camera
     this.mouse = new THREE.Vector3()
     this.dragStart = new THREE.Vector2()
     this.dragEnd = new THREE.Vector2()
@@ -283,7 +283,7 @@ export class GizmoAxes {
 
     const rotX = this.drag.x / this.canvas.width
     const rotY = this.drag.y / this.canvas.height
-    this.controller.rotate(new THREE.Vector2(rotX, rotY))
+    this.camera.rotate(new THREE.Vector2(rotX, rotY))
     this.dragStart.copy(this.dragEnd)
   }
 
@@ -291,9 +291,9 @@ export class GizmoAxes {
     // FIXME Don't like the current animation
     if (this.isDragging || !this.selectedAxis) return
 
-    this.controller.orbit(
+    this.camera.orbit(
       this.selectedAxis.direction,
-      this.controller.defaultLerpDuration
+      this.camera.defaultLerpDuration
     )
     this.selectedAxis = null
   }
@@ -370,8 +370,8 @@ export class GizmoAxes {
   }
 
   update = () => {
-    this.controller.camera.updateMatrix()
-    this.invRotMat.extractRotation(this.controller.camera.matrix).invert()
+    this.camera.camera.updateMatrix()
+    this.invRotMat.extractRotation(this.camera.camera.matrix).invert()
 
     for (let i = 0, length = this.axes.length; i < length; i++) {
       this.setAxisPosition(this.axes[i])
