@@ -291,7 +291,10 @@ export class GizmoAxes {
     // FIXME Don't like the current animation
     if (this.isDragging || !this.selectedAxis) return
 
-    this.controller.forward = this.selectedAxis.direction
+    this.controller.orbit(
+      this.selectedAxis.direction,
+      this.controller.defaultLerpDuration
+    )
     this.selectedAxis = null
   }
 

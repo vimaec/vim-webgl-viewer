@@ -288,9 +288,14 @@ export class Viewer {
     */
 
     this.selection.select(hit.object)
-    this._camera.target(hit.object.getCenter()!)
+    this._camera.target(
+      hit.object.getCenter()!,
+      this._camera.defaultLerpDuration
+    )
 
-    if (hit.doubleClick) this._camera.frame(hit.object)
+    if (hit.doubleClick) {
+      this._camera.frame(hit.object, false, this.camera.defaultLerpDuration)
+    }
 
     const element = hit.object.getBimElement()
     if (element instanceof Map) {
