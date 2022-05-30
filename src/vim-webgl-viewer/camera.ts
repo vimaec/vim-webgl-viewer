@@ -71,7 +71,7 @@ export interface ICamera {
    * Rotates the camera around the X or Y axis or both
    * @param vector where coordinates in range [-1, 1] for rotations of [-180, 180] degrees
    */
-  rotate(vector: THREE.Vector2): void
+  rotate(vector: THREE.Vector2, duration?: number): void
 
   /**
    * Moves the camera closer or farther away from orbit target.
@@ -383,7 +383,7 @@ export class Camera implements ICamera {
    * Rotates the camera around the X or Y axis or both
    * @param vector where coordinates in range [-1, 1] for rotations of [-180, 180] degrees
    */
-  rotate (vector: THREE.Vector2) {
+  rotate (vector: THREE.Vector2, duration: number = 0) {
     const euler = new THREE.Euler(0, 0, 0, 'YXZ')
     euler.setFromQuaternion(this.camera.quaternion)
 
@@ -404,17 +404,14 @@ export class Camera implements ICamera {
     if (this.orbitMode) {
       const target = new THREE.Vector3(0, 0, 1)
       target.applyQuaternion(new Quaternion().setFromEuler(euler))
-      this.orbit(target)
+      this.orbit(target, duration)
     } else {
-      // Rotate camera
-      // this.camera.quaternion.setFromEuler(euler)
-
       // Move orbital target in front of camera.
       const offset = new THREE.Vector3(0, 0, -this.orbitDistance)
       offset.applyQuaternion(this.camera.quaternion)
 
       this._orbitTarget = this.camera.position.clone().add(offset)
-      this.startLerp(0, 'Rotation')
+      this.startLerp(duration, 'Rotation')
     }
   }
 
@@ -532,7 +529,7 @@ export class Camera implements ICamera {
   }
 
   private startLerp (seconds: number, lerp: Lerp) {
-    console.log('Start Lerp')
+    // console.log('Start Lerp')
     this._lerpMsEndtime = new Date().getTime() + seconds * 1000
     this._lerpSecondsDuration = seconds
     this._lerpPosition = lerp === 'Position' || lerp === 'Both'
@@ -629,7 +626,7 @@ export class Camera implements ICamera {
     this.cancelLerp()
     this.camera.position.copy(this._targetPosition)
     this.lookAt(this._orbitTarget)
-    console.log('End Lerp')
+    // console.log('End Lerp')
   }
 
   private applyVelocity (deltaTime: number) {
