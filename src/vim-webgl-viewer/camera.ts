@@ -123,7 +123,7 @@ export class Camera implements ICamera {
   private _minOrbitalDistance: number = 0.05
   private _targetPosition: THREE.Vector3
 
-  defaultLerpDuration: number = 1
+  defaultLerpDuration: number = 2
   private _lerpSecondsDuration: number = 0
   private _lerpMsEndtime: number = 0
   private _lockDirection: boolean = false
@@ -137,7 +137,7 @@ export class Camera implements ICamera {
   private _moveSpeed: number = 0.8
   private _rotateSpeed: number = 1
   private _orbitSpeed: number = 1
-  private _zoomSpeed: number = 0.2
+  private _zoomSpeed: number = 0.25
   private _firstPersonSpeed = 10
 
   constructor (
@@ -295,6 +295,10 @@ export class Camera implements ICamera {
     return this.camera.position.distanceTo(this._orbitTarget)
   }
 
+  get targetOrbitDistance () {
+    return this._targetPosition.distanceTo(this._orbitTarget)
+  }
+
   /**
    * Moves the camera closer or farther away from orbit target.
    * @param amount movement size.
@@ -303,12 +307,13 @@ export class Camera implements ICamera {
     if (this.camera instanceof THREE.PerspectiveCamera) {
       const reverse = 1 / (1 - this._zoomSpeed) - 1
       const factor = amount < 0 ? this._zoomSpeed : reverse
-      let offset = this.orbitDistance * factor
+      const dist = this.targetOrbitDistance
+      let offset = dist * factor
       offset = Math.max(this._minOrbitalDistance, offset)
-      let dist = this.orbitDistance + offset * amount
-      dist = Math.max(this._minOrbitalDistance, dist)
+      let targetDist = dist + offset * amount
+      targetDist = Math.max(this._minOrbitalDistance, targetDist)
 
-      const target = new THREE.Vector3(0, 0, dist)
+      const target = new THREE.Vector3(0, 0, targetDist)
       target.applyQuaternion(this.camera.quaternion)
       target.add(this._orbitTarget)
       this._targetPosition = target
@@ -411,7 +416,6 @@ export class Camera implements ICamera {
       this._orbitTarget = this.camera.position.clone().add(offset)
       this.startLerp(0, 'Rotation')
     }
-    this.gizmo?.show()
   }
 
   orbit (forward: THREE.Vector3, duration: number = 0) {
@@ -528,6 +532,7 @@ export class Camera implements ICamera {
   }
 
   private startLerp (seconds: number, lerp: Lerp) {
+    console.log('Start Lerp')
     this._lerpMsEndtime = new Date().getTime() + seconds * 1000
     this._lerpSecondsDuration = seconds
     this._lerpPosition = lerp === 'Position' || lerp === 'Both'
@@ -552,8 +557,9 @@ export class Camera implements ICamera {
    * Apply the camera frame update
    */
   update (deltaTime: number) {
+    this.gizmo?.setPosition(this._orbitTarget)
+
     if (this.shouldLerp()) {
-      this.gizmo?.show()
       if (this._lerpPosition && !this.isNearTarget()) {
         this.applyPositionLerp()
       }
@@ -562,19 +568,19 @@ export class Camera implements ICamera {
       } else if (!this._lockDirection) {
         this.lookAt(this._orbitTarget)
       }
-      this.gizmo?.setPosition(this._orbitTarget)
+      this.gizmo?.show()
       return
     }
 
     // End any outstanding lerp
     if (this._lerpPosition || this._lerpRotation) {
+      this.gizmo?.show()
       this.endLerp()
     }
 
     this._targetPosition.copy(this.camera.position)
 
     this.applyVelocity(deltaTime)
-    this.gizmo?.setPosition(this._orbitTarget)
   }
 
   private isNearTarget () {
@@ -659,7 +665,8 @@ export class Camera implements ICamera {
 
   private applyPositionLerp () {
     console.log('Lerping Position')
-    const alpha = this.easeOutCubic(this.lerpProgress())
+    // const alpha = this.easeOutCubic(this.lerpProgress())
+    const alpha = this.lerpProgress()
 
     const pos = this.slerp(
       this._orbitTarget,
@@ -673,7 +680,8 @@ export class Camera implements ICamera {
 
   private applyRotationLerp () {
     console.log('Lerping Rotation')
-    const alpha = this.easeOutCubic(this.lerpProgress())
+    // const alpha = this.easeOutCubic(this.lerpProgress())
+    const alpha = this.lerpProgress()
     const current = this.camera.position
       .clone()
       .add(this.forward.multiplyScalar(this.orbitDistance))
