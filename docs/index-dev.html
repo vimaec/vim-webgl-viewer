@@ -15,6 +15,8 @@
         padding: 0;
         overflow: hidden;
         background: radial-gradient(circle at center, #d8d8e6, #8a8a8a);
+        /*This prevents touches from being eaten up by the browser.*/
+        touch-action: none;
       }
     </style>
     <title>VIM 3D Model Viewer</title>
@@ -25,7 +27,7 @@
   </head>
   <body>
     <script src="https://unpkg.com/three@0.133.1/build/three.min.js"></script>
-    <script src="https://unpkg.com/vim-webgl-viewer@1.2.27-dev.2"></script>
+    <script src="https://unpkg.com/vim-webgl-viewer@1.2.27-dev.3"></script>
     <script>
       // Parse URL
       const params = new URLSearchParams(window.location.search)
