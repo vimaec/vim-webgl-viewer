@@ -88,7 +88,7 @@ export class GizmoAxes {
   isDragSignificant: boolean
   dragStart: THREE.Vector2
   dragLast: THREE.Vector2
-  pointerPosition: THREE.Vector3
+  pointer: THREE.Vector3
   center: THREE.Vector3
   invRotMat: THREE.Matrix4 = new THREE.Matrix4()
   selectedAxis: Axis | null
@@ -96,7 +96,7 @@ export class GizmoAxes {
   constructor (camera: ICamera, options?: Partial<GizmoOptions>) {
     this.options = new GizmoOptions(options)
     this.camera = camera
-    this.pointerPosition = new THREE.Vector3()
+    this.pointer = new THREE.Vector3()
     this.dragStart = new THREE.Vector2()
     this.dragLast = new THREE.Vector2()
     this.center = new THREE.Vector3(
@@ -227,7 +227,7 @@ export class GizmoAxes {
   onPointerDown = (e: MouseEvent) => {
     console.log('onPointerDown')
     this.initDrag(e.clientX, e.clientY)
-    this.pickAxes(this.toMouseVector(e, this.pointerPosition))
+    this.pickAxes(this.toMouseVector(e, this.pointer))
 
     window.addEventListener('pointermove', this.onPointerDrag, false)
     window.addEventListener('pointerup', this.onPointerUp, false)
@@ -237,7 +237,7 @@ export class GizmoAxes {
     console.log('onPointerUp')
     this.endDrag()
     if (event.pointerType !== 'mouse') {
-      this.pointerPosition.set(0, 0, 0)
+      this.pointer.set(0, 0, 0)
     }
 
     window.removeEventListener('pointermove', this.onPointerDrag, false)
@@ -253,7 +253,7 @@ export class GizmoAxes {
     if (this.isDragging) return
 
     if (e) {
-      this.pointerPosition = this.toMouseVector(e, this.pointerPosition)
+      this.pointer = this.toMouseVector(e, this.pointer)
     }
   }
 
@@ -329,7 +329,7 @@ export class GizmoAxes {
 
     // Keep axis selected during drag.
     if (!this.isDragging) {
-      this.pickAxes(this.pointerPosition)
+      this.pickAxes(this.pointer)
     }
   }
 
