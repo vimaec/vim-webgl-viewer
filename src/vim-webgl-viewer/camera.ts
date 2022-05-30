@@ -116,7 +116,7 @@ export class Camera implements ICamera {
 
   private _targetVelocity: THREE.Vector3
   private _velocity: THREE.Vector3
-  speed: number
+  speed: number = 0
 
   private _orbitMode: boolean = false
   private _orbitTarget: THREE.Vector3
@@ -147,7 +147,8 @@ export class Camera implements ICamera {
   ) {
     this.camera = new THREE.PerspectiveCamera()
     this.camera.position.set(0, 0, -1000)
-    this.camera.lookAt(0, 0, 0)
+    this._orbitTarget = new THREE.Vector3(0, 0, 0)
+    this.lookAt(this._orbitTarget)
     this._scene = scene
     this._viewport = viewport
     this._viewport.onResize(() => {
@@ -157,9 +158,6 @@ export class Camera implements ICamera {
 
     this._targetVelocity = new THREE.Vector3(0, 0, 0)
     this._velocity = new THREE.Vector3(0, 0, 0)
-    this.speed = 0
-    this._sceneSizeMultiplier = 1
-    this._orbitTarget = new THREE.Vector3(0, 0, 0)
     this._targetPosition = this.camera.position
   }
 
@@ -173,12 +171,12 @@ export class Camera implements ICamera {
    */
   reset () {
     this.camera.position.set(0, 0, -5)
-    this.camera.lookAt(0, 0, 1)
 
     this._targetVelocity.set(0, 0, 0)
     this._velocity.set(0, 0, 0)
 
     this._orbitTarget.set(0, 0, 0)
+    this.lookAt(this._orbitTarget)
   }
 
   get localVelocity () {
@@ -197,12 +195,13 @@ export class Camera implements ICamera {
    * Set current velocity of the camera.
    */
   set localVelocity (vector: THREE.Vector3) {
+    console.log('local')
     if (this.camera instanceof THREE.OrthographicCamera) {
       vector = vector.clone()
       vector.setZ(0)
     }
 
-    this.endLerp()
+    this.cancelLerp()
     const move = vector.clone()
     move.setZ(-move.z)
     move.applyQuaternion(this.camera.quaternion)
@@ -336,7 +335,7 @@ export class Camera implements ICamera {
       vector.setZ(0)
     }
 
-    this.endLerp()
+    this.cancelLerp()
 
     const v = vector.clone()
     v.applyQuaternion(this.camera.quaternion)
@@ -442,6 +441,11 @@ export class Camera implements ICamera {
     this.startLerp(duration, 'Both')
     this.updateProjection(sphere)
     this.gizmo?.show(true)
+  }
+
+  private lookAt (position: THREE.Vector3) {
+    this.camera.lookAt(position)
+    this.camera.up.set(0, 1, 0)
   }
 
   updateProjection (sphere: THREE.Sphere) {
@@ -556,7 +560,7 @@ export class Camera implements ICamera {
       if (this._lerpRotation && !this.isLookingAtTarget()) {
         this.applyRotationLerp()
       } else if (!this._lockDirection) {
-        this.camera.lookAt(this._orbitTarget)
+        this.lookAt(this._orbitTarget)
       }
       this.gizmo?.setPosition(this._orbitTarget)
       return
@@ -608,13 +612,17 @@ export class Camera implements ICamera {
     return 1 - Math.pow(1 - x, 3)
   }
 
-  private endLerp () {
+  private cancelLerp () {
     this._lerpPosition = false
     this._lerpRotation = false
-    this._lerpMsEndtime = 0
-    this.camera.position.copy(this._targetPosition)
-    this.camera.lookAt(this._orbitTarget)
     this._lockDirection = false
+    this._lerpMsEndtime = 0
+  }
+
+  private endLerp () {
+    this.cancelLerp()
+    this.camera.position.copy(this._targetPosition)
+    this.lookAt(this._orbitTarget)
     console.log('End Lerp')
   }
 
@@ -670,6 +678,6 @@ export class Camera implements ICamera {
       .clone()
       .add(this.forward.multiplyScalar(this.orbitDistance))
     const look = current.lerp(this._orbitTarget, alpha)
-    this.camera.lookAt(look)
+    this.lookAt(look)
   }
 }

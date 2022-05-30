@@ -65,7 +65,8 @@ export class Mouse {
       this.camera.move2(delta, 'XY')
     } else if (event.buttons & 4) {
       // Midle button
-      this.camera.move2(delta, 'XZ')
+      // Same as right button
+      this.camera.move2(delta, 'XY')
     } else {
       // left button
       this.camera.rotate(delta)
