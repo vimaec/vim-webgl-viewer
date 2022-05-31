@@ -124,8 +124,8 @@ export class Camera implements ICamera {
   private _targetPosition: THREE.Vector3
 
   defaultLerpDuration: number = 2
-  private _lerpSecondsDuration: number = 0
-  private _lerpMsEndtime: number = 0
+  private _lerpStartMs: number = 0
+  private _lerpEndMs: number = 0
   private _lockDirection: boolean = false
   private _lerpPosition: boolean
   private _lerpRotation: boolean
@@ -195,7 +195,6 @@ export class Camera implements ICamera {
    * Set current velocity of the camera.
    */
   set localVelocity (vector: THREE.Vector3) {
-    console.log('local')
     if (this.camera instanceof THREE.OrthographicCamera) {
       vector = vector.clone()
       vector.setZ(0)
@@ -400,18 +399,25 @@ export class Camera implements ICamera {
     // Clamp X rotation to prevent performing a loop.
     const max = Math.PI * 0.48
     euler.x = Math.max(-max, Math.min(max, euler.x))
+    const rotation = new Quaternion().setFromEuler(euler)
 
     if (this.orbitMode) {
       const target = new THREE.Vector3(0, 0, 1)
-      target.applyQuaternion(new Quaternion().setFromEuler(euler))
+      target.applyQuaternion(rotation)
       this.orbit(target, duration)
     } else {
-      // Move orbital target in front of camera.
       const offset = new THREE.Vector3(0, 0, -this.orbitDistance)
-      offset.applyQuaternion(this.camera.quaternion)
-
+      if (duration <= 0) {
+        // apply rotation directly to camera
+        this.camera.quaternion.copy(rotation)
+        offset.applyQuaternion(this.camera.quaternion)
+        this.gizmo?.show()
+      } else {
+        // apply rotation to target and lerp
+        offset.applyQuaternion(rotation)
+        this.startLerp(duration, 'Rotation')
+      }
       this._orbitTarget = this.camera.position.clone().add(offset)
-      this.startLerp(duration, 'Rotation')
     }
   }
 
@@ -529,24 +535,22 @@ export class Camera implements ICamera {
   }
 
   private startLerp (seconds: number, lerp: Lerp) {
-    // console.log('Start Lerp')
-    this._lerpMsEndtime = new Date().getTime() + seconds * 1000
-    this._lerpSecondsDuration = seconds
+    const time = new Date().getTime()
+    this._lerpEndMs = time + seconds * 1000
+    this._lerpStartMs = time
     this._lerpPosition = lerp === 'Position' || lerp === 'Both'
     this._lerpRotation = lerp === 'Rotation' || lerp === 'Both'
   }
 
   private shouldLerp () {
-    return new Date().getTime() < this._lerpMsEndtime
+    return new Date().getTime() < this._lerpEndMs
   }
 
   private lerpProgress () {
-    let progress =
-      (new Date().getTime() - this._lerpMsEndtime) /
-      (this._lerpSecondsDuration * 1000)
+    const done = new Date().getTime() - this._lerpStartMs
+    const duration = this._lerpEndMs - this._lerpStartMs
+    let progress = done / duration
     progress = Math.min(progress, 1)
-    progress = 1 + progress
-
     return progress
   }
 
@@ -611,22 +615,17 @@ export class Camera implements ICamera {
     return result
   }
 
-  private easeOutCubic (x: number): number {
-    return 1 - Math.pow(1 - x, 3)
-  }
-
   private cancelLerp () {
     this._lerpPosition = false
     this._lerpRotation = false
     this._lockDirection = false
-    this._lerpMsEndtime = 0
+    this._lerpEndMs = 0
   }
 
   private endLerp () {
     this.cancelLerp()
     this.camera.position.copy(this._targetPosition)
     this.lookAt(this._orbitTarget)
-    // console.log('End Lerp')
   }
 
   private applyVelocity (deltaTime: number) {
@@ -661,7 +660,6 @@ export class Camera implements ICamera {
   }
 
   private applyPositionLerp () {
-    console.log('Lerping Position')
     // const alpha = this.easeOutCubic(this.lerpProgress())
     const alpha = this.lerpProgress()
 
@@ -676,13 +674,10 @@ export class Camera implements ICamera {
   }
 
   private applyRotationLerp () {
-    console.log('Lerping Rotation')
-    // const alpha = this.easeOutCubic(this.lerpProgress())
-    const alpha = this.lerpProgress()
     const current = this.camera.position
       .clone()
       .add(this.forward.multiplyScalar(this.orbitDistance))
-    const look = current.lerp(this._orbitTarget, alpha)
+    const look = current.lerp(this._orbitTarget, this.lerpProgress())
     this.lookAt(look)
   }
 }

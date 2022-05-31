@@ -212,7 +212,6 @@ export class GizmoAxes {
   onTouchMove = (e: TouchEvent) => {
     if (e.touches.length > 1) return
     const touch = e.touches[0]
-    console.log('touchMove')
     this.updateDrag(touch.clientX, touch.clientY)
   }
 
@@ -225,16 +224,13 @@ export class GizmoAxes {
   }
 
   onPointerDown = (e: MouseEvent) => {
-    console.log('onPointerDown')
     this.initDrag(e.clientX, e.clientY)
-    this.pickAxes(this.toMouseVector(e, this.pointer))
 
     window.addEventListener('pointermove', this.onPointerDrag, false)
     window.addEventListener('pointerup', this.onPointerUp, false)
   }
 
   onPointerUp = (event: PointerEvent) => {
-    console.log('onPointerUp')
     this.endDrag()
     if (event.pointerType !== 'mouse') {
       this.pointer.set(0, 0, 0)
@@ -263,12 +259,10 @@ export class GizmoAxes {
 
   // Drag
   onPointerDrag = (e: MouseEvent) => {
-    console.log('onMouseDrag')
     this.updateDrag(e.clientX, e.clientY)
   }
 
   initDrag (x: number, y: number) {
-    console.log('initDrag')
     this.dragStart.set(x, y)
     this.dragLast.set(x, y)
     this.isDragging = true
@@ -305,7 +299,6 @@ export class GizmoAxes {
   onMouseClick = () => {
     // FIXME Don't like the current animation
     if (this.isDragging || !this.selectedAxis) return
-    console.log('mouseclick')
     this.camera.orbit(
       this.selectedAxis.direction,
       this.camera.defaultLerpDuration
@@ -405,7 +398,6 @@ export class GizmoAxes {
   }
 
   private pickAxes (mouse: THREE.Vector3) {
-    console.log('pickAxes')
     const currentAxis = this.selectedAxis
     this.selectedAxis = null
 
