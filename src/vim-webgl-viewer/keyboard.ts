@@ -151,6 +151,9 @@ export class Keyboard {
     // Buttons that activate once on key up
     if (!keyDown) {
       switch (event.keyCode) {
+        case KEYS.KEY_O:
+          this.camera.orthographic = !this.camera.orthographic
+          break
         case KEYS.KEY_ADD:
         case KEYS.KEY_OEM_PLUS:
           this.camera.speed += 1
