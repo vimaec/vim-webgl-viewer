@@ -193,10 +193,15 @@ export class RemoteBuffer {
 
     const promise = new Promise<string>((resolve, reject) => {
       xhr.onload = (_) => {
-        const encoding = xhr.getResponseHeader('content-encoding')
+        let encoding = null
+        try {
+          encoding = xhr.getResponseHeader('content-encoding')
+        } catch (e) {
+          console.error(e)
+        }
         resolve(encoding)
       }
-      xhr.onerror = (_) => reject(_)
+      xhr.onerror = (_) => resolve(null)
     })
 
     const encoding = await promise
