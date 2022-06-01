@@ -180,6 +180,11 @@ export class BFast {
     return request.get()
   }
 
+  async getLocalBfast (name: string) {
+    const buffer = await this.getBuffer(name)
+    return new BFast(buffer, 0, name)
+  }
+
   /**
    * Returns the raw buffer associated with a name
    * This value is not cached.

@@ -14,6 +14,8 @@ export namespace VimOptions {
     z: number
   }
 
+  export type LoadingMode = 'stream' | 'download' | 'geometry'
+
   /**
    * Config object for loading a vim
    */
@@ -40,7 +42,7 @@ export namespace VimOptions {
      * Forces the viewer to download the whole data at once.
      * Otherwise bim data will be requested on per need basis.
      */
-    forceDownload?: boolean
+    download?: LoadingMode
   }
 }
 
@@ -58,7 +60,7 @@ export class VimSettings {
       rotation: { x: 0, y: 0, z: 0 },
       scale: 1,
       transparency: 'all',
-      forceDownload: false
+      download: 'download'
     }
 
     this.options = options ? deepmerge(fallback, options, undefined) : fallback
@@ -80,7 +82,7 @@ export class VimSettings {
     )
 
   getTransparency = () => this.options.transparency!
-  getForceDownload = () => this.options.forceDownload!
+  getDownloadMode = () => this.options.download
 }
 
 function toVec (obj: VimOptions.Vector3): THREE.Vector3 {

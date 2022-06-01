@@ -36,7 +36,7 @@ export class Document {
   /**
    * Creates document by fetching all required data from bfast.
    */
-  static async createFromBfast (bfast: BFast) {
+  static async createFromBfast (bfast: BFast, streamG3d: boolean = false) {
     let g3d: G3d
     let entity: BFast
     let strings: string[]
@@ -45,7 +45,7 @@ export class Document {
     let elementIds: number[]
 
     await Promise.all([
-      Document.requestG3d(bfast).then((g) => (g3d = g)),
+      Document.requestG3d(bfast, streamG3d).then((g) => (g3d = g)),
       Document.requestStrings(bfast).then((strs) => (strings = strs)),
       Document.requestEntities(bfast)
         .then((ets) => (entity = ets))
@@ -72,8 +72,11 @@ export class Document {
     )
   }
 
-  private static async requestG3d (bfast: BFast) {
-    const geometry = await bfast.getBfast('geometry')
+  private static async requestG3d (bfast: BFast, streamG3d: boolean) {
+    const geometry = streamG3d
+      ? await bfast.getBfast('geometry')
+      : await bfast.getLocalBfast('geometry')
+
     if (!geometry) {
       throw new Error('Could not get G3d Data from VIM file.')
     }

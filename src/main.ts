@@ -1,5 +1,6 @@
 import * as VIM from './vim'
 import * as THREE from 'three'
+import { VimOptions, VimSettings } from './vim'
 
 // Parse URL
 const params = new URLSearchParams(window.location.search)
@@ -11,6 +12,13 @@ let transparency: VIM.Transparency.Mode = 'all'
 if (params.has('transparency')) {
   const t = params.get('transparency')
   transparency = VIM.Transparency.isValid(t) ? t : 'all'
+}
+
+let download: VimOptions.LoadingMode = 'download'
+if (params.has('download')) {
+  const t = params.get('download')
+  const valid = t === 'download' || t === 'stream' || t === 'geometry'
+  download = valid ? t : 'download'
 }
 
 // Create Viewer
@@ -54,7 +62,8 @@ function load2 (vim: string | ArrayBuffer) {
         vim,
         {
           rotation: { x: 270, y: 0, z: 0 },
-          transparency: transparency
+          transparency: transparency,
+          download: download
         },
         (progress) => {
           console.log(`Loading : ${progress.loaded} / ${progress.total}`)

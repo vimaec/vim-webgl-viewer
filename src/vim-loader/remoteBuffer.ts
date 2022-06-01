@@ -93,7 +93,7 @@ export class RequestLogger {
    * Notify a webrequest of failure
    */
   fail (field: string) {
-    console.log(`${field} failed`)
+    console.error(`${field} failed`)
     const download = this.all.get(field)
     if (!download) throw new Error('Failing missing download')
     download.status = 'failed'
@@ -119,13 +119,62 @@ export class RequestLogger {
   }
 }
 
+class RetryRequest {
+  url: string
+  range: string
+  // eslint-disable-next-line no-undef
+  responseType: XMLHttpRequestResponseType
+  msg: string
+  xhr: XMLHttpRequest
+
+  constructor (
+    url: string,
+    range: string,
+    // eslint-disable-next-line no-undef
+    responseType: XMLHttpRequestResponseType
+  ) {
+    this.url = url
+    this.range = range
+    this.responseType = responseType
+  }
+
+  onLoad: (result: any) => void
+  onError: () => void
+  onProgress: (e: ProgressEvent<EventTarget>) => void
+
+  send () {
+    this.xhr?.abort()
+    const xhr = new XMLHttpRequest()
+    xhr.open('GET', this.url)
+    xhr.responseType = this.responseType
+
+    if (this.range) {
+      xhr.setRequestHeader('Range', this.range)
+    }
+
+    xhr.onprogress = (e) => {
+      this.onProgress?.(e)
+    }
+    xhr.onload = () => {
+      this.onLoad?.(xhr.response)
+    }
+    xhr.onerror = (_) => {
+      this.onError?.()
+    }
+    xhr.send()
+    this.xhr = xhr
+  }
+}
+
 /**
  * Wrapper to provide tracking for all webrequests via request logger.
  */
 export class RemoteBuffer {
   url: string
   logger: RequestLogger
-  queue: [XMLHttpRequest, string][] = []
+  queue: RetryRequest[] = []
+  active: Set<RetryRequest> = new Set<RetryRequest>()
+  maxConcurency: number = 10
 
   constructor (url: string, logger: RequestLogger = new RequestLogger(url)) {
     this.url = url
@@ -133,53 +182,65 @@ export class RemoteBuffer {
   }
 
   async http (range: Range | undefined, label: string) {
-    const xhr = new XMLHttpRequest()
-    xhr.open('GET', this.url)
-    xhr.responseType = 'arraybuffer'
-
-    if (range) {
-      xhr.setRequestHeader('Range', `bytes=${range.start}-${range.end - 1}`)
-    }
-    const msg = range
+    const rangeStr = range ? `bytes=${range.start}-${range.end - 1}` : undefined
+    const request = new RetryRequest(this.url, rangeStr, 'arraybuffer')
+    request.msg = range
       ? `${label} : [${range.start}, ${range.end}] of ${this.url}`
       : `${label} of ${this.url}`
 
-    this.enqueue(xhr, msg)
-
+    this.enqueue(request)
     return new Promise<ArrayBuffer | undefined>((resolve, reject) => {
       this.logger.start(label)
-      xhr.onprogress = (e) => {
+
+      request.onProgress = (e) => {
         this.logger.update(label, e)
       }
-      xhr.onload = () => {
+      request.onLoad = (result) => {
         this.logger.end(label)
-        resolve(xhr.response)
-        this.next()
+        resolve(result)
+        this.end(request)
       }
-      xhr.onerror = (_) => {
+      request.onError = () => {
         this.logger.fail(label)
-        resolve(undefined)
-        this.next()
+        this.retry(request)
       }
     })
   }
 
-  private enqueue (xhr: XMLHttpRequest, msg: string) {
-    this.queue.push([xhr, msg])
-    if (this.queue.length === 1) {
-      console.log('Starting ' + msg)
-      xhr.send()
-    } else {
-      console.log('Queuing ' + msg)
-    }
+  private enqueue (xhr: RetryRequest) {
+    this.queue.push(xhr)
+    this.next()
+  }
+
+  private retry (xhr: RetryRequest) {
+    this.active.delete(xhr)
+    this.maxConcurency = Math.max(1, this.maxConcurency - 1)
+    setTimeout(() => this.enqueue(xhr), 2000)
+  }
+
+  private end (xhr: RetryRequest) {
+    this.active.delete(xhr)
+    this.next()
   }
 
   private next () {
-    this.queue.shift()
-    if (this.queue.length > 0) {
-      const [request, m] = this.queue[0]
-      console.log('Starting ' + m)
-      request.send()
+    console.log('Queue size ' + this.queue.length)
+    if (this.queue.length === 0) {
+      console.log('queue empty')
+      return
     }
+
+    if (this.active.size >= this.maxConcurency) {
+      console.log('waiting in queue')
+      return
+    }
+
+    const next = this.queue[0]
+    this.queue.shift()
+    this.active.add(next)
+    next.send()
+
+    console.log('Starting ' + next.msg)
+    console.log('Active size ' + this.active.size)
   }
 }

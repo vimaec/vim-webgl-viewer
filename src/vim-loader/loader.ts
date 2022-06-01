@@ -16,9 +16,12 @@ export class Loader {
   async load (bfast: BFast, settings: VimSettings) {
     let document: Document
 
-    if (settings.getForceDownload()) await bfast.forceDownload()
+    const mode = settings.getDownloadMode()
+    if (mode === 'download') await bfast.forceDownload()
 
-    await Document.createFromBfast(bfast).then((d) => (document = d))
+    await Document.createFromBfast(bfast, mode === 'stream').then(
+      (d) => (document = d)
+    )
 
     const scene = Scene.createFromG3d(document!.g3d, settings.getTransparency())
     const vim = new Vim(document!, scene, settings)
