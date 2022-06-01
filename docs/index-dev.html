@@ -41,7 +41,7 @@
         transparency = geometry.transparencyIsValid(t) ? t : 'all'
       }
 
-      let download: VimOptions.LoadingMode = 'geometry'
+      let download = 'geometry'
       if (params.has('download')) {
         const t = params.get('download')
         const valid = t === 'download' || t === 'stream' || t === 'geometry'
