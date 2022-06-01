@@ -41,10 +41,13 @@
         transparency = geometry.transparencyIsValid(t) ? t : 'all'
       }
 
-      let forceDownload = false
-      if (params.has('forceDownload')) {
-        forceDownload = params.get('forceDownload') === 'true'
+      let download: VimOptions.LoadingMode = 'download'
+      if (params.has('download')) {
+        const t = params.get('download')
+        const valid = t === 'download' || t === 'stream' || t === 'geometry'
+        download = valid ? t : 'download'
       }
+
 
       // Create Viewer
       const viewer = new VIM.Viewer({
@@ -64,7 +67,7 @@
           {
             rotation: { x: 270, y: 0, z: 0 },
             transparency: transparency,
-            forceDownload: forceDownload
+            download: download
           }
         )
       }
