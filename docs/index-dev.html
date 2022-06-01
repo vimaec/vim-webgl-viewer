@@ -62,6 +62,7 @@
 
       // Load function string | arrayBuffer
       function load(vim) {
+        const start = new Date().getTime()
         viewer.loadVim(
           vim,
           {
@@ -69,8 +70,11 @@
             transparency: transparency,
             download: download
           }
+        ).then((v) =>
+        console.log(
+          `Loaded ${vim} in ${(new Date().getTime() - start) / 1000} seconds`
         )
-      }
+      )}
 
       // Add load file button
       const input = document.createElement('input')
@@ -93,13 +97,7 @@
       }
 
       // load default model
-      const start = new Date().getTime()
       load(url)
-      .then((v) =>
-        console.log(
-          'Loaded in ' + (new Date().getTime() - start) / 1000 + ' seconds'
-        )
-      )
 
       globalThis.viewer = viewer
     </script>
