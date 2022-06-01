@@ -93,7 +93,13 @@
       }
 
       // load default model
+      const start = new Date().getTime()
       load(url)
+      .then((v) =>
+        console.log(
+          'Loaded in ' + (new Date().getTime() - start) / 1000 + ' seconds'
+        )
+      )
 
       globalThis.viewer = viewer
     </script>
