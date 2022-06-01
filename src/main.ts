@@ -1,6 +1,6 @@
 import * as VIM from './vim'
 import * as THREE from 'three'
-import { VimOptions, VimSettings } from './vim'
+import { VimOptions } from './vim'
 
 // Parse URL
 const params = new URLSearchParams(window.location.search)
