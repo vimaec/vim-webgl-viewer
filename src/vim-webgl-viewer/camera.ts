@@ -8,6 +8,7 @@ import { Viewport } from './viewport'
 import { ViewerSettings } from './viewerSettings'
 import { Object } from '../vim'
 import { RenderScene } from './renderScene'
+import { Quaternion } from 'three'
 
 export const DIRECTIONS = {
   forward: new THREE.Vector3(0, 0, -1),
@@ -49,17 +50,7 @@ export interface ICamera {
    * @param vector where coordinates are in relative screen size. ie [-1, 1]
    */
 
-  /**
-   * Nudges the camera in given direction for a short distance.
-   * @param impulse impulse vector in camera local space.
-   */
-  addImpulse(impulse: THREE.Vector3): void
-
-  /**
-   * Moves the camera closer or farther away from orbit target.
-   * @param amount movement size.
-   */
-  zoom(amount: number): void
+  defaultLerpDuration: number
 
   /**
    * Moves the camera along all three axes.
@@ -80,26 +71,39 @@ export interface ICamera {
    * Rotates the camera around the X or Y axis or both
    * @param vector where coordinates in range [-1, 1] for rotations of [-180, 180] degrees
    */
-  rotate(vector: THREE.Vector2): void
+  rotate(vector: THREE.Vector2, duration?: number): void
+
+  /**
+   * Moves the camera closer or farther away from orbit target.
+   * @param amount movement size.
+   */
+  zoom(amount: number, duration?: number): void
+
+  /**
+   * Moves the camera around the target so that it looks down given forward vector
+   * @param forward direction vector
+   */
+  orbit(forward: THREE.Vector3, duration?: number): void
 
   /**
    * Sets orbit mode target and moves camera accordingly
    */
-  target(target: Object | THREE.Vector3): void
-
-  /**
-   * Rotates the camera to look at target
-   */
-  lookAt(target: Object | THREE.Vector3): void
+  target(target: Object | THREE.Vector3, duration?: number): void
 
   /**
    * Moves and rotates the camera so that target is well framed.
    * if center is true -> camera.y = target.y
    */
-  frame(target: Object | THREE.Sphere | 'all', center?: boolean): void
+  frame(
+    target: Object | THREE.Sphere | 'all',
+    center?: boolean,
+    duration?: number
+  ): void
 
   forward: THREE.Vector3
 }
+
+type Lerp = 'None' | 'Position' | 'Rotation' | 'Both'
 
 /**
  * Manages viewer camera movement and position
@@ -110,20 +114,21 @@ export class Camera implements ICamera {
   private _viewport: Viewport
   private _scene: RenderScene
 
-  private _inputVelocity: THREE.Vector3
+  private _targetVelocity: THREE.Vector3
   private _velocity: THREE.Vector3
-  private _impulse: THREE.Vector3
-  speed: number
-
-  private _orbitalTarget: THREE.Vector3
-  private _minOrbitalDistance: number = 0.05
-  private _currentOrbitalDistance: number
-  private _orbitalTargetDistance: number
-
-  private _lerpSecondsDuration: number = 0
-  private _lerpMsEndtime: number = 0
+  speed: number = 0
 
   private _orbitMode: boolean = false
+  private _orbitTarget: THREE.Vector3
+  private _minOrbitalDistance: number = 0.05
+  private _targetPosition: THREE.Vector3
+
+  defaultLerpDuration: number = 2
+  private _lerpStartMs: number = 0
+  private _lerpEndMs: number = 0
+  private _lockDirection: boolean = false
+  private _lerpPosition: boolean
+  private _lerpRotation: boolean
 
   // Settings
   private _vimReferenceSize: number = 1
@@ -132,7 +137,7 @@ export class Camera implements ICamera {
   private _moveSpeed: number = 0.8
   private _rotateSpeed: number = 1
   private _orbitSpeed: number = 1
-  private _zoomSpeed: number = 0.2
+  private _zoomSpeed: number = 0.25
   private _firstPersonSpeed = 10
 
   constructor (
@@ -142,7 +147,8 @@ export class Camera implements ICamera {
   ) {
     this.camera = new THREE.PerspectiveCamera()
     this.camera.position.set(0, 0, -1000)
-    this.camera.lookAt(0, 0, 0)
+    this._orbitTarget = new THREE.Vector3(0, 0, 0)
+    this.lookAt(this._orbitTarget)
     this._scene = scene
     this._viewport = viewport
     this._viewport.onResize(() => {
@@ -150,17 +156,9 @@ export class Camera implements ICamera {
     })
     this.applySettings(settings)
 
-    this._inputVelocity = new THREE.Vector3(0, 0, 0)
+    this._targetVelocity = new THREE.Vector3(0, 0, 0)
     this._velocity = new THREE.Vector3(0, 0, 0)
-    this._impulse = new THREE.Vector3(0, 0, 0)
-    this.speed = 0
-    this._sceneSizeMultiplier = 1
-    this._orbitalTarget = new THREE.Vector3(0, 0, 0)
-    this._currentOrbitalDistance = this.camera.position
-      .clone()
-      .sub(this._orbitalTarget)
-      .length()
-    this._orbitalTargetDistance = this._currentOrbitalDistance
+    this._targetPosition = this.camera.position
   }
 
   dispose () {
@@ -173,15 +171,12 @@ export class Camera implements ICamera {
    */
   reset () {
     this.camera.position.set(0, 0, -5)
-    this.camera.lookAt(0, 0, 1)
 
-    this._inputVelocity.set(0, 0, 0)
+    this._targetVelocity.set(0, 0, 0)
     this._velocity.set(0, 0, 0)
-    this._impulse.set(0, 0, 0)
 
-    this._currentOrbitalDistance = 5
-    this._orbitalTarget.set(0, 0, 0)
-    this._orbitalTargetDistance = this._currentOrbitalDistance
+    this._orbitTarget.set(0, 0, 0)
+    this.lookAt(this._orbitTarget)
   }
 
   get localVelocity () {
@@ -196,30 +191,22 @@ export class Camera implements ICamera {
     return this.camera.getWorldDirection(new THREE.Vector3())
   }
 
-  set forward (value: THREE.Vector3) {
-    const direction = value.clone()
-    if (direction.y !== 0 && direction.x === 0 && direction.z === 0) {
-      direction.x = 0.02
-      // direction.setZ(-direction.z)
-    }
-    const pos = this._orbitalTarget.clone()
-    const delta = direction
-      .normalize()
-      .multiplyScalar(this._currentOrbitalDistance)
-    this.camera.position.copy(pos.add(delta))
-    this.camera.lookAt(this._orbitalTarget)
-  }
-
   /**
    * Set current velocity of the camera.
    */
   set localVelocity (vector: THREE.Vector3) {
+    if (this.camera instanceof THREE.OrthographicCamera) {
+      vector = vector.clone()
+      vector.setZ(0)
+    }
+
+    this.cancelLerp()
     const move = vector.clone()
     move.setZ(-move.z)
     move.applyQuaternion(this.camera.quaternion)
     move.multiplyScalar(this.getSpeedMultiplier() * this._moveSpeed)
 
-    this._inputVelocity.copy(move)
+    this._targetVelocity.copy(move)
   }
 
   /**
@@ -242,7 +229,7 @@ export class Camera implements ICamera {
   /**
    * Sets Orbit mode target and moves camera accordingly
    */
-  target (target: Object | THREE.Vector3) {
+  target (target: Object | THREE.Vector3, duration: number = 0) {
     if (target instanceof Object && !target.hasMesh) {
       throw new Error('Attempting to target a mesh with no geometry.')
     }
@@ -250,32 +237,25 @@ export class Camera implements ICamera {
     const position =
       target instanceof THREE.Vector3 ? target : target.getCenter()!
 
-    this._orbitalTarget = position
-    this.startLerp(0.4)
-    this.gizmo?.show(true)
+    this._orbitTarget = position
+    this.startLerp(duration, 'Rotation')
   }
 
-  frame (target: Object | THREE.Sphere | 'all', center: boolean = false) {
-    if (target === 'all') {
-      this.frameSphere(this._scene.getBoundingSphere(), center)
-    }
-    if (target instanceof Object) {
-      const sphere = target.getBoundingSphere()
-      if (sphere) this.frameSphere(sphere, center)
-    }
-    if (target instanceof THREE.Sphere) {
-      this.frameSphere(target, center)
-    }
-    this.gizmo?.show(true)
-  }
+  frame (
+    target: Object | THREE.Sphere | 'all',
+    center: boolean = false,
+    duration: number = 0
+  ) {
+    const sphere =
+      target === 'all'
+        ? this._scene.getBoundingSphere()
+        : target instanceof Object
+          ? target.getBoundingSphere()
+          : target instanceof THREE.Sphere
+            ? target
+            : undefined
 
-  /**
-   * Rotates the camera to look at target
-   */
-  lookAt (target: Object | THREE.Vector3) {
-    const position =
-      target instanceof THREE.Vector3 ? target : target.getCenter()
-    if (position) this.camera.lookAt(position)
+    this.frameSphere(sphere, center, duration)
   }
 
   applySettings (settings: ViewerSettings) {
@@ -310,20 +290,33 @@ export class Camera implements ICamera {
       : 1
   }
 
+  get orbitDistance () {
+    return this.camera.position.distanceTo(this._orbitTarget)
+  }
+
+  get targetOrbitDistance () {
+    return this._targetPosition.distanceTo(this._orbitTarget)
+  }
+
   /**
    * Moves the camera closer or farther away from orbit target.
    * @param amount movement size.
    */
-  zoom (amount: number) {
+  zoom (amount: number, duration: number = 0) {
     if (this.camera instanceof THREE.PerspectiveCamera) {
-      const multiplier =
-        this._zoomSpeed *
-        this.getBaseMultiplier() *
-        (this._orbitalTargetDistance / this._vimReferenceSize)
+      const reverse = 1 / (1 - this._zoomSpeed) - 1
+      const factor = amount < 0 ? this._zoomSpeed : reverse
+      const dist = this.targetOrbitDistance
+      let offset = dist * factor
+      offset = Math.max(this._minOrbitalDistance, offset)
+      let targetDist = dist + offset * amount
+      targetDist = Math.max(this._minOrbitalDistance, targetDist)
 
-      const next = this._orbitalTargetDistance + amount * multiplier
-      this._orbitalTargetDistance = Math.max(next, this._minOrbitalDistance)
-      this.gizmo?.show()
+      const target = new THREE.Vector3(0, 0, targetDist)
+      target.applyQuaternion(this.camera.quaternion)
+      target.add(this._orbitTarget)
+      this._targetPosition = target
+      this.startLerp(duration, 'Position')
     } else {
       const multiplier = this._zoomSpeed * this.getBaseMultiplier()
       const padX = (this.camera.right - this.camera.left) * amount * multiplier
@@ -338,29 +331,24 @@ export class Camera implements ICamera {
   }
 
   /**
-   * Smoothly moves the camera in given direction for a short distance.
-   */
-  addImpulse (impulse: THREE.Vector3) {
-    const localImpulse = impulse
-      .clone()
-      .multiplyScalar(this.getSpeedMultiplier() * this._zoomSpeed)
-    localImpulse.applyQuaternion(this.camera.quaternion)
-    this._impulse.add(localImpulse)
-  }
-
-  /**
    * Moves the camera along all three axes.
    */
   move3 (vector: THREE.Vector3) {
+    if (this.camera instanceof THREE.OrthographicCamera) {
+      vector = vector.clone()
+      vector.setZ(0)
+    }
+
+    this.cancelLerp()
+
     const v = vector.clone()
     v.applyQuaternion(this.camera.quaternion)
     v.multiplyScalar(this.getSpeedMultiplier() * this._moveSpeed)
 
-    this._orbitalTarget.add(v)
-    this.gizmo?.show()
-    if (!this.orbitMode) {
-      this.camera.position.add(v)
-    }
+    this._orbitTarget.add(v)
+    this._targetPosition.add(v)
+    this._lockDirection = true
+    this.startLerp(0, 'Position')
   }
 
   /**
@@ -387,8 +375,6 @@ export class Camera implements ICamera {
       axis === 'Z' ? amount : 0
     )
 
-    this._currentOrbitalDistance += direction.z
-
     this.move3(direction)
   }
 
@@ -396,99 +382,77 @@ export class Camera implements ICamera {
    * Rotates the camera around the X or Y axis or both
    * @param vector where coordinates in range [-1, 1] for rotations of [-180, 180] degrees
    */
-  rotate (vector: THREE.Vector2) {
-    if (this.isLerping()) return
+  rotate (vector: THREE.Vector2, duration: number = 0) {
     const euler = new THREE.Euler(0, 0, 0, 'YXZ')
     euler.setFromQuaternion(this.camera.quaternion)
 
+    const factor = this.orbitMode
+      ? -Math.PI * this._orbitSpeed
+      : -Math.PI * this._rotateSpeed
+
     // When moving the mouse one full sreen
     // Orbit will rotate 180 degree around the scene
-    // Basic will rotate 180 degrees on itself
-    const factor = this.orbitMode
-      ? Math.PI * this._orbitSpeed
-      : Math.PI * this._rotateSpeed
-
-    euler.y -= vector.x * factor
-    euler.x -= vector.y * factor
+    euler.y += vector.x * factor
+    euler.x += vector.y * factor
     euler.z = 0
 
     // Clamp X rotation to prevent performing a loop.
     const max = Math.PI * 0.48
     euler.x = Math.max(-max, Math.min(max, euler.x))
+    const rotation = new Quaternion().setFromEuler(euler)
 
-    this.camera.quaternion.setFromEuler(euler)
-
-    if (!this.orbitMode) {
-      const offset = new THREE.Vector3(0, 0, 1)
-        .applyQuaternion(this.camera.quaternion)
-        .multiplyScalar(this._currentOrbitalDistance)
-
-      this._orbitalTarget = this.camera.position.clone().sub(offset)
+    if (this.orbitMode) {
+      const target = new THREE.Vector3(0, 0, 1)
+      target.applyQuaternion(rotation)
+      this.orbit(target, duration)
+    } else {
+      const offset = new THREE.Vector3(0, 0, -this.orbitDistance)
+      if (duration <= 0) {
+        // apply rotation directly to camera
+        this.camera.quaternion.copy(rotation)
+        offset.applyQuaternion(this.camera.quaternion)
+        this.gizmo?.show()
+      } else {
+        // apply rotation to target and lerp
+        offset.applyQuaternion(rotation)
+        this.startLerp(duration, 'Rotation')
+      }
+      this._orbitTarget = this.camera.position.clone().add(offset)
     }
   }
 
-  /**
-   * Apply the camera frame update
-   */
-  update (deltaTime: number) {
-    const targetVelocity = this._inputVelocity.clone()
+  orbit (forward: THREE.Vector3, duration: number = 0) {
+    const direction = this.clampY(
+      this._orbitTarget,
+      this.camera.position,
+      forward
+    )
 
-    // Update the camera velocity and position
-    const invBlendFactor = Math.pow(this._velocityBlendFactor, deltaTime)
-    const blendFactor = 1.0 - invBlendFactor
-
-    this._velocity.multiplyScalar(invBlendFactor)
-    targetVelocity.multiplyScalar(blendFactor)
-    this._velocity.add(targetVelocity)
-
-    this._currentOrbitalDistance =
-      this._currentOrbitalDistance * invBlendFactor +
-      this._orbitalTargetDistance * blendFactor
-
-    const positionDelta = this._velocity.clone().multiplyScalar(deltaTime)
-    const impulse = this._impulse.clone().multiplyScalar(blendFactor)
-    positionDelta.add(impulse)
-
-    const orbitDelta = positionDelta.clone()
-
-    this._impulse.multiplyScalar(invBlendFactor)
-    this.camera.position.add(positionDelta)
-    this._orbitalTarget.add(orbitDelta)
-
-    if (this.orbitMode) {
-      const target = new THREE.Vector3(0, 0, this._currentOrbitalDistance)
-      target.applyQuaternion(this.camera.quaternion)
-      target.add(this._orbitalTarget)
-
-      if (this.isLerping()) {
-        const frames = this._lerpSecondsDuration / deltaTime
-        const alpha = 1 - Math.pow(0.01, 1 / frames)
-        this.camera.position.lerp(target, alpha)
-      } else {
-        this.camera.position.copy(target)
-        if (this.isSignificant(positionDelta)) {
-          this.gizmo?.show()
-        }
-      }
-    }
-
-    this.gizmo?.setPosition(this._orbitalTarget)
+    const pos = this._orbitTarget.clone()
+    const delta = direction.normalize().multiplyScalar(this.orbitDistance)
+    this._targetPosition = pos.add(delta)
+    this.startLerp(duration, 'Position')
   }
 
   /**
    * Rotates the camera so that it looks at sphere
    * Adjusts distance so that the sphere is well framed
    */
-  private frameSphere (sphere: THREE.Sphere, center: boolean) {
-    if (center) {
-      this.camera.position.setY(sphere.center.y)
-    }
-
-    this.camera.lookAt(sphere.center)
-    this._currentOrbitalDistance = sphere.radius * 3
-    this._orbitalTargetDistance = sphere.radius * 3
-    this._orbitalTarget = sphere.center
+  private frameSphere (sphere: THREE.Sphere, center: boolean, duration: number) {
+    const offset = this.camera.position.clone().sub(sphere.center)
+    if (center) offset.setY(0)
+    offset.normalize()
+    offset.multiplyScalar(sphere.radius * 3)
+    this._targetPosition = sphere.center.clone().add(offset)
+    this._orbitTarget = sphere.center
+    this.startLerp(duration, 'Both')
     this.updateProjection(sphere)
+    this.gizmo?.show(true)
+  }
+
+  private lookAt (position: THREE.Vector3) {
+    this.camera.lookAt(position)
+    this.camera.up.set(0, 1, 0)
   }
 
   updateProjection (sphere: THREE.Sphere) {
@@ -533,20 +497,156 @@ export class Camera implements ICamera {
       this.getBaseMultiplier() *
       // (dist / size) * (size / ref). Size gets canceled.
       (this.orbitMode
-        ? this._orbitalTargetDistance / this._vimReferenceSize
+        ? this.orbitDistance / this._vimReferenceSize
         : this._firstPersonSpeed)
     )
   }
 
-  private getDistanceMultiplier () {}
-
-  private isLerping () {
-    return new Date().getTime() < this._lerpMsEndtime
+  private clampY (
+    center: THREE.Vector3,
+    origin: THREE.Vector3,
+    value: THREE.Vector3
+  ) {
+    const result = value.clone()
+    if (value.y !== 0 && value.x === 0 && value.z === 0) {
+      const delta = origin.clone().sub(center)
+      delta.setY(0)
+      delta.normalize().multiplyScalar(0.01)
+      result.x = delta.x
+      result.z = delta.z
+    }
+    return result
   }
 
-  private startLerp (seconds: number) {
-    this._lerpMsEndtime = new Date().getTime() + seconds * 1000
-    this._lerpSecondsDuration = seconds
+  private slerp (
+    center: THREE.Vector3,
+    start: THREE.Vector3,
+    end: THREE.Vector3,
+    value: number
+  ) {
+    const mid = start.clone().lerp(end, value)
+    const d1 = start.distanceTo(center)
+    const d2 = end.distanceTo(center)
+    const dist = d1 + (d2 - d1) * value
+    const dir = mid.clone().sub(center).normalize()
+    const pos = center.clone().add(dir.multiplyScalar(dist))
+
+    return pos
+  }
+
+  private startLerp (seconds: number, lerp: Lerp) {
+    const time = new Date().getTime()
+    this._lerpEndMs = time + seconds * 1000
+    this._lerpStartMs = time
+    this._lerpPosition = lerp === 'Position' || lerp === 'Both'
+    this._lerpRotation = lerp === 'Rotation' || lerp === 'Both'
+  }
+
+  private shouldLerp () {
+    return new Date().getTime() < this._lerpEndMs
+  }
+
+  private lerpProgress () {
+    const done = new Date().getTime() - this._lerpStartMs
+    const duration = this._lerpEndMs - this._lerpStartMs
+    let progress = done / duration
+    progress = Math.min(progress, 1)
+    return progress
+  }
+
+  /**
+   * Apply the camera frame update
+   */
+  update (deltaTime: number) {
+    this.gizmo?.setPosition(this._orbitTarget)
+
+    if (this.shouldLerp()) {
+      if (this._lerpPosition && !this.isNearTarget()) {
+        this.applyPositionLerp()
+      }
+      if (this._lerpRotation && !this.isLookingAtTarget()) {
+        this.applyRotationLerp()
+      } else if (!this._lockDirection) {
+        this.lookAt(this._orbitTarget)
+      }
+      this.gizmo?.show()
+      return
+    }
+
+    // End any outstanding lerp
+    if (this._lerpPosition || this._lerpRotation) {
+      this.gizmo?.show()
+      this.endLerp()
+    }
+
+    this._targetPosition.copy(this.camera.position)
+
+    this.applyVelocity(deltaTime)
+  }
+
+  private isNearTarget () {
+    return this.camera.position.distanceTo(this._targetPosition) < 0.1
+  }
+
+  private isLookingAtTarget () {
+    return this.goesThrough(
+      this.camera.position,
+      this.forward,
+      this._orbitTarget,
+      0.01
+    )
+  }
+
+  private goesThrough (
+    origin: THREE.Vector3,
+    direction: THREE.Vector3,
+    point: THREE.Vector3,
+    tolerance: number
+  ) {
+    const x = (point.x - origin.x) / direction.x
+    const y = (point.y - origin.y) / direction.y
+    const z = (point.z - origin.z) / direction.z
+
+    const result =
+      Math.abs(x - y) < tolerance &&
+      Math.abs(x - z) < tolerance &&
+      Math.abs(y - z) < tolerance
+
+    return result
+  }
+
+  private cancelLerp () {
+    this._lerpPosition = false
+    this._lerpRotation = false
+    this._lockDirection = false
+    this._lerpEndMs = 0
+  }
+
+  private endLerp () {
+    this.cancelLerp()
+    this.camera.position.copy(this._targetPosition)
+    this.lookAt(this._orbitTarget)
+  }
+
+  private applyVelocity (deltaTime: number) {
+    // Update the camera velocity and position
+    const invBlendFactor = Math.pow(this._velocityBlendFactor, deltaTime)
+    const blendFactor = 1.0 - invBlendFactor
+
+    this._velocity.multiplyScalar(invBlendFactor)
+    const deltaVelocity = this._targetVelocity
+      .clone()
+      .multiplyScalar(blendFactor)
+    this._velocity.add(deltaVelocity)
+
+    const deltaPosition = this._velocity.clone().multiplyScalar(deltaTime)
+
+    this.camera.position.add(deltaPosition)
+    this._orbitTarget.add(deltaPosition)
+
+    if (this.isSignificant(deltaPosition)) {
+      this.gizmo?.show()
+    }
   }
 
   private isSignificant (vector: THREE.Vector3) {
@@ -557,5 +657,27 @@ export class Camera implements ICamera {
       Math.abs(vector.y) > min ||
       Math.abs(vector.z) > min
     )
+  }
+
+  private applyPositionLerp () {
+    // const alpha = this.easeOutCubic(this.lerpProgress())
+    const alpha = this.lerpProgress()
+
+    const pos = this.slerp(
+      this._orbitTarget,
+      this.camera.position,
+      this._targetPosition,
+      alpha
+    )
+
+    this.camera.position.copy(pos)
+  }
+
+  private applyRotationLerp () {
+    const current = this.camera.position
+      .clone()
+      .add(this.forward.multiplyScalar(this.orbitDistance))
+    const look = current.lerp(this._orbitTarget, this.lerpProgress())
+    this.lookAt(look)
   }
 }

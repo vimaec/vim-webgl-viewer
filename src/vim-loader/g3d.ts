@@ -65,7 +65,9 @@ type TypedArray =
   | Int16Array
   | Uint16Array
   | Int32Array
+  | Uint32Array
   | Float32Array
+  | Uint32Array
   | Float64Array
 
 class G3dAttribute {
@@ -98,6 +100,7 @@ class G3dAttribute {
           bytes.byteOffset,
           bytes.byteLength / 8
         )
+      case 'uint8':
       case 'int8':
         return bytes
       case 'int16':
@@ -118,7 +121,18 @@ class G3dAttribute {
           bytes.byteOffset,
           bytes.byteLength / 4
         )
-      // case "int64": return new Int64Array(data.buffer, data.byteOffset, data.byteLength / 8);
+      case 'uint32':
+        return new Uint32Array(
+          bytes.buffer,
+          bytes.byteOffset,
+          bytes.byteLength / 4
+        )
+
+      case 'int64':
+      case 'uint64':
+        throw new Error(
+          '64-bit buffers unsuported in the javascript implementation.'
+        )
       default:
         throw new Error('Unrecognized attribute data type ' + dataType)
     }

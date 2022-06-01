@@ -78,28 +78,27 @@ export class GizmoAxes {
   axes: Axis[]
 
   // dependencies
-  controller: ICamera
+  camera: ICamera
   canvas: HTMLCanvasElement
   context: CanvasRenderingContext2D
   rect: DOMRect
 
   // state
   isDragging: boolean
+  isDragSignificant: boolean
   dragStart: THREE.Vector2
-  dragEnd: THREE.Vector2
-  drag: THREE.Vector2
-  mouse: THREE.Vector3
+  dragLast: THREE.Vector2
+  pointer: THREE.Vector3
   center: THREE.Vector3
   invRotMat: THREE.Matrix4 = new THREE.Matrix4()
   selectedAxis: Axis | null
 
-  constructor (controller: ICamera, options?: Partial<GizmoOptions>) {
+  constructor (camera: ICamera, options?: Partial<GizmoOptions>) {
     this.options = new GizmoOptions(options)
-    this.controller = controller
-    this.mouse = new THREE.Vector3()
+    this.camera = camera
+    this.pointer = new THREE.Vector3()
     this.dragStart = new THREE.Vector2()
-    this.dragEnd = new THREE.Vector2()
-    this.drag = new THREE.Vector2()
+    this.dragLast = new THREE.Vector2()
     this.center = new THREE.Vector3(
       this.options.size / 2,
       this.options.size / 2,
@@ -108,6 +107,7 @@ export class GizmoAxes {
     this.axes = this.createAxes()
     this.selectedAxis = null
     this.isDragging = false
+    this.isDragSignificant = false
 
     this.canvas = this.createCanvas()
     this.context = this.canvas.getContext('2d')!
@@ -196,10 +196,6 @@ export class GizmoAxes {
     canvas.addEventListener('pointerdown', this.onPointerDown, false)
     canvas.addEventListener('pointerenter', this.onPointerEnter, false)
     canvas.addEventListener('pointermove', this.onPointerMove, false)
-    canvas.addEventListener('click', this.onMouseClick, false)
-
-    canvas.addEventListener('touchstart', this.onTouchStart, false)
-
     return canvas
   }
 
@@ -207,37 +203,40 @@ export class GizmoAxes {
     e.preventDefault()
     if (e.touches.length > 1) return
     const touch = e.touches[0]
+    this.initDrag(touch.clientX, touch.clientY)
 
-    this.dragStart.set(touch.clientX, touch.clientY)
     window.addEventListener('touchmove', this.onTouchMove, false)
     window.addEventListener('touchend', this.onTouchEnd, false)
   }
 
   onTouchMove = (e: TouchEvent) => {
-    e.preventDefault()
     if (e.touches.length > 1) return
     const touch = e.touches[0]
-
-    this.onDragAny(touch.clientX, touch.clientY)
+    this.updateDrag(touch.clientX, touch.clientY)
   }
 
   onTouchEnd = (e: TouchEvent) => {
     e.preventDefault()
-    setTimeout(() => (this.isDragging = false), 0)
+    this.endDrag()
+    this.selectedAxis = null
     window.removeEventListener('touchmove', this.onTouchMove, false)
     window.removeEventListener('touchend', this.onTouchEnd, false)
   }
 
   onPointerDown = (e: MouseEvent) => {
-    this.dragStart.set(e.clientX, e.clientY)
-    window.addEventListener('pointermove', this.onDrag, false)
+    this.initDrag(e.clientX, e.clientY)
+
+    window.addEventListener('pointermove', this.onPointerDrag, false)
     window.addEventListener('pointerup', this.onPointerUp, false)
   }
 
-  onPointerUp = () => {
-    setTimeout(() => (this.isDragging = false), 0)
-    this.canvas.classList.remove('dragging')
-    window.removeEventListener('pointermove', this.onDrag, false)
+  onPointerUp = (event: PointerEvent) => {
+    this.endDrag()
+    if (event.pointerType !== 'mouse') {
+      this.pointer.set(0, 0, 0)
+    }
+
+    window.removeEventListener('pointermove', this.onPointerDrag, false)
     window.removeEventListener('pointerup', this.onPointerUp, false)
   }
 
@@ -249,73 +248,82 @@ export class GizmoAxes {
   onPointerMove = (e: MouseEvent) => {
     if (this.isDragging) return
 
-    const currentAxis = this.selectedAxis
-
-    this.selectedAxis = null
     if (e) {
-      this.mouse.set(e.clientX - this.rect.left, e.clientY - this.rect.top, 0)
+      this.pointer = this.toMouseVector(e, this.pointer)
     }
-
-    // Loop through each layer
-    for (let i = 0, length = this.axes.length; i < length; i++) {
-      const distance = this.mouse.distanceTo(this.axes[i].position)
-
-      if (distance < this.axes[i].size) this.selectedAxis = this.axes[i]
-    }
-
-    if (currentAxis !== this.selectedAxis) this.drawLayers(false)
   }
 
-  onDrag = (e: MouseEvent) => {
-    this.onDragAny(e.clientX, e.clientY)
+  toMouseVector (e: MouseEvent, target: THREE.Vector3) {
+    return target.set(e.clientX - this.rect.left, e.clientY - this.rect.top, 0)
   }
 
-  onDragAny (x: number, y: number) {
+  // Drag
+  onPointerDrag = (e: MouseEvent) => {
+    this.updateDrag(e.clientX, e.clientY)
+  }
+
+  initDrag (x: number, y: number) {
+    this.dragStart.set(x, y)
+    this.dragLast.set(x, y)
+    this.isDragging = true
+    this.isDragSignificant = false
+
     if (!this.isDragging) {
       this.canvas.classList.add('dragging')
     }
+  }
 
-    this.isDragging = true
-    this.selectedAxis = null
-    this.dragEnd.set(x, y)
+  updateDrag (x: number, y: number) {
+    if (new THREE.Vector2(x, y).sub(this.dragStart).length() > 3) {
+      this.isDragSignificant = true
+    }
 
-    this.drag.subVectors(this.dragEnd, this.dragStart)
+    const drag = new THREE.Vector2(x, y).sub(this.dragLast)
+    this.dragLast.set(x, y)
 
-    const rotX = this.drag.x / this.canvas.width
-    const rotY = this.drag.y / this.canvas.height
-    this.controller.rotate(new THREE.Vector2(rotX, rotY))
-    this.dragStart.copy(this.dragEnd)
+    const rotX = drag.x / this.canvas.width
+    const rotY = drag.y / this.canvas.height
+    this.camera.rotate(new THREE.Vector2(rotX, rotY))
+  }
+
+  endDrag () {
+    this.isDragging = false
+    if (!this.isDragSignificant) {
+      this.onMouseClick()
+      this.isDragSignificant = false
+    }
+
+    this.canvas.classList.remove('dragging')
   }
 
   onMouseClick = () => {
     // FIXME Don't like the current animation
     if (this.isDragging || !this.selectedAxis) return
-
-    this.controller.forward = this.selectedAxis.direction
+    this.camera.orbit(
+      this.selectedAxis.direction,
+      this.camera.defaultLerpDuration
+    )
     this.selectedAxis = null
   }
 
-  drawCircle (pos: THREE.Vector3, radius = 10, color = '#FF0000') {
-    this.context.beginPath()
-    this.context.arc(pos.x, pos.y, radius, 0, 2 * Math.PI, false)
-    this.context.fillStyle = color
-    this.context.fill()
-    this.context.closePath()
-  }
+  update = () => {
+    this.camera.camera.updateMatrix()
+    this.invRotMat.extractRotation(this.camera.camera.matrix).invert()
 
-  drawLine (
-    p1: THREE.Vector2,
-    p2: THREE.Vector2,
-    width: number = 1,
-    color = '#FF0000'
-  ) {
-    this.context.beginPath()
-    this.context.moveTo(p1.x, p1.y)
-    this.context.lineTo(p2.x, p2.y)
-    this.context.lineWidth = width
-    this.context.strokeStyle = color
-    this.context.stroke()
-    this.context.closePath()
+    for (let i = 0, length = this.axes.length; i < length; i++) {
+      this.setAxisPosition(this.axes[i])
+    }
+
+    // Sort the layers where the +Z position is last so its drawn on top of anything below it
+    this.axes.sort((a, b) => (a.position.z > b.position.z ? 1 : -1))
+
+    // Draw the layers
+    this.drawLayers(true)
+
+    // Keep axis selected during drag.
+    if (!this.isDragging) {
+      this.pickAxes(this.pointer)
+    }
   }
 
   drawLayers (clear: boolean) {
@@ -354,6 +362,29 @@ export class GizmoAxes {
     }
   }
 
+  drawCircle (pos: THREE.Vector3, radius = 10, color = '#FF0000') {
+    this.context.beginPath()
+    this.context.arc(pos.x, pos.y, radius, 0, 2 * Math.PI, false)
+    this.context.fillStyle = color
+    this.context.fill()
+    this.context.closePath()
+  }
+
+  drawLine (
+    p1: THREE.Vector2,
+    p2: THREE.Vector2,
+    width: number = 1,
+    color = '#FF0000'
+  ) {
+    this.context.beginPath()
+    this.context.moveTo(p1.x, p1.y)
+    this.context.lineTo(p2.x, p2.y)
+    this.context.lineWidth = width
+    this.context.strokeStyle = color
+    this.context.stroke()
+    this.context.closePath()
+  }
+
   setAxisPosition (axis: Axis) {
     const position = axis.direction.clone().applyMatrix4(this.invRotMat)
     const size = axis.size
@@ -366,36 +397,25 @@ export class GizmoAxes {
     )
   }
 
-  update = () => {
-    this.controller.camera.updateMatrix()
-    this.invRotMat.extractRotation(this.controller.camera.matrix).invert()
+  private pickAxes (mouse: THREE.Vector3) {
+    const currentAxis = this.selectedAxis
+    this.selectedAxis = null
 
+    // Loop through each layer
     for (let i = 0, length = this.axes.length; i < length; i++) {
-      this.setAxisPosition(this.axes[i])
+      const distance = mouse.distanceTo(this.axes[i].position)
+
+      if (distance < this.axes[i].size) this.selectedAxis = this.axes[i]
     }
 
-    // Sort the layers where the +Z position is last so its drawn on top of anything below it
-    this.axes.sort((a, b) => (a.position.z > b.position.z ? 1 : -1))
-
-    // Draw the layers
-    this.drawLayers(true)
+    if (currentAxis !== this.selectedAxis) this.drawLayers(false)
   }
 
   dispose = () => {
-    /*
-    this.orbit?.removeEventListener('change', this.update)
-    this.orbit?.removeEventListener('start', () =>
-      this.domElement.classList.add('inactive')
-    )
-    this.orbit?.removeEventListener('end', () =>
-      this.domElement.classList.remove('inactive')
-    )
-    */
     this.canvas.removeEventListener('pointerdown', this.onPointerDown, false)
     this.canvas.removeEventListener('pointerenter', this.onPointerEnter, false)
-    this.canvas.removeEventListener('pointermove', this.onPointerMove, false)
-    this.canvas.removeEventListener('click', this.onMouseClick, false)
-    window.removeEventListener('pointermove', this.onDrag, false)
+    this.canvas.removeEventListener('pointermove', this.onPointerDrag, false)
+    window.removeEventListener('pointermove', this.onPointerDrag, false)
     window.removeEventListener('pointerup', this.onPointerUp, false)
     this.canvas.remove()
   }

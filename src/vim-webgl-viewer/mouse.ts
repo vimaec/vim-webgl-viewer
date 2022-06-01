@@ -65,7 +65,8 @@ export class Mouse {
       this.camera.move2(delta, 'XY')
     } else if (event.buttons & 4) {
       // Midle button
-      this.camera.move2(delta, 'XZ')
+      // Same as right button
+      this.camera.move2(delta, 'XY')
     } else {
       // left button
       this.camera.rotate(delta)
@@ -83,11 +84,8 @@ export class Mouse {
 
     if (this._inputKeyboard.isCtrlPressed) {
       this.camera.speed -= scrollValue
-    } else if (this.camera.orbitMode) {
-      this.camera.zoom(scrollValue)
     } else {
-      const impulse = new THREE.Vector3(0, 0, scrollValue)
-      this.camera.addImpulse(impulse)
+      this.camera.zoom(scrollValue, this.camera.defaultLerpDuration)
     }
   }
 

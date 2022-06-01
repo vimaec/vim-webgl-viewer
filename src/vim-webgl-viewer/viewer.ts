@@ -277,20 +277,19 @@ export class Viewer {
    */
   public defaultOnClick (hit: RaycastResult) {
     console.log(hit)
-    if (!hit?.object || hit.object === this.selection.object) {
+    if (!hit?.object) {
       this.selection.select(undefined)
+      if (hit.doubleClick) {
+        this.camera.frame('all', false, this.camera.defaultLerpDuration)
+      }
       return
     }
-    /*
-    if (!hit.object.hasMesh) {
-      throw new Error('Clicked a mesh with no geometry. Something is wrong.')
-    }
-    */
 
     this.selection.select(hit.object)
-    this._camera.target(hit.object.getCenter()!)
 
-    if (hit.doubleClick) this._camera.frame(hit.object)
+    if (hit.doubleClick) {
+      this._camera.frame(hit.object, false, this.camera.defaultLerpDuration)
+    }
 
     const element = hit.object.getBimElement()
     if (element instanceof Map) {

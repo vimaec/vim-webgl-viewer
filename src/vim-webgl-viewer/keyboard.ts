@@ -151,6 +151,9 @@ export class Keyboard {
     // Buttons that activate once on key up
     if (!keyDown) {
       switch (event.keyCode) {
+        case KEYS.KEY_O:
+          this.camera.orthographic = !this.camera.orthographic
+          break
         case KEYS.KEY_ADD:
         case KEYS.KEY_OEM_PLUS:
           this.camera.speed += 1
@@ -167,7 +170,7 @@ export class Keyboard {
           event.preventDefault()
           break
         case KEYS.KEY_HOME:
-          this.camera.frame('all', true)
+          this.camera.frame('all', true, this.camera.defaultLerpDuration)
           event.preventDefault()
           break
         // Selection
@@ -178,9 +181,13 @@ export class Keyboard {
         case KEYS.KEY_Z:
         case KEYS.KEY_F:
           if (this.selection.object) {
-            this.camera.frame(this.selection.object)
+            this.camera.frame(
+              this.selection.object,
+              false,
+              this.camera.defaultLerpDuration
+            )
           } else {
-            this.camera.frame('all')
+            this.camera.frame('all', false, this.camera.defaultLerpDuration)
           }
           event.preventDefault()
           break
@@ -244,6 +251,7 @@ export class Keyboard {
     )
     const speed = this.isShiftPressed ? this.SHIFT_MULTIPLIER : 1
     move.multiplyScalar(speed)
+    // this.camera.move3(move)
     this.camera.localVelocity = move
   }
 }
