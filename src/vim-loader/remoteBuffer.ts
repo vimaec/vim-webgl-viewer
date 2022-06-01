@@ -3,6 +3,7 @@
  */
 
 import { Range } from './bfast'
+import { RemoteValue } from './remoteValue'
 
 /**
  * Represents the state of a single web request
@@ -175,16 +176,48 @@ export class RemoteBuffer {
   queue: RetryRequest[] = []
   active: Set<RetryRequest> = new Set<RetryRequest>()
   maxConcurency: number = 10
+  encoded: RemoteValue<boolean>
 
   constructor (url: string, logger: RequestLogger = new RequestLogger(url)) {
     this.url = url
     this.logger = logger
+
+    this.encoded = new RemoteValue(() => this.requestEncoding())
+  }
+
+  private async requestEncoding () {
+    const xhr = new XMLHttpRequest()
+    xhr.open('HEAD', this.url)
+    xhr.send()
+    console.log(`Requesting header for ${this.url}`)
+
+    const promise = new Promise<string>((resolve, reject) => {
+      xhr.onload = (_) => {
+        const encoding = xhr.getResponseHeader('content-encoding')
+        resolve(encoding)
+      }
+      xhr.onerror = (_) => reject(_)
+    })
+
+    const encoding = await promise
+    const encoded = !!encoding
+
+    console.log(`Encoding for ${this.url} = ${encoding}`)
+    if (encoded) {
+      console.log(
+        `Defaulting to download strategy for encoded content at ${this.url}`
+      )
+    }
+    return encoded
   }
 
   async http (range: Range | undefined, label: string) {
-    const rangeStr = range ? `bytes=${range.start}-${range.end - 1}` : undefined
+    const useRange = range && !(await this.encoded.get())
+    const rangeStr = useRange
+      ? `bytes=${range.start}-${range.end - 1}`
+      : undefined
     const request = new RetryRequest(this.url, rangeStr, 'arraybuffer')
-    request.msg = range
+    request.msg = useRange
       ? `${label} : [${range.start}, ${range.end}] of ${this.url}`
       : `${label} of ${this.url}`
 
@@ -224,14 +257,11 @@ export class RemoteBuffer {
   }
 
   private next () {
-    console.log('Queue size ' + this.queue.length)
     if (this.queue.length === 0) {
-      console.log('queue empty')
       return
     }
 
     if (this.active.size >= this.maxConcurency) {
-      console.log('waiting in queue')
       return
     }
 
@@ -239,8 +269,6 @@ export class RemoteBuffer {
     this.queue.shift()
     this.active.add(next)
     next.send()
-
     console.log('Starting ' + next.msg)
-    console.log('Active size ' + this.active.size)
   }
 }
