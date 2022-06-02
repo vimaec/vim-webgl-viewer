@@ -56,15 +56,18 @@
         const whiteleysNoZip =
           'https://vimdevelopment01storage.blob.core.windows.net/samples/_WHITELEYS-VIM-MAIN_detached.v1.2.13.S.O.nozip.vim'
 
-        await testLoad(wolford, 28.6)
-        await testLoad(wolfordNoZip, 34.6)
-        await testLoad(skanska, 74)
-        await testLoad(skanskaNoZip, 241)
-        await testLoad(whiteleys, 328)
-        await testLoad(whiteleysNoZip, 986)
+        await testLoad(wolford, 'stream', 28.6)
+        await testLoad(wolfordNoZip, 'stream', 34.6)
+        await testLoad(wolfordNoZip, 'geometry', 34.6)
+        await testLoad(skanska, 'stream', 74)
+        await testLoad(skanskaNoZip, 'stream', 241)
+        await testLoad(skanskaNoZip, 'geometry', 241)
+        await testLoad(whiteleys, 'stream', 328)
+        await testLoad(whiteleysNoZip, 'stream', 986)
+        await testLoad(whiteleysNoZip, 'geometry', 986)
       }
 
-      async function testLoad(url, size) {
+      async function testLoad(url, download, size) {
         const delay = (ms) => new Promise((resolve) => setTimeout(resolve, ms))
         let loaded = 0
         const start = new Date().getTime()
@@ -72,7 +75,7 @@
           url,
           {
             rotation: { x: 270, y: 0, z: 0 },
-            download: 'stream',
+            download: download,
           },
           (progress) => (loaded = progress.loaded)
         )
@@ -80,7 +83,7 @@
         const mbs = (loaded / 1000000).toFixed(2)
         const label = url.split('/').pop()
         console.log(
-          `loaded ${label} : ${mbs}MB of ${size}MB in ${secs} seconds`
+          `loaded ${label} : ${mbs}MB of ${size}MB in ${secs} seconds using ${download}`
         )
         await delay(1000)
         viewer.unloadVim(vim)
