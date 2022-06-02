@@ -60,7 +60,7 @@ export class VimSettings {
       rotation: { x: 0, y: 0, z: 0 },
       scale: 1,
       transparency: 'all',
-      download: 'download'
+      download: 'stream'
     }
 
     this.options = options ? deepmerge(fallback, options, undefined) : fallback
