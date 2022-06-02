@@ -268,6 +268,10 @@ export class BFast {
    * Forces download of the full underlying buffer, from now on all calls will be local.
    */
   async forceDownload () {
+    if (this.source instanceof ArrayBuffer) {
+      console.log('Ignoring forceDownload on local buffer.')
+      return
+    }
     const buffer = await this.remote(undefined, this.name)
     if (!buffer) throw new Error('Failed to download BFAST.')
     this.source = buffer
