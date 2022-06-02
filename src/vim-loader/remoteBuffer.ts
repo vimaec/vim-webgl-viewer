@@ -109,7 +109,8 @@ export class RequestLogger {
     const download = this.all.get(field)
     if (!download) throw new Error('Failing missing download')
     download.status = 'completed'
-    this.signal()
+    // We don't want to throttle end update.
+    this.onUpdate?.(this)
   }
 
   private signal () {
@@ -156,7 +157,8 @@ class RetryRequest {
     xhr.onprogress = (e) => {
       this.onProgress?.(e)
     }
-    xhr.onload = () => {
+    xhr.onload = (e) => {
+      this.onProgress?.(e)
       this.onLoad?.(xhr.response)
     }
     xhr.onerror = (_) => {
