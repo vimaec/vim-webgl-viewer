@@ -22,91 +22,64 @@
 </head>
 <body>
     <script src="https://unpkg.com/three@0.133.1/build/three.min.js"></script>
-    <script src="https://unpkg.com/vim-webgl-viewer@1.1.31"></script>
+    <script src="https://unpkg.com/vim-webgl-viewer@1.2.28-dev.4"></script>
     <script>
-      // Parse URL
-      const url = 'https://vim.azureedge.net/samples/residence.vim'
+    import * as VIM from './vim'
 
-      // Create Viewer
-      const viewer = new VIM.Viewer({
-        camera: { showGizmo: true },
-        groundPlane: {
-          show: true,
-          texture:
-            'https://vimdevelopment01storage.blob.core.windows.net/textures/vim-floor-soft.png',
-          opacity: 1,
-          size: 5
-        }
-      })
-
-    const offset = -1
-    let count = 0
-    function onLoad () {
-      if (++count === 5) {
-        viewer.selection.select(viewer.getVim(0).getObjectFromElementId(195095))
-
-        const vim0 = viewer.getVim(0)
-        const filter = [195095, 517815, 517321, 465993].map(i => vim0.getObjectFromElementId(i))
-        vim0.getObjectFromElementId(195095).changeColor(new THREE.Color(1, 0, 0))
-        vim0.getObjectFromElementId(517815).changeColor(new THREE.Color(0, 1, 0))
-        vim0.getObjectFromElementId(517321).changeColor(new THREE.Color(0, 0, 1))
-        vim0.getObjectFromElementId(465993).changeColor(new THREE.Color(0, 0, 0))
-        viewer.filterVim(vim0, filter)
-        viewer.selection.select(vim0.getObjectFromElementId(195095))
-
-        const vim4 = viewer.getVim(4)
-        vim4.getObjectFromElementId(183622).changeColor(new THREE.Color(1, 0, 0))
-        viewer.filterVim(vim4, [vim0.getObjectFromElementId(195095)])
-        vim4.getObjectFromElementId(174811).changeColor(new THREE.Color(1, 0, 0))
-        viewer.filterVim(vim4, undefined)
+    // Create Viewer
+    const viewer = new VIM.Viewer({
+      groundPlane: {
+        show: true,
+        texture:
+          'https://vimdevelopment01storage.blob.core.windows.net/textures/vim-floor-soft.png',
+        opacity: 1,
+        size: 5
       }
+    })
+
+    const wolford =
+      'https://vimdevelopment01storage.blob.core.windows.net/samples/residence.vim'
+    const wolfordNoZip =
+      'https://vimdevelopment01storage.blob.core.windows.net/samples/residence_nozip.vim'
+
+    const skanska =
+      'https://vimdevelopment01storage.blob.core.windows.net/samples/skanska.vim'
+    const skanskaNoZip =
+      'https://vimdevelopment01storage.blob.core.windows.net/samples/skanska.nozip.vim'
+
+    const whiteleys =
+      'https://vimdevelopment01storage.blob.core.windows.net/samples/_WHITELEYS-VIM-MAIN_detached.v1.2.42.vim.gz'
+    const whiteleysNoZip =
+      'https://vimdevelopment01storage.blob.core.windows.net/samples/_WHITELEYS-VIM-MAIN_detached.v1.2.13.S.O.nozip.vim'
+
+    await testLoad(wolford)
+    await testLoad(wolfordNoZip)
+    await testLoad(skanska)
+    await testLoad(skanskaNoZip)
+    await testLoad(whiteleys)
+    await testLoad(whiteleysNoZip)
+
+    async function testLoad (url: string) {
+      const delay = (ms) => new Promise((resolve) => setTimeout(resolve, ms))
+      let loaded = 0
+      const start = new Date().getTime()
+      const vim = await viewer.loadVim(
+        url,
+        {
+          rotation: { x: 270, y: 0, z: 0 },
+          download: 'stream'
+        },
+        (progress) => (loaded = progress.loaded)
+      )
+      const time = new Date().getTime() - start
+      console.log(
+        `loaded ${url.split('/').pop()} : ${loaded / 1000000}MB in ${
+          time / 1000
+        } seconds`
+      )
+      await delay(1000)
+      viewer.unloadVim(vim)
     }
-
-    viewer.loadVim(url,
-      {
-        position: { x: 0, y: 0, z: 0 },
-        rotation: { x: 270, y: 0, z: 0 },
-        transparency: 'all'
-      },
-      (vim) => onLoad())
-
-    viewer.loadVim(url,
-      {
-        position: { x: offset, y: 0, z: 0 },
-        rotation: { x: 270, y: 0, z: 0 },
-        transparency: 'allAsOpaque'
-      },
-      (vim) => onLoad())
-
-    viewer.loadVim(url,
-      {
-        position: { x: offset * 2, y: 0, z: 0 },
-        rotation: { x: 270, y: 0, z: 0 },
-        transparency: 'opaqueOnly'
-      },
-      (vim) => onLoad())
-
-    viewer.loadVim(url,
-      {
-        position: { x: 0, y: 1, z: 0 },
-        rotation: { x: 270, y: 0, z: 0 },
-        transparency: 'transparentOnly'
-      },
-      (vim) => onLoad())
-
-    viewer.loadVim(url,
-      {
-        position: { x: offset, y: 1, z: 0 },
-        rotation: { x: 270, y: 0, z: 0 },
-        transparency: 'all'
-      },
-      (vim) => onLoad())
-
-    globalThis.viewer = viewer
-    globalThis.VIM = VIM
-    globalThis.THREE = THREE
-
-
     </script> 
 </body>
 </html>
