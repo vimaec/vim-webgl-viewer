@@ -1,6 +1,6 @@
 import * as VIM from './vim'
 import * as THREE from 'three'
-import { VimOptions, VimSettings } from './vim'
+import { VimOptions } from './vim'
 
 // Parse URL
 const params = new URLSearchParams(window.location.search)
@@ -58,17 +58,24 @@ function load2 (vim: string | ArrayBuffer) {
   const COUNT = 1
   for (let i = 0; i < COUNT; i++) {
     for (let j = 0; j < COUNT; j++) {
-      viewer.loadVim(
-        vim,
-        {
-          rotation: { x: 270, y: 0, z: 0 },
-          transparency: transparency,
-          download: download
-        },
-        (progress) => {
-          console.log(`Loading : ${progress.loaded} / ${progress.total}`)
-        }
-      )
+      const start = new Date().getTime()
+      viewer
+        .loadVim(
+          vim,
+          {
+            rotation: { x: 270, y: 0, z: 0 },
+            transparency: transparency,
+            download: download
+          },
+          (progress) => {
+            console.log(`Loading : ${progress.loaded} / ${progress.total}`)
+          }
+        )
+        .then((v) =>
+          console.log(
+            'Loaded in ' + (new Date().getTime() - start) / 1000 + ' seconds'
+          )
+        )
     }
   }
 }

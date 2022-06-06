@@ -20,7 +20,7 @@ export class RemoteValue<T> {
    * Returns a value from cache or queue up existing request or start a new requests
    */
   get (): Promise<T> {
-    if (this._value) {
+    if (this._value !== undefined) {
       // console.log(this.label + ' returning cached value ')
       return Promise.resolve(this._value)
     }
