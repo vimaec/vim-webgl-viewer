@@ -38,12 +38,12 @@ export class Viewport {
   }
 
   /**
-   * Returns the pixel size of the canvas.
+   * Returns the pixel size of the parent element.
    */
   getParentSize (): [width: number, height: number] {
     return [
-      this.canvas.parentElement!.clientWidth,
-      this.canvas.parentElement!.clientHeight
+      this.canvas.parentElement?.clientWidth ?? this.canvas.clientWidth,
+      this.canvas.parentElement?.clientHeight ?? this.canvas.clientHeight
     ]
   }
 
@@ -55,10 +55,7 @@ export class Viewport {
   }
 
   getAspectRatio () {
-    return (
-      this.canvas.parentElement!.clientWidth /
-      this.canvas.parentElement!.clientHeight
-    )
+    return this.canvas.clientWidth / this.canvas.clientHeight
   }
 
   onResize (callback: () => void) {
