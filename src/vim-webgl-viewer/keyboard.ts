@@ -115,7 +115,7 @@ export class Keyboard {
   }
 
   private get section () {
-    return this._viewer.section
+    return this._viewer.gizmoSection
   }
 
   // State

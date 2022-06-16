@@ -1,5 +1,4 @@
 import { Viewer } from './viewer'
-import { Materials } from '../vim-loader/materials'
 import * as THREE from 'three'
 
 class BoxOutline extends THREE.LineSegments {
@@ -164,66 +163,19 @@ class BoxHighlight extends THREE.Mesh {
   }
 }
 
-class BoxClipper {
-  viewer: Viewer
-  private _active: boolean
-
-  constructor (viewer: Viewer) {
-    this.viewer = viewer
-  }
-
-  maxX: THREE.Plane = new THREE.Plane(new THREE.Vector3(-1, 0, 0))
-  minX: THREE.Plane = new THREE.Plane(new THREE.Vector3(1, 0, 0))
-  maxY: THREE.Plane = new THREE.Plane(new THREE.Vector3(0, -1, 0))
-  minY: THREE.Plane = new THREE.Plane(new THREE.Vector3(0, 1, 0))
-  maxZ: THREE.Plane = new THREE.Plane(new THREE.Vector3(0, 0, -1))
-  minZ: THREE.Plane = new THREE.Plane(new THREE.Vector3(0, 0, 1))
-  planes: THREE.Plane[] = [
-    this.maxX,
-    this.minX,
-    this.maxY,
-    this.minY,
-    this.maxZ,
-    this.minZ
-  ]
-
-  fitBox (box: THREE.Box3) {
-    this.maxX.constant = box.max.x
-    this.minX.constant = -box.min.x
-    this.maxY.constant = box.max.y
-    this.minY.constant = -box.min.y
-    this.maxZ.constant = box.max.z
-    this.minZ.constant = -box.min.z
-  }
-
-  set active (value: boolean) {
-    const materials = Materials.getDefaultLibrary()
-    const p = value ? this.planes : undefined
-    materials.opaque.clippingPlanes = p
-    materials.transparent.clippingPlanes = p
-    materials.wireframe.clippingPlanes = p
-    this.viewer.renderer.renderer.localClippingEnabled = value
-    this._active = value
-  }
-
-  get active () {
-    return this._active
-  }
-}
-
 class BoxInputs {
   // dependencies
   viewer: Viewer
   cube: THREE.Object3D
-  box: THREE.Box3
+  sharedBox: THREE.Box3
 
   // state
   faceNormal: THREE.Vector3 = new THREE.Vector3()
   dragOrigin: THREE.Vector3 = new THREE.Vector3()
-  lastBox: THREE.Box3 = new THREE.Box3()
   dragpPlane: THREE.Plane
   mouseDown: boolean
   raycaster: THREE.Raycaster = new THREE.Raycaster()
+  lastBox: THREE.Box3 = new THREE.Box3()
   unregisters: (() => void)[] = []
 
   // Called when mouse enters or leave a face
@@ -234,7 +186,7 @@ class BoxInputs {
   constructor (viewer: Viewer, cube: THREE.Object3D, box: THREE.Box3) {
     this.viewer = viewer
     this.cube = cube
-    this.box = box
+    this.sharedBox = box
   }
 
   private reg = (
@@ -261,8 +213,6 @@ class BoxInputs {
   }
 
   onMouseMove (event: any) {
-    console.log('onMouseMove')
-
     if (this.mouseDown) {
       this.onDrag(event)
       return
@@ -293,7 +243,6 @@ class BoxInputs {
 
   onMouseUp (event: any) {
     if (this.mouseDown) {
-      this.viewer.selection.clear()
       this.faceNormal = new THREE.Vector3()
       this.mouseDown = false
       this.viewer.inputs.register()
@@ -302,18 +251,17 @@ class BoxInputs {
   }
 
   onMouseClick (event: any) {
-    console.log('OnClick !')
     const hits = this.raycast(new THREE.Vector2(event.offsetX, event.offsetY))
     const hit = hits?.[0]
     if (!hit?.face?.normal) return
 
+    this.lastBox.copy(this.sharedBox)
     this.faceNormal = hit.face.normal
     this.dragOrigin.copy(hit.point)
     const dist = hit.point.clone().dot(this.viewer.camera.forward)
 
     this.dragpPlane = new THREE.Plane(this.viewer.camera.forward, -dist)
     this.mouseDown = true
-    this.lastBox.copy(this.box)
     this.viewer.inputs.unregister()
   }
 
@@ -331,33 +279,33 @@ class BoxInputs {
     // We compute the normal-aligned component of the delta between current drag point and origin drag point.
     const delta = point.sub(this.dragOrigin)
     const amount = delta.dot(this.faceNormal)
-    const nextBox = this.stretch(this.faceNormal, amount)
-    this.onBoxStretch?.(nextBox)
+    const box = this.stretch(this.faceNormal, amount)
+    this.onBoxStretch?.(box)
   }
 
   stretch (normal: THREE.Vector3, amount: number) {
-    const box = this.lastBox.clone()
+    const result = this.sharedBox.clone()
     if (normal.x > 0.1) {
-      box.max.setX(Math.max(this.lastBox.max.x + amount, box.min.x - 1))
+      result.max.setX(Math.max(this.lastBox.max.x + amount, result.min.x - 1))
     }
     if (normal.x < -0.1) {
-      box.min.setX(Math.min(this.lastBox.min.x - amount, box.max.x + 1))
+      result.min.setX(Math.min(this.lastBox.min.x - amount, result.max.x + 1))
     }
 
     if (normal.y > 0.1) {
-      box.max.setY(Math.max(this.lastBox.max.y + amount, box.min.y - 1))
+      result.max.setY(Math.max(this.lastBox.max.y + amount, result.min.y - 1))
     }
     if (normal.y < -0.1) {
-      box.min.setY(Math.min(this.lastBox.min.y - amount, box.max.y + 1))
+      result.min.setY(Math.min(this.lastBox.min.y - amount, result.max.y + 1))
     }
 
     if (normal.z > 0.1) {
-      box.max.setZ(Math.max(this.lastBox.max.z + amount, box.min.z - 1))
+      result.max.setZ(Math.max(this.lastBox.max.z + amount, result.min.z - 1))
     }
     if (normal.z < -0.1) {
-      box.min.setZ(Math.min(this.lastBox.min.z - amount, this.box.max.z + 1))
+      result.min.setZ(Math.min(this.lastBox.min.z - amount, result.max.z + 1))
     }
-    return box
+    return result
   }
 
   raycast (position: THREE.Vector2) {
@@ -371,49 +319,52 @@ class BoxInputs {
 
 export class GizmoSection {
   // dependencies
-  viewer: Viewer
+  _viewer: Viewer
 
   // resources
   inputs: BoxInputs
   cube: BoxMesh
   outline: BoxOutline
   highlight: BoxHighlight
-  clipper: BoxClipper
 
   // State
-  box: THREE.Box3
-  normal: THREE.Vector3
+  private _normal: THREE.Vector3
   private _active: boolean
   private _show: boolean
   private _interactive: boolean
 
-  constructor (viewer: Viewer) {
-    this.viewer = viewer
+  private get renderer () {
+    return this._viewer.renderer
+  }
 
-    this.normal = new THREE.Vector3()
-    this.box = new THREE.Box3(
-      new THREE.Vector3(-30, -30, -30),
-      new THREE.Vector3(30, 30, 30)
-    )
+  private get section () {
+    return this._viewer.renderer.section
+  }
+
+  constructor (viewer: Viewer) {
+    this._viewer = viewer
+
+    this._normal = new THREE.Vector3()
 
     this.cube = new BoxMesh()
-    this.clipper = new BoxClipper(this.viewer)
     this.outline = new BoxOutline()
     this.highlight = new BoxHighlight()
 
-    this.viewer.renderer.add(this.cube)
-    this.viewer.renderer.add(this.outline)
-    this.viewer.renderer.add(this.highlight)
+    this.renderer.add(this.cube)
+    this.renderer.add(this.outline)
+    this.renderer.add(this.highlight)
 
-    this.inputs = new BoxInputs(viewer, this.cube, this.box)
+    this.inputs = new BoxInputs(
+      viewer,
+      this.cube,
+      this._viewer.renderer.section.box
+    )
     this.inputs.onFaceEnter = (normal) => {
-      console.log('enter')
-      this.highlight.highlight(this.box, normal)
-      this.normal = normal
+      this.highlight.highlight(this.section.box, normal)
+      this._normal = normal
     }
     this.inputs.onBoxStretch = (box) => {
-      console.log('stretch')
-      this.box.copy(box)
+      this.renderer.section.fitBox(box)
       this.update()
     }
     this.active = false
@@ -428,7 +379,7 @@ export class GizmoSection {
 
   public set active (value: boolean) {
     this._active = value
-    this.clipper.active = value
+    this.renderer.section.active = value
   }
 
   get interactive () {
@@ -456,16 +407,20 @@ export class GizmoSection {
   public fitBox (box: THREE.Box3) {
     this.cube.fitBox(box)
     this.outline.fitBox(box)
-    this.clipper.fitBox(box)
-    this.box.copy(box)
+    this.renderer.section.fitBox(box)
   }
 
-  private update () {
-    this.fitBox(this.box)
-    this.highlight.highlight(this.box, this.normal)
+  // Call this if there were changes to SectionBox
+  update () {
+    this.fitBox(this.section.box)
+    this.highlight.highlight(this.section.box, this._normal)
   }
 
   dispose () {
+    this.renderer.remove(this.cube)
+    this.renderer.remove(this.outline)
+    this.renderer.remove(this.highlight)
+
     this.inputs.unregister()
     this.cube.dispose()
     this.outline.dispose()

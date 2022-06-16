@@ -8,7 +8,7 @@ import { Vim } from '../vim-loader/vim'
 import { RenderScene } from './renderScene'
 import { Viewport } from './viewport'
 import { Camera } from './camera'
-import { GizmoSection } from './gizmoSection'
+import { Renderer } from './renderer'
 
 type ThreeIntersectionList = THREE.Intersection<THREE.Object3D<THREE.Event>>[]
 
@@ -108,7 +108,7 @@ export class Raycaster {
   private _viewport: Viewport
   private _camera: Camera
   private _scene: RenderScene
-  private _section: GizmoSection
+  private _renderer: Renderer
 
   private _raycaster = new THREE.Raycaster()
 
@@ -116,12 +116,12 @@ export class Raycaster {
     viewport: Viewport,
     camera: Camera,
     scene: RenderScene,
-    section: GizmoSection
+    renderer: Renderer
   ) {
     this._viewport = viewport
     this._camera = camera
     this._scene = scene
-    this._section = section
+    this._renderer = renderer
   }
 
   /**
@@ -130,9 +130,10 @@ export class Raycaster {
   screenRaycast (position: THREE.Vector2): RaycastResult {
     console.time('raycast')
     let intersections = this.raycast(position)
-    if (this._section.active) {
+
+    if (this._renderer.section.active) {
       intersections = intersections.filter((i) =>
-        this._section.box.containsPoint(i.point)
+        this._renderer.section.box.containsPoint(i.point)
       )
     }
     console.timeEnd('raycast')

@@ -10,7 +10,6 @@ import { Camera, ICamera } from './camera'
 import { Input } from './input'
 import { Selection } from './selection'
 import { Environment, IEnvironment } from './environment'
-import { Renderer } from './renderer'
 import { Raycaster, RaycastResult } from './raycaster'
 import { CameraGizmo } from './gizmos'
 import { RenderScene } from './renderScene'
@@ -26,6 +25,7 @@ import { BFast } from '../vim-loader/bfast'
 import { Vim } from '../vim-loader/vim'
 import { IProgressLogs, RemoteBuffer } from '../vim-loader/remoteBuffer'
 import { Materials } from '../vim-loader/materials'
+import { Renderer } from './renderer'
 
 /**
  * Viewer and loader for vim files.
@@ -61,7 +61,10 @@ export class Viewer {
    */
   raycaster: Raycaster
 
-  section: GizmoSection
+  /**
+   * Interface to interact with the section gizmo.
+   */
+  gizmoSection: GizmoSection
 
   private _environment: Environment
   private _camera: Camera
@@ -121,8 +124,7 @@ export class Viewer {
     this._gizmoAxes.canvas.style.right = '10px'
     this._gizmoAxes.canvas.style.top = '10px'
 
-    this.section = new GizmoSection(this)
-    this.section.active = false
+    this.gizmoSection = new GizmoSection(this)
 
     this._environment = new Environment(this.settings)
     this._environment.getObjects().forEach((o) => this.renderer.add(o))
@@ -136,7 +138,7 @@ export class Viewer {
       this.viewport,
       this._camera,
       scene,
-      this.section
+      this.renderer
     )
     this.inputs = new Input(this)
     this.inputs.register()
@@ -244,7 +246,7 @@ export class Viewer {
     const box = this.renderer.getBoundingBox()
     if (box) this._environment.adaptToContent(box)
     this._camera.adaptToContent()
-    this.section.fitBox(box)
+    this.gizmoSection.fitBox(box)
   }
 
   /**
