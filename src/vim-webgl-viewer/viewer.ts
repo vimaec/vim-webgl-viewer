@@ -16,6 +16,7 @@ import { CameraGizmo } from './gizmos'
 import { RenderScene } from './renderScene'
 import { Viewport } from './viewport'
 import { GizmoAxes } from './gizmoAxes'
+import { GizmoSection } from './gizmoSection'
 
 // loader
 import { VimSettings, VimOptions } from '../vim-loader/vimSettings'
@@ -59,6 +60,8 @@ export class Viewer {
    * Interface to raycast into the scene to find objects.
    */
   raycaster: Raycaster
+
+  section: GizmoSection
 
   private _environment: Environment
   private _camera: Camera
@@ -118,6 +121,9 @@ export class Viewer {
     this._gizmoAxes.canvas.style.right = '10px'
     this._gizmoAxes.canvas.style.top = '10px'
 
+    this.section = new GizmoSection(this)
+    this.section.active = false
+
     this._environment = new Environment(this.settings)
     this._environment.getObjects().forEach((o) => this.renderer.add(o))
 
@@ -126,7 +132,12 @@ export class Viewer {
 
     // Input and Selection
     this.selection = new Selection(this.renderer)
-    this.raycaster = new Raycaster(this.viewport, this._camera, scene)
+    this.raycaster = new Raycaster(
+      this.viewport,
+      this._camera,
+      scene,
+      this.section
+    )
     this.inputs = new Input(this)
     this.inputs.register()
 
@@ -233,6 +244,7 @@ export class Viewer {
     const box = this.renderer.getBoundingBox()
     if (box) this._environment.adaptToContent(box)
     this._camera.adaptToContent()
+    this.section.fitBox(box)
   }
 
   /**

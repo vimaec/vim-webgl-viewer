@@ -8,6 +8,7 @@ import { Vim } from '../vim-loader/vim'
 import { RenderScene } from './renderScene'
 import { Viewport } from './viewport'
 import { Camera } from './camera'
+import { GizmoSection } from './gizmoSection'
 
 type ThreeIntersectionList = THREE.Intersection<THREE.Object3D<THREE.Event>>[]
 
@@ -107,13 +108,20 @@ export class Raycaster {
   private _viewport: Viewport
   private _camera: Camera
   private _scene: RenderScene
+  private _section: GizmoSection
 
   private _raycaster = new THREE.Raycaster()
 
-  constructor (viewport: Viewport, camera: Camera, scene: RenderScene) {
+  constructor (
+    viewport: Viewport,
+    camera: Camera,
+    scene: RenderScene,
+    section: GizmoSection
+  ) {
     this._viewport = viewport
     this._camera = camera
     this._scene = scene
+    this._section = section
   }
 
   /**
@@ -121,7 +129,12 @@ export class Raycaster {
    */
   screenRaycast (position: THREE.Vector2): RaycastResult {
     console.time('raycast')
-    const intersections = this.raycast(position)
+    let intersections = this.raycast(position)
+    if (this._section.active) {
+      intersections = intersections.filter((i) =>
+        this._section.box.containsPoint(i.point)
+      )
+    }
     console.timeEnd('raycast')
     const r = new RaycastResult(position, intersections)
 
@@ -144,11 +157,17 @@ export class Raycaster {
     return r
   }
 
-  private raycast (position: THREE.Vector2): ThreeIntersectionList {
+  getRaycaster (position: THREE.Vector2, target: THREE.Raycaster) {
+    target = new THREE.Raycaster()
     const [width, height] = this._viewport.getSize()
     const x = (position.x / width) * 2 - 1
     const y = -(position.y / height) * 2 + 1
-    this._raycaster.setFromCamera(new THREE.Vector2(x, y), this._camera.camera)
+    target.setFromCamera(new THREE.Vector2(x, y), this._camera.camera)
+    return target
+  }
+
+  private raycast (position: THREE.Vector2): ThreeIntersectionList {
+    this._raycaster = this.getRaycaster(position, this._raycaster)
     return this._raycaster.intersectObjects(this._scene.scene.children)
   }
 }
