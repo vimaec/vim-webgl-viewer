@@ -20,7 +20,7 @@ export class Input {
   private _mouse: Mouse
   private _keyboard: Keyboard
 
-  constructor (viewer: Renderer) {
+  constructor (viewer: Viewer) {
     this._canvas = viewer.viewport.canvas
     this._unregisters = []
 
