@@ -360,8 +360,8 @@ export class GizmoSection {
       this._viewer.renderer.section.box
     )
     this.inputs.onFaceEnter = (normal) => {
-      this.highlight.highlight(this.section.box, normal)
       this._normal = normal
+      if (this.show) this.highlight.highlight(this.section.box, normal)
     }
     this.inputs.onBoxStretch = (box) => {
       this.renderer.section.fitBox(box)
@@ -402,6 +402,7 @@ export class GizmoSection {
     this.cube.visible = value
     this.outline.visible = value
     this.highlight.visible = value
+    if (value) this.update()
   }
 
   public fitBox (box: THREE.Box3) {
