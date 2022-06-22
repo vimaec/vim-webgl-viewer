@@ -24,7 +24,7 @@ export namespace ViewerOptions {
    */
   export type GroundPlane = {
     /** Enables/Disables plane under scene */
-    show: boolean
+    visible: boolean
     /** Local or remote texture url for plane */
     texture: string
     /** Opacity of the plane */
@@ -169,7 +169,7 @@ export class ViewerSettings {
         }
       },
       groundPlane: {
-        show: false,
+        visible: false,
         texture: undefined,
         opacity: 1,
         color: { r: 0xff, g: 0xff, b: 0xff },
@@ -199,7 +199,7 @@ export class ViewerSettings {
   getCanvasId = () => this.options.canvas.id
 
   // Plane
-  getGroundPlaneShow = () => this.options.groundPlane.show!
+  getGroundPlaneVisible = () => this.options.groundPlane.visible!
   getGroundPlaneColor = () => toRGBColor(this.options.groundPlane.color!)
   getGroundPlaneTextureUrl = () => this.options.groundPlane.texture!
   getGroundPlaneOpacity = () => this.options.groundPlane.opacity!
