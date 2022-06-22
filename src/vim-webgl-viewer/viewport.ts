@@ -56,7 +56,8 @@ export class Viewport {
   }
 
   getAspectRatio () {
-    return this.canvas.clientWidth / this.canvas.clientHeight
+    const [width, height] = this.getParentSize()
+    return width / height
   }
 
   onResize (callback: () => void) {
