@@ -336,7 +336,7 @@ export class GizmoSection {
 
   // State
   private _normal: THREE.Vector3
-  private _active: boolean
+  private _clip: boolean
   private _show: boolean
   private _interactive: boolean
 
@@ -368,24 +368,24 @@ export class GizmoSection {
     )
     this.inputs.onFaceEnter = (normal) => {
       this._normal = normal
-      if (this.show) this.highlight.highlight(this.section.box, normal)
+      if (this.visible) this.highlight.highlight(this.section.box, normal)
     }
     this.inputs.onBoxStretch = (box) => {
       this.renderer.section.fitBox(box)
       this.update()
     }
-    this.active = false
-    this.show = false
+    this.clip = false
+    this.visible = false
     this.interactive = false
     this.update()
   }
 
-  get active () {
-    return this._active
+  get clip () {
+    return this._clip
   }
 
-  public set active (value: boolean) {
-    this._active = value
+  public set clip (value: boolean) {
+    this._clip = value
     this.renderer.section.active = value
   }
 
@@ -400,11 +400,11 @@ export class GizmoSection {
     this.highlight.visible = false
   }
 
-  get show () {
+  get visible () {
     return this._show
   }
 
-  set show (value: boolean) {
+  set visible (value: boolean) {
     this._show = value
     this.cube.visible = value
     this.outline.visible = value
