@@ -24,7 +24,7 @@ if (params.has('download')) {
 // Create Viewer
 const viewer = new VIM.Viewer({
   groundPlane: {
-    show: true,
+    visible: true,
     texture:
       'https://vimdevelopment01storage.blob.core.windows.net/textures/vim-floor-soft.png',
     opacity: 1,
