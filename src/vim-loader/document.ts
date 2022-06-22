@@ -156,11 +156,23 @@ export class Document {
   }
 
   /**
-   * Returns all fields of element at given index
+   * Returns all fields of element at given element index
    * @param element vim element index
    */
   async getElement (element: number) {
     return this.getEntity('Vim.Element', element)
+  }
+
+  /**
+   * Returns provided field of at given element index
+   * @param element vim element index
+   * @param field field name
+   * @param resolveStrings field name
+   */
+  async getElementValue (element: number, field: string) {
+    const elements = await this._entity.getBfast('Vim.Element')
+    const value = await elements.getValue(field, element)
+    return value
   }
 
   /**
@@ -200,6 +212,10 @@ export class Document {
     if (!row) return
     this.resolveStrings(row)
     return row
+  }
+
+  getString (index: number) {
+    return this._strings[index]
   }
 
   /**

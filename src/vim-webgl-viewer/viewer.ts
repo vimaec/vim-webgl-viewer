@@ -16,6 +16,7 @@ import { RenderScene } from './renderScene'
 import { Viewport } from './viewport'
 import { GizmoAxes } from './gizmoAxes'
 import { GizmoSection } from './gizmoSection'
+import { Isolation } from './isolation'
 
 // loader
 import { VimSettings, VimOptions } from '../vim-loader/vimSettings'
@@ -66,15 +67,10 @@ export class Viewer {
    */
   gizmoSection: GizmoSection
 
-  private _environment: Environment
-  private _camera: Camera
-  private _loader: Loader
-  private _clock = new THREE.Clock()
-  private _gizmoAxes: GizmoAxes
-
-  // State
-  private _vims: (Vim | undefined)[] = []
-  private _disposed: boolean = false
+  /**
+   * Interface to interact with isolation.
+   */
+  isolation: Isolation
 
   /**
    * Interface to manipulate the viewer camera.
@@ -89,6 +85,16 @@ export class Viewer {
   get environment () {
     return this._environment as IEnvironment
   }
+
+  private _environment: Environment
+  private _camera: Camera
+  private _loader: Loader
+  private _clock = new THREE.Clock()
+  private _gizmoAxes: GizmoAxes
+
+  // State
+  private _vims: (Vim | undefined)[] = []
+  private _disposed: boolean = false
 
   /**
    * Callback for on mouse click. Replace it to override or combine
@@ -125,6 +131,7 @@ export class Viewer {
     this._gizmoAxes.canvas.style.top = '10px'
 
     this.gizmoSection = new GizmoSection(this)
+    this.isolation = new Isolation(this)
 
     this._environment = new Environment(this.settings)
     this._environment.getObjects().forEach((o) => this.renderer.add(o))

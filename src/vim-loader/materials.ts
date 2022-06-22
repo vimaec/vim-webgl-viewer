@@ -12,15 +12,21 @@ export namespace Materials {
     opaque: THREE.Material
     transparent: THREE.Material
     wireframe: THREE.LineBasicMaterial
+    ghost: THREE.Material
+    shape: THREE.Material
 
     constructor (
       opaque?: THREE.Material,
       transparent?: THREE.Material,
-      wireframe?: THREE.LineBasicMaterial
+      wireframe?: THREE.LineBasicMaterial,
+      ghost?: THREE.Material,
+      shape?: THREE.Material
     ) {
       this.opaque = opaque ?? createOpaque()
       this.transparent = transparent ?? createTransparent()
       this.wireframe = wireframe ?? createWireframe()
+      this.ghost = ghost ?? createGhost()
+      this.shape = shape ?? createShape()
     }
 
     dispose () {
@@ -66,14 +72,126 @@ export namespace Materials {
   }
 
   /**
+   * Creates a new instance of the default wireframe material
+   * @returns a THREE.LineBasicMaterial
+   */
+  export function createWireframe () {
+    const material = new THREE.LineBasicMaterial({
+      depthTest: false,
+      opacity: 1,
+      color: new THREE.Color(0x0000ff),
+      transparent: true
+    })
+    return material
+  }
+
+  /**
+   * Creates a new instance of the default ghost material used for isolation
+   * @returns a THREE.Material
+   */
+  export function createGhost () {
+    const mat = new THREE.MeshBasicMaterial({
+      transparent: true,
+      color: new THREE.Color(1, 1, 1),
+      side: THREE.DoubleSide,
+      opacity: 0.01,
+      depthWrite: false,
+      depthTest: true,
+      blending: THREE.CustomBlending,
+      blendSrc: THREE.OneMinusSrcColorFactor
+    })
+    patchMaterial(mat)
+    return mat
+  }
+
+  /**
+   * Creates a new instance of the default shape material used for isolation
+   * @returns a THREE.Material
+   */
+  export function createShape () {
+    return new THREE.MeshStandardMaterial({
+      color: new THREE.Color(0, 0.8, 1),
+      flatShading: true
+    })
+  }
+
+  /**
    * Adds feature to default three material to support color change.
    * Developed and tested for Phong material, but might work for other materials.
    */
   export function patchMaterial (material: THREE.Material) {
-    material.onBeforeCompile = (shader) => {
-      patchShader(shader)
-      material.userData.shader = shader
+    if (material instanceof THREE.MeshPhongMaterial) {
+      material.onBeforeCompile = (shader) => {
+        patchShader(shader)
+        material.userData.shader = shader
+      }
     }
+    if (material instanceof THREE.MeshBasicMaterial) {
+      material.onBeforeCompile = (shader) => {
+        patchBasicShader(shader)
+        material.userData.shader = shader
+      }
+    }
+  }
+
+  function patchBasicShader (shader: THREE.Shader) {
+    shader.vertexShader = shader.vertexShader
+      // Adding declarations for attributes and varying for visibility and coloring.
+      .replace(
+        '#include <color_pars_vertex>',
+        `
+      #include <color_pars_vertex>
+      
+      // VISIBILITY
+
+      // Instance or vertex attribute to hide objects 
+      #ifdef USE_INSTANCING
+        attribute float ignoreInstance;
+      #else
+        attribute float ignoreVertex;
+      #endif
+
+      // Passed to fragment to discard them
+      varying float vIgnore;
+
+      `
+      )
+      // Adding vertex shader logic for visility and coloring
+      .replace(
+        '#include <color_vertex>',
+        `
+        // VISIBILITY
+
+        // Set frag ignore from instance or vertex attribute
+        #ifdef USE_INSTANCING
+          vIgnore = ignoreInstance;
+        #else
+          vIgnore = ignoreVertex;
+        #endif
+      `
+      )
+
+    shader.fragmentShader = shader.fragmentShader
+      // Adding declarations for varying defined in vertex shader
+      .replace(
+        '#include <clipping_planes_pars_fragment>',
+        `
+      #include <clipping_planes_pars_fragment>
+      varying float vIgnore;
+      `
+      )
+      // Adding fragment shader logic for visibility and coloring.
+      .replace(
+        '#include <output_fragment>',
+        `
+        // VISIBILITY
+        if (vIgnore > 0.0f)
+          discard;
+
+        #include <output_fragment>
+      `
+      )
+    return shader
   }
 
   /**
@@ -177,19 +295,6 @@ export namespace Materials {
     return shader
   }
 
-  /**
-   * Creates a new instance of the default wireframe material
-   * @returns a THREE.LineBasicMaterial
-   */
-  export function createWireframe () {
-    const material = new THREE.LineBasicMaterial({
-      depthTest: false,
-      opacity: 1,
-      color: new THREE.Color(0x0000ff),
-      transparent: true
-    })
-    return material
-  }
   let materials: Library
 
   /**

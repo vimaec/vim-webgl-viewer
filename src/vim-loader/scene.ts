@@ -18,6 +18,7 @@ export class Scene {
   boundingBox: THREE.Box3 = new THREE.Box3()
   private _instanceToThreeMesh: Map<number, [THREE.Mesh, number]> = new Map()
   private _threeMeshIdToInstances: Map<number, number[]> = new Map()
+  private _material: THREE.Material
 
   /**
    * Returns the THREE.Mesh in which this instance is represented along with index
@@ -144,6 +145,35 @@ export class Scene {
     this.boundingBox =
       this.boundingBox?.union(other.boundingBox) ?? other.boundingBox.clone()
     return this
+  }
+
+  /**
+   * Gets the current material override or undefined if none.
+   */
+  get material () {
+    return this._material
+  }
+
+  /**
+   * Sets and apply a material override to the scene, set to undefined to remove override.
+   */
+  set material (value: THREE.Material) {
+    this._material = value
+    if (value) {
+      this.meshes.forEach((m) => {
+        if (!m.userData.mat) {
+          m.userData.mat = m.material
+        }
+        m.material = value
+      })
+    } else {
+      this.meshes.forEach((m) => {
+        if (m.userData.mat) {
+          m.material = m.userData.mat
+          m.userData.mat = undefined
+        }
+      })
+    }
   }
 
   dispose () {
