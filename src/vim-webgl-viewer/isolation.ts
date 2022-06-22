@@ -24,14 +24,16 @@ export class Isolation {
       target.forEach((obj) => this.createShape(obj, mats.shape))
     }
 
-    // Toggle plane
+    // Hide groundplane
     this._viewer.environment.groundPlane.visible = false
   }
 
   clear () {
     this._viewer.vims[0].scene.material = undefined
     this.clearShapes()
-    this._viewer.environment.groundPlane.visible = true
+    //  Restore ground plane to default value
+    this._viewer.environment.groundPlane.visible =
+      this._viewer.settings.getGroundPlaneVisible()
   }
 
   private createShape (object: Object, mat: THREE.Material) {
