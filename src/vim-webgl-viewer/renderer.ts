@@ -146,6 +146,7 @@ export class Renderer {
 
   private fitViewport = () => {
     const [width, height] = this.viewport.getParentSize()
+    this.renderer.setPixelRatio(window.devicePixelRatio)
     this.renderer.setSize(width, height)
   }
 }
