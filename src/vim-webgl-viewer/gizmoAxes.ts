@@ -112,6 +112,8 @@ export class GizmoAxes {
     this.canvas = this.createCanvas()
     this.context = this.canvas.getContext('2d')!
     this.rect = this.canvas.getBoundingClientRect()
+    this.context.imageSmoothingEnabled = true
+    this.context.imageSmoothingQuality = 'high'
 
     this.animate()
   }
