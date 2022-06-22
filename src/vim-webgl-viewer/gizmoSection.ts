@@ -202,9 +202,9 @@ class BoxInputs {
   register () {
     if (this.unregister.length > 0) return
     const canvas = this.viewer.viewport.canvas
-    this.reg(canvas, 'mousedown', this.onMouseClick.bind(this))
-    this.reg(canvas, 'mousemove', this.onMouseMove.bind(this))
-    this.reg(canvas, 'mouseup', this.onMouseUp.bind(this))
+    this.reg(canvas, 'pointerdown', this.onMouseClick.bind(this))
+    this.reg(canvas, 'pointermove', this.onMouseMove.bind(this))
+    this.reg(canvas, 'pointerup', this.onMouseUp.bind(this))
   }
 
   unregister () {
@@ -217,6 +217,7 @@ class BoxInputs {
       this.onDrag(event)
       return
     }
+    console.log('move')
 
     const hits = this.raycast(new THREE.Vector2(event.offsetX, event.offsetY))
     const hit = hits?.[0]
@@ -243,10 +244,15 @@ class BoxInputs {
 
   onMouseUp (event: any) {
     if (this.mouseDown) {
-      this.faceNormal = new THREE.Vector3()
+      // this.faceNormal = new THREE.Vector3()
       this.mouseDown = false
       this.viewer.inputs.register()
-      this.onMouseMove(event)
+      if (event.pointerType === 'mouse') {
+        this.onMouseMove(event)
+      } else {
+        this.faceNormal = new THREE.Vector3()
+        this.onFaceEnter?.(this.faceNormal)
+      }
     }
   }
 
@@ -263,6 +269,7 @@ class BoxInputs {
     this.dragpPlane = new THREE.Plane(this.viewer.camera.forward, -dist)
     this.mouseDown = true
     this.viewer.inputs.unregister()
+    this.onFaceEnter?.(this.faceNormal)
   }
 
   onDrag (event: any) {
