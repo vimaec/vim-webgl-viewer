@@ -155,50 +155,6 @@ export class Keyboard {
     // Buttons that activate once on key up
     if (!keyDown) {
       switch (event.keyCode) {
-        case KEYS.KEY_P:
-          if (
-            !this.section.active &&
-            !this.section.show &&
-            !this.section.interactive
-          ) {
-            console.log('!')
-            this.section.active = true
-            this.section.show = true
-            this.section.interactive = true
-            break
-          }
-          if (
-            this.section.active &&
-            this.section.show &&
-            this.section.interactive
-          ) {
-            this.section.active = true
-            this.section.show = true
-            this.section.interactive = false
-            break
-          }
-          if (
-            this.section.active &&
-            this.section.show &&
-            !this.section.interactive
-          ) {
-            this.section.active = true
-            this.section.show = false
-            this.section.interactive = false
-            break
-          }
-          if (
-            this.section.active &&
-            !this.section.show &&
-            !this.section.interactive
-          ) {
-            this.section.active = false
-            this.section.show = false
-            this.section.interactive = false
-            break
-          }
-
-          break
         case KEYS.KEY_O:
           this.camera.orthographic = !this.camera.orthographic
           break
