@@ -300,7 +300,8 @@ export namespace Materials {
       uniforms: { opacity: { value: 0.05 } },
       transparent: true,
       clipping: true,
-      side: THREE.DoubleSide,
+      // side: THREE.BackSide,
+      // side: THREE.Sin,
       // depthWrite: false,
       // depthTest: true,
       // blending: THREE.CustomBlending,
@@ -321,7 +322,7 @@ export namespace Materials {
 
       // Passed to fragment to discard them
       varying float vIgnore;
-      varying float z;
+      varying vec3 vPosition;
 
       void main() {
         #include <begin_vertex>
@@ -337,29 +338,34 @@ export namespace Materials {
         #endif
         //z = gl_Position.z;
         if(vIgnore > 0.0f){
-          //gl_Position.z = 0.0f;
+          gl_Position.z = 1.0f;
         }else{
-          gl_Position.z = -gl_Position.z;
+          gl_Position.z = -1.0f;
         }
-        z = gl_Position.z;
-          
-        
+        vPosition = vec3(mvPosition ) / mvPosition .w;
       }
       `,
       fragmentShader: /* glsl */ `
       #include <clipping_planes_pars_fragment>
       varying float vIgnore;
       uniform float opacity;
-      varying float z;
+      varying vec3 vPosition;
 
       void main() {
         #include <clipping_planes_fragment>
 
+        vec3 dx =dFdx(vPosition);
+        vec3 dy =dFdy(vPosition);
+        vec3 normal = normalize( cross(dFdx(vPosition), dFdy(vPosition)) );
+        float light = dot(normal, normalize(vec3(1.4142f, 1.732f, 2.2360f)));
+        light = 0.5 + (light *0.5);
+
         if (vIgnore > 0.0f){
           gl_FragColor = vec4(1,1,1, opacity);
         }
-        else{
-          gl_FragColor = vec4(0,.75,1, 1.0f);
+        else{ 
+          gl_FragColor = vec4(0,0.75f,1.0f, 1.0f);
+          gl_FragColor.xyz *= light;
         }
       }
       `
