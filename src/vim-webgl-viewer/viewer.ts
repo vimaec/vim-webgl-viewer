@@ -16,7 +16,6 @@ import { RenderScene } from './renderScene'
 import { Viewport } from './viewport'
 import { GizmoAxes } from './gizmoAxes'
 import { GizmoSection } from './gizmoSection'
-import { Isolation } from './isolation'
 
 // loader
 import { VimSettings, VimOptions } from '../vim-loader/vimSettings'
@@ -66,11 +65,6 @@ export class Viewer {
    * Interface to interact with the section gizmo.
    */
   gizmoSection: GizmoSection
-
-  /**
-   * Interface to interact with isolation.
-   */
-  isolation: Isolation
 
   /**
    * Interface to manipulate the viewer camera.
@@ -131,7 +125,6 @@ export class Viewer {
     this._gizmoAxes.canvas.style.top = '10px'
 
     this.gizmoSection = new GizmoSection(this)
-    this.isolation = new Isolation(this)
 
     this._environment = new Environment(this.settings)
     this._environment.getObjects().forEach((o) => this.renderer.add(o))

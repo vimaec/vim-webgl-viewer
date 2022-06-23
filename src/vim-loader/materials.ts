@@ -25,7 +25,7 @@ export namespace Materials {
       this.opaque = opaque ?? createOpaque()
       this.transparent = transparent ?? createTransparent()
       this.wireframe = wireframe ?? createWireframe()
-      this.ghost = ghost ?? createGhost()
+      this.ghost = ghost ?? createCustomGhostMaterial()
       this.shape = shape ?? createShape()
     }
 
@@ -293,6 +293,77 @@ export namespace Materials {
         `
       )
     return shader
+  }
+
+  export function createCustomGhostMaterial () {
+    return new THREE.ShaderMaterial({
+      uniforms: { opacity: { value: 0.05 } },
+      transparent: true,
+      clipping: true,
+      side: THREE.DoubleSide,
+      // depthWrite: false,
+      // depthTest: true,
+      // blending: THREE.CustomBlending,
+      // blendSrc: THREE.OneMinusSrcColorFactor,
+      vertexShader: /* glsl */ `
+
+      #include <common>
+      #include <logdepthbuf_pars_vertex>
+      #include <clipping_planes_pars_vertex>
+
+      // Instance or vertex attribute to hide objects 
+      
+      #ifdef USE_INSTANCING
+        attribute float ignoreInstance;
+      #else
+        attribute float ignoreVertex;
+      #endif
+
+      // Passed to fragment to discard them
+      varying float vIgnore;
+      varying float z;
+
+      void main() {
+        #include <begin_vertex>
+        #include <project_vertex>
+        #include <clipping_planes_vertex>
+        #include <logdepthbuf_vertex>
+
+        // Set frag ignore from instance or vertex attribute
+        #ifdef USE_INSTANCING
+          vIgnore = ignoreInstance;
+        #else
+          vIgnore = ignoreVertex;
+        #endif
+        //z = gl_Position.z;
+        if(vIgnore > 0.0f){
+          //gl_Position.z = 0.0f;
+        }else{
+          gl_Position.z = -gl_Position.z;
+        }
+        z = gl_Position.z;
+          
+        
+      }
+      `,
+      fragmentShader: /* glsl */ `
+      #include <clipping_planes_pars_fragment>
+      varying float vIgnore;
+      uniform float opacity;
+      varying float z;
+
+      void main() {
+        #include <clipping_planes_fragment>
+
+        if (vIgnore > 0.0f){
+          gl_FragColor = vec4(1,1,1, opacity);
+        }
+        else{
+          gl_FragColor = vec4(0,.75,1, 1.0f);
+        }
+      }
+      `
+    })
   }
 
   let materials: Library
