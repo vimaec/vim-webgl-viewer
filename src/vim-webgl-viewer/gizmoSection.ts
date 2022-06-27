@@ -182,6 +182,8 @@ class BoxInputs {
   onFaceEnter: (normal: THREE.Vector3) => void
   // Called the box is reshaped
   onBoxStretch: (box: THREE.Box3) => void
+  // Called when the user is done reshaping the box
+  onBoxConfirm: (box: THREE.Box3) => void
 
   constructor (viewer: Viewer, cube: THREE.Object3D, box: THREE.Box3) {
     this.viewer = viewer
@@ -253,6 +255,7 @@ class BoxInputs {
         this.faceNormal = new THREE.Vector3()
         this.onFaceEnter?.(this.faceNormal)
       }
+      this.onBoxConfirm?.(this.sharedBox)
     }
   }
 
@@ -340,6 +343,8 @@ export class GizmoSection {
   private _show: boolean
   private _interactive: boolean
 
+  onBoxConfirm: (box: THREE.Box3) => void
+
   private get renderer () {
     return this._viewer.renderer
   }
@@ -374,6 +379,8 @@ export class GizmoSection {
       this.renderer.section.fitBox(box)
       this.update()
     }
+    this.inputs.onBoxConfirm = (box) => this.onBoxConfirm?.(box)
+
     this.clip = false
     this.visible = false
     this.interactive = false
