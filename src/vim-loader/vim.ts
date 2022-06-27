@@ -84,7 +84,7 @@ export class Vim {
   }
 
   /**
-   * Returns vim object from given vim element Id
+   * Returns an array of vim objects matching given vim element Id
    * @param id vim element Id
    */
   getObjectsFromElementId (id: number) {
@@ -108,6 +108,22 @@ export class Vim {
 
     const result = new Object(this, element, instances, meshes)
     this._elementToObject.set(element, result)
+    return result
+  }
+
+  /**
+   * Returns an array with all vim objects strictly contained in given box.
+   */
+  getObjectsInBox (box: THREE.Box3) {
+    const result: Object[] = []
+
+    for (const obj of this.getAllObjects()) {
+      const b = obj.getBoundingBox()
+      if (!b) continue
+      if (box.containsBox(b)) {
+        result.push(obj)
+      }
+    }
     return result
   }
 
