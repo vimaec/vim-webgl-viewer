@@ -243,10 +243,12 @@ export namespace Materials {
       .replace(
         '#include <color_vertex>',
         `
-          vColor = color;
-          vColored = colored;
+
 
           // COLORING
+
+          vColor = color;
+          vColored = colored;
 
           // colored == 1 -> instance color
           // colored == 0 -> vertex color
@@ -298,22 +300,17 @@ export namespace Materials {
   export function createCustomGhostMaterial () {
     return new THREE.ShaderMaterial({
       uniforms: { opacity: { value: 0.05 } },
+      vertexColors: true,
       transparent: true,
       clipping: true,
-      // side: THREE.BackSide,
-      // side: THREE.Sin,
-      // depthWrite: false,
-      // depthTest: true,
-      // blending: THREE.CustomBlending,
-      // blendSrc: THREE.OneMinusSrcColorFactor,
       vertexShader: /* glsl */ `
 
       #include <common>
       #include <logdepthbuf_pars_vertex>
       #include <clipping_planes_pars_vertex>
-
+        
+      // VISIBILITY
       // Instance or vertex attribute to hide objects 
-      
       #ifdef USE_INSTANCING
         attribute float ignoreInstance;
       #else
@@ -324,24 +321,54 @@ export namespace Materials {
       varying float vIgnore;
       varying vec3 vPosition;
 
+
+      // COLORING
+      varying vec3 vColor;
+
+      // attribute for color override
+      // merged meshes use it as vertex attribute
+      // instanced meshes use it as an instance attribute
+      attribute float colored;
+
+      // There seems to be an issue where setting mehs.instanceColor
+      // doesn't properly set USE_INSTANCING_COLOR
+      // so we always use it as a fix
+      #ifndef USE_INSTANCING_COLOR
+      attribute vec3 instanceColor;
+      #endif
+
       void main() {
         #include <begin_vertex>
         #include <project_vertex>
         #include <clipping_planes_vertex>
         #include <logdepthbuf_vertex>
 
+        // VISIBILITY
         // Set frag ignore from instance or vertex attribute
         #ifdef USE_INSTANCING
           vIgnore = ignoreInstance;
         #else
           vIgnore = ignoreVertex;
         #endif
-        //z = gl_Position.z;
+
+        // COLORING
+        vColor = color.xyz;
+
+        // colored == 1 -> instance color
+        // colored == 0 -> vertex color
+        #ifdef USE_INSTANCING
+          vColor.xyz = colored * instanceColor.xyz + (1.0f - colored) * color.xyz;
+        #endif
+
+
+        // ORDERING
         if(vIgnore > 0.0f){
           gl_Position.z = 1.0f;
         }else{
           gl_Position.z = -1.0f;
         }
+
+        // LIGHTING
         vPosition = vec3(mvPosition ) / mvPosition .w;
       }
       `,
@@ -350,21 +377,21 @@ export namespace Materials {
       varying float vIgnore;
       uniform float opacity;
       varying vec3 vPosition;
+      varying vec3 vColor;
 
       void main() {
         #include <clipping_planes_fragment>
-
-        vec3 dx =dFdx(vPosition);
-        vec3 dy =dFdy(vPosition);
-        vec3 normal = normalize( cross(dFdx(vPosition), dFdy(vPosition)) );
-        float light = dot(normal, normalize(vec3(1.4142f, 1.732f, 2.2360f)));
-        light = 0.5 + (light *0.5);
 
         if (vIgnore > 0.0f){
           gl_FragColor = vec4(1,1,1, opacity);
         }
         else{ 
-          gl_FragColor = vec4(0,0.75f,1.0f, 1.0f);
+          gl_FragColor = vec4(vColor.x, vColor.y, vColor.z, 1.0f);
+
+          // LIGHTING
+          vec3 normal = normalize( cross(dFdx(vPosition), dFdy(vPosition)) );
+          float light = dot(normal, normalize(vec3(1.4142f, 1.732f, 2.2360f)));
+          light = 0.5 + (light *0.5);
           gl_FragColor.xyz *= light;
         }
       }
