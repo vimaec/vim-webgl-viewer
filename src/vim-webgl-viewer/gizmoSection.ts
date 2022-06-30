@@ -219,7 +219,6 @@ class BoxInputs {
       this.onDrag(event)
       return
     }
-    console.log('move')
 
     const hits = this.raycast(new THREE.Vector2(event.offsetX, event.offsetY))
     const hit = hits?.[0]
