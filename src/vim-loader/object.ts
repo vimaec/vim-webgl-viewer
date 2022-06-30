@@ -65,10 +65,7 @@ export class Object {
   /**
    * Returns Bim data for the element associated with this object.
    */
-  async getBimElementValue<T extends true | false> (
-    field: string,
-    resolveString: T
-  ): T extends true ? Promise<string> : Promise<number> {
+  async getBimElementValue (field: string, resolveString: boolean) {
     const value = await this.vim.document.getElementValue(this.element, field)
     return resolveString ? this.vim.document.getString(value) : value
   }
