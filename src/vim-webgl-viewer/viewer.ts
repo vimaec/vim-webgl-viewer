@@ -282,8 +282,14 @@ export class Viewer {
 
   applyMaterialSettings (settings: ViewerSettings) {
     const lib = Materials.getDefaultLibrary()
-    lib.wireframe.color = settings.getHighlightColor()
-    lib.wireframe.opacity = settings.getHighlightOpacity()
+    lib.applyWireframeSettings(
+      settings.getHighlightColor(),
+      settings.getHighlightOpacity()
+    )
+    lib.applyIsolationSettings(
+      settings.getIsolationColor(),
+      settings.getIsolationOpacity()
+    )
   }
 
   /**

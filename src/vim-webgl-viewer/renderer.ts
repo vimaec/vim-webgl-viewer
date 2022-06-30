@@ -52,7 +52,7 @@ class Section {
     materials.opaque.clippingPlanes = p
     materials.transparent.clippingPlanes = p
     materials.wireframe.clippingPlanes = p
-    materials.ghost.clippingPlanes = p
+    materials.isolation.clippingPlanes = p
     this._renderer.localClippingEnabled = value
     this._active = value
   }

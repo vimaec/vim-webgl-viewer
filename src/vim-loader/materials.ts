@@ -10,20 +10,31 @@ export namespace Materials {
    */
   export class Library {
     opaque: THREE.Material
-    transparent: THREE.Material
+    transparent: THREE.MeshPhongMaterial
     wireframe: THREE.LineBasicMaterial
-    ghost: THREE.Material
+    isolation: THREE.ShaderMaterial
 
     constructor (
       opaque?: THREE.Material,
-      transparent?: THREE.Material,
+      transparent?: THREE.MeshPhongMaterial,
       wireframe?: THREE.LineBasicMaterial,
-      ghost?: THREE.Material
+      isolation?: THREE.ShaderMaterial
     ) {
       this.opaque = opaque ?? createOpaque()
       this.transparent = transparent ?? createTransparent()
       this.wireframe = wireframe ?? createWireframe()
-      this.ghost = ghost ?? createCustomGhostMaterial()
+      this.isolation = isolation ?? createCustomIsolationMaterial()
+    }
+
+    applyWireframeSettings (color: THREE.Color, opacity: number) {
+      this.wireframe.color = color
+      this.wireframe.opacity = opacity
+    }
+
+    applyIsolationSettings (color: THREE.Color, opacity: number) {
+      this.isolation.uniforms.fillColor.value = color
+      this.isolation.uniforms.opacity.value = opacity
+      this.isolation.uniformsNeedUpdate = true
     }
 
     dispose () {
@@ -204,9 +215,12 @@ export namespace Materials {
     return shader
   }
 
-  export function createCustomGhostMaterial () {
+  export function createCustomIsolationMaterial () {
     return new THREE.ShaderMaterial({
-      uniforms: { opacity: { value: 0.05 } },
+      uniforms: {
+        opacity: { value: 0.1 },
+        fillColor: { value: new THREE.Vector3(0.5, 0.5, 0.5) }
+      },
       vertexColors: true,
       transparent: true,
       clipping: true,
@@ -283,6 +297,7 @@ export namespace Materials {
       #include <clipping_planes_pars_fragment>
       varying float vIgnore;
       uniform float opacity;
+      uniform vec3 fillColor;
       varying vec3 vPosition;
       varying vec3 vColor;
 
@@ -290,7 +305,7 @@ export namespace Materials {
         #include <clipping_planes_fragment>
 
         if (vIgnore > 0.0f){
-          gl_FragColor = vec4(1,1,1, opacity);
+          gl_FragColor = vec4(fillColor, opacity);
         }
         else{ 
           gl_FragColor = vec4(vColor.x, vColor.y, vColor.z, 1.0f);
