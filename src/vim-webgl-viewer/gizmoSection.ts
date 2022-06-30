@@ -329,13 +329,13 @@ class BoxInputs {
 
 export class GizmoSection {
   // dependencies
-  _viewer: Viewer
+  private _viewer: Viewer
 
   // resources
-  inputs: BoxInputs
-  cube: BoxMesh
-  outline: BoxOutline
-  highlight: BoxHighlight
+  private _inputs: BoxInputs
+  private _cube: BoxMesh
+  private _outline: BoxOutline
+  private _highlight: BoxHighlight
 
   // State
   private _normal: THREE.Vector3
@@ -343,6 +343,9 @@ export class GizmoSection {
   private _show: boolean
   private _interactive: boolean
 
+  /**
+   * Callback for when box is done changing
+   */
   onBoxConfirm: (box: THREE.Box3) => void
 
   private get renderer () {
@@ -358,28 +361,28 @@ export class GizmoSection {
 
     this._normal = new THREE.Vector3()
 
-    this.cube = new BoxMesh()
-    this.outline = new BoxOutline()
-    this.highlight = new BoxHighlight()
+    this._cube = new BoxMesh()
+    this._outline = new BoxOutline()
+    this._highlight = new BoxHighlight()
 
-    this.renderer.add(this.cube)
-    this.renderer.add(this.outline)
-    this.renderer.add(this.highlight)
+    this.renderer.add(this._cube)
+    this.renderer.add(this._outline)
+    this.renderer.add(this._highlight)
 
-    this.inputs = new BoxInputs(
+    this._inputs = new BoxInputs(
       viewer,
-      this.cube,
+      this._cube,
       this._viewer.renderer.section.box
     )
-    this.inputs.onFaceEnter = (normal) => {
+    this._inputs.onFaceEnter = (normal) => {
       this._normal = normal
-      if (this.visible) this.highlight.highlight(this.section.box, normal)
+      if (this.visible) this._highlight.highlight(this.section.box, normal)
     }
-    this.inputs.onBoxStretch = (box) => {
+    this._inputs.onBoxStretch = (box) => {
       this.renderer.section.fitBox(box)
       this.update()
     }
-    this.inputs.onBoxConfirm = (box) => this.onBoxConfirm?.(box)
+    this._inputs.onBoxConfirm = (box) => this.onBoxConfirm?.(box)
 
     this.clip = false
     this.visible = false
@@ -387,58 +390,72 @@ export class GizmoSection {
     this.update()
   }
 
+  /**
+   * When true the section gizmo will section the model with clipping planes.
+   */
   get clip () {
     return this._clip
   }
 
-  public set clip (value: boolean) {
+  set clip (value: boolean) {
     this._clip = value
     this.renderer.section.active = value
   }
 
+  /**
+   * When true the section gizmo will react to user inputs.
+   */
   get interactive () {
     return this._interactive
   }
 
   set interactive (value: boolean) {
-    if (!this._interactive && value) this.inputs.register()
-    if (this._interactive && !value) this.inputs.unregister()
+    if (!this._interactive && value) this._inputs.register()
+    if (this._interactive && !value) this._inputs.unregister()
     this._interactive = value
-    this.highlight.visible = false
+    this._highlight.visible = false
   }
 
+  /**
+   * When true the section gizmo will be rendered.
+   */
   get visible () {
     return this._show
   }
 
   set visible (value: boolean) {
     this._show = value
-    this.cube.visible = value
-    this.outline.visible = value
-    this.highlight.visible = value
+    this._cube.visible = value
+    this._outline.visible = value
+    this._highlight.visible = value
     if (value) this.update()
   }
 
+  /**
+   * Sets the section gizmo size to match given box
+   */
   public fitBox (box: THREE.Box3) {
-    this.cube.fitBox(box)
-    this.outline.fitBox(box)
+    this._cube.fitBox(box)
+    this._outline.fitBox(box)
     this.renderer.section.fitBox(box)
   }
 
-  // Call this if there were changes to SectionBox
+  /**
+   * Call this if there were direct changes to renderer.section
+   */
   update () {
     this.fitBox(this.section.box)
-    this.highlight.highlight(this.section.box, this._normal)
+    this._highlight.highlight(this.section.box, this._normal)
   }
 
   dispose () {
-    this.renderer.remove(this.cube)
-    this.renderer.remove(this.outline)
-    this.renderer.remove(this.highlight)
+    this.renderer.remove(this._cube)
+    this.renderer.remove(this._outline)
+    this.renderer.remove(this._highlight)
 
-    this.inputs.unregister()
-    this.cube.dispose()
-    this.outline.dispose()
-    this.highlight.dispose()
+    this._inputs.unregister()
+    this._cube.dispose()
+    this._outline.dispose()
+    this._highlight.dispose()
   }
 }
