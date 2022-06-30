@@ -167,7 +167,6 @@ export class Document {
    * Returns provided field of at given element index
    * @param element vim element index
    * @param field field name
-   * @param resolveStrings field name
    */
   async getElementValue (element: number, field: string) {
     const elements = await this._entity.getBfast('Vim.Element')
