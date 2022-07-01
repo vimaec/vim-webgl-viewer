@@ -24,8 +24,8 @@ import { Object } from '../vim-loader/object'
 import { BFast } from '../vim-loader/bfast'
 import { Vim } from '../vim-loader/vim'
 import { IProgressLogs, RemoteBuffer } from '../vim-loader/remoteBuffer'
-import { Materials } from '../vim-loader/materials'
 import { Renderer } from './renderer'
+import { IMaterialLibrary, VimMaterials } from '../vim'
 
 /**
  * Viewer and loader for vim files.
@@ -85,6 +85,7 @@ export class Viewer {
   private _loader: Loader
   private _clock = new THREE.Clock()
   private _gizmoAxes: GizmoAxes
+  private _materials: IMaterialLibrary
 
   // State
   private _vims: (Vim | undefined)[] = []
@@ -104,13 +105,17 @@ export class Viewer {
   }
 
   constructor (options?: Partial<ViewerOptions.Root>) {
-    this._loader = new Loader()
     this.settings = new ViewerSettings(options)
+
+    const materials = new VimMaterials()
+    this.applyMaterialSettings(materials, this.settings)
+    this._loader = new Loader(materials)
+    this._materials = materials
 
     const scene = new RenderScene()
     this.viewport = new Viewport(this.settings)
     this._camera = new Camera(scene, this.viewport, this.settings)
-    this.renderer = new Renderer(scene, this.viewport)
+    this.renderer = new Renderer(scene, this.viewport, materials)
     this._camera.gizmo = new CameraGizmo(
       this.renderer,
       this._camera,
@@ -133,7 +138,7 @@ export class Viewer {
     this._onMouseClick = this.defaultOnClick
 
     // Input and Selection
-    this.selection = new Selection(this.renderer)
+    this.selection = new Selection(this.renderer, this._loader.meshBuilder)
     this.raycaster = new Raycaster(
       this.viewport,
       this._camera,
@@ -143,13 +148,12 @@ export class Viewer {
     this.inputs = new Input(this)
     this.inputs.register()
 
-    this.applyMaterialSettings(this.settings)
-
     // Start Loop
     this.animate()
   }
 
   dispose () {
+    if (this._disposed) return
     this._environment.dispose()
     this.selection.clear()
     this._camera.dispose()
@@ -157,7 +161,7 @@ export class Viewer {
     this.renderer.dispose()
     this.inputs.unregister()
     this._vims.forEach((v) => v?.dispose())
-    this._vims = []
+    this._materials.dispose()
     this._disposed = true
   }
 
@@ -280,13 +284,12 @@ export class Viewer {
     this.renderer.add(vim.scene)
   }
 
-  applyMaterialSettings (settings: ViewerSettings) {
-    const lib = Materials.getDefaultLibrary()
-    lib.applyWireframeSettings(
+  applyMaterialSettings (materials: VimMaterials, settings: ViewerSettings) {
+    materials.applyWireframeSettings(
       settings.getHighlightColor(),
       settings.getHighlightOpacity()
     )
-    lib.applyIsolationSettings(
+    materials.applyIsolationSettings(
       settings.getIsolationColor(),
       settings.getIsolationOpacity()
     )

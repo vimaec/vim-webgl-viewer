@@ -6,10 +6,11 @@ import * as THREE from 'three'
 import { Scene } from '../vim-loader/scene'
 import { Viewport } from './viewport'
 import { RenderScene } from './renderScene'
-import { Materials } from '../vim-loader/materials'
+import { IMaterialLibrary } from '../vim-loader/materials'
 
 class Section {
   private _renderer: THREE.WebGLRenderer
+  private _materials: IMaterialLibrary
   private _active: boolean
 
   readonly box: THREE.Box3 = new THREE.Box3(
@@ -32,8 +33,9 @@ class Section {
     this.minZ
   ]
 
-  constructor (renderer: THREE.WebGLRenderer) {
+  constructor (renderer: THREE.WebGLRenderer, materials: IMaterialLibrary) {
     this._renderer = renderer
+    this._materials = materials
   }
 
   fitBox (box: THREE.Box3) {
@@ -47,12 +49,11 @@ class Section {
   }
 
   set active (value: boolean) {
-    const materials = Materials.getDefaultLibrary()
     const p = value ? this.planes : undefined
-    materials.opaque.clippingPlanes = p
-    materials.transparent.clippingPlanes = p
-    materials.wireframe.clippingPlanes = p
-    materials.isolation.clippingPlanes = p
+    this._materials.opaque.clippingPlanes = p
+    this._materials.transparent.clippingPlanes = p
+    this._materials.wireframe.clippingPlanes = p
+    this._materials.isolation.clippingPlanes = p
     this._renderer.localClippingEnabled = value
     this._active = value
   }
@@ -70,11 +71,17 @@ export class Renderer {
   viewport: Viewport
   scene: RenderScene
   section: Section
+  materials: IMaterialLibrary
 
-  constructor (scene: RenderScene, viewport: Viewport) {
+  constructor (
+    scene: RenderScene,
+    viewport: Viewport,
+    materials: IMaterialLibrary
+  ) {
     this.viewport = viewport
 
     this.scene = scene
+    this.materials = materials
     this.renderer = new THREE.WebGLRenderer({
       canvas: viewport.canvas,
       antialias: true,
@@ -90,7 +97,7 @@ export class Renderer {
 
     this.renderer.setPixelRatio(window.devicePixelRatio)
     this.renderer.shadowMap.enabled = false
-    this.section = new Section(this.renderer)
+    this.section = new Section(this.renderer, this.materials)
   }
 
   dispose () {

@@ -4,7 +4,6 @@
 
 // external
 import * as THREE from 'three'
-import { Mesh } from './mesh'
 import { Geometry } from './geometry'
 import {
   BufferAttribute,
@@ -36,6 +35,10 @@ export class Object {
     this.element = element
     this.instances = instances
     this._meshes = meshes
+  }
+
+  private get meshBuilder () {
+    return this.vim.scene.builder.meshBuilder
   }
 
   get hasMesh () {
@@ -117,7 +120,7 @@ export class Object {
   createWireframe () {
     if (!this.instances) return
 
-    const wireframe = Mesh.getDefaultBuilder().createWireframe(
+    const wireframe = this.meshBuilder.createWireframe(
       this.vim.document.g3d,
       this.instances
     )

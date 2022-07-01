@@ -13,10 +13,11 @@ import { Object } from './object'
  * Dispenses Objects for high level scene manipulation
  */
 export class Vim {
-  document: Document
-  scene: Scene
-  settings: VimSettings
+  readonly document: Document
   index: number = -1
+  settings: VimSettings
+
+  scene: Scene
   private _elementToObject: Map<number, Object> = new Map<number, Object>()
 
   constructor (vim: Document, scene: Scene, settings: VimSettings) {
@@ -36,17 +37,19 @@ export class Vim {
    * @param instances g3d instance indices to keep
    */
   filter (instances?: number[]) {
-    this.scene.dispose()
-    this.scene = Scene.createFromG3d(
+    const next = this.scene.builder.createFromG3d(
       this.document.g3d,
       this.settings.getTransparency(),
       instances
     )
-    this.scene.applyMatrix4(this.settings.getMatrix())
-    this.scene.setVim(this)
+    this.scene.dispose()
+
+    next.applyMatrix4(this.settings.getMatrix())
+    next.setVim(this)
     for (const [element, object] of this._elementToObject.entries()) {
       object.updateMeshes(this.getMeshesFromElement(element))
     }
+    this.scene = next
   }
 
   /**
