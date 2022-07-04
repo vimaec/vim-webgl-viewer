@@ -3,6 +3,7 @@
  */
 
 import * as THREE from 'three'
+import { MeshBuilder } from '../vim'
 import { Object } from '../vim-loader/object'
 import { Renderer } from './renderer'
 
@@ -13,6 +14,7 @@ import { Renderer } from './renderer'
 export class Selection {
   // Dependencies
   private _renderer: Renderer
+  private _meshBuilder: MeshBuilder
 
   // State
   private _object: Object | undefined
@@ -20,8 +22,9 @@ export class Selection {
   // Disposable State
   private _highlight: THREE.LineSegments | undefined
 
-  constructor (renderer: Renderer) {
+  constructor (renderer: Renderer, meshBuilder: MeshBuilder) {
     this._renderer = renderer
+    this._meshBuilder = meshBuilder
   }
 
   /**

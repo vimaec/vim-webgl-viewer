@@ -114,6 +114,10 @@ export class Keyboard {
     return this._viewer.selection
   }
 
+  private get section () {
+    return this._viewer.gizmoSection
+  }
+
   // State
   isUpPressed: boolean = false
   isDownPressed: boolean = false

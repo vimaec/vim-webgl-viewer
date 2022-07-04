@@ -10,12 +10,12 @@ import { Camera, ICamera } from './camera'
 import { Input } from './input'
 import { Selection } from './selection'
 import { Environment, IEnvironment } from './environment'
-import { Renderer } from './renderer'
 import { Raycaster, RaycastResult } from './raycaster'
 import { CameraGizmo } from './gizmos'
 import { RenderScene } from './renderScene'
 import { Viewport } from './viewport'
 import { GizmoAxes } from './gizmoAxes'
+import { GizmoSection } from './gizmoSection'
 
 // loader
 import { VimSettings, VimOptions } from '../vim-loader/vimSettings'
@@ -24,7 +24,8 @@ import { Object } from '../vim-loader/object'
 import { BFast } from '../vim-loader/bfast'
 import { Vim } from '../vim-loader/vim'
 import { IProgressLogs, RemoteBuffer } from '../vim-loader/remoteBuffer'
-import { Materials } from '../vim-loader/materials'
+import { Renderer } from './renderer'
+import { IMaterialLibrary, VimMaterials } from '../vim'
 
 /**
  * Viewer and loader for vim files.
@@ -60,15 +61,10 @@ export class Viewer {
    */
   raycaster: Raycaster
 
-  private _environment: Environment
-  private _camera: Camera
-  private _loader: Loader
-  private _clock = new THREE.Clock()
-  private _gizmoAxes: GizmoAxes
-
-  // State
-  private _vims: (Vim | undefined)[] = []
-  private _disposed: boolean = false
+  /**
+   * Interface to interact with the section gizmo.
+   */
+  gizmoSection: GizmoSection
 
   /**
    * Interface to manipulate the viewer camera.
@@ -84,6 +80,17 @@ export class Viewer {
     return this._environment as IEnvironment
   }
 
+  private _environment: Environment
+  private _camera: Camera
+  private _loader: Loader
+  private _clock = new THREE.Clock()
+  private _gizmoAxes: GizmoAxes
+  private _materials: IMaterialLibrary
+
+  // State
+  private _vims: (Vim | undefined)[] = []
+  private _disposed: boolean = false
+
   /**
    * Callback for on mouse click. Replace it to override or combine
    * default behaviour with your custom logic.
@@ -98,13 +105,17 @@ export class Viewer {
   }
 
   constructor (options?: Partial<ViewerOptions.Root>) {
-    this._loader = new Loader()
     this.settings = new ViewerSettings(options)
+
+    const materials = new VimMaterials()
+    this.applyMaterialSettings(materials, this.settings)
+    this._loader = new Loader(materials)
+    this._materials = materials
 
     const scene = new RenderScene()
     this.viewport = new Viewport(this.settings)
     this._camera = new Camera(scene, this.viewport, this.settings)
-    this.renderer = new Renderer(scene, this.viewport)
+    this.renderer = new Renderer(scene, this.viewport, materials)
     this._camera.gizmo = new CameraGizmo(
       this.renderer,
       this._camera,
@@ -118,6 +129,8 @@ export class Viewer {
     this._gizmoAxes.canvas.style.right = '10px'
     this._gizmoAxes.canvas.style.top = '10px'
 
+    this.gizmoSection = new GizmoSection(this)
+
     this._environment = new Environment(this.settings)
     this._environment.getObjects().forEach((o) => this.renderer.add(o))
 
@@ -125,18 +138,22 @@ export class Viewer {
     this._onMouseClick = this.defaultOnClick
 
     // Input and Selection
-    this.selection = new Selection(this.renderer)
-    this.raycaster = new Raycaster(this.viewport, this._camera, scene)
+    this.selection = new Selection(this.renderer, this._loader.meshBuilder)
+    this.raycaster = new Raycaster(
+      this.viewport,
+      this._camera,
+      scene,
+      this.renderer
+    )
     this.inputs = new Input(this)
     this.inputs.register()
-
-    this.applyMaterialSettings(this.settings)
 
     // Start Loop
     this.animate()
   }
 
   dispose () {
+    if (this._disposed) return
     this._environment.dispose()
     this.selection.clear()
     this._camera.dispose()
@@ -144,7 +161,7 @@ export class Viewer {
     this.renderer.dispose()
     this.inputs.unregister()
     this._vims.forEach((v) => v?.dispose())
-    this._vims = []
+    this._materials.dispose()
     this._disposed = true
   }
 
@@ -233,6 +250,7 @@ export class Viewer {
     const box = this.renderer.getBoundingBox()
     if (box) this._environment.adaptToContent(box)
     this._camera.adaptToContent()
+    this.gizmoSection.fitBox(box)
   }
 
   /**
@@ -266,10 +284,15 @@ export class Viewer {
     this.renderer.add(vim.scene)
   }
 
-  applyMaterialSettings (settings: ViewerSettings) {
-    const lib = Materials.getDefaultLibrary()
-    lib.wireframe.color = settings.getHighlightColor()
-    lib.wireframe.opacity = settings.getHighlightOpacity()
+  applyMaterialSettings (materials: VimMaterials, settings: ViewerSettings) {
+    materials.applyWireframeSettings(
+      settings.getHighlightColor(),
+      settings.getHighlightOpacity()
+    )
+    materials.applyIsolationSettings(
+      settings.getIsolationColor(),
+      settings.getIsolationOpacity()
+    )
   }
 
   /**

@@ -6,6 +6,62 @@ import * as THREE from 'three'
 import { Scene } from '../vim-loader/scene'
 import { Viewport } from './viewport'
 import { RenderScene } from './renderScene'
+import { IMaterialLibrary } from '../vim-loader/materials'
+
+class Section {
+  private _renderer: THREE.WebGLRenderer
+  private _materials: IMaterialLibrary
+  private _active: boolean
+
+  readonly box: THREE.Box3 = new THREE.Box3(
+    new THREE.Vector3(-100, -100, -100),
+    new THREE.Vector3(100, 100, 100)
+  )
+
+  private maxX: THREE.Plane = new THREE.Plane(new THREE.Vector3(-1, 0, 0))
+  private minX: THREE.Plane = new THREE.Plane(new THREE.Vector3(1, 0, 0))
+  private maxY: THREE.Plane = new THREE.Plane(new THREE.Vector3(0, -1, 0))
+  private minY: THREE.Plane = new THREE.Plane(new THREE.Vector3(0, 1, 0))
+  private maxZ: THREE.Plane = new THREE.Plane(new THREE.Vector3(0, 0, -1))
+  private minZ: THREE.Plane = new THREE.Plane(new THREE.Vector3(0, 0, 1))
+  private planes: THREE.Plane[] = [
+    this.maxX,
+    this.minX,
+    this.maxY,
+    this.minY,
+    this.maxZ,
+    this.minZ
+  ]
+
+  constructor (renderer: THREE.WebGLRenderer, materials: IMaterialLibrary) {
+    this._renderer = renderer
+    this._materials = materials
+  }
+
+  fitBox (box: THREE.Box3) {
+    this.maxX.constant = box.max.x
+    this.minX.constant = -box.min.x
+    this.maxY.constant = box.max.y
+    this.minY.constant = -box.min.y
+    this.maxZ.constant = box.max.z
+    this.minZ.constant = -box.min.z
+    this.box.copy(box)
+  }
+
+  set active (value: boolean) {
+    const p = value ? this.planes : undefined
+    this._materials.opaque.clippingPlanes = p
+    this._materials.transparent.clippingPlanes = p
+    this._materials.wireframe.clippingPlanes = p
+    this._materials.isolation.clippingPlanes = p
+    this._renderer.localClippingEnabled = value
+    this._active = value
+  }
+
+  get active () {
+    return this._active
+  }
+}
 
 /**
  * Manages how vim objects are added and removed from the THREE.Scene to be rendered
@@ -14,11 +70,18 @@ export class Renderer {
   renderer: THREE.WebGLRenderer
   viewport: Viewport
   scene: RenderScene
+  section: Section
+  materials: IMaterialLibrary
 
-  constructor (scene: RenderScene, viewport: Viewport) {
+  constructor (
+    scene: RenderScene,
+    viewport: Viewport,
+    materials: IMaterialLibrary
+  ) {
     this.viewport = viewport
 
     this.scene = scene
+    this.materials = materials
     this.renderer = new THREE.WebGLRenderer({
       canvas: viewport.canvas,
       antialias: true,
@@ -34,6 +97,7 @@ export class Renderer {
 
     this.renderer.setPixelRatio(window.devicePixelRatio)
     this.renderer.shadowMap.enabled = false
+    this.section = new Section(this.renderer, this.materials)
   }
 
   dispose () {
@@ -90,6 +154,7 @@ export class Renderer {
 
   private fitViewport = () => {
     const [width, height] = this.viewport.getParentSize()
+    this.renderer.setPixelRatio(window.devicePixelRatio)
     this.renderer.setSize(width, height)
   }
 }

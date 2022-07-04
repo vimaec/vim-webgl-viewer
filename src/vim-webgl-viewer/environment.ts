@@ -29,7 +29,7 @@ export class GroundPlane {
   applyViewerSettings (settings: ViewerSettings) {
     this._size = settings.getGroundPlaneSize()
     // Visibily
-    this.mesh.visible = settings.getGroundPlaneShow()
+    this.mesh.visible = settings.getGroundPlaneVisible()
 
     // Looks
     this.applyTexture(settings.getGroundPlaneTextureUrl())

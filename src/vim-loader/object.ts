@@ -4,7 +4,6 @@
 
 // external
 import * as THREE from 'three'
-import { Mesh } from './mesh'
 import { Geometry } from './geometry'
 import {
   BufferAttribute,
@@ -38,6 +37,10 @@ export class Object {
     this._meshes = meshes
   }
 
+  private get meshBuilder () {
+    return this.vim.scene.builder.meshBuilder
+  }
+
   get hasMesh () {
     return this._meshes?.length!!
   }
@@ -60,6 +63,14 @@ export class Object {
    */
   getBimElement () {
     return this.vim.document.getElement(this.element)
+  }
+
+  /**
+   * Returns Bim data for the element associated with this object.
+   */
+  async getBimElementValue (field: string, resolveString: boolean) {
+    const value = await this.vim.document.getElementValue(this.element, field)
+    return resolveString ? this.vim.document.getString(value) : value
   }
 
   get elementId () {
@@ -109,7 +120,7 @@ export class Object {
   createWireframe () {
     if (!this.instances) return
 
-    const wireframe = Mesh.getDefaultBuilder().createWireframe(
+    const wireframe = this.meshBuilder.createWireframe(
       this.vim.document.g3d,
       this.instances
     )

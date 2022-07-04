@@ -24,7 +24,7 @@ export namespace ViewerOptions {
    */
   export type GroundPlane = {
     /** Enables/Disables plane under scene */
-    show: boolean
+    visible: boolean
     /** Local or remote texture url for plane */
     texture: string
     /** Opacity of the plane */
@@ -98,9 +98,14 @@ export namespace ViewerOptions {
     intensity: number
   }
 
-  export type Highlight = {
+  export type ColorRGBA = {
     color: ColorRGB
     opacity: number
+  }
+
+  export type Materials = {
+    highlight: Partial<ColorRGBA>
+    isolation: Partial<ColorRGBA>
   }
 
   /** Viewer related options independant from vims */
@@ -130,7 +135,7 @@ export namespace ViewerOptions {
     /**
      * Object highlight on click options
      */
-    highlight: Partial<Highlight>
+    materials: Partial<Materials>
   }
 }
 
@@ -169,7 +174,7 @@ export class ViewerSettings {
         }
       },
       groundPlane: {
-        show: false,
+        visible: false,
         texture: undefined,
         opacity: 1,
         color: { r: 0xff, g: 0xff, b: 0xff },
@@ -185,9 +190,15 @@ export class ViewerSettings {
         color: { h: 0.1, s: 1, l: 0.95 },
         intensity: 1
       },
-      highlight: {
-        color: { r: 0x6a, g: 0xd2, b: 0xff },
-        opacity: 0.5
+      materials: {
+        highlight: {
+          color: { r: 0x6a, g: 0xd2, b: 0xff },
+          opacity: 0.5
+        },
+        isolation: {
+          color: { r: 0x40, g: 0x40, b: 0x40 },
+          opacity: 0.1
+        }
       }
     }
 
@@ -199,7 +210,7 @@ export class ViewerSettings {
   getCanvasId = () => this.options.canvas.id
 
   // Plane
-  getGroundPlaneShow = () => this.options.groundPlane.show!
+  getGroundPlaneVisible = () => this.options.groundPlane.visible!
   getGroundPlaneColor = () => toRGBColor(this.options.groundPlane.color!)
   getGroundPlaneTextureUrl = () => this.options.groundPlane.texture!
   getGroundPlaneOpacity = () => this.options.groundPlane.opacity!
@@ -216,8 +227,19 @@ export class ViewerSettings {
   getSunlightPosition = () => toVec(this.options.sunLight.position!)
   getSunlightIntensity = () => this.options.sunLight.intensity!
 
-  getHighlightColor = () => toRGBColor(this.options.highlight.color!)
-  getHighlightOpacity = () => this.options.highlight.opacity!
+  private get highlight () {
+    return this.options.materials.highlight
+  }
+
+  getHighlightColor = () => toRGBColor(this.highlight.color!)
+  getHighlightOpacity = () => this.highlight.opacity!
+
+  private get isolation () {
+    return this.options.materials.isolation
+  }
+
+  getIsolationColor = () => toRGBColor(this.isolation.color!)
+  getIsolationOpacity = () => this.isolation.opacity!
 
   // Camera
   private get camera () {

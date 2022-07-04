@@ -26,6 +26,7 @@ export class Viewport {
     if (canvas) return [canvas, false]
 
     canvas = document.createElement('canvas')
+    canvas.className = 'vim-canvas'
     document.body.appendChild(canvas)
     return [canvas, true]
   }
@@ -38,12 +39,12 @@ export class Viewport {
   }
 
   /**
-   * Returns the pixel size of the canvas.
+   * Returns the pixel size of the parent element.
    */
   getParentSize (): [width: number, height: number] {
     return [
-      this.canvas.parentElement!.clientWidth,
-      this.canvas.parentElement!.clientHeight
+      this.canvas.parentElement?.clientWidth ?? this.canvas.clientWidth,
+      this.canvas.parentElement?.clientHeight ?? this.canvas.clientHeight
     ]
   }
 
@@ -55,10 +56,8 @@ export class Viewport {
   }
 
   getAspectRatio () {
-    return (
-      this.canvas.parentElement!.clientWidth /
-      this.canvas.parentElement!.clientHeight
-    )
+    const [width, height] = this.getParentSize()
+    return width / height
   }
 
   onResize (callback: () => void) {
