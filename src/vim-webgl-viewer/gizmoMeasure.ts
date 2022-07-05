@@ -115,6 +115,7 @@ export class GizmoMeasure {
   private _lastRaycast: number
   private removeMouseListener: () => void
   private oldClick: (hit: HitTestResult) => void
+  private onClear: () => void
 
   // results
   private _startPos: THREE.Vector3
@@ -139,8 +140,10 @@ export class GizmoMeasure {
 
   /**
    * Starts a new measure flow where the two next click are overriden.
+   * Promise is resolved if flow is succesfully completed, rejected otherwise.
+   * Do not override viewer.onMouseClick while this flow is active.
    */
-  measure () {
+  async measure () {
     this.clear()
     this.registerMouse()
     this._stage = 'ready'
@@ -151,15 +154,31 @@ export class GizmoMeasure {
     this._viewer.renderer.add(this._startMarker.mesh)
 
     this.oldClick = this._viewer.onMouseClick
-    this._viewer.onMouseClick = (hit) => {
-      if (!hit.object) return
-      this.onFirstClick(hit)
+
+    return new Promise<void>((resolve, reject) => {
+      this.onClear = () => reject(new Error('Aborted'))
+
+      // Override next two clicks then reverts
       this._viewer.onMouseClick = (hit) => {
-        this._viewer.onMouseClick = this.oldClick
-        this.oldClick = undefined
-        this.onSecondClick(hit)
+        // Wait until valid first click.
+        if (!hit.object) return
+        this.onFirstClick(hit)
+
+        this._viewer.onMouseClick = (hit) => {
+          this.onClear = undefined
+
+          // Restore normal click behavior
+          this._viewer.onMouseClick = this.oldClick
+          this.oldClick = undefined
+
+          if (this.onSecondClick(hit)) {
+            resolve()
+          } else {
+            reject(new Error('Canceled'))
+          }
+        }
       }
-    }
+    })
   }
 
   private onFirstClick (hit: HitTestResult) {
@@ -223,7 +242,7 @@ export class GizmoMeasure {
     if (!hit.object) {
       this.clear()
       console.log('No point selected. Aborting measurement.')
-      return
+      return false
     }
     this._stage = 'done'
     this.removeMouseListener?.()
@@ -270,10 +289,11 @@ export class GizmoMeasure {
       new THREE.Color(0, 0, 1)
     )
     this._viewer.renderer.add(this._lineZ.mesh)
+    return true
   }
 
   /**
-   * Cancels the current measure flow and dispose all resources.
+   * Cancels the current measure flow, fails the related promise and dispose all resources.
    */
   clear () {
     if (this.oldClick) {
@@ -316,5 +336,7 @@ export class GizmoMeasure {
       this._viewer.renderer.remove(this._lineZ.mesh)
       this._lineZ.dispose()
     }
+    this.onClear?.()
+    this.onClear = undefined
   }
 }
