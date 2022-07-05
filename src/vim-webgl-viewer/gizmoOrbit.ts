@@ -30,7 +30,7 @@ export class CameraGizmo {
   private _wireframe: THREE.BufferGeometry | undefined
   private _material: THREE.LineBasicMaterial | undefined
   private _materialAlways: THREE.LineBasicMaterial | undefined
-  private _gizmos: THREE.Group | undefined
+  private _gizmos: THREE.LineSegments | undefined
 
   // State
   private _timeout: ReturnType<typeof setTimeout> | undefined
@@ -145,6 +145,8 @@ export class CameraGizmo {
   private createGizmo () {
     this._box = new THREE.SphereGeometry(1)
     this._wireframe = new THREE.WireframeGeometry(this._box)
+    this._wireframe.addGroup(0, Infinity, 0)
+    this._wireframe.addGroup(0, Infinity, 1)
 
     this._material = new THREE.LineBasicMaterial({
       depthTest: true,
@@ -160,11 +162,11 @@ export class CameraGizmo {
     })
 
     // Add to scene as group
-    this._gizmos = new THREE.Group()
-    this._gizmos.add(new THREE.LineSegments(this._wireframe, this._material))
-    this._gizmos.add(
-      new THREE.LineSegments(this._wireframe, this._materialAlways)
-    )
+    this._gizmos = new THREE.LineSegments(this._wireframe, [
+      this._material,
+      this._materialAlways
+    ])
+
     this._renderer.add(this._gizmos)
     this.updateScale()
   }
