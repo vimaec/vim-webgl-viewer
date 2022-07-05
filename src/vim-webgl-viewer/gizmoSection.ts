@@ -1,3 +1,7 @@
+/**
+ * @module viw-webgl-viewer
+ */
+
 import { Viewer } from './viewer'
 import * as THREE from 'three'
 
@@ -326,6 +330,9 @@ class BoxInputs {
   }
 }
 
+/**
+ * Gizmo for section box, it acts as a proxy between renderer and user.
+ */
 export class GizmoSection {
   // dependencies
   private _viewer: Viewer

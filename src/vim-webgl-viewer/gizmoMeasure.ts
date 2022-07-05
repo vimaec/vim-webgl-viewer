@@ -1,3 +1,7 @@
+/**
+ * @module viw-webgl-viewer
+ */
+
 import * as THREE from 'three'
 import { HitTestResult } from '../vim'
 import { Viewer } from './viewer'
