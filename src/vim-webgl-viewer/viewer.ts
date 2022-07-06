@@ -129,7 +129,7 @@ export class Viewer {
     )
 
     // TODO add options
-    this.gizmoMeasure = new GizmoMeasure(this)
+    // this.gizmoMeasure = new GizmoMeasure(this)
     this._gizmoAxes = new GizmoAxes(this.camera)
     this.viewport.canvas.parentElement?.prepend(this._gizmoAxes.canvas)
     this._gizmoAxes.canvas.style.position = 'fixed'

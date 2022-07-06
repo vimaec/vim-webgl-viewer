@@ -5,8 +5,10 @@
 import * as THREE from 'three'
 import { HitTestResult } from '../vim'
 import { Viewer } from './viewer'
-import * as ML from 'three.meshline'
+
 import { Vector2 } from 'three'
+// import * as ML from 'three.meshline'
+const ML = undefined
 
 /**
  * Wrapper for a two points line drawn using MeshLine
