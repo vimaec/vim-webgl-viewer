@@ -35,18 +35,18 @@ export class VimMaterials implements IMaterialLibrary {
   opaque: THREE.Material
   transparent: THREE.MeshPhongMaterial
   wireframe: THREE.LineBasicMaterial
-  isolation: THREE.ShaderMaterial
+  isolation: THREE.Material
 
   constructor (
     opaque?: THREE.Material,
     transparent?: THREE.MeshPhongMaterial,
     wireframe?: THREE.LineBasicMaterial,
-    isolation?: THREE.ShaderMaterial
+    isolation?: THREE.Material
   ) {
     this.opaque = opaque ?? createOpaque()
     this.transparent = transparent ?? createTransparent()
     this.wireframe = wireframe ?? createWireframe()
-    this.isolation = isolation ?? createCustomIsolationMaterial()
+    this.isolation = isolation ?? createIsolation2()
   }
 
   applyWireframeSettings (color: THREE.Color, opacity: number) {
@@ -55,9 +55,9 @@ export class VimMaterials implements IMaterialLibrary {
   }
 
   applyIsolationSettings (color: THREE.Color, opacity: number) {
-    this.isolation.uniforms.fillColor.value = color
-    this.isolation.uniforms.opacity.value = opacity
-    this.isolation.uniformsNeedUpdate = true
+    // this.isolation.uniforms.fillColor.value = color
+    // this.isolation.uniforms.opacity.value = opacity
+    // this.isolation.uniformsNeedUpdate = true
   }
 
   dispose () {
@@ -100,6 +100,17 @@ export function createTransparent () {
   const mat = createBase()
   mat.transparent = true
   patchBaseMaterial(mat)
+  return mat
+}
+
+/**
+ * Creates a new instance of the default loader transparent material
+ * @returns a THREE.MeshPhongMaterial
+ */
+export function createIsolation2 () {
+  const mat = createBase()
+  mat.transparent = true
+  patchBaseMaterial2(mat)
   return mat
 }
 
@@ -180,7 +191,6 @@ export function patchBaseMaterial (material: THREE.Material) {
 
 
           // VISIBILITY
-
           // Set frag ignore from instance or vertex attribute
           #ifdef USE_INSTANCING
             vIgnore = ignoreInstance;
@@ -214,6 +224,118 @@ export function patchBaseMaterial (material: THREE.Material) {
           // vColored == 0 -> Phong Color 
           float d = length(outgoingLight);
           gl_FragColor = vec4(vColored * vColor.xyz * d + (1.0f - vColored) * outgoingLight.xyz, diffuseColor.a);
+        `
+      )
+  }
+}
+
+/**
+ * Patches phong shader to be able to control when lighting should be applied to resulting color.
+ * Instanced meshes ignore light when InstanceColor is defined
+ * Instanced meshes ignore vertex color when instance attribute useVertexColor is 0
+ * Regular meshes ignore light in favor of vertex color when uv.y = 0
+ */
+export function patchBaseMaterial2 (material: THREE.Material) {
+  material.onBeforeCompile = (shader) => {
+    // shader.uniforms.fillValue = { value: new THREE.Color(0.25, 0.25, 0.25) }
+
+    material.userData.shader = shader
+    shader.vertexShader = shader.vertexShader
+      // VERTEX DECLARATIONS
+      .replace(
+        '#include <color_pars_vertex>',
+        `
+        #include <color_pars_vertex>
+        
+        // COLORING
+
+        // attribute for color override
+        // merged meshes use it as vertex attribute
+        // instanced meshes use it as an instance attribute
+        attribute float colored;
+
+        // There seems to be an issue where setting mehs.instanceColor
+        // doesn't properly set USE_INSTANCING_COLOR
+        // so we always use it as a fix
+        #ifndef USE_INSTANCING_COLOR
+        attribute vec3 instanceColor;
+        #endif
+
+        // Passed to fragment to ignore phong model
+        varying float vColored;
+        
+        // VISIBILITY
+
+        // Instance or vertex attribute to hide objects 
+        #ifdef USE_INSTANCING
+          attribute float ignoreInstance;
+        #else
+          attribute float ignoreVertex;
+        #endif
+
+        // Passed to fragment to discard them
+        varying float vIgnore;
+
+        `
+      )
+      // VERTEX IMPLEMENTATION
+      .replace(
+        '#include <color_vertex>',
+        `
+          // COLORING
+          vColor = color;
+          vColored = colored;
+
+          // colored == 1 -> instance color
+          // colored == 0 -> vertex color
+          #ifdef USE_INSTANCING
+            vColor.xyz = colored * instanceColor.xyz + (1.0f - colored) * color.xyz;
+          #endif
+
+
+          // VISIBILITY
+          // Set frag ignore from instance or vertex attribute
+          #ifdef USE_INSTANCING
+            vIgnore = ignoreInstance;
+          #else
+            vIgnore = ignoreVertex;
+          #endif
+        `
+      )
+      .replace(
+        '#include <logdepthbuf_vertex>',
+        `
+        // ORDERING
+        if(vIgnore > 0.0f){
+          gl_Position.z = 1.0f;
+        }else{
+          gl_Position.z = -1.0f;
+        }
+      `
+      )
+    // FRAGMENT DECLARATIONS
+    shader.fragmentShader = shader.fragmentShader
+      // Adding declarations for varying defined in vertex shader
+      .replace(
+        '#include <clipping_planes_pars_fragment>',
+        `
+        #include <clipping_planes_pars_fragment>
+        varying float vIgnore;
+        varying float vColored;
+        `
+      )
+      // FRAGMENT IMPLEMENTATION
+      .replace(
+        '#include <output_fragment>',
+        `
+        if (vIgnore > 0.0f){
+          gl_FragColor = vec4(0.25f,0.25f,0.25f, 0.1f);
+        }
+        else{
+          float d = length(outgoingLight);
+          gl_FragColor = vec4(vColored * vColor.xyz * d + (1.0f - vColored) * outgoingLight.xyz, 1.0f);
+        }
+        
         `
       )
   }
@@ -292,7 +414,7 @@ export function createCustomIsolationMaterial () {
         }else{
           gl_Position.z = -1.0f;
         }
-
+        
         // LIGHTING
         vPosition = vec3(mvPosition ) / mvPosition .w;
       }
