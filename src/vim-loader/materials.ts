@@ -309,7 +309,7 @@ export function patchBaseMaterial2 (material: THREE.Material) {
           discard;
         }
 
-        gl_FragColor = vec4(0.25f,0.25f,0.25f, 0.1f);
+        gl_FragColor = vec4(0.25f,0.25f,0.25f, 0.02f);
         `
       )
   }
