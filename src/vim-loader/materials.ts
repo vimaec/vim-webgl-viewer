@@ -110,6 +110,9 @@ export function createTransparent () {
 export function createIsolation2 () {
   const mat = createBase()
   mat.transparent = true
+  mat.color = new THREE.Color(0.25, 0.25, 0.25)
+  mat.depthWrite = false
+  mat.opacity = 0.1
   patchBaseMaterial2(mat)
   return mat
 }
@@ -247,23 +250,6 @@ export function patchBaseMaterial2 (material: THREE.Material) {
         `
         #include <color_pars_vertex>
         
-        // COLORING
-
-        // attribute for color override
-        // merged meshes use it as vertex attribute
-        // instanced meshes use it as an instance attribute
-        attribute float colored;
-
-        // There seems to be an issue where setting mehs.instanceColor
-        // doesn't properly set USE_INSTANCING_COLOR
-        // so we always use it as a fix
-        #ifndef USE_INSTANCING_COLOR
-        attribute vec3 instanceColor;
-        #endif
-
-        // Passed to fragment to ignore phong model
-        varying float vColored;
-        
         // VISIBILITY
 
         // Instance or vertex attribute to hide objects 
@@ -282,17 +268,6 @@ export function patchBaseMaterial2 (material: THREE.Material) {
       .replace(
         '#include <color_vertex>',
         `
-          // COLORING
-          vColor = color;
-          vColored = colored;
-
-          // colored == 1 -> instance color
-          // colored == 0 -> vertex color
-          #ifdef USE_INSTANCING
-            vColor.xyz = colored * instanceColor.xyz + (1.0f - colored) * color.xyz;
-          #endif
-
-
           // VISIBILITY
           // Set frag ignore from instance or vertex attribute
           #ifdef USE_INSTANCING
@@ -302,6 +277,7 @@ export function patchBaseMaterial2 (material: THREE.Material) {
           #endif
         `
       )
+    /*
       .replace(
         '#include <logdepthbuf_vertex>',
         `
@@ -311,8 +287,10 @@ export function patchBaseMaterial2 (material: THREE.Material) {
         }else{
           gl_Position.z = -1.0f;
         }
+
       `
       )
+    */
     // FRAGMENT DECLARATIONS
     shader.fragmentShader = shader.fragmentShader
       // Adding declarations for varying defined in vertex shader
@@ -321,21 +299,17 @@ export function patchBaseMaterial2 (material: THREE.Material) {
         `
         #include <clipping_planes_pars_fragment>
         varying float vIgnore;
-        varying float vColored;
         `
       )
       // FRAGMENT IMPLEMENTATION
       .replace(
         '#include <output_fragment>',
         `
-        if (vIgnore > 0.0f){
-          gl_FragColor = vec4(0.25f,0.25f,0.25f, 0.1f);
+        if(vIgnore == 0.0f){
+          discard;
         }
-        else{
-          float d = length(outgoingLight);
-          gl_FragColor = vec4(vColored * vColor.xyz * d + (1.0f - vColored) * outgoingLight.xyz, 1.0f);
-        }
-        
+
+        gl_FragColor = vec4(0.25f,0.25f,0.25f, 0.1f);
         `
       )
   }

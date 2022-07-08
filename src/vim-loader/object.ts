@@ -226,7 +226,11 @@ export class Object {
    * @param index index of the merged mesh instance
    * @param color rgb representation of the color to apply
    */
-  private applyMergedVisible (mesh: THREE.Mesh, index: number, show: boolean) {
+  private applyMergedVisible (
+    mesh: THREE.Mesh,
+    index: number,
+    visible: boolean
+  ) {
     const attribute =
       mesh.geometry.getAttribute('ignoreVertex') ??
       new Float32BufferAttribute(
@@ -241,9 +245,11 @@ export class Object {
 
     for (let i = start; i < end; i++) {
       const v = indices.getX(i)
-      attribute.setX(v, show ? 0 : 1)
+      attribute.setX(v, visible ? 0 : 1)
     }
     attribute.needsUpdate = true
+
+    this.addOrRemoveGroup(mesh.geometry, visible, attribute)
   }
 
   /**
@@ -263,6 +269,26 @@ export class Object {
 
     attribute.setX(index, visible ? 0 : 1)
     attribute.needsUpdate = true
+    this.addOrRemoveGroup(mesh.geometry, visible, attribute)
+  }
+
+  private addOrRemoveGroup (
+    geometry: THREE.BufferGeometry,
+    visible: boolean,
+    attribute: THREE.BufferAttribute | THREE.InterleavedBufferAttribute
+  ) {
+    if (visible) {
+      if (geometry.groups.length === 2) {
+        for (let i = 0; i < attribute.count; i++) {
+          if (attribute.getX(i) === 1) return
+        }
+      }
+      geometry.groups.length = 1
+    } else {
+      if (geometry.groups.length === 1) {
+        geometry.addGroup(0, Infinity, 1)
+      }
+    }
   }
 
   /**

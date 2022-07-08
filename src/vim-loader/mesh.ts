@@ -79,7 +79,12 @@ export class MeshBuilder {
       ? this.materials.transparent
       : this.materials.opaque
 
-    const result = new THREE.InstancedMesh(geometry, material, instances.length)
+    const result = new THREE.InstancedMesh(
+      geometry,
+      [material, this.materials.isolation],
+      instances.length
+    )
+    geometry.addGroup(0, Infinity, 0)
 
     for (let i = 0; i < instances.length; i++) {
       const matrix = Geometry.getInstanceMatrix(g3d, instances[i])
@@ -109,7 +114,9 @@ export class MeshBuilder {
       ? this.materials.transparent
       : this.materials.opaque
 
-    const mesh = new THREE.Mesh(geometry, material)
+    const mesh = new THREE.Mesh(geometry, [material, this.materials.isolation])
+    geometry.addGroup(0, Infinity, 0)
+
     mesh.userData.merged = true
     mesh.userData.instances = merger.getInstances()
     mesh.userData.submeshes = merger.getSubmeshes()
