@@ -11,11 +11,12 @@ import { Input } from './input'
 import { Selection } from './selection'
 import { Environment, IEnvironment } from './environment'
 import { Raycaster, RaycastResult } from './raycaster'
-import { CameraGizmo } from './gizmos'
+import { CameraGizmo } from './gizmoOrbit'
 import { RenderScene } from './renderScene'
 import { Viewport } from './viewport'
 import { GizmoAxes } from './gizmoAxes'
 import { GizmoSection } from './gizmoSection'
+import { GizmoMeasure } from './gizmoMeasure'
 
 // loader
 import { VimSettings, VimOptions } from '../vim-loader/vimSettings'
@@ -65,6 +66,11 @@ export class Viewer {
    * Interface to interact with the section gizmo.
    */
   gizmoSection: GizmoSection
+
+  /**
+   * Interface to interact with the section gizmo.
+   */
+  gizmoMeasure: GizmoMeasure
 
   /**
    * Interface to manipulate the viewer camera.
@@ -123,6 +129,7 @@ export class Viewer {
     )
 
     // TODO add options
+    this.gizmoMeasure = new GizmoMeasure(this)
     this._gizmoAxes = new GizmoAxes(this.camera)
     this.viewport.canvas.parentElement?.prepend(this._gizmoAxes.canvas)
     this._gizmoAxes.canvas.style.position = 'fixed'

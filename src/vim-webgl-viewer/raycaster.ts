@@ -128,7 +128,6 @@ export class Raycaster {
    * Raycast projecting a ray from camera position to screen position
    */
   screenRaycast (position: THREE.Vector2): RaycastResult {
-    console.time('raycast')
     let intersections = this.raycast(position)
 
     if (this._renderer.section.active) {
@@ -136,7 +135,6 @@ export class Raycaster {
         this._renderer.section.box.containsPoint(i.point)
       )
     }
-    console.timeEnd('raycast')
     const r = new RaycastResult(position, intersections)
 
     const hit = r.firstHit
