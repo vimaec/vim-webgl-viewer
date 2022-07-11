@@ -5,7 +5,7 @@
 import * as THREE from 'three'
 import { HitTestResult } from '../vim'
 import { Viewer } from './viewer'
-import * as ML from 'three.meshline'
+import { MeshLine, MeshLineMaterial } from './meshLine'
 import { Vector2 } from 'three'
 
 /**
@@ -23,14 +23,14 @@ class MeasureLine {
     end: THREE.Vector3,
     color: THREE.Color
   ) {
-    this._material = new ML.MeshLineMaterial({
+    this._material = new MeshLineMaterial({
       sizeAttenuation: 0,
       lineWidth: 5,
       resolution: canvasSize,
       color: color
     })
 
-    this._materialAlways = new ML.MeshLineMaterial({
+    this._materialAlways = new MeshLineMaterial({
       lineWidth: 5,
       sizeAttenuation: 0,
       depthTest: false,
@@ -40,7 +40,7 @@ class MeasureLine {
       color: color
     })
 
-    this._meshLine = new ML.MeshLine()
+    this._meshLine = new MeshLine()
     this._meshLine.setPoints([start, end])
     this.mesh = new THREE.Mesh(this._meshLine, [
       this._material,

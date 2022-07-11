@@ -52,8 +52,7 @@
   "dependencies": {
     "deepmerge": "^4.2.2",
     "lodash-es": "^4.17.21",
-    "three": "^0.133.1",
-    "three.meshline": "^1.4.0"
+    "three": "^0.133.1"
   },
   "keywords": [
     "3d",
