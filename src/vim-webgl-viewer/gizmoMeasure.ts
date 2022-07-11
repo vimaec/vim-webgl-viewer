@@ -5,7 +5,7 @@
 import * as THREE from 'three'
 import { HitTestResult } from '../vim'
 import { Viewer } from './viewer'
-import { MeshLine, MeshLineMaterial } from './meshLine'
+import { MeshLine, MeshLineMaterial } from '../utils/meshLine'
 import { Vector2 } from 'three'
 
 /**
