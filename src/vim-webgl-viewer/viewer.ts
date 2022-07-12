@@ -321,11 +321,9 @@ export class Viewer {
       this._camera.frame(hit.object, false, this.camera.defaultLerpDuration)
     }
 
-    const element = hit.object.getBimElement()
-    if (element instanceof Map) {
-      console.log(element)
-    } else {
-      element.then((e) => console.log(e))
-    }
+    hit.object.getBimElement().then((e) => {
+      e.set('Index', hit.object.element)
+      console.log(e)
+    })
   }
 }
