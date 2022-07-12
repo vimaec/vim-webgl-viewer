@@ -5,9 +5,36 @@
 import { BFast } from './bfast'
 import { G3d } from './g3d'
 
+const objectModel = {
+  entities: 'entities',
+  nodes: {
+    table: 'Vim.Node'
+  },
+  element: {
+    table: 'Vim.Element',
+    columns: {
+      index: 'index:Vim.Element:Element'
+    }
+  },
+  parameter: {
+    table: 'Vim.Parameter',
+    columns: {
+      value: 'string:Value'
+    }
+  },
+  parameterDescriptor: {
+    table: 'Vim.ParameterDescriptor',
+    columns: {
+      index: 'index:Vim.ParameterDescriptor:ParameterDescriptor',
+      name: 'string:Name',
+      group: 'string:Group'
+    }
+  }
+}
+
 export class Document {
   g3d: G3d
-  private _entity: BFast
+  private _entities: BFast
   private _strings: string[]
 
   private _instanceToElement: number[]
@@ -25,7 +52,7 @@ export class Document {
     elementIdToElements: Map<number, number[]>
   ) {
     this.g3d = g3d
-    this._entity = entities
+    this._entities = entities
     this._strings = strings
     this._instanceToElement = instanceToElement
     this._elementToInstances = elementToInstances
@@ -92,14 +119,14 @@ export class Document {
   }
 
   private static async requestEntities (bfast: BFast) {
-    const entities = await bfast.getBfast('entities')
+    const entities = await bfast.getBfast(objectModel.entities)
     if (!entities) throw new Error('Could not get Entities Data from VIM file.')
     return entities
   }
 
   private static async requestInstanceToElement (entities: BFast) {
-    const nodes = await entities.getBfast('Vim.Node')
-    const instances = await nodes?.getArray('index:Vim.Element:Element')
+    const nodes = await entities.getBfast(objectModel.nodes.table)
+    const instances = await nodes?.getArray(objectModel.element.columns.index)
     if (!instances) {
       throw new Error('Could not get InstanceToElement from VIM file.')
     }
@@ -110,7 +137,7 @@ export class Document {
    * Request element id table from remote with support for legacy name
    */
   private static async requestElementIds (entities: BFast) {
-    const elements = await entities.getBfast('Vim.Element')
+    const elements = await entities.getBfast(objectModel.element.table)
     const ids =
       (await elements?.getArray('int:Id')) ??
       (await elements?.getArray('numeric:Id'))
@@ -160,7 +187,7 @@ export class Document {
    * @param element vim element index
    */
   async getElement (element: number) {
-    return this.getEntity('Vim.Element', element)
+    return this.getEntity(objectModel.element.table, element)
   }
 
   /**
@@ -169,7 +196,7 @@ export class Document {
    * @param field field name
    */
   async getElementValue (element: number, field: string) {
-    const elements = await this._entity.getBfast('Vim.Element')
+    const elements = await this._entities.getBfast(objectModel.element.table)
     const value = await elements.getValue(field, element)
     return value
   }
@@ -206,7 +233,7 @@ export class Document {
    * @param index row index
    */
   async getEntity (name: string, index: number) {
-    const elements = await this._entity.getBfast(name)
+    const elements = await this._entities.getBfast(name)
     const row = await elements?.getRow(index)
     if (!row) return
     this.resolveStrings(row)
@@ -215,6 +242,57 @@ export class Document {
 
   getString (index: number) {
     return this._strings[index]
+  }
+
+  async getElementParameters (element: number): Promise<
+    {
+      name: string
+      value: string
+      group: string
+    }[]
+  > {
+    const parameters = await this._entities.getBfast(
+      objectModel.parameter.table
+    )
+    const elements = await parameters.getArray(
+      objectModel.element.columns.index
+    )
+    const values = await parameters.getArray(
+      objectModel.parameter.columns.value
+    )
+    const descs = await parameters.getArray(
+      objectModel.parameterDescriptor.columns.index
+    )
+
+    const decriptors = await this._entities.getBfast(
+      objectModel.parameterDescriptor.table
+    )
+    const desriptorNames = await decriptors.getArray(
+      objectModel.parameterDescriptor.columns.name
+    )
+    const descriptorTypes = await decriptors.getArray(
+      objectModel.parameterDescriptor.columns.group
+    )
+
+    const result: {
+      name: string
+      value: string
+      group: string
+    }[] = []
+
+    await elements.forEach((e, i) => {
+      if (e === element) {
+        const value = this._strings[values[i]].split('|')
+        const displayValue = value[value.length - 1]
+        const d = descs[i]
+        result.push({
+          name: this._strings[desriptorNames[d]],
+          value: displayValue,
+          group: this._strings[descriptorTypes[d]]
+        })
+      }
+    })
+    return result
   }
 
   /**
