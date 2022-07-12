@@ -73,6 +73,13 @@ export class Object {
     return resolveString ? this.vim.document.getString(value) : value
   }
 
+  /**
+   * Returns Bim data for the element associated with this object.
+   */
+  async getBimParameters () {
+    return await this.vim.document.getElementParameters(this.element)
+  }
+
   get elementId () {
     return this.vim.document.getElementId(this.element)
   }
