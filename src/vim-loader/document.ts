@@ -12,9 +12,8 @@ const objectModel = {
   },
   element: {
     table: 'Vim.Element',
-    columns: {
-      index: 'index:Vim.Element:Element'
-    }
+    index: 'index:Vim.Element:Element',
+    columns: {}
   },
   parameter: {
     table: 'Vim.Parameter',
@@ -24,11 +23,25 @@ const objectModel = {
   },
   parameterDescriptor: {
     table: 'Vim.ParameterDescriptor',
+    index: 'index:Vim.ParameterDescriptor:ParameterDescriptor',
     columns: {
-      index: 'index:Vim.ParameterDescriptor:ParameterDescriptor',
       name: 'string:Name',
       group: 'string:Group'
     }
+  },
+  familyInstance: {
+    table: 'Vim.FamilyInstance',
+    columns: {}
+  },
+  familyType: {
+    table: 'Vim.FamilyType',
+    index: 'index:Vim.FamilyType:FamilyType',
+    columns: {}
+  },
+  family: {
+    table: 'Vim.Family',
+    index: 'index:Vim.Family:Family',
+    columns: {}
   }
 }
 
@@ -126,7 +139,7 @@ export class Document {
 
   private static async requestInstanceToElement (entities: BFast) {
     const nodes = await entities.getBfast(objectModel.nodes.table)
-    const instances = await nodes?.getArray(objectModel.element.columns.index)
+    const instances = await nodes?.getArray(objectModel.element.index)
     if (!instances) {
       throw new Error('Could not get InstanceToElement from VIM file.')
     }
@@ -244,6 +257,11 @@ export class Document {
     return this._strings[index]
   }
 
+  /**
+   * Returns all parameters of an element and of its family type and family
+   * @param element element index
+   * @returns An array of paramters with name, value, group
+   */
   async getElementParameters (element: number): Promise<
     {
       name: string
@@ -251,26 +269,46 @@ export class Document {
       group: string
     }[]
   > {
-    const parameters = await this._entities.getBfast(
+    const elements = new Set<number>()
+    elements.add(element)
+
+    const familyInstance = await this.getElementFamilyInstance(element)
+    if (familyInstance !== undefined) {
+      const familyType = await this.getFamilyInstanceFamilyType(familyInstance)
+      const family = await this.getFamilyTypeFamily(familyType)
+
+      const familyTypeElement = await this.getFamiltyTypeElement(familyType)
+      elements.add(familyTypeElement)
+
+      const familyElement = await this.getFamilyElement(family)
+      elements.add(familyElement)
+    }
+
+    const result = await this.getElementsParameters(elements)
+    return result
+  }
+
+  private async getElementsParameters (elements: Set<number>) {
+    const parameterTable = await this._entities.getBfast(
       objectModel.parameter.table
     )
-    const elements = await parameters.getArray(
-      objectModel.element.columns.index
+    const parameterElement = await parameterTable.getArray(
+      objectModel.element.index
     )
-    const values = await parameters.getArray(
+    const parameterValue = await parameterTable.getArray(
       objectModel.parameter.columns.value
     )
-    const descs = await parameters.getArray(
-      objectModel.parameterDescriptor.columns.index
+    const parameterDescription = await parameterTable.getArray(
+      objectModel.parameterDescriptor.index
     )
 
-    const decriptors = await this._entities.getBfast(
+    const parameterDescriptor = await this._entities.getBfast(
       objectModel.parameterDescriptor.table
     )
-    const desriptorNames = await decriptors.getArray(
+    const parameterDescriptorName = await parameterDescriptor.getArray(
       objectModel.parameterDescriptor.columns.name
     )
-    const descriptorTypes = await decriptors.getArray(
+    const parameterDescriptorGroup = await parameterDescriptor.getArray(
       objectModel.parameterDescriptor.columns.group
     )
 
@@ -280,18 +318,80 @@ export class Document {
       group: string
     }[] = []
 
-    await elements.forEach((e, i) => {
-      if (e === element) {
-        const value = this._strings[values[i]].split('|')
+    parameterElement.forEach((e, i) => {
+      if (elements.has(e)) {
+        const value = this._strings[parameterValue[i]].split('|')
         const displayValue = value[value.length - 1]
-        const d = descs[i]
+        const d = parameterDescription[i]
         result.push({
-          name: this._strings[desriptorNames[d]],
+          name: this._strings[parameterDescriptorName[d]],
           value: displayValue,
-          group: this._strings[descriptorTypes[d]]
+          group: this._strings[parameterDescriptorGroup[d]]
         })
       }
     })
+    return result
+  }
+
+  private async getElementFamilyInstance (element: number) {
+    const familyInstanceTable = await this._entities.getBfast(
+      objectModel.familyInstance.table
+    )
+    const familyInstanceElementArray = await familyInstanceTable.getArray(
+      objectModel.element.index
+    )
+
+    let result: number
+    familyInstanceElementArray.forEach((e, i) => {
+      if (e === element) {
+        result = i
+      }
+    })
+    return result
+  }
+
+  private async getFamilyInstanceFamilyType (familyInstance: number) {
+    const familyInstanceTable = await this._entities.getBfast(
+      objectModel.familyInstance.table
+    )
+
+    const result = await familyInstanceTable.getValue(
+      objectModel.familyType.index,
+      familyInstance
+    )
+
+    return result
+  }
+
+  private async getFamilyTypeFamily (familyType: number) {
+    const familyTypeTable = await this._entities.getBfast(
+      objectModel.familyType.table
+    )
+
+    const result = await familyTypeTable.getValue(
+      objectModel.family.index,
+      familyType
+    )
+
+    return result
+  }
+
+  private async getFamiltyTypeElement (familyType: number) {
+    const familyTypeTable = await this._entities.getBfast(
+      objectModel.familyType.table
+    )
+
+    const result = await familyTypeTable.getValue(
+      objectModel.element.index,
+      familyType
+    )
+
+    return result
+  }
+
+  private async getFamilyElement (family: number) {
+    const familyTable = await this._entities.getBfast(objectModel.family.table)
+    const result = await familyTable.getValue(objectModel.element.index, family)
     return result
   }
 
