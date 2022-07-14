@@ -5,6 +5,14 @@
 import { BFast } from './bfast'
 import { G3d } from './g3d'
 
+type ElementInfo = {
+  element: number
+  name: string
+  categoryName: string
+  familyName: string
+  familyTypeName: string
+}
+
 const objectModel = {
   entities: 'entities',
   nodes: {
@@ -13,7 +21,10 @@ const objectModel = {
   element: {
     table: 'Vim.Element',
     index: 'index:Vim.Element:Element',
-    columns: {}
+    columns: {
+      name: 'string:Name',
+      familyName: 'string:FamilyName'
+    }
   },
   parameter: {
     table: 'Vim.Parameter',
@@ -36,12 +47,21 @@ const objectModel = {
   familyType: {
     table: 'Vim.FamilyType',
     index: 'index:Vim.FamilyType:FamilyType',
-    columns: {}
+    columns: {
+      name: 'string:Name'
+    }
   },
   family: {
     table: 'Vim.Family',
     index: 'index:Vim.Family:Family',
     columns: {}
+  },
+  category: {
+    table: 'Vim.Category',
+    index: 'index:Vim.Category:Category',
+    columns: {
+      name: 'string:Name'
+    }
   }
 }
 
@@ -255,6 +275,71 @@ export class Document {
 
   getString (index: number) {
     return this._strings[index]
+  }
+
+  async getElementsSummary (elements?: number[]) {
+    const set = elements ? new Set(elements) : undefined
+    const elementTable = await this._entities.getBfast(
+      objectModel.element.table
+    )
+
+    const elementNameArray = await elementTable.getArray(
+      objectModel.element.columns.name
+    )
+
+    const elementCategoryArray = await elementTable.getArray(
+      objectModel.category.index
+    )
+    const categoryTable = await this._entities.getBfast(
+      objectModel.category.table
+    )
+    const categoryNameArray = await categoryTable.getArray(
+      objectModel.category.columns.name
+    )
+
+    const familyNameArray = await elementTable.getArray(
+      objectModel.element.columns.familyName
+    )
+
+    const familyInstanceTable = await this._entities.getBfast(
+      objectModel.familyInstance.table
+    )
+
+    const familyInstanceElement = await familyInstanceTable.getArray(
+      objectModel.element.index
+    )
+
+    const familyInstanceFamilyType = await familyInstanceTable.getArray(
+      objectModel.familyType.index
+    )
+
+    const familyTypeTable = await this._entities.getBfast(
+      objectModel.familyType.table
+    )
+    const familyTypeElementArray = await familyTypeTable.getArray(
+      objectModel.element.index
+    )
+
+    const summary: ElementInfo[] = []
+
+    familyInstanceElement.forEach((e, f) => {
+      if (!set || set.has(e)) {
+        summary.push({
+          element: e,
+          name: this._strings[elementNameArray[e]],
+          categoryName:
+            this._strings[categoryNameArray[elementCategoryArray[e]]],
+          familyName: this._strings[familyNameArray[e]],
+          familyTypeName:
+            this._strings[
+              elementNameArray[
+                familyTypeElementArray[familyInstanceFamilyType[f]]
+              ]
+            ]
+        })
+      }
+    })
+    return summary
   }
 
   /**
