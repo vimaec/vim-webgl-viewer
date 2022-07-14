@@ -5,7 +5,7 @@
 import { BFast } from './bfast'
 import { G3d } from './g3d'
 
-type ElementInfo = {
+export type ElementInfo = {
   element: number
   name: string
   categoryName: string
