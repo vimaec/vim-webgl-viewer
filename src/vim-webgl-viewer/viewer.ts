@@ -145,7 +145,7 @@ export class Viewer {
     this._onMouseClick = this.defaultOnClick
 
     // Input and Selection
-    this.selection = new Selection(this.renderer, this._loader.meshBuilder)
+    this.selection = new Selection(this.renderer)
     this.raycaster = new Raycaster(
       this.viewport,
       this._camera,

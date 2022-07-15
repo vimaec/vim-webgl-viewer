@@ -3,18 +3,15 @@
  */
 
 import * as THREE from 'three'
-import { MeshBuilder } from '../vim'
 import { Object } from '../vim-loader/object'
 import { Renderer } from './renderer'
 
-// TODO: Fix circular dependency
 /**
  * Provides basic selection mechanic in viewer
  */
 export class Selection {
   // Dependencies
   private _renderer: Renderer
-  private _meshBuilder: MeshBuilder
 
   // State
   private _object: Object | undefined
@@ -22,9 +19,13 @@ export class Selection {
   // Disposable State
   private _highlight: THREE.LineSegments | undefined
 
-  constructor (renderer: Renderer, meshBuilder: MeshBuilder) {
+  /**
+   * Callback for when selection changes or is cleared
+   */
+  onValueChanged: () => void
+
+  constructor (renderer: Renderer) {
     this._renderer = renderer
-    this._meshBuilder = meshBuilder
   }
 
   /**
@@ -38,11 +39,14 @@ export class Selection {
    * Select given object
    */
   select (object: Object | undefined) {
-    this.clear()
     if (object) {
-      this._object = object
-      this._highlight = object.createWireframe()
-      if (this._highlight) this._renderer.add(this._highlight)
+      if (object !== this._object) {
+        this._object = object
+        this.createHighlight(object)
+        this.onValueChanged?.()
+      }
+    } else {
+      this.clear()
     }
   }
 
@@ -50,8 +54,19 @@ export class Selection {
    * Clear selection and related highlights
    */
   clear () {
-    this._object = undefined
+    if (this.object !== undefined) {
+      this._object = undefined
+      this.removeHighlight()
+      this.onValueChanged?.()
+    }
+  }
 
+  private createHighlight (object: Object) {
+    this._highlight = object.createWireframe()
+    if (this._highlight) this._renderer.add(this._highlight)
+  }
+
+  private removeHighlight () {
     if (this._highlight) {
       this._highlight.geometry.dispose()
       this._renderer.remove(this._highlight)
