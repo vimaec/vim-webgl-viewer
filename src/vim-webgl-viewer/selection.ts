@@ -42,6 +42,7 @@ export class Selection {
     if (object) {
       if (object !== this._object) {
         this._object = object
+        this.removeHighlight()
         this.createHighlight(object)
         this.onValueChanged?.()
       }
