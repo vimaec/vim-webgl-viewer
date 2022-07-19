@@ -19,13 +19,12 @@ export class Input {
   private _mouse: Mouse
   private _keyboard: Keyboard
 
-  private _unregistersTouch: Function[]
-  private _unregistersMouse: Function[]
-  private _unregistersKeyboard: Function[]
+  private _unregistersTouch: Function[] = []
+  private _unregistersMouse: Function[] = []
+  private _unregistersKeyboard: Function[] = []
 
   constructor (viewer: Viewer) {
     this._canvas = viewer.viewport.canvas
-    this._unregisters = []
 
     this._keyboard = new Keyboard(viewer)
     this._mouse = new Mouse(viewer, this._keyboard)
