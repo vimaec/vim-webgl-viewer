@@ -7,6 +7,7 @@ import { G3d } from './g3d'
 
 export type ElementInfo = {
   element: number
+  id: number
   name: string
   categoryName: string
   familyName: string
@@ -23,7 +24,8 @@ const objectModel = {
     index: 'index:Vim.Element:Element',
     columns: {
       name: 'string:Name',
-      familyName: 'string:FamilyName'
+      familyName: 'string:FamilyName',
+      id: 'int:Id'
     }
   },
   parameter: {
@@ -287,6 +289,10 @@ export class Document {
       objectModel.element.columns.name
     )
 
+    const elementIdArray = await elementTable.getArray(
+      objectModel.element.columns.id
+    )
+
     const elementCategoryArray = await elementTable.getArray(
       objectModel.category.index
     )
@@ -326,6 +332,7 @@ export class Document {
       if (!set || set.has(e)) {
         summary.push({
           element: e,
+          id: elementIdArray[e],
           name: this._strings[elementNameArray[e]],
           categoryName:
             this._strings[categoryNameArray[elementCategoryArray[e]]],
