@@ -97,6 +97,11 @@ export class Viewer {
   private _vims: (Vim | undefined)[] = []
   private _disposed: boolean = false
 
+  // TODO: Cleanup axes so that it can be exposed.
+  get axesCanvas () {
+    return this._gizmoAxes.canvas
+  }
+
   /**
    * Callback for on mouse click. Replace it to override or combine
    * default behaviour with your custom logic.

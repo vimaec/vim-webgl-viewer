@@ -27,6 +27,7 @@ export class Viewport {
 
     canvas = document.createElement('canvas')
     canvas.className = 'vim-canvas'
+    canvas.tabIndex = 0
     document.body.appendChild(canvas)
     return [canvas, true]
   }
