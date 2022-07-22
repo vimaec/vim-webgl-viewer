@@ -151,8 +151,6 @@ export class GizmoMeasure {
    * Do not override viewer.onMouseClick while this flow is active.
    */
   async measure (onProgress?: (stage: Stage) => void) {
-    this.clear()
-
     // Start Marker
     this._startMarker = new MeasureMarker()
     this._startMarker.mesh.visible = false
@@ -196,6 +194,7 @@ export class GizmoMeasure {
   }
 
   private onFirstClick (hit: HitTestResult) {
+    this.clear()
     this._startPos = hit.position
 
     // Line
