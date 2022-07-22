@@ -109,6 +109,7 @@ export class GizmoMeasure {
   private _viewer: Viewer
 
   // resources
+  private _currentMarker: MeasureMarker
   private _startMarker: MeasureMarker
   private _endMarker: MeasureMarker
   private _line: MeasureLine
@@ -121,7 +122,7 @@ export class GizmoMeasure {
   private _lastRaycast: number
   private removeMouseListener: () => void
   private oldClick: (hit: HitTestResult) => void
-  private onClear: () => void
+  private onAbort: () => void
 
   // results
   private _startPos: THREE.Vector3
@@ -152,16 +153,16 @@ export class GizmoMeasure {
    */
   async measure (onProgress?: (stage: Stage) => void) {
     // Start Marker
-    this._startMarker = new MeasureMarker()
-    this._startMarker.mesh.visible = false
-    this._viewer.renderer.add(this._startMarker.mesh)
+    this._currentMarker = new MeasureMarker()
+    this._currentMarker.mesh.visible = false
+    this._viewer.renderer.add(this._currentMarker.mesh)
 
     this.oldClick = this._viewer.onMouseClick
 
     onProgress?.('ready')
     this.registerMouse(this.onMouseMoveReady.bind(this))
     return new Promise<void>((resolve, reject) => {
-      this.onClear = () => {
+      this.onAbort = () => {
         onProgress?.(undefined)
         reject(new Error('Aborted'))
       }
@@ -174,7 +175,7 @@ export class GizmoMeasure {
         onProgress?.('active')
         this.registerMouse(this.onMouseMoveActive.bind(this))
         this._viewer.onMouseClick = (hit) => {
-          this.onClear = undefined
+          this.onAbort = undefined
 
           // Restore normal click behavior
           this._viewer.onMouseClick = this.oldClick
@@ -194,8 +195,13 @@ export class GizmoMeasure {
   }
 
   private onFirstClick (hit: HitTestResult) {
-    this.clear()
+    this.reset()
+
     this._startPos = hit.position
+
+    this._startMarker = new MeasureMarker()
+    this._startMarker.setPosition(this._startPos)
+    this._viewer.renderer.add(this._startMarker.mesh)
 
     // Line
     this._line = new MeasureLine(
@@ -205,10 +211,6 @@ export class GizmoMeasure {
       new THREE.Color(1, 1, 1)
     )
     this._viewer.renderer.add(this._line.mesh)
-
-    // Start Marker
-    this._endMarker = new MeasureMarker(hit.position)
-    this._viewer.renderer.add(this._endMarker.mesh)
   }
 
   private registerMouse (callBack: (e: MouseEvent) => void) {
@@ -235,9 +237,9 @@ export class GizmoMeasure {
     if (!hit) return
 
     if (hit.object) {
-      this._startMarker.setPosition(hit.position)
+      this._currentMarker.setPosition(hit.position)
     }
-    this._startMarker.mesh.visible = !!hit.object
+    this._currentMarker.mesh.visible = !!hit.object
   }
 
   private onMouseMoveActive (event: MouseEvent) {
@@ -247,16 +249,16 @@ export class GizmoMeasure {
     // Show markers and line on hit
     if (hit.object) {
       this._line.setPoints(this._startPos, hit.position)
-      this._endMarker.setPosition(hit.position)
+      this._currentMarker.setPosition(hit.position)
     }
 
-    this._endMarker.mesh.visible = !!hit.object
+    this._currentMarker.mesh.visible = !!hit.object
     this._line.mesh.visible = !!hit.object
   }
 
   private onSecondClick (hit: HitTestResult) {
     if (!hit.object) {
-      this.clear()
+      this.abort()
       console.log('No point selected. Aborting measurement.')
       return false
     }
@@ -264,7 +266,19 @@ export class GizmoMeasure {
     this.removeMouseListener?.()
 
     this._endPos = hit.position
-    const canvasSize = new Vector2().fromArray(this._viewer.viewport.getSize())
+
+    // Set end marker
+    this._endMarker = new MeasureMarker(hit.position)
+    this._endMarker.setPosition(this._endPos)
+    this._viewer.renderer.add(this._endMarker.mesh)
+
+    // Remove hover marker
+    if (this._currentMarker) {
+      this._viewer.renderer.remove(this._currentMarker.mesh)
+      this._currentMarker.dispose()
+    }
+
+    // Compute measurement vector component
     this._measurement = this._endPos.clone().sub(this._startPos)
     const endX = this._startPos
       .clone()
@@ -280,8 +294,10 @@ export class GizmoMeasure {
       `
     )
 
+    // Add measurement lines meshes
     this._line.setPoints(this._startPos, this._endPos)
 
+    const canvasSize = new Vector2().fromArray(this._viewer.viewport.getSize())
     this._lineX = new MeasureLine(
       canvasSize,
       this._startPos,
@@ -309,9 +325,9 @@ export class GizmoMeasure {
   }
 
   /**
-   * Cancels the current measure flow, fails the related promise and dispose all resources.
+   * Aborts the current measure flow, fails the related promise and dispose all resources.
    */
-  clear () {
+  abort () {
     if (this.oldClick) {
       this._viewer.onMouseClick = this.oldClick
       this.oldClick = undefined
@@ -319,6 +335,17 @@ export class GizmoMeasure {
     this.removeMouseListener?.()
     this.removeMouseListener = undefined
 
+    this.reset()
+    if (this._currentMarker) {
+      this._viewer.renderer.remove(this._currentMarker.mesh)
+      this._currentMarker.dispose()
+    }
+
+    this.onAbort?.()
+    this.onAbort = undefined
+  }
+
+  private reset () {
     this._startPos = undefined
     this._endPos = undefined
     this._measurement = undefined
@@ -351,7 +378,5 @@ export class GizmoMeasure {
       this._viewer.renderer.remove(this._lineZ.mesh)
       this._lineZ.dispose()
     }
-    this.onClear?.()
-    this.onClear = undefined
   }
 }
