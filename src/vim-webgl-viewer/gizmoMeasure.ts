@@ -248,10 +248,12 @@ export class GizmoMeasure {
 
     // Show markers and line on hit
     if (hit.object) {
+      this._measurement = hit.position.clone().sub(this._startPos)
       this._line.setPoints(this._startPos, hit.position)
       this._currentMarker.setPosition(hit.position)
     }
 
+    this._measurement = undefined
     this._currentMarker.mesh.visible = !!hit.object
     this._line.mesh.visible = !!hit.object
   }
