@@ -46,7 +46,7 @@ export class VimMaterials implements IMaterialLibrary {
     this.opaque = opaque ?? createOpaque()
     this.transparent = transparent ?? createTransparent()
     this.wireframe = wireframe ?? createWireframe()
-    this.isolation = isolation ?? createIsolation2()
+    this.isolation = isolation ?? createIsolation()
   }
 
   applyWireframeSettings (color: THREE.Color, opacity: number) {
@@ -107,10 +107,10 @@ export function createTransparent () {
  * Creates a new instance of the default loader transparent material
  * @returns a THREE.MeshPhongMaterial
  */
-export function createIsolation2 () {
+export function createIsolation () {
   const mat = createBase()
   mat.transparent = true
-  patchBaseMaterial2(mat)
+  patchIsolationMaterial(mat)
   return mat
 }
 
@@ -235,7 +235,7 @@ export function patchBaseMaterial (material: THREE.Material) {
  * Instanced meshes ignore vertex color when instance attribute useVertexColor is 0
  * Regular meshes ignore light in favor of vertex color when uv.y = 0
  */
-export function patchBaseMaterial2 (material: THREE.Material) {
+export function patchIsolationMaterial (material: THREE.Material) {
   material.onBeforeCompile = (shader) => {
     // shader.uniforms.fillValue = { value: new THREE.Color(0.25, 0.25, 0.25) }
 
