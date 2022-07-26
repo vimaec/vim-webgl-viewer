@@ -61,6 +61,14 @@ export class CameraGizmo {
     }
   }
 
+  get enabled () {
+    return this._active
+  }
+
+  set enabled (value: boolean) {
+    this._active = value
+  }
+
   show (show: boolean = true) {
     if (!this._active) return
 

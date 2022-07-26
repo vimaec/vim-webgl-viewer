@@ -127,11 +127,13 @@ export class Viewer {
     this.viewport = new Viewport(this.settings)
     this._camera = new Camera(scene, this.viewport, this.settings)
     this.renderer = new Renderer(scene, this.viewport, materials)
-    this._camera.gizmo = new CameraGizmo(
-      this.renderer,
-      this._camera,
-      this.settings
-    )
+    if (this.settings.getCameraGizmoEnable()) {
+      this._camera.gizmo = new CameraGizmo(
+        this.renderer,
+        this._camera,
+        this.settings
+      )
+    }
 
     // TODO add options
     this.gizmoMeasure = new GizmoMeasure(this)

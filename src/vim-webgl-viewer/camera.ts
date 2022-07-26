@@ -233,7 +233,10 @@ export class Camera implements ICamera {
    */
   public set orbitMode (value: boolean) {
     this._orbitMode = value
-    this.gizmo?.show(value)
+    if (this.gizmo) {
+      this.gizmo.enabled = value
+      this.gizmo.show(value)
+    }
   }
 
   /**
@@ -325,7 +328,9 @@ export class Camera implements ICamera {
       // Distance is capped such that model is at least a certain screen size.
       const box = this._scene.getBoundingSphere()
       const rad = (this.camera.fov / 2) * (Math.PI / 180)
-      if (box.radius / (targetDist * Math.tan(rad)) < this._minModelScrenSize) { return }
+      if (box.radius / (targetDist * Math.tan(rad)) < this._minModelScrenSize) {
+        return
+      }
 
       const target = new THREE.Vector3(0, 0, targetDist)
       target.applyQuaternion(this.camera.quaternion)
@@ -343,6 +348,7 @@ export class Camera implements ICamera {
       this.camera.top += padY
       this.camera.updateProjectionMatrix()
     }
+    this.gizmo?.show()
   }
 
   /**
@@ -364,6 +370,7 @@ export class Camera implements ICamera {
     this._targetPosition.add(v)
     this._lockDirection = true
     this.startLerp(0, 'Position')
+    this.gizmo?.show()
   }
 
   /**
@@ -426,7 +433,6 @@ export class Camera implements ICamera {
         // apply rotation directly to camera
         this.camera.quaternion.copy(rotation)
         offset.applyQuaternion(this.camera.quaternion)
-        this.gizmo?.show()
       } else {
         // apply rotation to target and lerp
         offset.applyQuaternion(rotation)
@@ -462,7 +468,7 @@ export class Camera implements ICamera {
     this._orbitTarget = sphere.center
     this.startLerp(duration, 'Both')
     this.updateProjection(sphere)
-    this.gizmo?.show(true)
+    this.gizmo?.show()
   }
 
   private lookAt (position: THREE.Vector3) {
@@ -584,13 +590,11 @@ export class Camera implements ICamera {
       } else if (!this._lockDirection) {
         this.lookAt(this._orbitTarget)
       }
-      this.gizmo?.show()
       return
     }
 
     // End any outstanding lerp
     if (this._lerpPosition || this._lerpRotation) {
-      this.gizmo?.show()
       this.endLerp()
     }
 
