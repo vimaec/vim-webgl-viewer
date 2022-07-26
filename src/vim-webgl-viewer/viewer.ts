@@ -97,6 +97,11 @@ export class Viewer {
   private _vims: (Vim | undefined)[] = []
   private _disposed: boolean = false
 
+  // TODO: Cleanup axes so that it can be exposed.
+  get axesCanvas () {
+    return this._gizmoAxes.canvas
+  }
+
   /**
    * Callback for on mouse click. Replace it to override or combine
    * default behaviour with your custom logic.
@@ -145,7 +150,7 @@ export class Viewer {
     this._onMouseClick = this.defaultOnClick
 
     // Input and Selection
-    this.selection = new Selection(this.renderer, this._loader.meshBuilder)
+    this.selection = new Selection(this.renderer)
     this.raycaster = new Raycaster(
       this.viewport,
       this._camera,
@@ -321,11 +326,9 @@ export class Viewer {
       this._camera.frame(hit.object, false, this.camera.defaultLerpDuration)
     }
 
-    const element = hit.object.getBimElement()
-    if (element instanceof Map) {
-      console.log(element)
-    } else {
-      element.then((e) => console.log(e))
-    }
+    hit.object.getBimElement().then((e) => {
+      e.set('Index', hit.object.element)
+      console.log(e)
+    })
   }
 }

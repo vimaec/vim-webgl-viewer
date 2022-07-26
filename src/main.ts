@@ -71,11 +71,11 @@ function load2 (vim: string | ArrayBuffer) {
             console.log(`Loading : ${progress.loaded} / ${progress.total}`)
           }
         )
-        .then((v) =>
+        .then((v) => {
           console.log(
             'Loaded in ' + (new Date().getTime() - start) / 1000 + ' seconds'
           )
-        )
+        })
     }
   }
 }

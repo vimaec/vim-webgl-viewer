@@ -9,6 +9,7 @@ import { ViewerSettings } from './viewerSettings'
 import { Object } from '../vim'
 import { RenderScene } from './renderScene'
 import { Quaternion } from 'three'
+import { clamp } from 'three/src/math/MathUtils'
 
 export const DIRECTIONS = {
   forward: new THREE.Vector3(0, 0, -1),
@@ -116,7 +117,7 @@ export class Camera implements ICamera {
 
   private _targetVelocity: THREE.Vector3
   private _velocity: THREE.Vector3
-  speed: number = 0
+  private _speed: number = 0
 
   private _orbitMode: boolean = false
   private _orbitTarget: THREE.Vector3
@@ -177,6 +178,14 @@ export class Camera implements ICamera {
 
     this._orbitTarget.set(0, 0, 0)
     this.lookAt(this._orbitTarget)
+  }
+
+  get speed () {
+    return this._speed
+  }
+
+  set speed (value: number) {
+    this._speed = clamp(value, -25, 25)
   }
 
   get localVelocity () {
