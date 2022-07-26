@@ -140,6 +140,7 @@ export class Camera implements ICamera {
   private _orbitSpeed: number = 1
   private _zoomSpeed: number = 0.25
   private _firstPersonSpeed = 10
+  private _minModelScrenSize = 0.05
 
   constructor (
     scene: RenderScene,
@@ -320,6 +321,11 @@ export class Camera implements ICamera {
       offset = Math.max(this._minOrbitalDistance, offset)
       let targetDist = dist + offset * amount
       targetDist = Math.max(this._minOrbitalDistance, targetDist)
+
+      // Distance is capped such that model is at least a certain screen size.
+      const box = this._scene.getBoundingSphere()
+      const rad = (this.camera.fov / 2) * (Math.PI / 180)
+      if (box.radius / (targetDist * Math.tan(rad)) < this._minModelScrenSize) { return }
 
       const target = new THREE.Vector3(0, 0, targetDist)
       target.applyQuaternion(this.camera.quaternion)
