@@ -111,6 +111,8 @@ type Lerp = 'None' | 'Position' | 'Rotation' | 'Both'
  */
 export class Camera implements ICamera {
   camera: THREE.PerspectiveCamera | THREE.OrthographicCamera
+  private cameraPerspective: THREE.PerspectiveCamera
+  private cameraOrthographic: THREE.OrthographicCamera
   gizmo: CameraGizmo | undefined
   private _viewport: Viewport
   private _scene: RenderScene
@@ -147,7 +149,8 @@ export class Camera implements ICamera {
     viewport: Viewport,
     settings: ViewerSettings
   ) {
-    this.camera = new THREE.PerspectiveCamera()
+    this.cameraPerspective = new THREE.PerspectiveCamera()
+    this.camera = this.cameraPerspective
     this.camera.position.set(0, 0, -1000)
     this._orbitTarget = new THREE.Vector3(0, 0, 0)
     this.lookAt(this._orbitTarget)
@@ -316,6 +319,8 @@ export class Camera implements ICamera {
    * @param amount movement size.
    */
   zoom (amount: number, duration: number = 0) {
+    const sphere = this._scene.getBoundingSphere()
+
     if (this.camera instanceof THREE.PerspectiveCamera) {
       const reverse = 1 / (1 - this._zoomSpeed) - 1
       const factor = amount < 0 ? this._zoomSpeed : reverse
@@ -326,9 +331,11 @@ export class Camera implements ICamera {
       targetDist = Math.max(this._minOrbitalDistance, targetDist)
 
       // Distance is capped such that model is at least a certain screen size.
-      const box = this._scene.getBoundingSphere()
       const rad = (this.camera.fov / 2) * (Math.PI / 180)
-      if (box.radius / (targetDist * Math.tan(rad)) < this._minModelScrenSize) {
+      if (
+        sphere.radius / (targetDist * Math.tan(rad)) <
+        this._minModelScrenSize
+      ) {
         return
       }
 
@@ -341,6 +348,12 @@ export class Camera implements ICamera {
       const multiplier = this._zoomSpeed * this.getBaseMultiplier()
       const padX = (this.camera.right - this.camera.left) * amount * multiplier
       const padY = (this.camera.top - this.camera.bottom) * amount * multiplier
+
+      // View box size is capped such that model is at least a certain screen size.
+      const X = this.camera.right - this.camera.left + 2 * padX
+      const Y = this.camera.top - this.camera.bottom + 2 * padY
+      const radius = Math.min(X / 2, Y / 2)
+      if (sphere.radius / radius < this._minModelScrenSize) return
 
       this.camera.left -= padX
       this.camera.right += padX
@@ -485,8 +498,8 @@ export class Camera implements ICamera {
       this.camera.right = sphere.radius * aspect
       this.camera.top = sphere.radius
       this.camera.bottom = -sphere.radius
-      this.camera.near = 0.1
-      this.camera.far = sphere.radius * 10
+      this.camera.near = -this.cameraPerspective.far
+      this.camera.far = this.cameraPerspective.far
     }
     this.camera.updateProjectionMatrix()
   }
@@ -498,13 +511,15 @@ export class Camera implements ICamera {
   set orthographic (value: boolean) {
     if (value === this.orthographic) return
 
-    const cam = value
-      ? new THREE.OrthographicCamera(-1, 1, 1, -1, -1, 1)
-      : new THREE.PerspectiveCamera()
+    if (value && !this.cameraOrthographic) {
+      // prettier-ignore
+      this.cameraOrthographic = new THREE.OrthographicCamera(-1, 1, 1, -1, -1, 1)
+    }
 
-    cam.position.copy(this.camera.position)
-    cam.rotation.copy(this.camera.rotation)
-    this.camera = cam
+    const next = value ? this.cameraOrthographic : this.cameraPerspective
+    next.position.copy(this.camera.position)
+    next.rotation.copy(this.camera.rotation)
+    this.camera = next
 
     this.updateProjection(this._scene.getBoundingSphere())
   }
