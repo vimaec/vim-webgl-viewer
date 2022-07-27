@@ -12,6 +12,8 @@ export type ElementInfo = {
   categoryName: string
   familyName: string
   familyTypeName: string
+  workset: string
+  document: string
 }
 
 const objectModel = {
@@ -61,6 +63,20 @@ const objectModel = {
   category: {
     table: 'Vim.Category',
     index: 'index:Vim.Category:Category',
+    columns: {
+      name: 'string:Name'
+    }
+  },
+  workset: {
+    table: 'Vim.Workset',
+    index: 'index:Vim.Workset:Workset',
+    columns: {
+      name: 'string:Name'
+    }
+  },
+  document: {
+    table: 'Vim.BimDocument',
+    index: 'index:Vim.BimDocument:BimDocument',
     columns: {
       name: 'string:Name'
     }
@@ -285,6 +301,7 @@ export class Document {
       objectModel.element.table
     )
 
+    // Element
     const elementNameArray = await elementTable.getArray(
       objectModel.element.columns.name
     )
@@ -293,6 +310,10 @@ export class Document {
       objectModel.element.columns.id
     )
 
+    const getElementName = (element: number) =>
+      this._strings[elementNameArray[element]]
+
+    // Category
     const elementCategoryArray = await elementTable.getArray(
       objectModel.category.index
     )
@@ -302,19 +323,22 @@ export class Document {
     const categoryNameArray = await categoryTable.getArray(
       objectModel.category.columns.name
     )
+    const getCategory = (element: number) =>
+      this._strings[categoryNameArray[elementCategoryArray[element]]]
+
+    // Family
+    const familyInstanceTable = await this._entities.getBfast(
+      objectModel.familyInstance.table
+    )
 
     const familyNameArray = await elementTable.getArray(
       objectModel.element.columns.familyName
     )
 
-    const familyInstanceTable = await this._entities.getBfast(
-      objectModel.familyInstance.table
-    )
+    const getFamilyName = (element: number) =>
+      this._strings[familyNameArray[element]]
 
-    const familyInstanceElement = await familyInstanceTable.getArray(
-      objectModel.element.index
-    )
-
+    // FamilyType
     const familyInstanceFamilyType = await familyInstanceTable.getArray(
       objectModel.familyType.index
     )
@@ -326,6 +350,45 @@ export class Document {
       objectModel.element.index
     )
 
+    const getFamilyTypeName = (family: number) =>
+      this._strings[
+        elementNameArray[
+          familyTypeElementArray[familyInstanceFamilyType[family]]
+        ]
+      ]
+
+    // Workset
+    const elementWorksetArray = await elementTable.getArray(
+      objectModel.workset.index
+    )
+    const worksetTable = await this._entities.getBfast(
+      objectModel.workset.table
+    )
+    const worksetNameArray = await worksetTable.getArray(
+      objectModel.workset.columns.name
+    )
+    const getWorkset = (element: number) =>
+      this._strings[worksetNameArray[elementWorksetArray[element]]]
+
+    // Document
+    const elementDocumentArray = await elementTable.getArray(
+      objectModel.document.index
+    )
+    const documentTable = await this._entities.getBfast(
+      objectModel.document.table
+    )
+    const documentNameArray = await documentTable.getArray(
+      objectModel.document.columns.name
+    )
+    const getDocument = (element: number) =>
+      this._strings[documentNameArray[elementDocumentArray[element]]]
+
+    // Compilation
+
+    const familyInstanceElement = await familyInstanceTable.getArray(
+      objectModel.element.index
+    )
+
     const summary: ElementInfo[] = []
 
     familyInstanceElement.forEach((e, f) => {
@@ -333,16 +396,12 @@ export class Document {
         summary.push({
           element: e,
           id: elementIdArray[e],
-          name: this._strings[elementNameArray[e]],
-          categoryName:
-            this._strings[categoryNameArray[elementCategoryArray[e]]],
-          familyName: this._strings[familyNameArray[e]],
-          familyTypeName:
-            this._strings[
-              elementNameArray[
-                familyTypeElementArray[familyInstanceFamilyType[f]]
-              ]
-            ]
+          name: getElementName(e),
+          categoryName: getCategory(e),
+          familyName: getFamilyName(e),
+          familyTypeName: getFamilyTypeName(f),
+          workset: getWorkset(e),
+          document: getDocument(e)
         })
       }
     })
