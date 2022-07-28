@@ -152,7 +152,10 @@ export class Renderer {
     this.scene.clear()
   }
 
-  private fitViewport = () => {
+  /**
+   * Call if canvas or html layout has changed size.
+   */
+  fitViewport = () => {
     const [width, height] = this.viewport.getParentSize()
     this.renderer.setPixelRatio(window.devicePixelRatio)
     this.renderer.setSize(width, height)
