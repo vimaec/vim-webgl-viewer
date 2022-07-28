@@ -489,15 +489,18 @@ export class Camera implements ICamera {
     this.camera.up.set(0, 1, 0)
   }
 
-  updateProjection (sphere: THREE.Sphere) {
+  private updateProjection (sphere?: THREE.Sphere) {
     const aspect = this._viewport.getAspectRatio()
     if (this.camera instanceof THREE.PerspectiveCamera) {
       this.camera.aspect = aspect
     } else {
-      this.camera.left = -sphere.radius * aspect
-      this.camera.right = sphere.radius * aspect
-      this.camera.top = sphere.radius
-      this.camera.bottom = -sphere.radius
+      if (sphere) {
+        this.camera.left = -sphere.radius * aspect
+        this.camera.right = sphere.radius * aspect
+        this.camera.top = sphere.radius
+        this.camera.bottom = -sphere.radius
+      }
+
       this.camera.near = -this.cameraPerspective.far
       this.camera.far = this.cameraPerspective.far
     }
