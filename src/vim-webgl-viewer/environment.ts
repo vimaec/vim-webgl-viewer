@@ -156,6 +156,6 @@ export class Environment {
 
 export interface IEnvironment {
   skyLight: THREE.HemisphereLight
-  sunLight: THREE.DirectionalLight
+  sunLights: THREE.DirectionalLight[]
   groundPlane: THREE.Mesh
 }
