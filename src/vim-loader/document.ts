@@ -20,6 +20,7 @@ export type ElementParameter = {
   name: string
   value: string
   group: string
+  isInstance: boolean
 }
 
 const objectModel = {
@@ -47,7 +48,8 @@ const objectModel = {
     index: 'index:Vim.ParameterDescriptor:ParameterDescriptor',
     columns: {
       name: 'string:Name',
-      group: 'string:Group'
+      group: 'boolean:Group',
+      isInstance: 'byte:IsInstance'
     }
   },
   familyInstance: {
@@ -462,6 +464,9 @@ export class Document {
     const parameterDescriptorGroup = await parameterDescriptor.getArray(
       objectModel.parameterDescriptor.columns.group
     )
+    const parameterDescriptorIsInstance = await parameterDescriptor.getArray(
+      objectModel.parameterDescriptor.columns.isInstance
+    )
 
     const result: ElementParameter[] = []
 
@@ -473,7 +478,8 @@ export class Document {
         result.push({
           name: this._strings[parameterDescriptorName[d]],
           value: displayValue,
-          group: this._strings[parameterDescriptorGroup[d]]
+          group: this._strings[parameterDescriptorGroup[d]],
+          isInstance: !!parameterDescriptorIsInstance[d]
         })
       }
     })
