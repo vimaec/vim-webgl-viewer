@@ -422,26 +422,28 @@ export class Document {
    * @returns An array of paramters with name, value, group
    */
   async getElementParameters (element: number): Promise<ElementParameter[]> {
-    const elements = new Set<number>()
-    elements.add(element)
+    const result: ElementParameter[] = []
+    const instance = await this.getElementsParameters([element], true)
+    instance.forEach((i) => result.push(i))
 
     const familyInstance = await this.getElementFamilyInstance(element)
     if (familyInstance !== undefined) {
       const familyType = await this.getFamilyInstanceFamilyType(familyInstance)
       const family = await this.getFamilyTypeFamily(familyType)
-
       const familyTypeElement = await this.getFamiltyTypeElement(familyType)
-      elements.add(familyTypeElement)
-
       const familyElement = await this.getFamilyElement(family)
-      elements.add(familyElement)
+      const type = await this.getElementsParameters(
+        [familyTypeElement, familyElement],
+        false
+      )
+      type.forEach((i) => result.push(i))
     }
 
-    const result = await this.getElementsParameters(elements)
     return result
   }
 
-  private async getElementsParameters (elements: Set<number>) {
+  private async getElementsParameters (elements: number[], isInstance: boolean) {
+    const set = new Set(elements)
     const parameterTable = await this._entities.getBfast(
       objectModel.parameter.table
     )
@@ -464,14 +466,11 @@ export class Document {
     const parameterDescriptorGroup = await parameterDescriptor.getArray(
       objectModel.parameterDescriptor.columns.group
     )
-    const parameterDescriptorIsInstance = await parameterDescriptor.getArray(
-      objectModel.parameterDescriptor.columns.isInstance
-    )
 
     const result: ElementParameter[] = []
 
     parameterElement.forEach((e, i) => {
-      if (elements.has(e)) {
+      if (set.has(e)) {
         const value = this._strings[parameterValue[i]].split('|')
         const displayValue = value[value.length - 1]
         const d = parameterDescription[i]
@@ -479,7 +478,7 @@ export class Document {
           name: this._strings[parameterDescriptorName[d]],
           value: displayValue,
           group: this._strings[parameterDescriptorGroup[d]],
-          isInstance: !!parameterDescriptorIsInstance[d]
+          isInstance: isInstance
         })
       }
     })
