@@ -16,6 +16,12 @@ export type ElementInfo = {
   document: string
 }
 
+export type ElementParameter = {
+  name: string
+  value: string
+  group: string
+}
+
 const objectModel = {
   entities: 'entities',
   nodes: {
@@ -413,13 +419,7 @@ export class Document {
    * @param element element index
    * @returns An array of paramters with name, value, group
    */
-  async getElementParameters (element: number): Promise<
-    {
-      name: string
-      value: string
-      group: string
-    }[]
-  > {
+  async getElementParameters (element: number): Promise<ElementParameter[]> {
     const elements = new Set<number>()
     elements.add(element)
 
@@ -463,11 +463,7 @@ export class Document {
       objectModel.parameterDescriptor.columns.group
     )
 
-    const result: {
-      name: string
-      value: string
-      group: string
-    }[] = []
+    const result: ElementParameter[] = []
 
     parameterElement.forEach((e, i) => {
       if (elements.has(e)) {
