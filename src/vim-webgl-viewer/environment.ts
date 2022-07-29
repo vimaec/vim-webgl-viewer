@@ -97,7 +97,7 @@ export class GroundPlane {
  */
 export class Environment {
   skyLight: THREE.HemisphereLight
-  sunLight: THREE.DirectionalLight
+  sunLights: THREE.DirectionalLight[]
   private _groundPlane: GroundPlane
 
   get groundPlane () {
@@ -107,7 +107,7 @@ export class Environment {
   constructor (settings: ViewerSettings) {
     this._groundPlane = new GroundPlane()
     this.skyLight = new THREE.HemisphereLight()
-    this.sunLight = new THREE.DirectionalLight()
+    this.sunLights = []
     this.applySettings(settings)
   }
 
@@ -115,7 +115,7 @@ export class Environment {
    * Returns all three objects composing the environment
    */
   getObjects (): THREE.Object3D[] {
-    return [this._groundPlane.mesh, this.skyLight, this.sunLight]
+    return [this._groundPlane.mesh, this.skyLight, ...this.sunLights]
   }
 
   applySettings (settings: ViewerSettings) {
@@ -127,10 +127,16 @@ export class Environment {
     this.skyLight.groundColor.copy(settings.getSkylightGroundColor())
     this.skyLight.intensity = settings.getSkylightIntensity()
 
-    // Sunlight
-    this.sunLight.color.copy(settings.getSunlightColor())
-    this.sunLight.position.copy(settings.getSunlightPosition())
-    this.sunLight.intensity = settings.getSunlightIntensity()
+    // Sunlights
+    const count = settings.getSunlightCount()
+    for (let i = 0; i < count; i++) {
+      if (!this.sunLights[i]) {
+        this.sunLights[i] = new THREE.DirectionalLight()
+      }
+      this.sunLights[i].color.copy(settings.getSunlightColor(i))
+      this.sunLights[i].position.copy(settings.getSunlightPosition(i))
+      this.sunLights[i].intensity = settings.getSunlightIntensity(i)
+    }
   }
 
   /**
@@ -142,7 +148,7 @@ export class Environment {
   }
 
   dispose () {
-    this.sunLight.dispose()
+    this.sunLights.forEach((s) => s.dispose())
     this.skyLight.dispose()
     this._groundPlane.dispose()
   }

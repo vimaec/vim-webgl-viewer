@@ -78,7 +78,7 @@ export function createBase () {
     vertexColors: true,
     flatShading: true,
     side: THREE.DoubleSide,
-    shininess: 70
+    shininess: 5
   })
 }
 
@@ -99,6 +99,7 @@ export function createOpaque () {
 export function createTransparent () {
   const mat = createBase()
   mat.transparent = true
+  mat.shininess = 70
   patchBaseMaterial(mat)
   return mat
 }

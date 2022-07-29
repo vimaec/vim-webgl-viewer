@@ -130,7 +130,7 @@ export namespace ViewerOptions {
     /**
      * Sunlight (directional light) options
      */
-    sunLight: Partial<SunLight>
+    sunLights: Partial<SunLight[]>
 
     /**
      * Object highlight on click options
@@ -185,11 +185,18 @@ export class ViewerSettings {
         groundColor: { h: 0.095, s: 1, l: 0.75 },
         intensity: 0.8
       },
-      sunLight: {
-        position: { x: -47.0, y: 22, z: -45 },
-        color: { h: 0.1, s: 1, l: 0.95 },
-        intensity: 1
-      },
+      sunLights: [
+        {
+          position: { x: -45.0, y: 40, z: -23 },
+          color: { h: 0.1, s: 1, l: 0.95 },
+          intensity: 0.8
+        },
+        {
+          position: { x: 45.0, y: 40, z: 23 },
+          color: { h: 0.1, s: 1, l: 0.95 },
+          intensity: 0.2
+        }
+      ],
       materials: {
         highlight: {
           color: { r: 0x6a, g: 0xd2, b: 0xff },
@@ -223,9 +230,15 @@ export class ViewerSettings {
   getSkylightIntensity = () => this.options.skylight.intensity!
 
   // Sunlight
-  getSunlightColor = () => toHSLColor(this.options.sunLight.color!)
-  getSunlightPosition = () => toVec(this.options.sunLight.position!)
-  getSunlightIntensity = () => this.options.sunLight.intensity!
+  getSunlightCount = () => this.options.sunLights.length
+  getSunlightColor = (index: number) =>
+    toHSLColor(this.options.sunLights[index].color!)
+
+  getSunlightPosition = (index: number) =>
+    toVec(this.options.sunLights[index].position!)
+
+  getSunlightIntensity = (index: number) =>
+    this.options.sunLights[index].intensity!
 
   private get highlight () {
     return this.options.materials.highlight
