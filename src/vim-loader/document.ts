@@ -48,7 +48,7 @@ const objectModel = {
     index: 'index:Vim.ParameterDescriptor:ParameterDescriptor',
     columns: {
       name: 'string:Name',
-      group: 'boolean:Group',
+      group: 'string:Group',
       isInstance: 'byte:IsInstance'
     }
   },
