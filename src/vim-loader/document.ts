@@ -13,7 +13,7 @@ export type ElementInfo = {
   familyName: string
   familyTypeName: string
   workset: string
-  document: string
+  documentTitle: string
 }
 
 export type ElementParameter = {
@@ -86,7 +86,8 @@ const objectModel = {
     table: 'Vim.BimDocument',
     index: 'index:Vim.BimDocument:BimDocument',
     columns: {
-      name: 'string:Name'
+      name: 'string:Name',
+      title: 'string:Title'
     }
   }
 }
@@ -385,11 +386,11 @@ export class Document {
     const documentTable = await this._entities.getBfast(
       objectModel.document.table
     )
-    const documentNameArray = await documentTable.getArray(
-      objectModel.document.columns.name
+    const documentTitleArray = await documentTable.getArray(
+      objectModel.document.columns.title
     )
     const getDocument = (element: number) =>
-      this._strings[documentNameArray[elementDocumentArray[element]]]
+      this._strings[documentTitleArray[elementDocumentArray[element]]]
 
     // Compilation
 
@@ -409,7 +410,7 @@ export class Document {
           familyName: getFamilyName(e),
           familyTypeName: getFamilyTypeName(f),
           workset: getWorkset(e),
-          document: getDocument(e)
+          documentTitle: getDocument(e)
         })
       }
     })
