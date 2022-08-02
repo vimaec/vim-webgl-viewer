@@ -368,16 +368,18 @@ export class Camera implements ICamera {
    * Moves the camera along all three axes.
    */
   move3 (vector: THREE.Vector3) {
-    if (this.camera instanceof THREE.OrthographicCamera) {
-      vector = vector.clone()
-      vector.setZ(0)
-    }
-
     this.cancelLerp()
-
-    const v = vector.clone()
-    v.applyQuaternion(this.camera.quaternion)
-    v.multiplyScalar(this.getSpeedMultiplier() * this._moveSpeed)
+    const v = new THREE.Vector3()
+    if (this.orthographic) {
+      const aspect = this._viewport.getAspectRatio()
+      const dx = this.cameraOrthographic.right - this.cameraOrthographic.left
+      const dy = this.cameraOrthographic.top - this.cameraOrthographic.bottom
+      v.set(-vector.x * dx * aspect, vector.y * dy, 0)
+    } else {
+      v.copy(vector)
+      v.applyQuaternion(this.camera.quaternion)
+      v.multiplyScalar(this.getSpeedMultiplier() * this._moveSpeed)
+    }
 
     this._orbitTarget.add(v)
     this._targetPosition.add(v)
