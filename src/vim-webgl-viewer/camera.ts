@@ -208,11 +208,6 @@ export class Camera implements ICamera {
    * Set current velocity of the camera.
    */
   set localVelocity (vector: THREE.Vector3) {
-    if (this.camera instanceof THREE.OrthographicCamera) {
-      vector = vector.clone()
-      vector.setZ(0)
-    }
-
     this.cancelLerp()
     const move = vector.clone()
     move.setZ(-move.z)
@@ -682,6 +677,16 @@ export class Camera implements ICamera {
 
     this.camera.position.add(deltaPosition)
     this._orbitTarget.add(deltaPosition)
+
+    if (this.orthographic) {
+      const aspect = this._viewport.getAspectRatio()
+      const d = -deltaPosition.z / 2
+      this.cameraOrthographic.left -= d * aspect
+      this.cameraOrthographic.right += d * aspect
+      this.cameraOrthographic.top += d
+      this.cameraOrthographic.bottom -= d
+      this.cameraOrthographic.updateProjectionMatrix()
+    }
 
     if (this.isSignificant(deltaPosition)) {
       this.gizmo?.show()
