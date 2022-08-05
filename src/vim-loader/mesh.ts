@@ -42,21 +42,43 @@ export class MeshBuilder {
         : meshInstances.filter((i) => (g3d.instanceFlags[i] & 1) === 0)
 
       if (meshInstances.length <= 1) continue
+
+      /*
       if (!Transparency.match(transparency, g3d.meshTransparent[mesh])) {
         continue
       }
+      */
 
-      const useAlpha =
-        Transparency.requiresAlpha(transparency) && g3d.meshTransparent[mesh]
-      const geometry = Geometry.createGeometryFromMesh(g3d, mesh, useAlpha)
-      const resultMesh = this.createInstancedMesh(
-        geometry,
-        g3d,
-        meshInstances,
-        useAlpha
-      )
+      // const useAlpha =
+      //  Transparency.requiresAlpha(transparency) && g3d.meshTransparent[mesh]
 
-      result.push(resultMesh)
+      const opaque = g3d.getMeshSubmeshCount(mesh, 'opaque')
+      if (opaque > 0) {
+        console.log('getMeshOpaqueSubmeshCount')
+        const geometry = Geometry.createGeometryFromMesh(g3d, mesh, false)
+        const resultMesh = this.createInstancedMesh(
+          geometry,
+          g3d,
+          meshInstances,
+          false
+        )
+
+        result.push(resultMesh)
+      }
+
+      const transparent = g3d.getMeshSubmeshCount(mesh, 'transparent')
+      if (transparent > 0) {
+        console.log('getMeshTranparentSubmeshCount')
+        const geometry = Geometry.createGeometryFromMesh(g3d, mesh, true)
+        const resultMesh = this.createInstancedMesh(
+          geometry,
+          g3d,
+          meshInstances,
+          true
+        )
+
+        result.push(resultMesh)
+      }
     }
 
     return result
@@ -102,7 +124,7 @@ export class MeshBuilder {
   ): THREE.Mesh {
     const merger = instances
       ? Geometry.Merger.createFromInstances(g3d, instances, transparency)
-      : Geometry.Merger.createFromUniqueMeshes(g3d, transparency)
+      : Geometry.Merger3.createFromUniqueMeshes(g3d, transparency)
 
     const geometry = merger.toBufferGeometry()
     const material = Transparency.requiresAlpha(transparency)

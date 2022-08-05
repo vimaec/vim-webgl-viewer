@@ -62,16 +62,18 @@ export namespace Geometry {
     useAlpha: boolean
   ): THREE.BufferGeometry {
     const colors = createVertexColors(g3d, mesh, useAlpha)
+    const positions = g3d.positions.subarray(
+      g3d.getMeshVertexStart(mesh) * 3,
+      g3d.getMeshVertexEnd(mesh) * 3
+    )
 
+    const section = useAlpha ? 'transparent' : 'opaque'
+    const start = g3d.getMeshIndexStart(mesh, section)
+    const end = g3d.getMeshIndexEnd(mesh, section)
+    const indices = g3d.indices.subarray(start, end)
     return createGeometryFromArrays(
-      g3d.positions.subarray(
-        g3d.getMeshVertexStart(mesh) * 3,
-        g3d.getMeshVertexEnd(mesh) * 3
-      ),
-      g3d.indices.subarray(
-        g3d.getMeshIndexStart(mesh),
-        g3d.getMeshIndexEnd(mesh)
-      ),
+      positions,
+      indices,
       colors,
       useAlpha ? 4 : 3
     )
@@ -104,6 +106,416 @@ export namespace Geometry {
       }
     }
     return result
+  }
+
+  /**
+   * Helper to merge many instances/meshes from a g3d direcly into a BufferGeometry
+   */
+  export class Merger2 {
+    private _g3d: G3d
+    private _colorSize: number
+
+    // aligned arrays
+    private _instances: number[]
+    private _submeshesOffset: number[]
+    private _submeshes: number[]
+
+    // output
+    private _indices: Uint32Array
+    private _vertices: Float32Array
+    private _colors: Float32Array
+    private _groups: number[]
+
+    getMeshSubmeshStart (mesh: number) {
+      return this._submeshesOffset[mesh]
+    }
+
+    getMeshSubmeshEnd (mesh: number) {
+      return mesh < this._instances.length - 1
+        ? this._submeshesOffset[mesh + 1]
+        : this._submeshes.length
+    }
+
+    constructor (
+      g3d: G3d,
+      transparency: Transparency.Mode,
+      instances: number[],
+      meshSubmeshOffsets: number[],
+      submeshes: number[],
+      indexCount: number,
+      vertexCount: number
+    ) {
+      this._g3d = g3d
+      this._colorSize = Transparency.requiresAlpha(transparency) ? 4 : 3
+      this._instances = instances
+      this._submeshesOffset = meshSubmeshOffsets
+      this._submeshes = submeshes
+
+      // allocate all memory required for merge
+      this._indices = new Uint32Array(indexCount)
+      this._vertices = new Float32Array(vertexCount * this._g3d.POSITION_SIZE)
+      this._colors = new Float32Array(vertexCount * this._colorSize)
+      this._groups = new Array(this._instances.length)
+    }
+
+    getInstances = () => this._instances
+    getSubmeshes = () => this._groups
+
+    /**
+     * Prepares a merge of all meshes referenced by only one instance.
+     */
+    static createFromUniqueMeshes (g3d: G3d, transparency: Transparency.Mode) {
+      let vertexCount = 0
+      let indexCount = 0
+      const instances = []
+      const meshesSubmeshOffset = []
+      const submeshes = []
+
+      const meshCount = g3d.getMeshCount()
+      for (let mesh = 0; mesh < meshCount; mesh++) {
+        const meshInstances = g3d.meshInstances[mesh]
+        if (!meshInstances || meshInstances.length !== 1) continue
+        const instance = meshInstances[0]
+        if ((g3d.instanceFlags[instance] & 1) > 0) continue
+
+        const subStart = g3d.getMeshSubmeshStart(mesh)
+        const subEnd = g3d.getMeshSubmeshEnd(mesh)
+        let some = false
+        const offset = submeshes.length
+        for (let sub = subStart; sub < subEnd; sub++) {
+          const alpha = g3d.getSubmeshAlpha(sub)
+          if (!Transparency.match(transparency, alpha < 1)) {
+            continue
+          }
+          some = true
+          submeshes.push(sub)
+          indexCount += g3d.getSubmeshIndexCount(sub)
+        }
+        if (!some) continue
+
+        instances.push(instance)
+        meshesSubmeshOffset.push(offset)
+        vertexCount += g3d.getMeshVertexCount(mesh)
+      }
+      return new Merger2(
+        g3d,
+        transparency,
+        instances,
+        meshesSubmeshOffset,
+        submeshes,
+        indexCount,
+        vertexCount
+      )
+    }
+
+    /**
+     * Prepares a merge of all meshes referenced by given instances.
+     */
+    static createFromInstances (
+      g3d: G3d,
+      instances: number[],
+      transparency: Transparency.Mode
+    ) {
+      let vertexCount = 0
+      let indexCount = 0
+      const instancesFiltered = []
+      const meshes = []
+      for (let i = 0; i < instances.length; i++) {
+        const instance = instances[i]
+        const mesh = g3d.instanceMeshes[instance]
+        if (mesh < 0) continue
+        if (
+          !Transparency.match(transparency, g3d.getMeshHasTransparency(mesh))
+        ) {
+          continue
+        }
+
+        vertexCount += g3d.getMeshVertexCount(mesh)
+        indexCount += g3d.getMeshIndexCount(mesh)
+        instancesFiltered.push(instance)
+        meshes.push(mesh)
+      }
+
+      return new Merger(
+        g3d,
+        transparency,
+        instancesFiltered,
+        meshes,
+        indexCount,
+        vertexCount
+      )
+    }
+
+    /**
+     * Concatenates the arrays of each of the (instance,matrix) pairs into large arrays
+     * Vertex position is transformed with the relevent matrix at it is copied
+     * Index is offset to match the vertices in the concatenated vertex buffer
+     * Color is expanded from submehes to vertex color into a concatenated array
+     * Returns a BufferGeometry from the concatenated array
+     */
+    private merge () {
+      // matrix and vector is reused to avoid needless allocations
+      const matrix = new THREE.Matrix4()
+      const vector = new THREE.Vector3()
+
+      // Vertex are fully copied from meshes.
+      let vertex = 0
+      let index = 0
+      let offset = 0
+      for (let i = 0; i < this._instances.length; i++) {
+        const instance = this._instances[i]
+        const mesh = this._g3d.getInstanceMesh(instance)
+        // Apply Matrices and copy vertices to merged array
+        getInstanceMatrix(this._g3d, instance, matrix)
+        const vertexStart = this._g3d.getMeshVertexStart(mesh)
+        const vertexEnd = this._g3d.getMeshVertexEnd(mesh)
+
+        for (let p = vertexStart; p < vertexEnd; p++) {
+          vector.fromArray(this._g3d.positions, p * this._g3d.POSITION_SIZE)
+          vector.applyMatrix4(matrix)
+          vector.toArray(this._vertices, vertex)
+
+          vertex += this._g3d.POSITION_SIZE
+        }
+
+        const subStart = this.getMeshSubmeshStart(i)
+        const subEnd = this.getMeshSubmeshEnd(i)
+        for (let s = subStart; s < subEnd; s++) {
+          const sub = this._submeshes[s]
+          const start = this._g3d.getSubmeshIndexStart(sub)
+          const end = this._g3d.getSubmeshIndexEnd(sub)
+          const subColor = this._g3d.getSubmeshColor(sub)
+          for (let i = start; i < end; i++) {
+            this._indices[index++] = this._g3d.indices[i] + offset
+
+            // Copy all colors to merged array
+            const v = (this._g3d.indices[i] + offset) * this._colorSize
+            this._colors[v] = subColor[0]
+            this._colors[v + 1] = subColor[1]
+            this._colors[v + 2] = subColor[2]
+            if (this._colorSize > 3) {
+              this._colors[v + 3] = subColor[3]
+            }
+          }
+        }
+        offset += vertex
+      }
+    }
+
+    /**
+     * Runs the merge process and return the resulting BufferGeometry
+     */
+    toBufferGeometry () {
+      this.merge()
+
+      const geometry = createGeometryFromArrays(
+        this._vertices,
+        this._indices,
+        this._colors,
+        this._colorSize
+      )
+      return geometry
+    }
+  }
+
+  export class Merger3 {
+    // input
+    private _g3d: G3d
+    private _colorSize: number
+    private _instances: number[]
+    private _acceptSubmesh: boolean[]
+
+    // output
+    private _indices: Uint32Array
+    private _vertices: Float32Array
+    private _colors: Float32Array
+    private _groups: number[]
+
+    constructor (
+      g3d: G3d,
+      transparency: Transparency.Mode,
+      instances: number[],
+      acceptSubmesh: boolean[],
+      indexCount: number,
+      vertexCount: number
+    ) {
+      this._g3d = g3d
+      this._colorSize = Transparency.requiresAlpha(transparency) ? 4 : 3
+      this._instances = instances
+      this._acceptSubmesh = acceptSubmesh
+
+      // allocate all memory required for merge
+      this._indices = new Uint32Array(indexCount)
+      this._vertices = new Float32Array(vertexCount * this._g3d.POSITION_SIZE)
+      this._colors = new Float32Array(vertexCount * this._colorSize)
+      this._groups = new Array(this._instances.length)
+    }
+
+    getInstances = () => this._instances
+    getSubmeshes = () => this._groups
+
+    /**
+     * Prepares a merge of all meshes referenced by only one instance.
+     */
+    static createFromUniqueMeshes (g3d: G3d, transparency: Transparency.Mode) {
+      let vertexCount = 0
+      let indexCount = 0
+      const instances = []
+      const acceptSubmesh = new Array<boolean>(g3d.getSubmeshCount())
+
+      const meshCount = g3d.getMeshCount()
+      for (let mesh = 0; mesh < meshCount; mesh++) {
+        const meshInstances = g3d.meshInstances[mesh]
+        if (!meshInstances || meshInstances.length !== 1) continue
+        const instance = meshInstances[0]
+        if ((g3d.instanceFlags[instance] & 1) > 0) continue
+
+        const subStart = g3d.getMeshSubmeshStart(mesh)
+        const subEnd = g3d.getMeshSubmeshEnd(mesh)
+        let some = false
+        for (let sub = subStart; sub < subEnd; sub++) {
+          const alpha = g3d.getSubmeshAlpha(sub)
+          if (!Transparency.match(transparency, alpha < 1)) {
+            continue
+          }
+
+          some = true
+          acceptSubmesh[sub] = true
+          indexCount += g3d.getSubmeshIndexCount(sub)
+        }
+        if (!some) continue
+
+        instances.push(instance)
+        vertexCount += g3d.getMeshVertexCount(mesh)
+      }
+
+      return new Merger3(
+        g3d,
+        transparency,
+        instances,
+        acceptSubmesh,
+        indexCount,
+        vertexCount
+      )
+    }
+
+    /**
+     * Prepares a merge of all meshes referenced by given instances.
+     */
+    static createFromInstances (
+      g3d: G3d,
+      instances: number[],
+      transparency: Transparency.Mode
+    ) {
+      let vertexCount = 0
+      let indexCount = 0
+      const instancesFiltered = []
+      const meshes = []
+      for (let i = 0; i < instances.length; i++) {
+        const instance = instances[i]
+        const mesh = g3d.instanceMeshes[instance]
+        if (mesh < 0) continue
+        if (
+          !Transparency.match(transparency, g3d.getMeshHasTransparency(mesh))
+        ) {
+          continue
+        }
+
+        vertexCount += g3d.getMeshVertexCount(mesh)
+        indexCount += g3d.getMeshIndexCount(mesh)
+        instancesFiltered.push(instance)
+        meshes.push(mesh)
+      }
+
+      return new Merger(
+        g3d,
+        transparency,
+        instancesFiltered,
+        meshes,
+        indexCount,
+        vertexCount
+      )
+    }
+
+    /**
+     * Concatenates the arrays of each of the (instance,matrix) pairs into large arrays
+     * Vertex position is transformed with the relevent matrix at it is copied
+     * Index is offset to match the vertices in the concatenated vertex buffer
+     * Color is expanded from submehes to vertex color into a concatenated array
+     * Returns a BufferGeometry from the concatenated array
+     */
+    private merge () {
+      let index = 0
+      let vertex = 0
+      let offset = 0
+
+      // matrix and vector is reused to avoid needless allocations
+      const matrix = new THREE.Matrix4()
+      const vector = new THREE.Vector3()
+
+      for (let i = 0; i < this._instances.length; i++) {
+        const instance = this._instances[i]
+        const mesh = this._g3d.getInstanceMesh(instance)
+        this._groups[i] = index
+
+        const subStart = this._g3d.getMeshSubmeshStart(mesh)
+        const subEnd = this._g3d.getMeshSubmeshEnd(mesh)
+        for (let sub = subStart; sub < subEnd; sub++) {
+          if (!this._acceptSubmesh[sub]) continue
+
+          const startIndex = this._g3d.getSubmeshIndexStart(sub)
+          const endIndex = this._g3d.getSubmeshIndexEnd(sub)
+
+          // Copy indices
+          for (let i = startIndex; i < endIndex; i++) {
+            this._indices[index++] = this._g3d.indices[i] + offset
+          }
+
+          // Copy all colors to merged array
+          const subColor = this._g3d.getSubmeshColor(sub)
+          for (let i = startIndex; i < endIndex; i++) {
+            const v = (this._g3d.indices[i] + offset) * this._colorSize
+            this._colors[v] = subColor[0]
+            this._colors[v + 1] = subColor[1]
+            this._colors[v + 2] = subColor[2]
+            if (this._colorSize > 3) {
+              this._colors[v + 3] = subColor[3]
+            }
+          }
+        }
+
+        // Apply Matrices and copy vertices to merged array
+        getInstanceMatrix(this._g3d, instance, matrix)
+        const vertexStart = this._g3d.getMeshVertexStart(mesh)
+        const vertexEnd = this._g3d.getMeshVertexEnd(mesh)
+
+        for (let p = vertexStart; p < vertexEnd; p++) {
+          vector.fromArray(this._g3d.positions, p * this._g3d.POSITION_SIZE)
+          vector.applyMatrix4(matrix)
+          vector.toArray(this._vertices, vertex)
+
+          vertex += this._g3d.POSITION_SIZE
+        }
+
+        // Keep offset for next mesh
+        offset += vertexEnd - vertexStart
+      }
+    }
+
+    /**
+     * Runs the merge process and return the resulting BufferGeometry
+     */
+    toBufferGeometry () {
+      this.merge()
+
+      const geometry = createGeometryFromArrays(
+        this._vertices,
+        this._indices,
+        this._colors,
+        this._colorSize
+      )
+      return geometry
+    }
   }
 
   /**
@@ -156,7 +568,9 @@ export namespace Geometry {
       for (let mesh = 0; mesh < meshCount; mesh++) {
         const meshInstances = g3d.meshInstances[mesh]
         if (!meshInstances || meshInstances.length !== 1) continue
-        if (!Transparency.match(transparency, g3d.meshTransparent[mesh])) {
+        if (
+          !Transparency.match(transparency, g3d.getMeshHasTransparency(mesh))
+        ) {
           continue
         }
         if ((g3d.instanceFlags[meshInstances[0]] & 1) > 0) continue
@@ -192,7 +606,9 @@ export namespace Geometry {
         const instance = instances[i]
         const mesh = g3d.instanceMeshes[instance]
         if (mesh < 0) continue
-        if (!Transparency.match(transparency, g3d.meshTransparent[mesh])) {
+        if (
+          !Transparency.match(transparency, g3d.getMeshHasTransparency(mesh))
+        ) {
           continue
         }
 

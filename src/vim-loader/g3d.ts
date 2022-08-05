@@ -60,6 +60,8 @@ class G3dAttributeDescriptor {
   }
 }
 
+type Section = 'opaque' | 'transparent' | 'all'
+
 type TypedArray =
   | Uint8Array
   | Int16Array
@@ -232,7 +234,7 @@ export class G3d {
   // computed fields
   meshVertexOffsets: Int32Array
   meshInstances: Array<Array<number>>
-  meshTransparent: Array<boolean>
+  meshOpaqueCount: Array<number>
 
   rawG3d: AbstractG3d
 
@@ -281,7 +283,8 @@ export class G3d {
     this.meshVertexOffsets = this.computeMeshVertexOffsets()
     this.rebaseIndices()
     this.meshInstances = this.computeMeshInstances()
-    this.meshTransparent = this.computeMeshIsTransparent()
+    this.meshOpaqueCount = this.computeMeshOpaqueCount()
+    this.sortSubmeshes()
   }
 
   /**
@@ -291,29 +294,14 @@ export class G3d {
     const result = new Int32Array(this.getMeshCount())
     for (let m = 0; m < result.length; m++) {
       let min = Number.MAX_SAFE_INTEGER
-      const start = this.getMeshIndexStart(m)
-      const end = this.getMeshIndexEnd(m)
+      const start = this.getMeshIndexStart(m, 'all')
+      const end = this.getMeshIndexEnd(m, 'all')
       for (let i = start; i < end; i++) {
         min = Math.min(min, this.indices[i])
       }
       result[m] = min
     }
     return result
-  }
-
-  /**
-   * Rebase indices to be relative to its own mesh instead of to the whole g3d
-   */
-  private rebaseIndices () {
-    const count = this.getMeshCount()
-    for (let m = 0; m < count; m++) {
-      const offset = this.meshVertexOffsets[m]
-      const start = this.getMeshIndexStart(m)
-      const end = this.getMeshIndexEnd(m)
-      for (let i = start; i < end; i++) {
-        this.indices[i] -= offset
-      }
-    }
   }
 
   /**
@@ -334,18 +322,183 @@ export class G3d {
   }
 
   /**
+   * Reorders submeshIndexOffset, submeshMaterials and indices
+   * such that for each mesh, submeshes are sorted according to material alpha.
+   * This enables efficient splitting of arrays into opaque and transparent continuous ranges.
+   */
+  private sortSubmeshes () {
+    // We need to compute where submeshes end before we can reorder them.
+    const submeshEnd = this.computeSubmeshEnd()
+    // We need to compute mesh index offsets from before we swap thins around to recompute new submesh offsets.
+    const meshIndexOffsets = this.computeMeshIndexOffsets()
+
+    const meshCount = this.getMeshCount()
+    const meshReordered = new Array<boolean>(meshCount)
+
+    const submeshArrays = [
+      this.submeshIndexOffset,
+      this.submeshMaterial,
+      submeshEnd
+    ]
+
+    const largestMesh = this.reorderSubmeshes(submeshArrays, meshReordered)
+    this.reorderIndices(
+      meshIndexOffsets,
+      submeshEnd,
+      meshReordered,
+      largestMesh
+    )
+  }
+
+  /**
+   * Stores result of getSubmeshIndexEnd for each submesh in an array
+   */
+  private computeSubmeshEnd () {
+    const submeshCount = this.getSubmeshCount()
+    const result = new Int32Array(submeshCount)
+    for (let s = 0; s < submeshCount; s++) {
+      result[s] = this.getSubmeshIndexEnd(s)
+    }
+    return result
+  }
+
+  /**
+   * Stores result of getMeshIndexStart for each mesh in an array
+   */
+  private computeMeshIndexOffsets () {
+    const meshCount = this.getMeshCount()
+    const result = new Int32Array(meshCount)
+    for (let m = 0; m < meshCount; m++) {
+      result[m] = this.getMeshIndexStart(m, 'all')
+    }
+    return result
+  }
+
+  /**
+   * Reorder submesh arrays and returns size of largest reordered mesh
+   */
+  private reorderSubmeshes (submeshArrays: Int32Array[], reordered: boolean[]) {
+    const meshCount = this.getMeshCount()
+    let largestMesh = 0
+    for (let m = 0; m < meshCount; m++) {
+      const subStart = this.getMeshSubmeshStart(m, 'all')
+      const subEnd = this.getMeshSubmeshEnd(m, 'all')
+
+      if (subEnd - subStart <= 1) {
+        continue
+      }
+      // Largest mesh size to use a temp buffer.
+      largestMesh = Math.max(largestMesh, this.getMeshIndexCount(m, 'all'))
+
+      // Sort submeshes by material alpha using bubble sort.
+
+      // Take note of the submesh end before swapping them.
+      reordered[m] = this.Sort(
+        subStart,
+        subEnd,
+        (i) => this.getSubmeshAlpha(i),
+        submeshArrays
+      )
+    }
+    return largestMesh
+  }
+
+  /**
+   * Sorts the range from start to end in every array provided in arrays in increasing criterion order.
+   */
+  private Sort (
+    start: number,
+    end: number,
+    criterion: (i: number) => number,
+    arrays: Int32Array[]
+  ) {
+    let swapped = false
+    while (true) {
+      let loop = false
+      for (let i = start; i < end - 1; i++) {
+        if (criterion(i) < criterion(i + 1)) {
+          loop = true
+          swapped = true
+          for (let j = 0; j < arrays.length; j++) {
+            const array = arrays[j]
+            const t = array[i]
+            array[i] = array[i + 1]
+            array[i + 1] = t
+          }
+        }
+      }
+      if (!loop) {
+        break
+      }
+    }
+    return swapped
+  }
+
+  /**
+   * Reorders the index buffer to match the new order of the submesh arrays.
+   */
+  private reorderIndices (
+    meshIndexOffsets: Int32Array,
+    submeshEnd: Int32Array,
+    meshReordered: boolean[],
+    bufferSize: number
+  ) {
+    const meshCount = this.getMeshCount()
+    const buffer = new Float32Array(bufferSize)
+
+    for (let m = 0; m < meshCount; m++) {
+      if (!meshReordered[m]) continue
+
+      const meshOffset = meshIndexOffsets[m]
+      const subStart = this.getMeshSubmeshStart(m, 'all')
+      const subEnd = this.getMeshSubmeshEnd(m, 'all')
+      let index = 0
+
+      // Copy indices -> buffer, in sorted order.
+      for (let s = subStart; s < subEnd; s++) {
+        const start = this.submeshIndexOffset[s]
+        const end = submeshEnd[s]
+
+        // Change submesh offset to match new ordering
+        this.submeshIndexOffset[s] = meshOffset + index
+        for (let i = start; i < end; i++) {
+          buffer[index++] = this.indices[i]
+        }
+      }
+
+      // Copy buffer -> indices
+      for (let i = 0; i < index; i++) {
+        this.indices[meshOffset + i] = buffer[i]
+      }
+    }
+  }
+
+  /**
+   * Rebase indices to be relative to its own mesh instead of to the whole g3d
+   */
+  private rebaseIndices () {
+    const count = this.getMeshCount()
+    for (let m = 0; m < count; m++) {
+      const offset = this.meshVertexOffsets[m]
+      const start = this.getMeshIndexStart(m, 'all')
+      const end = this.getMeshIndexEnd(m, 'all')
+      for (let i = start; i < end; i++) {
+        this.indices[i] -= offset
+      }
+    }
+  }
+
+  /**
    * Computes an array where true if any of the materials used by a mesh has transparency.
    */
-  private computeMeshIsTransparent (): Array<boolean> {
-    const result = new Array<boolean>(this.getMeshCount())
+  private computeMeshOpaqueCount () {
+    const result = new Array<number>(this.getMeshCount()).fill(0)
     for (let m = 0; m < result.length; m++) {
-      const subStart = this.getMeshSubmeshStart(m)
-      const subEnd = this.getMeshSubmeshEnd(m)
+      const subStart = this.getMeshSubmeshStart(m, 'all')
+      const subEnd = this.getMeshSubmeshEnd(m, 'all')
       for (let s = subStart; s < subEnd; s++) {
-        const material = this.submeshMaterial[s]
-        const alpha =
-          this.materialColors[material * this.COLOR_SIZE + this.COLOR_SIZE - 1]
-        result[m] = result[m] || alpha < 1
+        const alpha = this.getSubmeshAlpha(s)
+        result[m] += alpha === 1 ? 1 : 0
       }
     }
     return result
@@ -357,18 +510,24 @@ export class G3d {
   // ------------- Meshes -----------------
   getMeshCount = () => this.meshSubmeshes.length
 
-  getMeshIndexStart (mesh: number): number {
-    const subStart = this.getMeshSubmeshStart(mesh)
-    return this.getSubmeshIndexStart(subStart)
+  // getMeshIndexStart (mesh: number, section: Section): number {
+  getMeshIndexStart (mesh: number, section: Section = 'all'): number {
+    const sub = this.getMeshSubmeshStart(mesh, section)
+    return this.getSubmeshIndexStart(sub)
   }
 
-  getMeshIndexEnd (mesh: number): number {
-    const subEnd = this.getMeshSubmeshEnd(mesh)
-    return this.getSubmeshIndexEnd(subEnd - 1)
+  // getMeshIndexEnd (mesh: number, section: Section): number {
+  getMeshIndexEnd (mesh: number, section: Section = 'all'): number {
+    const sub = this.getMeshSubmeshEnd(mesh, section)
+    return this.getSubmeshIndexEnd(sub - 1)
   }
 
-  getMeshIndexCount (mesh: number): number {
-    return this.getMeshIndexEnd(mesh) - this.getMeshIndexStart(mesh)
+  // getMeshIndexCount (mesh: number, section: Section): number {
+  getMeshIndexCount (mesh: number, section: Section = 'all'): number {
+    return (
+      this.getMeshIndexEnd(mesh, section) -
+      this.getMeshIndexStart(mesh, section)
+    )
   }
 
   getMeshVertexStart (mesh: number): number {
@@ -385,24 +544,43 @@ export class G3d {
     return this.getMeshVertexEnd(mesh) - this.getMeshVertexStart(mesh)
   }
 
-  getMeshSubmeshStart (mesh: number): number {
+  // getMeshSubmeshStart (mesh: number, section: Section): number {
+  getMeshSubmeshStart (mesh: number, section: Section = 'all'): number {
+    if (section === 'transparent') {
+      return this.getMeshSubmeshEnd(mesh, 'opaque')
+    }
+
     return this.meshSubmeshes[mesh]
   }
 
-  getMeshSubmeshEnd (mesh: number): number {
+  // getMeshSubmeshEnd (mesh: number, section: Section): number {
+  getMeshSubmeshEnd (mesh: number, section: Section = 'all'): number {
+    if (section === 'opaque') {
+      return this.meshSubmeshes[mesh] + this.meshOpaqueCount[mesh]
+    }
+
     return mesh < this.meshSubmeshes.length - 1
       ? this.meshSubmeshes[mesh + 1]
       : this.submeshIndexOffset.length
   }
 
-  getMeshSubmeshCount (mesh: number): number {
-    return this.getMeshSubmeshEnd(mesh) - this.getMeshSubmeshStart(mesh)
+  // getMeshSubmeshCount (mesh: number, section: Section): number {
+  getMeshSubmeshCount (mesh: number, section: Section = 'all'): number {
+    const end = this.getMeshSubmeshEnd(mesh, section)
+    const start = this.getMeshSubmeshStart(mesh, section)
+    return end - start
+  }
+
+  getMeshHasTransparency (mesh: number) {
+    return this.getMeshSubmeshCount(mesh, 'transparent') > 0
   }
 
   // ------------- Submeshes -----------------
 
   getSubmeshIndexStart (submesh: number): number {
-    return this.submeshIndexOffset[submesh]
+    return submesh < this.submeshIndexOffset.length
+      ? this.submeshIndexOffset[submesh]
+      : this.indices.length
   }
 
   getSubmeshIndexEnd (submesh: number): number {
@@ -423,8 +601,31 @@ export class G3d {
     return this.getMaterialColor(this.submeshMaterial[submesh])
   }
 
+  /**
+   * Returns color of given submesh as a 4-number array (RGBA)
+   * @param submesh g3d submesh index
+   */
+  getSubmeshAlpha (submesh: number): number {
+    return this.getMaterialAlpha(this.submeshMaterial[submesh])
+  }
+
+  /**
+   * Returns the total number of mesh in the g3d
+   */
+  getSubmeshCount (): number {
+    return this.submeshMaterial.length
+  }
+
   // ------------- Instances -----------------
   getInstanceCount = () => this.instanceMeshes.length
+
+  /**
+   * Returns mesh index of given instance
+   * @param instance g3d instance index
+   */
+  getInstanceMesh (instance: number): number {
+    return this.instanceMeshes[instance]
+  }
 
   /**
    * Returns an 16 number array representation of the matrix for given instance
@@ -451,6 +652,13 @@ export class G3d {
       material * this.COLOR_SIZE,
       (material + 1) * this.COLOR_SIZE
     )
+  }
+
+  getMaterialAlpha (material: number): number {
+    if (material < 0) return 1
+    const index = material * this.COLOR_SIZE + this.COLOR_SIZE - 1
+    const result = this.materialColors[index]
+    return result
   }
 
   static async createFromBfast (bfast: BFast) {
@@ -562,6 +770,24 @@ export class G3d {
     if (this.materialColors.length % this.COLOR_SIZE !== 0) {
       throw new Error(
         'Invalid material color buffer, must be divisible by ' + this.COLOR_SIZE
+      )
+    }
+    console.assert(this.meshInstances.length === this.getMeshCount())
+    console.assert(this.meshOpaqueCount.length === this.getMeshCount())
+    console.assert(this.meshSubmeshes.length === this.getMeshCount())
+    console.assert(this.meshVertexOffsets.length === this.getMeshCount())
+
+    for (let m = 0; m < this.getMeshCount(); m++) {
+      console.assert(
+        this.getMeshSubmeshCount(m, 'opaque') +
+          this.getMeshSubmeshCount(m, 'transparent') ===
+          this.getMeshSubmeshCount(m, 'all')
+      )
+
+      console.assert(
+        this.getMeshIndexCount(m, 'opaque') +
+          this.getMeshIndexCount(m, 'transparent') ===
+          this.getMeshIndexCount(m, 'all')
       )
     }
   }
