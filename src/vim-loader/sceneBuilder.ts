@@ -41,7 +41,7 @@ export class SceneBuilder {
     }
 
     // Add unique transparent geometry
-    if (Transparency.isTransparent(transparency)) {
+    if (Transparency.requiresAlpha(transparency)) {
       const transparent = this.createFromMergeableMeshes(
         g3d,
         'transparentOnly',
@@ -86,6 +86,7 @@ export class SceneBuilder {
   createFromMergeableMeshes (
     g3d: G3d,
     transparency: Transparency.Mode,
+
     instances: number[] | undefined = undefined
   ) {
     const mesh = this.meshBuilder.createMergedMesh(g3d, transparency, instances)

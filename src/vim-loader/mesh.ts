@@ -3,7 +3,7 @@
  */
 
 import * as THREE from 'three'
-import { G3d } from './g3d'
+import { G3d, MeshSection } from './g3d'
 import { Geometry, Transparency } from './geometry'
 import { IMaterialLibrary, VimMaterials } from './materials'
 
@@ -43,41 +43,34 @@ export class MeshBuilder {
 
       if (meshInstances.length <= 1) continue
 
-      /*
-      if (!Transparency.match(transparency, g3d.meshTransparent[mesh])) {
-        continue
+      const createMesh = (section: MeshSection, transparent: boolean) => {
+        const geometry = Geometry.createGeometryFromMesh(
+          g3d,
+          mesh,
+          section,
+          transparent
+        )
+        return this.createInstancedMesh(
+          geometry,
+          g3d,
+          meshInstances,
+          transparent
+        )
       }
-      */
 
-      // const useAlpha =
-      //  Transparency.requiresAlpha(transparency) && g3d.meshTransparent[mesh]
-
-      const opaque = g3d.getMeshSubmeshCount(mesh, 'opaque')
+      const opaqueSection = transparency === 'allAsOpaque' ? 'all' : 'opaque'
+      const opaque = g3d.getMeshSubmeshCount(mesh, opaqueSection)
       if (opaque > 0) {
-        console.log('getMeshOpaqueSubmeshCount')
-        const geometry = Geometry.createGeometryFromMesh(g3d, mesh, false)
-        const resultMesh = this.createInstancedMesh(
-          geometry,
-          g3d,
-          meshInstances,
-          false
-        )
-
-        result.push(resultMesh)
+        const m = createMesh(opaqueSection, false)
+        result.push(m)
       }
 
-      const transparent = g3d.getMeshSubmeshCount(mesh, 'transparent')
-      if (transparent > 0) {
-        console.log('getMeshTranparentSubmeshCount')
-        const geometry = Geometry.createGeometryFromMesh(g3d, mesh, true)
-        const resultMesh = this.createInstancedMesh(
-          geometry,
-          g3d,
-          meshInstances,
-          true
-        )
-
-        result.push(resultMesh)
+      if (Transparency.requiresAlpha(transparency)) {
+        const transparent = g3d.getMeshSubmeshCount(mesh, 'transparent')
+        if (transparent > 0) {
+          const m = createMesh('transparent', true)
+          result.push(m)
+        }
       }
     }
 

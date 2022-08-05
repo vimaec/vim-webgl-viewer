@@ -3,7 +3,7 @@
  */
 
 import * as THREE from 'three'
-import { G3d } from './g3d'
+import { G3d, MeshSection } from './g3d'
 
 export namespace Transparency {
   /**
@@ -54,20 +54,20 @@ export namespace Geometry {
   /**
    * Creates a BufferGeometry from a given mesh index in the g3d
    * @param mesh g3d mesh index
-   * @param useAlpha specify to use RGB or RGBA for colors
+   * @param transparent specify to use RGB or RGBA for colors
    */
   export function createGeometryFromMesh (
     g3d: G3d,
     mesh: number,
-    useAlpha: boolean
+    section: MeshSection,
+    transparent: boolean
   ): THREE.BufferGeometry {
-    const colors = createVertexColors(g3d, mesh, useAlpha)
+    const colors = createVertexColors(g3d, mesh, transparent)
     const positions = g3d.positions.subarray(
       g3d.getMeshVertexStart(mesh) * 3,
       g3d.getMeshVertexEnd(mesh) * 3
     )
 
-    const section = useAlpha ? 'transparent' : 'opaque'
     const start = g3d.getMeshIndexStart(mesh, section)
     const end = g3d.getMeshIndexEnd(mesh, section)
     const indices = g3d.indices.subarray(start, end)
@@ -75,7 +75,7 @@ export namespace Geometry {
       positions,
       indices,
       colors,
-      useAlpha ? 4 : 3
+      transparent ? 4 : 3
     )
   }
   /**
