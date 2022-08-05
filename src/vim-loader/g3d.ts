@@ -60,7 +60,7 @@ class G3dAttributeDescriptor {
   }
 }
 
-type Section = 'opaque' | 'transparent' | 'all'
+export type MeshSection = 'opaque' | 'transparent' | 'all'
 
 type TypedArray =
   | Uint8Array
@@ -510,20 +510,17 @@ export class G3d {
   // ------------- Meshes -----------------
   getMeshCount = () => this.meshSubmeshes.length
 
-  // getMeshIndexStart (mesh: number, section: Section): number {
-  getMeshIndexStart (mesh: number, section: Section = 'all'): number {
+  getMeshIndexStart (mesh: number, section: MeshSection = 'all'): number {
     const sub = this.getMeshSubmeshStart(mesh, section)
     return this.getSubmeshIndexStart(sub)
   }
 
-  // getMeshIndexEnd (mesh: number, section: Section): number {
-  getMeshIndexEnd (mesh: number, section: Section = 'all'): number {
+  getMeshIndexEnd (mesh: number, section: MeshSection = 'all'): number {
     const sub = this.getMeshSubmeshEnd(mesh, section)
     return this.getSubmeshIndexEnd(sub - 1)
   }
 
-  // getMeshIndexCount (mesh: number, section: Section): number {
-  getMeshIndexCount (mesh: number, section: Section = 'all'): number {
+  getMeshIndexCount (mesh: number, section: MeshSection = 'all'): number {
     return (
       this.getMeshIndexEnd(mesh, section) -
       this.getMeshIndexStart(mesh, section)
@@ -544,8 +541,7 @@ export class G3d {
     return this.getMeshVertexEnd(mesh) - this.getMeshVertexStart(mesh)
   }
 
-  // getMeshSubmeshStart (mesh: number, section: Section): number {
-  getMeshSubmeshStart (mesh: number, section: Section = 'all'): number {
+  getMeshSubmeshStart (mesh: number, section: MeshSection = 'all'): number {
     if (section === 'transparent') {
       return this.getMeshSubmeshEnd(mesh, 'opaque')
     }
@@ -553,8 +549,7 @@ export class G3d {
     return this.meshSubmeshes[mesh]
   }
 
-  // getMeshSubmeshEnd (mesh: number, section: Section): number {
-  getMeshSubmeshEnd (mesh: number, section: Section = 'all'): number {
+  getMeshSubmeshEnd (mesh: number, section: MeshSection = 'all'): number {
     if (section === 'opaque') {
       return this.meshSubmeshes[mesh] + this.meshOpaqueCount[mesh]
     }
@@ -564,8 +559,7 @@ export class G3d {
       : this.submeshIndexOffset.length
   }
 
-  // getMeshSubmeshCount (mesh: number, section: Section): number {
-  getMeshSubmeshCount (mesh: number, section: Section = 'all'): number {
+  getMeshSubmeshCount (mesh: number, section: MeshSection = 'all'): number {
     const end = this.getMeshSubmeshEnd(mesh, section)
     const start = this.getMeshSubmeshStart(mesh, section)
     return end - start
@@ -607,6 +601,14 @@ export class G3d {
    */
   getSubmeshAlpha (submesh: number): number {
     return this.getMaterialAlpha(this.submeshMaterial[submesh])
+  }
+
+  /**
+   * Returns true if submesh is transparent.
+   * @param submesh g3d submesh index
+   */
+  getSubmeshIsTransparent (submesh: number): boolean {
+    return this.getSubmeshAlpha(submesh) < 1
   }
 
   /**
