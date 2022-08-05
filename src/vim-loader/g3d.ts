@@ -340,7 +340,7 @@ export class G3d {
       this.submeshMaterial,
       submeshEnd
     ]
-
+    // Largest mesh size thus minimum buffer size to use to reorder indices.
     const largestMesh = this.reorderSubmeshes(submeshArrays, meshReordered)
     this.reorderIndices(
       meshIndexOffsets,
@@ -387,12 +387,9 @@ export class G3d {
       if (subEnd - subStart <= 1) {
         continue
       }
-      // Largest mesh size to use a temp buffer.
+
       largestMesh = Math.max(largestMesh, this.getMeshIndexCount(m, 'all'))
 
-      // Sort submeshes by material alpha using bubble sort.
-
-      // Take note of the submesh end before swapping them.
       reordered[m] = this.Sort(
         subStart,
         subEnd,
@@ -405,6 +402,7 @@ export class G3d {
 
   /**
    * Sorts the range from start to end in every array provided in arrays in increasing criterion order.
+   * Using a simple bubble sort, there is a limited number of submeshes per mesh.
    */
   private Sort (
     start: number,
