@@ -607,6 +607,7 @@ export class Camera implements ICamera {
       } else if (!this._lockDirection) {
         this.lookAt(this._orbitTarget)
       }
+      this.gizmo?.setPosition(this._orbitTarget)
       return
     }
 
