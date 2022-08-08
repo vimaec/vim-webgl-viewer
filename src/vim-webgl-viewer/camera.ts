@@ -143,6 +143,7 @@ export class Camera implements ICamera {
   private _zoomSpeed: number = 0.25
   private _firstPersonSpeed = 10
   private _minModelScrenSize = 0.05
+  private _minOrthoSize = 1
 
   constructor (
     scene: RenderScene,
@@ -597,8 +598,6 @@ export class Camera implements ICamera {
    * Apply the camera frame update
    */
   update (deltaTime: number) {
-    this.gizmo?.setPosition(this._orbitTarget)
-
     if (this.shouldLerp()) {
       if (this._lerpPosition && !this.isNearTarget()) {
         this.applyPositionLerp()
@@ -619,6 +618,7 @@ export class Camera implements ICamera {
     this._targetPosition.copy(this.camera.position)
 
     this.applyVelocity(deltaTime)
+    this.gizmo?.setPosition(this._orbitTarget)
   }
 
   private isNearTarget () {
@@ -694,13 +694,14 @@ export class Camera implements ICamera {
         this.cameraOrthographic.bottom +
         2 * d * aspect
       const radius = Math.min(dx, dy)
-      if (radius < this._minOrbitalDistance) return
+      if (radius < this._minOrthoSize) return
 
       this.cameraOrthographic.left -= d * aspect
       this.cameraOrthographic.right += d * aspect
       this.cameraOrthographic.top += d
       this.cameraOrthographic.bottom -= d
       this.cameraOrthographic.updateProjectionMatrix()
+      this.gizmo?.show()
     }
 
     if (this.isSignificant(deltaPosition)) {

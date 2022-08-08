@@ -145,8 +145,16 @@ export class CameraGizmo {
     const dist = this._camera.camera.position
       .clone()
       .distanceTo(this._gizmos.position)
-    // computes scale such that gizmo screen size remains constant
-    const h = dist * Math.tan(MathUtils.degToRad(this._fov) * this._size)
+    let h = 0
+    const cam = this._camera.camera
+    if (cam instanceof THREE.OrthographicCamera) {
+      const dx = cam.right - cam.left
+      const dy = cam.top - cam.bottom
+      h = Math.min(dx, dy) * this._size
+    } else {
+      // computes scale such that gizmo screen size remains constant
+      h = dist * Math.tan(MathUtils.degToRad(this._fov) * this._size)
+    }
     this._gizmos.scale.set(h, h, h)
   }
 
