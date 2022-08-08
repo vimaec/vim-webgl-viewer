@@ -12,6 +12,15 @@ export type ElementInfo = {
   categoryName: string
   familyName: string
   familyTypeName: string
+  workset: string
+  documentTitle: string
+}
+
+export type ElementParameter = {
+  name: string
+  value: string
+  group: string
+  isInstance: boolean
 }
 
 const objectModel = {
@@ -39,7 +48,8 @@ const objectModel = {
     index: 'index:Vim.ParameterDescriptor:ParameterDescriptor',
     columns: {
       name: 'string:Name',
-      group: 'string:Group'
+      group: 'string:Group',
+      isInstance: 'byte:IsInstance'
     }
   },
   familyInstance: {
@@ -63,6 +73,21 @@ const objectModel = {
     index: 'index:Vim.Category:Category',
     columns: {
       name: 'string:Name'
+    }
+  },
+  workset: {
+    table: 'Vim.Workset',
+    index: 'index:Vim.Workset:Workset',
+    columns: {
+      name: 'string:Name'
+    }
+  },
+  document: {
+    table: 'Vim.BimDocument',
+    index: 'index:Vim.BimDocument:BimDocument',
+    columns: {
+      name: 'string:Name',
+      title: 'string:Title'
     }
   }
 }
@@ -285,6 +310,7 @@ export class Document {
       objectModel.element.table
     )
 
+    // Element
     const elementNameArray = await elementTable.getArray(
       objectModel.element.columns.name
     )
@@ -293,6 +319,10 @@ export class Document {
       objectModel.element.columns.id
     )
 
+    const getElementName = (element: number) =>
+      this._strings[elementNameArray[element]]
+
+    // Category
     const elementCategoryArray = await elementTable.getArray(
       objectModel.category.index
     )
@@ -302,19 +332,22 @@ export class Document {
     const categoryNameArray = await categoryTable.getArray(
       objectModel.category.columns.name
     )
+    const getCategory = (element: number) =>
+      this._strings[categoryNameArray[elementCategoryArray[element]]]
+
+    // Family
+    const familyInstanceTable = await this._entities.getBfast(
+      objectModel.familyInstance.table
+    )
 
     const familyNameArray = await elementTable.getArray(
       objectModel.element.columns.familyName
     )
 
-    const familyInstanceTable = await this._entities.getBfast(
-      objectModel.familyInstance.table
-    )
+    const getFamilyName = (element: number) =>
+      this._strings[familyNameArray[element]]
 
-    const familyInstanceElement = await familyInstanceTable.getArray(
-      objectModel.element.index
-    )
-
+    // FamilyType
     const familyInstanceFamilyType = await familyInstanceTable.getArray(
       objectModel.familyType.index
     )
@@ -326,6 +359,45 @@ export class Document {
       objectModel.element.index
     )
 
+    const getFamilyTypeName = (family: number) =>
+      this._strings[
+        elementNameArray[
+          familyTypeElementArray[familyInstanceFamilyType[family]]
+        ]
+      ]
+
+    // Workset
+    const elementWorksetArray = await elementTable.getArray(
+      objectModel.workset.index
+    )
+    const worksetTable = await this._entities.getBfast(
+      objectModel.workset.table
+    )
+    const worksetNameArray = await worksetTable.getArray(
+      objectModel.workset.columns.name
+    )
+    const getWorkset = (element: number) =>
+      this._strings[worksetNameArray[elementWorksetArray[element]]]
+
+    // Document
+    const elementDocumentArray = await elementTable.getArray(
+      objectModel.document.index
+    )
+    const documentTable = await this._entities.getBfast(
+      objectModel.document.table
+    )
+    const documentTitleArray = await documentTable.getArray(
+      objectModel.document.columns.title
+    )
+    const getDocument = (element: number) =>
+      this._strings[documentTitleArray[elementDocumentArray[element]]]
+
+    // Compilation
+
+    const familyInstanceElement = await familyInstanceTable.getArray(
+      objectModel.element.index
+    )
+
     const summary: ElementInfo[] = []
 
     familyInstanceElement.forEach((e, f) => {
@@ -333,16 +405,12 @@ export class Document {
         summary.push({
           element: e,
           id: elementIdArray[e],
-          name: this._strings[elementNameArray[e]],
-          categoryName:
-            this._strings[categoryNameArray[elementCategoryArray[e]]],
-          familyName: this._strings[familyNameArray[e]],
-          familyTypeName:
-            this._strings[
-              elementNameArray[
-                familyTypeElementArray[familyInstanceFamilyType[f]]
-              ]
-            ]
+          name: getElementName(e),
+          categoryName: getCategory(e),
+          familyName: getFamilyName(e),
+          familyTypeName: getFamilyTypeName(f),
+          workset: getWorkset(e),
+          documentTitle: getDocument(e)
         })
       }
     })
@@ -354,33 +422,29 @@ export class Document {
    * @param element element index
    * @returns An array of paramters with name, value, group
    */
-  async getElementParameters (element: number): Promise<
-    {
-      name: string
-      value: string
-      group: string
-    }[]
-  > {
-    const elements = new Set<number>()
-    elements.add(element)
+  async getElementParameters (element: number): Promise<ElementParameter[]> {
+    const result: ElementParameter[] = []
+    const instance = await this.getElementsParameters([element], true)
+    instance.forEach((i) => result.push(i))
 
     const familyInstance = await this.getElementFamilyInstance(element)
     if (familyInstance !== undefined) {
       const familyType = await this.getFamilyInstanceFamilyType(familyInstance)
       const family = await this.getFamilyTypeFamily(familyType)
-
       const familyTypeElement = await this.getFamiltyTypeElement(familyType)
-      elements.add(familyTypeElement)
-
       const familyElement = await this.getFamilyElement(family)
-      elements.add(familyElement)
+      const type = await this.getElementsParameters(
+        [familyTypeElement, familyElement],
+        false
+      )
+      type.forEach((i) => result.push(i))
     }
 
-    const result = await this.getElementsParameters(elements)
     return result
   }
 
-  private async getElementsParameters (elements: Set<number>) {
+  private async getElementsParameters (elements: number[], isInstance: boolean) {
+    const set = new Set(elements)
     const parameterTable = await this._entities.getBfast(
       objectModel.parameter.table
     )
@@ -404,21 +468,18 @@ export class Document {
       objectModel.parameterDescriptor.columns.group
     )
 
-    const result: {
-      name: string
-      value: string
-      group: string
-    }[] = []
+    const result: ElementParameter[] = []
 
     parameterElement.forEach((e, i) => {
-      if (elements.has(e)) {
+      if (set.has(e)) {
         const value = this._strings[parameterValue[i]].split('|')
         const displayValue = value[value.length - 1]
         const d = parameterDescription[i]
         result.push({
           name: this._strings[parameterDescriptorName[d]],
           value: displayValue,
-          group: this._strings[parameterDescriptorGroup[d]]
+          group: this._strings[parameterDescriptorGroup[d]],
+          isInstance: isInstance
         })
       }
     })

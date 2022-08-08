@@ -30,24 +30,24 @@ export class SceneBuilder {
     )
     scene.merge(shared)
 
-    // Add opaque geometry
+    // Add unique opaque geometry
     if (transparency !== 'transparentOnly') {
       const opaque = this.createFromMergeableMeshes(
         g3d,
         transparency === 'allAsOpaque' ? 'allAsOpaque' : 'opaqueOnly',
         instances
       )
-      scene.merge(opaque)
+      if (opaque) scene.merge(opaque)
     }
 
-    // Add transparent geometry
+    // Add unique transparent geometry
     if (Transparency.requiresAlpha(transparency)) {
       const transparent = this.createFromMergeableMeshes(
         g3d,
         'transparentOnly',
         instances
       )
-      scene.merge(transparent)
+      if (transparent) scene.merge(transparent)
     }
 
     return scene
@@ -86,9 +86,11 @@ export class SceneBuilder {
   createFromMergeableMeshes (
     g3d: G3d,
     transparency: Transparency.Mode,
+
     instances: number[] | undefined = undefined
   ) {
     const mesh = this.meshBuilder.createMergedMesh(g3d, transparency, instances)
+    if (!mesh) return
     return new Scene(this).addMergedMesh(mesh)
   }
 }

@@ -32,8 +32,8 @@ class Axis {
 }
 
 class GizmoOptions {
-  size: number = 90
-  padding: number = 8
+  size: number = 96
+  padding: number = 4
   bubbleSizePrimary: number = 8
   bubbleSizeSecondary: number = 6
   lineWidth: number = 2
@@ -42,18 +42,13 @@ class GizmoOptions {
   fontWeight: string = 'bold'
   fontColor: string = '#222222'
   className: string = 'gizmo-axis-canvas'
-  colorX: string = '#f73c3c'
-  // colorX: string = '#ffffff'
 
+  colorX: string = '#f73c3c'
   colorY: string = '#6ccb26'
   colorZ: string = '#178cf0'
   colorXSub: string = '#942424'
-  // colorXSub: string = '#ffffff'
-
   colorYSub: string = '#417a17'
-  // colorYSub: string = '#ffffff'
   colorZSub: string = '#0e5490'
-  // colorZSub: string = '#ffffff'
 
   constructor (init?: Partial<GizmoOptions>) {
     this.size = init?.size ?? this.size
@@ -197,6 +192,9 @@ export class GizmoAxes {
     const canvas = document.createElement('canvas')
     canvas.width = this.options.size
     canvas.height = this.options.size
+    canvas.style.position = 'fixed'
+    canvas.style.right = '24px'
+    canvas.style.top = '24px'
     canvas.classList.add(this.options.className)
 
     canvas.addEventListener('pointerdown', this.onPointerDown, false)

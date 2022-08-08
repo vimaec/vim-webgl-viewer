@@ -66,6 +66,13 @@ export class Viewport {
   }
 
   /**
+   * Resizes canvas and update camera to match new parent dimensions.
+   */
+  ResizeToParent () {
+    this._resizeCallbacks.forEach((cb) => cb())
+  }
+
+  /**
    * Set a callback for canvas resize with debouncing
    * https://stackoverflow.com/questions/5825447/javascript-event-for-canvas-resize/30688151
    * @param callback code to be called

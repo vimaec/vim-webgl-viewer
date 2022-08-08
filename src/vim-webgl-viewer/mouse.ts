@@ -100,7 +100,7 @@ export class Mouse {
   }
 
   onMouseUp = (event: any) => {
-    if (this.isMouseDown && !this.hasMouseMoved) {
+    if (event.button === 0 && this.isMouseDown && !this.hasMouseMoved) {
       this.onMouseClick(new THREE.Vector2(event.offsetX, event.offsetY), false)
     }
     this.isMouseDown = false

@@ -127,19 +127,18 @@ export class Viewer {
     this.viewport = new Viewport(this.settings)
     this._camera = new Camera(scene, this.viewport, this.settings)
     this.renderer = new Renderer(scene, this.viewport, materials)
-    this._camera.gizmo = new CameraGizmo(
-      this.renderer,
-      this._camera,
-      this.settings
-    )
+    if (this.settings.getCameraGizmoEnable()) {
+      this._camera.gizmo = new CameraGizmo(
+        this.renderer,
+        this._camera,
+        this.settings
+      )
+    }
 
     // TODO add options
     this.gizmoMeasure = new GizmoMeasure(this)
     this._gizmoAxes = new GizmoAxes(this.camera)
     this.viewport.canvas.parentElement?.prepend(this._gizmoAxes.canvas)
-    this._gizmoAxes.canvas.style.position = 'fixed'
-    this._gizmoAxes.canvas.style.right = '10px'
-    this._gizmoAxes.canvas.style.top = '10px'
 
     this.gizmoSection = new GizmoSection(this)
 
