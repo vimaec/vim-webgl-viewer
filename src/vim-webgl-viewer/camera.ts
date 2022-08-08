@@ -344,11 +344,14 @@ export class Camera implements ICamera {
       const padX = (this.camera.right - this.camera.left) * amount * multiplier
       const padY = (this.camera.top - this.camera.bottom) * amount * multiplier
 
-      // View box size is capped such that model is at least a certain screen size.
       const X = this.camera.right - this.camera.left + 2 * padX
       const Y = this.camera.top - this.camera.bottom + 2 * padY
       const radius = Math.min(X / 2, Y / 2)
+
+      // View box size is capped such that model is at least a certain screen size.
+      // And tha box is of size at least min orbit distance
       if (sphere.radius / radius < this._minModelScrenSize) return
+      if (radius * 2 < this._minOrbitalDistance) return
 
       this.camera.left -= padX
       this.camera.right += padX
@@ -681,6 +684,18 @@ export class Camera implements ICamera {
     if (this.orthographic) {
       const aspect = this._viewport.getAspectRatio()
       const d = -deltaPosition.z / 2
+
+      const dx =
+        this.cameraOrthographic.right -
+        this.cameraOrthographic.left +
+        2 * d * aspect
+      const dy =
+        this.cameraOrthographic.top -
+        this.cameraOrthographic.bottom +
+        2 * d * aspect
+      const radius = Math.min(dx, dy)
+      if (radius < this._minOrbitalDistance) return
+
       this.cameraOrthographic.left -= d * aspect
       this.cameraOrthographic.right += d * aspect
       this.cameraOrthographic.top += d
