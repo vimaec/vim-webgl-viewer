@@ -683,7 +683,7 @@ export class Camera implements ICamera {
 
     if (this.orthographic) {
       const aspect = this._viewport.getAspectRatio()
-      const d = -deltaPosition.z / 2
+      const d = -deltaPosition.dot(this.forward)
 
       const dx =
         this.cameraOrthographic.right -
