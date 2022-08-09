@@ -7,6 +7,7 @@ import { Scene } from '../vim-loader/scene'
 import { Viewport } from './viewport'
 import { RenderScene } from './renderScene'
 import { IMaterialLibrary, VimMaterials } from '../vim-loader/materials'
+import { ViewerSettings } from './viewerSettings'
 
 class Section {
   private _renderer: THREE.WebGLRenderer
