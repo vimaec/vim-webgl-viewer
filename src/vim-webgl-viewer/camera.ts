@@ -613,18 +613,17 @@ export class Camera implements ICamera {
         this.lookAt(this._orbitTarget)
       }
       this.onChanged?.()
-      this.gizmo?.setPosition(this._orbitTarget)
-      return
+    } else {
+      // End any outstanding lerp
+      if (this._lerpPosition || this._lerpRotation) {
+        this.endLerp()
+      }
+
+      this._targetPosition.copy(this.camera.position)
+
+      this.applyVelocity(deltaTime)
     }
 
-    // End any outstanding lerp
-    if (this._lerpPosition || this._lerpRotation) {
-      this.endLerp()
-    }
-
-    this._targetPosition.copy(this.camera.position)
-
-    this.applyVelocity(deltaTime)
     this.gizmo?.setPosition(this._orbitTarget)
   }
 
@@ -728,7 +727,6 @@ export class Camera implements ICamera {
   }
 
   private applyPositionLerp () {
-    // const alpha = this.easeOutCubic(this.lerpProgress())
     const alpha = this.lerpProgress()
 
     const pos = this.slerp(

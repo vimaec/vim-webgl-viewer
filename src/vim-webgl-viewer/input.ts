@@ -6,38 +6,47 @@ import { Viewer } from './viewer'
 import { KeyboardHandler } from './keyboard'
 import { TouchHandler } from './touch'
 import { MouseHandler } from './mouse'
-import { RaycastResult } from './raycaster'
+import { InputAction } from './raycaster'
 
 /**
  * Manages and registers all viewer user inputs for mouse, keyboard and touch
  */
 export class Input {
   // Dependencies
-  private _canvas: HTMLCanvasElement
+  private _viewer: Viewer
 
-  // State
+  /**
+   * Touch input handler
+   */
   touch: TouchHandler
+  /**
+   * Mouse input handler
+   */
   mouse: MouseHandler
+  /**
+   * Keyboard input handler
+   */
   keyboard: KeyboardHandler
 
   /**
    * Callback for on mouse click. Replace it to override or combine
    * default behaviour with your custom logic.
    */
-  onMainAction: (hit: RaycastResult) => {} | undefined
+  onMainAction: ((hit: InputAction) => void) | undefined
 
   /**
-   * Callback for on mouse click. Replace it to override or combine
+   * Callback when mouse and camera have been idle for some time.
    * default behaviour with your custom logic.
    */
-  onIdle: (hit: RaycastResult) => {} | undefined
+  onIdleAction: ((hit: InputAction) => void) | undefined
 
   constructor (viewer: Viewer) {
-    this._canvas = viewer.viewport.canvas
+    this._viewer = viewer
 
     this.keyboard = new KeyboardHandler(viewer)
     this.mouse = new MouseHandler(viewer)
     this.touch = new TouchHandler(viewer)
+    this.onMainAction = this.defaultAction
   }
 
   /**
@@ -65,5 +74,33 @@ export class Input {
     this.mouse.reset()
     this.keyboard.reset()
     this.touch.reset()
+  }
+
+  /**
+   * Default action behaviour on mouse click or touch tap.
+   */
+  public defaultAction (action: InputAction) {
+    const camera = this._viewer.camera
+    const selection = this._viewer.selection
+
+    console.log(action)
+    if (!action?.object) {
+      selection.select(undefined)
+      if (action.type === 'double') {
+        camera.frame('all', false, camera.defaultLerpDuration)
+      }
+      return
+    }
+
+    selection.select(action.object)
+
+    if (action.type === 'double') {
+      camera.frame(action.object, false, camera.defaultLerpDuration)
+    }
+
+    action.object.getBimElement().then((e) => {
+      e.set('Index', action.object.element)
+      console.log(e)
+    })
   }
 }

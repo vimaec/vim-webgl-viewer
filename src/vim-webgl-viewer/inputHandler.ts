@@ -18,6 +18,10 @@ export class InputHandler {
     this._unregisters.push(() => handler.removeEventListener(type, listener))
   }
 
+  /**
+   * Register handler to related browser events
+   * Prevents double registrations
+   */
   register () {
     if (this._unregisters.length > 0) return
     this.addListeners()
@@ -25,11 +29,18 @@ export class InputHandler {
 
   protected addListeners () {}
 
+  /**
+   * Unregister handler from related browser events
+   * Prevents double unregistration
+   */
   unregister () {
     this._unregisters.forEach((f) => f())
     this._unregisters.length = 0
     this.reset()
   }
 
+  /**
+   * Reset handler states such as button down, drag, etc.
+   */
   reset () {}
 }

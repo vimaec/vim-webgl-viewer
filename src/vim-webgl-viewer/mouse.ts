@@ -4,6 +4,7 @@
 
 import * as THREE from 'three'
 import { InputHandler } from './inputHandler'
+import { InputAction } from './raycaster'
 
 /**
  * Manages mouse user inputs
@@ -67,8 +68,8 @@ export class MouseHandler extends InputHandler {
   }
 
   private onMouseIdle = (position: THREE.Vector2) => {
-    const result = this.raycaster.screenRaycast('idle', position)
-    this._viewer.inputs.onIdle?.(result)
+    const action = new InputAction('idle', position, this.raycaster)
+    this._viewer.inputs.onIdleAction?.(action)
   }
 
   private onMouseMove = (event: any) => {
@@ -145,8 +146,12 @@ export class MouseHandler extends InputHandler {
 
   // TODO Make private
   onMouseClick = (position: THREE.Vector2, doubleClick: boolean) => {
-    const event = doubleClick ? 'double' : 'main'
-    const result = this.raycaster.screenRaycast(event, position)
-    this._viewer.inputs.onMainAction?.(result)
+    const action = new InputAction(
+      doubleClick ? 'double' : 'main',
+      position,
+      this.raycaster
+    )
+
+    this._viewer.inputs.onMainAction?.(action)
   }
 }

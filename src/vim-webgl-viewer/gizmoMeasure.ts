@@ -3,7 +3,7 @@
  */
 
 import * as THREE from 'three'
-import { HitTestResult } from '../vim'
+import { InputAction } from './raycaster'
 import { Viewer } from './viewer'
 import { MeshLine, MeshLineMaterial } from '../utils/meshLine'
 import { Vector2 } from 'three'
@@ -118,10 +118,8 @@ export class GizmoMeasure {
   private _lineZ: MeasureLine
 
   // state
-
-  private _lastRaycast: number
   private removeMouseListener: () => void
-  private oldClick: (hit: HitTestResult) => void
+  private oldAction: (hit: InputAction) => void
   private onAbort: () => void
 
   // results
@@ -157,10 +155,11 @@ export class GizmoMeasure {
     this._currentMarker.mesh.visible = false
     this._viewer.renderer.add(this._currentMarker.mesh)
 
-    this.oldClick = this._viewer.onMouseClick
+    this.oldAction = this._viewer.inputs.onMainAction
 
     onProgress?.('ready')
     this.registerMouse(this.onMouseMoveReady.bind(this))
+    this._viewer.inputs.onIdleAction = this.onMouseIdleReady.bind(this)
     return new Promise<void>((resolve, reject) => {
       this.onAbort = () => {
         onProgress?.(undefined)
@@ -168,18 +167,19 @@ export class GizmoMeasure {
       }
 
       // Override next two clicks then reverts
-      this._viewer.onMouseClick = (hit) => {
+      this._viewer.inputs.onMainAction = (hit) => {
         // Wait until valid first click.
         if (!hit.object) return
         this.onFirstClick(hit)
         onProgress?.('active')
+        this._viewer.inputs.onIdleAction = this.onMouseIdleActive.bind(this)
         this.registerMouse(this.onMouseMoveActive.bind(this))
-        this._viewer.onMouseClick = (hit) => {
+        this._viewer.inputs.onMainAction = (hit) => {
           this.onAbort = undefined
 
           // Restore normal click behavior
-          this._viewer.onMouseClick = this.oldClick
-          this.oldClick = undefined
+          this._viewer.inputs.onMainAction = this.oldAction
+          this.oldAction = undefined
 
           const success = this.onSecondClick(hit)
           if (success) {
@@ -194,10 +194,10 @@ export class GizmoMeasure {
     })
   }
 
-  private onFirstClick (hit: HitTestResult) {
+  private onFirstClick (action: InputAction) {
     this.reset()
 
-    this._startPos = hit.position
+    this._startPos = action.raycast.position
 
     this._startMarker = new MeasureMarker()
     this._startMarker.setPosition(this._startPos)
@@ -206,8 +206,8 @@ export class GizmoMeasure {
     // Line
     this._line = new MeasureLine(
       new Vector2().fromArray(this._viewer.viewport.getSize()),
-      hit.position,
-      hit.position,
+      action.raycast.position,
+      action.raycast.position,
       new THREE.Color(1, 1, 1)
     )
     this._viewer.renderer.add(this._line.mesh)
@@ -222,56 +222,53 @@ export class GizmoMeasure {
     }
   }
 
-  private mouseRaycast (event: MouseEvent) {
-    // Cap the number of raycast per seconds
-    const time = Date.now()
-    if (time - this._lastRaycast < 20) return
-    this._lastRaycast = time
-
-    const position = new THREE.Vector2(event.offsetX, event.offsetY)
-    return this._viewer.raycaster.screenRaycast(position)
-  }
-
-  private onMouseMoveReady (event: MouseEvent) {
-    const hit = this.mouseRaycast(event)
-    if (!hit) return
-
-    if (hit.object) {
-      this._currentMarker.setPosition(hit.position)
+  private onMouseIdleReady (action: InputAction) {
+    if (action.object) {
+      this._currentMarker.setPosition(action.raycast.position)
     }
-    this._currentMarker.mesh.visible = !!hit.object
+    this._currentMarker.mesh.visible = !!action.object
   }
 
-  private onMouseMoveActive (event: MouseEvent) {
-    const hit = this.mouseRaycast(event)
-    if (!hit) return
+  private onMouseMoveReady () {
+    this._currentMarker.mesh.visible = false
+  }
 
+  private onMouseIdleActive (action: InputAction) {
     // Show markers and line on hit
-    if (hit.object) {
-      this._measurement = hit.position.clone().sub(this._startPos)
-      this._line.setPoints(this._startPos, hit.position)
-      this._currentMarker.setPosition(hit.position)
+    const object = action.object
+    const position = action.raycast.position
+
+    if (object) {
+      this._measurement = position.clone().sub(this._startPos)
+      this._line.setPoints(this._startPos, position)
+      this._currentMarker.setPosition(position)
     } else {
       this._measurement = undefined
     }
 
-    this._currentMarker.mesh.visible = !!hit.object
-    this._line.mesh.visible = !!hit.object
+    this._currentMarker.mesh.visible = !!object
+    this._line.mesh.visible = !!object
   }
 
-  private onSecondClick (hit: HitTestResult) {
-    if (!hit.object) {
+  private onMouseMoveActive () {
+    this._currentMarker.mesh.visible = false
+    this._line.mesh.visible = false
+  }
+
+  private onSecondClick (action: InputAction) {
+    if (!action.object) {
       this.abort()
       console.log('No point selected. Aborting measurement.')
       return false
     }
 
+    this._viewer.inputs.onIdleAction = undefined
     this.removeMouseListener?.()
 
-    this._endPos = hit.position
+    this._endPos = action.raycast.position
 
     // Set end marker
-    this._endMarker = new MeasureMarker(hit.position)
+    this._endMarker = new MeasureMarker(action.raycast.position)
     this._endMarker.setPosition(this._endPos)
     this._viewer.renderer.add(this._endMarker.mesh)
 
@@ -331,12 +328,11 @@ export class GizmoMeasure {
    * Aborts the current measure flow, fails the related promise and dispose all resources.
    */
   abort () {
-    if (this.oldClick) {
-      this._viewer.onMouseClick = this.oldClick
-      this.oldClick = undefined
+    if (this.oldAction) {
+      this._viewer.inputs.onMainAction = this.oldAction
+      this.oldAction = undefined
     }
-    this.removeMouseListener?.()
-    this.removeMouseListener = undefined
+    this._viewer.inputs.onIdleAction = undefined
 
     this.reset()
     if (this._currentMarker) {

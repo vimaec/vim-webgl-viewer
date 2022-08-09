@@ -4,6 +4,7 @@
 
 import * as THREE from 'three'
 import { InputHandler } from './inputHandler'
+import { InputAction } from './raycaster'
 
 /**
  * Manages user touch inputs.
@@ -22,14 +23,6 @@ export class TouchHandler extends InputHandler {
     return this._viewer.viewport
   }
 
-  private get mouse () {
-    return this._viewer.inputs.mouse
-  }
-
-  private get canvas () {
-    return this._viewer.viewport.canvas
-  }
-
   // State
   private _touch: THREE.Vector2 | undefined = undefined // When one touch occurs this is the value, when two or more touches occur it is the average of the first two.
   private _touch1: THREE.Vector2 | undefined = undefined // The first touch when multiple touches occur, otherwise left undefined
@@ -39,9 +32,10 @@ export class TouchHandler extends InputHandler {
   private _touchStart: THREE.Vector2
 
   protected override addListeners (): void {
-    this.reg(this.canvas, 'touchstart', this.onTouchStart)
-    this.reg(this.canvas, 'touchend', this.onTouchEnd)
-    this.reg(this.canvas, 'touchmove', this.onTouchMove)
+    const canvas = this.viewport.canvas
+    this.reg(canvas, 'touchstart', this.onTouchStart)
+    this.reg(canvas, 'touchend', this.onTouchEnd)
+    this.reg(canvas, 'touchmove', this.onTouchMove)
   }
 
   override reset = () => {
@@ -51,8 +45,15 @@ export class TouchHandler extends InputHandler {
   private onTap = (position: THREE.Vector2) => {
     const time = new Date().getTime()
     const double = time - this._lastTapMs < this.DOUBLE_TAP_DELAY_MS
-    this.mouse.onMouseClick(position, double)
     this._lastTapMs = new Date().getTime()
+
+    const action = new InputAction(
+      double ? 'double' : 'main',
+      position,
+      this._viewer.raycaster
+    )
+
+    this._viewer.inputs.onMainAction?.(action)
   }
 
   private onTouchStart = (event: any) => {

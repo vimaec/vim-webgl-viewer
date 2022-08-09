@@ -12,23 +12,17 @@ import { Renderer } from './renderer'
 
 type ThreeIntersectionList = THREE.Intersection<THREE.Object3D<THREE.Event>>[]
 
-type RaycastEvent = 'main' | 'double' | 'idle'
+type ActionType = 'main' | 'double' | 'idle'
+
 /**
  * Highlevel aggregate of information about a raycast result
  */
 export class RaycastResult {
-  mousePosition: THREE.Vector2
-  doubleClick: RaycastEvent
   object: Object | undefined
   intersections: ThreeIntersectionList
   firstHit: THREE.Intersection | undefined
 
-  constructor (
-    event: RaycastEvent,
-    mousePosition: THREE.Vector2,
-    intersections: ThreeIntersectionList
-  ) {
-    this.mousePosition = mousePosition
+  constructor (intersections: ThreeIntersectionList) {
     this.intersections = intersections
     const [hit, obj] = this.GetFirstVimHit(intersections)
     this.firstHit = hit
@@ -129,7 +123,7 @@ export class Raycaster {
   /**
    * Raycast projecting a ray from camera position to screen position
    */
-  screenRaycast (event: RaycastEvent, position: THREE.Vector2): RaycastResult {
+  sceneRaycast (position: THREE.Vector2) {
     let intersections = this.raycast(position)
 
     if (this._renderer.section.active) {
@@ -137,29 +131,13 @@ export class Raycaster {
         this._renderer.section.box.containsPoint(i.point)
       )
     }
-    const r = new RaycastResult(event, position, intersections)
-
-    const hit = r.firstHit
-
-    if (hit) {
-      const vim = hit.object.userData.vim as Vim
-
-      // Merged meshes have g3d intance index of each face encoded in uvs
-      if (hit.object.userData.merged && hit.uv !== undefined) {
-        const instance = Math.round(hit.uv.x)
-        r.object = vim.getObjectFromInstance(instance)
-      } else if (hit.instanceId !== undefined) {
-        r.object = vim.getObjectFromMesh(
-          hit.object as THREE.InstancedMesh,
-          hit.instanceId
-        )
-      }
-    }
-    return r
+    return new RaycastResult(intersections)
   }
 
-  getRaycaster (position: THREE.Vector2, target: THREE.Raycaster) {
-    target = new THREE.Raycaster()
+  fromPoint (
+    position: THREE.Vector2,
+    target: THREE.Raycaster = new THREE.Raycaster()
+  ) {
     const [width, height] = this._viewport.getSize()
     const x = (position.x / width) * 2 - 1
     const y = -(position.y / height) * 2 + 1
@@ -168,7 +146,31 @@ export class Raycaster {
   }
 
   private raycast (position: THREE.Vector2): ThreeIntersectionList {
-    this._raycaster = this.getRaycaster(position, this._raycaster)
+    this._raycaster = this.fromPoint(position, this._raycaster)
     return this._raycaster.intersectObjects(this._scene.scene.children)
+  }
+}
+
+export class InputAction {
+  readonly position: THREE.Vector2
+  readonly type: ActionType
+  private _raycaster: Raycaster
+
+  constructor (type: ActionType, position: THREE.Vector2, raycaster: Raycaster) {
+    this.type = type
+    this.position = position
+    this._raycaster = raycaster
+  }
+
+  private _raycast: RaycastResult
+  get raycast () {
+    return (
+      this._raycast ??
+      (this._raycast = this._raycaster.sceneRaycast(this.position))
+    )
+  }
+
+  get object () {
+    return this.raycast.object
   }
 }

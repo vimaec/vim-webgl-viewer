@@ -6,7 +6,7 @@ import * as THREE from 'three'
 import { Scene } from '../vim-loader/scene'
 import { Viewport } from './viewport'
 import { RenderScene } from './renderScene'
-import { IMaterialLibrary } from '../vim-loader/materials'
+import { IMaterialLibrary, VimMaterials } from '../vim-loader/materials'
 
 class Section {
   private _renderer: THREE.WebGLRenderer
@@ -71,13 +71,9 @@ export class Renderer {
   viewport: Viewport
   scene: RenderScene
   section: Section
-  materials: IMaterialLibrary
+  materials: VimMaterials
 
-  constructor (
-    scene: RenderScene,
-    viewport: Viewport,
-    materials: IMaterialLibrary
-  ) {
+  constructor (scene: RenderScene, viewport: Viewport, materials: VimMaterials) {
     this.viewport = viewport
 
     this.scene = scene
@@ -150,6 +146,17 @@ export class Renderer {
    */
   clear () {
     this.scene.clear()
+  }
+
+  applyMaterialSettings (settings: ViewerSettings) {
+    this.materials.applyWireframeSettings(
+      settings.getHighlightColor(),
+      settings.getHighlightOpacity()
+    )
+    this.materials.applyIsolationSettings(
+      settings.getIsolationColor(),
+      settings.getIsolationOpacity()
+    )
   }
 
   private fitViewport = () => {

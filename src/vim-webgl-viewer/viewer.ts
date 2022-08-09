@@ -10,7 +10,7 @@ import { Camera, ICamera } from './camera'
 import { Input } from './input'
 import { Selection } from './selection'
 import { Environment, IEnvironment } from './environment'
-import { Raycaster, RaycastResult } from './raycaster'
+import { Raycaster } from './raycaster'
 import { CameraGizmo } from './gizmoOrbit'
 import { RenderScene } from './renderScene'
 import { Viewport } from './viewport'
@@ -97,7 +97,10 @@ export class Viewer {
   private _vims: (Vim | undefined)[] = []
   private _disposed: boolean = false
 
-  // TODO: Cleanup axes so that it can be exposed.
+  /**
+   * Will be removed once gizmo axes are cleaned up to expose canvas.
+   * @deprecated
+   */
   get axesCanvas () {
     return this._gizmoAxes.canvas
   }
@@ -106,7 +109,7 @@ export class Viewer {
     this.settings = new ViewerSettings(options)
 
     const materials = new VimMaterials()
-    this.applyMaterialSettings(materials, this.settings)
+
     this._loader = new Loader(materials)
     this._materials = materials
 
@@ -121,6 +124,7 @@ export class Viewer {
         this.settings
       )
     }
+    this.renderer.applyMaterialSettings(this.settings)
 
     // TODO add options
     this.gizmoMeasure = new GizmoMeasure(this)
@@ -143,7 +147,7 @@ export class Viewer {
     this.inputs = new Input(this)
     this.inputs.registerAll()
     // Default mouse click behaviour, can be overriden
-    this.inputs.onMainAction = this.defaultOnClick.bind(this)
+    this.inputs.onMainAction = this.inputs.defaultAction.bind(this)
 
     // this.camera.onChanged = () => this.renderer.render(this.camera.camera)
 
@@ -236,12 +240,12 @@ export class Viewer {
     // Remove progress listener
     if (buffer instanceof RemoteBuffer) buffer.logger.onUpdate = undefined
 
-    this.onVimLoaded(vim, new VimSettings(options))
+    this.onVimLoaded(vim)
     this.camera.frame('all', true)
     return vim
   }
 
-  private onVimLoaded (vim: Vim, settings: VimSettings) {
+  private onVimLoaded (vim: Vim) {
     this.addVim(vim)
 
     this.renderer.add(vim.scene)
@@ -280,41 +284,5 @@ export class Viewer {
     this.renderer.remove(vim.scene)
     vim.filter(instances)
     this.renderer.add(vim.scene)
-  }
-
-  applyMaterialSettings (materials: VimMaterials, settings: ViewerSettings) {
-    materials.applyWireframeSettings(
-      settings.getHighlightColor(),
-      settings.getHighlightOpacity()
-    )
-    materials.applyIsolationSettings(
-      settings.getIsolationColor(),
-      settings.getIsolationOpacity()
-    )
-  }
-
-  /**
-   * Default click behaviour.
-   */
-  public defaultOnClick (hit: RaycastResult) {
-    console.log(hit)
-    if (!hit?.object) {
-      this.selection.select(undefined)
-      if (hit.doubleClick) {
-        this.camera.frame('all', false, this.camera.defaultLerpDuration)
-      }
-      return
-    }
-
-    this.selection.select(hit.object)
-
-    if (hit.doubleClick) {
-      this._camera.frame(hit.object, false, this.camera.defaultLerpDuration)
-    }
-
-    hit.object.getBimElement().then((e) => {
-      e.set('Index', hit.object.element)
-      console.log(e)
-    })
   }
 }
