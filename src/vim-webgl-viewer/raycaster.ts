@@ -12,17 +12,19 @@ import { Renderer } from './renderer'
 
 type ThreeIntersectionList = THREE.Intersection<THREE.Object3D<THREE.Event>>[]
 
+type RaycastEvent = 'main' | 'double' | 'idle'
 /**
  * Highlevel aggregate of information about a raycast result
  */
 export class RaycastResult {
   mousePosition: THREE.Vector2
-  doubleClick: boolean = false
+  doubleClick: RaycastEvent
   object: Object | undefined
   intersections: ThreeIntersectionList
   firstHit: THREE.Intersection | undefined
 
   constructor (
+    event: RaycastEvent,
     mousePosition: THREE.Vector2,
     intersections: ThreeIntersectionList
   ) {
@@ -127,7 +129,7 @@ export class Raycaster {
   /**
    * Raycast projecting a ray from camera position to screen position
    */
-  screenRaycast (position: THREE.Vector2): RaycastResult {
+  screenRaycast (event: RaycastEvent, position: THREE.Vector2): RaycastResult {
     let intersections = this.raycast(position)
 
     if (this._renderer.section.active) {
@@ -135,7 +137,7 @@ export class Raycaster {
         this._renderer.section.box.containsPoint(i.point)
       )
     }
-    const r = new RaycastResult(position, intersections)
+    const r = new RaycastResult(event, position, intersections)
 
     const hit = r.firstHit
 

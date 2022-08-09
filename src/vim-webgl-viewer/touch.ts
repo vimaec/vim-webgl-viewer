@@ -3,21 +3,16 @@
  */
 
 import * as THREE from 'three'
-import { Mouse } from './mouse'
-import { Viewer } from './viewer'
+import { InputHandler } from './inputHandler'
 
 /**
  * Manages user touch inputs.
  */
-export class Touch {
-  readonly TAP_DURATION_MS: number = 500
-  readonly DOUBLE_TAP_DELAY_MS = 500
-  readonly TAP_MAX_MOVE_PIXEL = 5
-  readonly ZOOM_SPEED = 5
-
-  // Dependencies
-  private _viewer: Viewer
-  private _mouse: Mouse
+export class TouchHandler extends InputHandler {
+  private readonly TAP_DURATION_MS: number = 500
+  private readonly DOUBLE_TAP_DELAY_MS = 500
+  private readonly TAP_MAX_MOVE_PIXEL = 5
+  private readonly ZOOM_SPEED = 5
 
   private get camera () {
     return this._viewer.camera
@@ -25,6 +20,14 @@ export class Touch {
 
   private get viewport () {
     return this._viewer.viewport
+  }
+
+  private get mouse () {
+    return this._viewer.inputs.mouse
+  }
+
+  private get canvas () {
+    return this._viewer.viewport.canvas
   }
 
   // State
@@ -35,23 +38,24 @@ export class Touch {
   private _lastTapMs: number
   private _touchStart: THREE.Vector2
 
-  constructor (viewer: Viewer, mouse: Mouse) {
-    this._viewer = viewer
-    this._mouse = mouse
+  protected override addListeners (): void {
+    this.reg(this.canvas, 'touchstart', this.onTouchStart)
+    this.reg(this.canvas, 'touchend', this.onTouchEnd)
+    this.reg(this.canvas, 'touchmove', this.onTouchMove)
   }
 
-  reset = () => {
+  override reset = () => {
     this._touch = this._touch1 = this._touch2 = this._touchStartTime = undefined
   }
 
   private onTap = (position: THREE.Vector2) => {
     const time = new Date().getTime()
     const double = time - this._lastTapMs < this.DOUBLE_TAP_DELAY_MS
-    this._mouse.onMouseClick(position, double)
+    this.mouse.onMouseClick(position, double)
     this._lastTapMs = new Date().getTime()
   }
 
-  onTouchStart = (event: any) => {
+  private onTouchStart = (event: any) => {
     event.preventDefault() // prevent scrolling
     if (!event || !event.touches || !event.touches.length) {
       return
@@ -69,15 +73,15 @@ export class Touch {
     this._touchStart = this._touch
   }
 
-  onDrag = (delta: THREE.Vector2) => {
+  private onDrag = (delta: THREE.Vector2) => {
     this.camera.rotate(delta)
   }
 
-  onDoubleDrag = (delta: THREE.Vector2) => {
+  private onDoubleDrag = (delta: THREE.Vector2) => {
     this.camera.move2(delta, 'XY')
   }
 
-  onPinchOrSpread = (delta: number) => {
+  private onPinchOrSpread = (delta: number) => {
     if (this.camera.orbitMode) {
       this.camera.zoom(delta * this.ZOOM_SPEED)
     } else {
@@ -85,7 +89,7 @@ export class Touch {
     }
   }
 
-  onTouchMove = (event: any) => {
+  private onTouchMove = (event: any) => {
     event.preventDefault()
     if (!event || !event.touches || !event.touches.length) return
     if (!this._touch) return
@@ -135,7 +139,7 @@ export class Touch {
     }
   }
 
-  onTouchEnd = (event: any) => {
+  private onTouchEnd = (event: any) => {
     if (this.isSingleTouch()) {
       const touchDurationMs = new Date().getTime() - this._touchStartTime!
       const length = this._touch.clone().sub(this._touchStart).length()

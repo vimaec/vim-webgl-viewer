@@ -102,6 +102,8 @@ export interface ICamera {
   ): void
 
   forward: THREE.Vector3
+
+  onChanged: () => void | undefined
 }
 
 type Lerp = 'None' | 'Position' | 'Rotation' | 'Both'
@@ -126,14 +128,16 @@ export class Camera implements ICamera {
   private _minOrbitalDistance: number = 0.05
   private _targetPosition: THREE.Vector3
 
-  defaultLerpDuration: number = 2
   private _lerpStartMs: number = 0
   private _lerpEndMs: number = 0
   private _lockDirection: boolean = false
   private _lerpPosition: boolean
   private _lerpRotation: boolean
 
+  onChanged = () => {}
+
   // Settings
+  defaultLerpDuration: number = 2
   private _vimReferenceSize: number = 1
   private _sceneSizeMultiplier: number = 1
   private _velocityBlendFactor: number = 0.0001
@@ -359,6 +363,7 @@ export class Camera implements ICamera {
       this.camera.bottom -= padY
       this.camera.top += padY
       this.camera.updateProjectionMatrix()
+      this.onChanged?.()
     }
     this.gizmo?.show()
   }
@@ -607,6 +612,7 @@ export class Camera implements ICamera {
       } else if (!this._lockDirection) {
         this.lookAt(this._orbitTarget)
       }
+      this.onChanged?.()
       this.gizmo?.setPosition(this._orbitTarget)
       return
     }
@@ -706,6 +712,7 @@ export class Camera implements ICamera {
     }
 
     if (this.isSignificant(deltaPosition)) {
+      this.onChanged?.()
       this.gizmo?.show()
     }
   }

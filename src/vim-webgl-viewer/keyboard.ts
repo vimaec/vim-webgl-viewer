@@ -3,7 +3,7 @@
  */
 
 import * as THREE from 'three'
-import { Viewer } from './viewer'
+import { InputHandler } from './inputHandler'
 
 export const KEYS = {
   KEY_0: 48,
@@ -95,16 +95,38 @@ export const KEYS = {
   KEY_Y: 89,
   KEY_Z: 90
 }
-
 /**
  * Manages keyboard user inputs
  */
-export class Keyboard {
+export class KeyboardHandler extends InputHandler {
   // Settings
   private SHIFT_MULTIPLIER: number = 3.0
 
-  // Dependencies
-  private _viewer: Viewer
+  // State
+  isUpPressed: boolean = false
+  isDownPressed: boolean = false
+  isLeftPressed: boolean = false
+  isRightPressed: boolean = false
+  isEPressed: boolean = false
+  isQPressed: boolean = false
+  isShiftPressed: boolean = false
+  isCtrlPressed: boolean = false
+
+  protected override addListeners (): void {
+    this.reg(document, 'keydown', this.onKeyDown)
+    this.reg(document, 'keyup', this.onKeyUp)
+  }
+
+  override reset () {
+    this.isUpPressed = false
+    this.isDownPressed = false
+    this.isLeftPressed = false
+    this.isRightPressed = false
+    this.isEPressed = false
+    this.isQPressed = false
+    this.isShiftPressed = false
+    this.isCtrlPressed = false
+  }
 
   private get camera () {
     return this._viewer.camera
@@ -118,40 +140,15 @@ export class Keyboard {
     return this._viewer.gizmoSection
   }
 
-  // State
-  isUpPressed: boolean = false
-  isDownPressed: boolean = false
-  isLeftPressed: boolean = false
-  isRightPressed: boolean = false
-  isEPressed: boolean = false
-  isQPressed: boolean = false
-  isShiftPressed: boolean = false
-  isCtrlPressed: boolean = false
-
-  constructor (viewer: Viewer) {
-    this._viewer = viewer
-  }
-
-  reset = () => {
-    this.isUpPressed = false
-    this.isDownPressed = false
-    this.isLeftPressed = false
-    this.isRightPressed = false
-    this.isEPressed = false
-    this.isQPressed = false
-    this.isShiftPressed = false
-    this.isCtrlPressed = false
-  }
-
-  onKeyUp = (event: any) => {
+  private onKeyUp = (event: any) => {
     this.onKey(event, false)
   }
 
-  onKeyDown = (event: any) => {
+  private onKeyDown = (event: any) => {
     this.onKey(event, true)
   }
 
-  onKey = (event: any, keyDown: boolean) => {
+  private onKey = (event: any, keyDown: boolean) => {
     // Buttons that activate once on key up
     if (!keyDown) {
       switch (event.keyCode) {

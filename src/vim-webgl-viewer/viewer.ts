@@ -102,19 +102,6 @@ export class Viewer {
     return this._gizmoAxes.canvas
   }
 
-  /**
-   * Callback for on mouse click. Replace it to override or combine
-   * default behaviour with your custom logic.
-   */
-  private _onMouseClick: (hit: RaycastResult) => void
-  get onMouseClick () {
-    return this._onMouseClick
-  }
-
-  set onMouseClick (callback: (hit: RaycastResult) => void) {
-    this._onMouseClick = callback ?? function (hit: RaycastResult) {}
-  }
-
   constructor (options?: Partial<ViewerOptions.Root>) {
     this.settings = new ViewerSettings(options)
 
@@ -145,9 +132,6 @@ export class Viewer {
     this._environment = new Environment(this.settings)
     this._environment.getObjects().forEach((o) => this.renderer.add(o))
 
-    // Default mouse click behaviour, can be overriden
-    this._onMouseClick = this.defaultOnClick
-
     // Input and Selection
     this.selection = new Selection(this.renderer)
     this.raycaster = new Raycaster(
@@ -157,7 +141,11 @@ export class Viewer {
       this.renderer
     )
     this.inputs = new Input(this)
-    this.inputs.register()
+    this.inputs.registerAll()
+    // Default mouse click behaviour, can be overriden
+    this.inputs.onMainAction = this.defaultOnClick.bind(this)
+
+    // this.camera.onChanged = () => this.renderer.render(this.camera.camera)
 
     // Start Loop
     this.animate()
@@ -170,7 +158,7 @@ export class Viewer {
     this._camera.dispose()
     this.viewport.dispose()
     this.renderer.dispose()
-    this.inputs.unregister()
+    this.inputs.unregisterAll()
     this._vims.forEach((v) => v?.dispose())
     this._materials.dispose()
     this._disposed = true
@@ -182,7 +170,6 @@ export class Viewer {
     if (this._disposed) return
 
     requestAnimationFrame(() => this.animate())
-
     // Camera
     this._camera.update(this._clock.getDelta())
     // Rendering

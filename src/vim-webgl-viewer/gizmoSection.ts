@@ -251,7 +251,7 @@ class BoxInputs {
     if (this.mouseDown) {
       // this.faceNormal = new THREE.Vector3()
       this.mouseDown = false
-      this.viewer.inputs.register()
+      this.viewer.inputs.registerAll()
       if (event.pointerType === 'mouse') {
         this.onMouseMove(event)
       } else {
@@ -274,7 +274,7 @@ class BoxInputs {
 
     this.dragpPlane = new THREE.Plane(this.viewer.camera.forward, -dist)
     this.mouseDown = true
-    this.viewer.inputs.unregister()
+    this.viewer.inputs.unregisterAll()
     this.onFaceEnter?.(this.faceNormal)
   }
 

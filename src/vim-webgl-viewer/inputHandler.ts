@@ -1,0 +1,35 @@
+import { Viewer } from './viewer'
+
+export class InputHandler {
+  protected _viewer: Viewer
+  private _unregisters: Function[] = []
+
+  constructor (viewer: Viewer) {
+    this._viewer = viewer
+  }
+
+  protected reg = (
+    // eslint-disable-next-line no-undef
+    handler: DocumentAndElementEventHandlers,
+    type: string,
+    listener: (event: any) => void
+  ) => {
+    handler.addEventListener(type, listener)
+    this._unregisters.push(() => handler.removeEventListener(type, listener))
+  }
+
+  register () {
+    if (this._unregisters.length > 0) return
+    this.addListeners()
+  }
+
+  protected addListeners () {}
+
+  unregister () {
+    this._unregisters.forEach((f) => f())
+    this._unregisters.length = 0
+    this.reset()
+  }
+
+  reset () {}
+}

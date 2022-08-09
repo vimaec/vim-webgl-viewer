@@ -3,18 +3,19 @@
  */
 
 import * as THREE from 'three'
-import { Viewer } from './viewer'
-import { Raycaster } from './raycaster'
-import { Keyboard } from './keyboard'
+import { InputHandler } from './inputHandler'
 
 /**
  * Manages mouse user inputs
  */
-export class Mouse {
-  // Dependencies
-  private _viewer: Viewer
-  private _raycaster: Raycaster
-  private _inputKeyboard: Keyboard
+export class MouseHandler extends InputHandler {
+  // State
+  private isMouseDown: Boolean = false
+  private hasMouseMoved: Boolean = false
+
+  private _idleTimeout: number
+  private _idleDelayMs = 200
+  private _lastPosition: THREE.Vector2
 
   private get camera () {
     return this._viewer.camera
@@ -24,25 +25,56 @@ export class Mouse {
     return this._viewer.viewport
   }
 
-  // State
-  isMouseDown: Boolean = false
-  hasMouseMoved: Boolean = false
-
-  constructor (viewer: Viewer, keyboard: Keyboard) {
-    this._viewer = viewer
-    this._raycaster = this._viewer.raycaster
-    this._inputKeyboard = keyboard
+  private get canvas () {
+    return this.viewport.canvas
   }
 
-  reset = () => {
+  private get raycaster () {
+    return this._viewer.raycaster
+  }
+
+  private get keyboard () {
+    return this._viewer.inputs.keyboard
+  }
+
+  protected override addListeners (): void {
+    // mouse
+    this.reg(this.canvas, 'mousedown', this.onMouseDown)
+    this.reg(this.canvas, 'wheel', this.onMouseWheel)
+    this.reg(this.canvas, 'mousemove', this.onMouseMove)
+    this.reg(this.canvas, 'mouseup', this.onMouseUp)
+    this.reg(this.canvas, 'mouseout', this.onMouseOut)
+    this.reg(this.canvas, 'dblclick', this.onDoubleClick)
+
+    // Disable right click menu
+    this.reg(this.canvas, 'contextmenu', (e) => e.preventDefault())
+  }
+
+  override reset = () => {
     this.isMouseDown = this.hasMouseMoved = false
   }
 
-  onMouseOut = (_: any) => {
+  private resetIdleTimeout () {
+    clearTimeout(this._idleTimeout)
+    this._idleTimeout = setTimeout(
+      () => this.onMouseIdle(this._lastPosition),
+      this._idleDelayMs
+    )
+  }
+
+  private onMouseOut = (_: any) => {
     this.isMouseDown = this.hasMouseMoved = false
   }
 
-  onMouseMove = (event: any) => {
+  private onMouseIdle = (position: THREE.Vector2) => {
+    const result = this.raycaster.screenRaycast('idle', position)
+    this._viewer.inputs.onIdle?.(result)
+  }
+
+  private onMouseMove = (event: any) => {
+    this._lastPosition = new THREE.Vector2(event.offsetX, event.offsetY)
+    this.resetIdleTimeout()
+
     if (!this.isMouseDown) {
       return
     }
@@ -73,7 +105,7 @@ export class Mouse {
     }
   }
 
-  onMouseWheel = (event: any) => {
+  private onMouseWheel = (event: any) => {
     event.preventDefault()
     event.stopPropagation()
 
@@ -82,14 +114,14 @@ export class Mouse {
     // Thus we only use the direction of the value
     const scrollValue = Math.sign(event.deltaY)
 
-    if (this._inputKeyboard.isCtrlPressed) {
+    if (this.keyboard.isCtrlPressed) {
       this.camera.speed -= scrollValue
     } else {
       this.camera.zoom(scrollValue, this.camera.defaultLerpDuration)
     }
   }
 
-  onMouseDown = (event: any) => {
+  private onMouseDown = (event: any) => {
     event.preventDefault()
     this.isMouseDown = true
     this.hasMouseMoved = false
@@ -99,7 +131,7 @@ export class Mouse {
     this.viewport.canvas.focus()
   }
 
-  onMouseUp = (event: any) => {
+  private onMouseUp = (event: any) => {
     if (event.button === 0 && this.isMouseDown && !this.hasMouseMoved) {
       this.onMouseClick(new THREE.Vector2(event.offsetX, event.offsetY), false)
     }
@@ -107,13 +139,14 @@ export class Mouse {
     event.preventDefault()
   }
 
-  onDoubleClick = (event: any) => {
+  private onDoubleClick = (event: any) => {
     this.onMouseClick(new THREE.Vector2(event.offsetX, event.offsetY), true)
   }
 
+  // TODO Make private
   onMouseClick = (position: THREE.Vector2, doubleClick: boolean) => {
-    const result = this._raycaster.screenRaycast(position)
-    result.doubleClick = doubleClick
-    this._viewer.onMouseClick(result)
+    const event = doubleClick ? 'double' : 'main'
+    const result = this.raycaster.screenRaycast(event, position)
+    this._viewer.inputs.onMainAction?.(result)
   }
 }
