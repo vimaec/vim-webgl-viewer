@@ -79,11 +79,10 @@ export class Input {
   /**
    * Default action behaviour on mouse click or touch tap.
    */
-  public defaultAction (action: InputAction) {
+  public defaultAction = (action: InputAction) => {
     const camera = this._viewer.camera
     const selection = this._viewer.selection
 
-    console.log(action)
     if (!action?.object) {
       selection.select(undefined)
       if (action.type === 'double') {

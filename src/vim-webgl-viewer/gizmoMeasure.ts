@@ -82,7 +82,7 @@ class MeasureMarker {
       color: new THREE.Color(0, 0.75, 1)
     })
 
-    const g = new THREE.SphereGeometry(0.75)
+    const g = new THREE.SphereGeometry(0.25)
     g.addGroup(0, Infinity, 0)
     g.addGroup(0, Infinity, 1)
     this.mesh = new THREE.Mesh(g, [this._material, this._materialAlways])
@@ -159,7 +159,6 @@ export class GizmoMeasure {
 
     onProgress?.('ready')
     this.registerMouse(this.onMouseMoveReady.bind(this))
-    this._viewer.inputs.onIdleAction = this.onMouseIdleReady.bind(this)
     return new Promise<void>((resolve, reject) => {
       this.onAbort = () => {
         onProgress?.(undefined)
@@ -222,13 +221,6 @@ export class GizmoMeasure {
     }
   }
 
-  private onMouseIdleReady (action: InputAction) {
-    if (action.object) {
-      this._currentMarker.setPosition(action.raycast.position)
-    }
-    this._currentMarker.mesh.visible = !!action.object
-  }
-
   private onMouseMoveReady () {
     this._currentMarker.mesh.visible = false
   }
@@ -246,7 +238,6 @@ export class GizmoMeasure {
       this._measurement = undefined
     }
 
-    this._currentMarker.mesh.visible = !!object
     this._line.mesh.visible = !!object
   }
 
@@ -265,6 +256,7 @@ export class GizmoMeasure {
     this._viewer.inputs.onIdleAction = undefined
     this.removeMouseListener?.()
 
+    this._line.mesh.visible = true
     this._endPos = action.raycast.position
 
     // Set end marker
