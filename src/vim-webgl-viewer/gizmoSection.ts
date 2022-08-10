@@ -394,6 +394,13 @@ export class GizmoSection {
   }
 
   /**
+   * Section bounding box, to update the box use fitBox.
+   */
+  get box () {
+    return this.section.box
+  }
+
+  /**
    * When true the section gizmo will section the model with clipping planes.
    */
   get clip () {
