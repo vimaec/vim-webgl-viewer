@@ -86,7 +86,7 @@ export class Input {
     if (!action?.object) {
       selection.select(undefined)
       if (action.type === 'double') {
-        camera.frame('all', false, camera.defaultLerpDuration)
+        camera.frame('all', 'none', camera.defaultLerpDuration)
       }
       return
     }
@@ -94,7 +94,7 @@ export class Input {
     selection.select(action.object)
 
     if (action.type === 'double') {
-      camera.frame(action.object, false, camera.defaultLerpDuration)
+      camera.frame(action.object, 'none', camera.defaultLerpDuration)
     }
 
     action.object.getBimElement().then((e) => {

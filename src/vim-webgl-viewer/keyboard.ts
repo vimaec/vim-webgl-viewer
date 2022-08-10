@@ -171,7 +171,7 @@ export class KeyboardHandler extends InputHandler {
           event.preventDefault()
           break
         case KEYS.KEY_HOME:
-          this.camera.frame('all', true, this.camera.defaultLerpDuration)
+          this.camera.frame('all', 45, this.camera.defaultLerpDuration)
           event.preventDefault()
           break
         // Selection
@@ -184,11 +184,11 @@ export class KeyboardHandler extends InputHandler {
           if (this.selection.object) {
             this.camera.frame(
               this.selection.object,
-              false,
+              'center',
               this.camera.defaultLerpDuration
             )
           } else {
-            this.camera.frame('all', false, this.camera.defaultLerpDuration)
+            this.camera.frame('all', 'center', this.camera.defaultLerpDuration)
           }
           event.preventDefault()
           break

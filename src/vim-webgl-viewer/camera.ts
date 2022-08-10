@@ -20,6 +20,8 @@ export const DIRECTIONS = {
   down: new THREE.Vector3(0, -1, 0)
 }
 
+type FrameAngle = 'none' | 'center' | number
+
 export interface ICamera {
   /**
    * Wrapped Three.js camera
@@ -97,7 +99,7 @@ export interface ICamera {
    */
   frame(
     target: Object | THREE.Sphere | 'all',
-    center?: boolean,
+    angle?: FrameAngle,
     duration?: number
   ): void
 
@@ -259,7 +261,7 @@ export class Camera implements ICamera {
 
   frame (
     target: Object | THREE.Sphere | 'all',
-    center: boolean = false,
+    center: FrameAngle = 'none',
     duration: number = 0
   ) {
     const sphere =
@@ -478,9 +480,20 @@ export class Camera implements ICamera {
    * Rotates the camera so that it looks at sphere
    * Adjusts distance so that the sphere is well framed
    */
-  private frameSphere (sphere: THREE.Sphere, center: boolean, duration: number) {
+  private frameSphere (
+    sphere: THREE.Sphere,
+    angle: FrameAngle,
+    duration: number
+  ) {
     const offset = this.camera.position.clone().sub(sphere.center)
-    if (center) offset.setY(0)
+    const dist = this.camera.position.distanceTo(sphere.center)
+    if (angle === 'center') {
+      offset.setY(0)
+    }
+    if (typeof angle === 'number') {
+      const y = Math.sin(angle * (Math.PI / 180)) * dist
+      offset.setY(y)
+    }
     offset.normalize()
     offset.multiplyScalar(sphere.radius * 3)
     this._targetPosition = sphere.center.clone().add(offset)
