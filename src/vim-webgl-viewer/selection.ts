@@ -50,7 +50,7 @@ export class Selection {
     if (this._objects.size === 0) return
     let box: THREE.Box3
     for (const o of this._objects) {
-      box = box ? o.getBoundingBox() : box.union(o.getBoundingBox())
+      box = box ? box.union(o.getBoundingBox()) : o.getBoundingBox()
     }
     return box
   }
