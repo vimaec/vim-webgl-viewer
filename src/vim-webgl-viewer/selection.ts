@@ -56,18 +56,22 @@ export class Selection {
   }
 
   /**
-   * Select given object and unselect all other objects
+   * Select given objects and unselect all other objects
    */
-  select (object: Object | undefined) {
-    if (object) {
-      if (this._objects.size === 1 && this._objects.has(object)) return
-      this._objects.clear()
-      this._objects.add(object)
-      this._vim = object.vim
-      this.updateHighlight()
-    } else {
-      this.clear()
+  select (...object: Object[]) {
+    if (
+      object.length === this._objects.size &&
+      object.every((o) => this._objects.has(o))
+    ) {
+      return
     }
+
+    this._objects.clear()
+    object.forEach((o) => {
+      this.clearOnNewVim(o.vim)
+      this._objects.add(o)
+    })
+    this.updateHighlight()
   }
 
   /**
