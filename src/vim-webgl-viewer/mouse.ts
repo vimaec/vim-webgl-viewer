@@ -68,7 +68,12 @@ export class MouseHandler extends InputHandler {
   }
 
   private onMouseIdle = (position: THREE.Vector2) => {
-    const action = new InputAction('idle', position, this.raycaster)
+    const action = new InputAction(
+      'idle',
+      this.getModifier(),
+      position,
+      this.raycaster
+    )
     this._viewer.inputs.onIdleAction?.(action)
   }
 
@@ -148,10 +153,19 @@ export class MouseHandler extends InputHandler {
   onMouseClick = (position: THREE.Vector2, doubleClick: boolean) => {
     const action = new InputAction(
       doubleClick ? 'double' : 'main',
+      this.getModifier(),
       position,
       this.raycaster
     )
 
     this._viewer.inputs.onMainAction?.(action)
+  }
+
+  private getModifier () {
+    return this.keyboard.isCtrlPressed
+      ? 'ctrl'
+      : this.keyboard.isShiftPressed
+        ? 'shift'
+        : 'none'
   }
 }

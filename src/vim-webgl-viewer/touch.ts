@@ -49,6 +49,7 @@ export class TouchHandler extends InputHandler {
 
     const action = new InputAction(
       double ? 'double' : 'main',
+      'none',
       position,
       this._viewer.raycaster
     )

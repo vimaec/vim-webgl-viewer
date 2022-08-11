@@ -150,14 +150,22 @@ export class Raycaster {
     return this._raycaster.intersectObjects(this._scene.scene.children)
   }
 }
+type ActionModifier = 'none' | 'shift' | 'ctrl'
 
 export class InputAction {
   readonly position: THREE.Vector2
+  readonly modifier: ActionModifier
   readonly type: ActionType
   private _raycaster: Raycaster
 
-  constructor (type: ActionType, position: THREE.Vector2, raycaster: Raycaster) {
+  constructor (
+    type: ActionType,
+    modifier: ActionModifier,
+    position: THREE.Vector2,
+    raycaster: Raycaster
+  ) {
     this.type = type
+    this.modifier = modifier
     this.position = position
     this._raycaster = raycaster
   }

@@ -262,7 +262,9 @@ export class Viewer {
     this.removeVim(vim)
     this.renderer.remove(vim.scene)
     vim.dispose()
-    if (this.selection.object?.vim === vim) this.selection.clear()
+    if (this.selection.vim === vim) {
+      this.selection.clear()
+    }
   }
 
   /**

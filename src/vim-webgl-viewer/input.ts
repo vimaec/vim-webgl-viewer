@@ -91,7 +91,11 @@ export class Input {
       return
     }
 
-    selection.select(action.object)
+    if (action.modifier !== 'none') {
+      selection.toggle(action.object)
+    } else {
+      selection.select(action.object)
+    }
 
     if (action.type === 'double') {
       camera.frame(action.object, 'none', camera.defaultLerpDuration)
