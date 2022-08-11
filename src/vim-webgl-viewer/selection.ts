@@ -46,6 +46,15 @@ export class Selection {
     return this._objects.values()
   }
 
+  getBoundingBox () {
+    if (this._objects.size === 0) return
+    let box: THREE.Box3
+    for (const o of this._objects) {
+      box = box ? o.getBoundingBox() : box.union(o.getBoundingBox())
+    }
+    return box
+  }
+
   /**
    * Select given object and unselect all other objects
    */
