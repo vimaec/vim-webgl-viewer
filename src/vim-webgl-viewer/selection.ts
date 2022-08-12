@@ -57,17 +57,23 @@ export class Selection {
 
   /**
    * Select given objects and unselect all other objects
+   * using undefined as argument will clear selection.
    */
-  select (...object: Object[]) {
+  select (...object: Object[] | undefined) {
     if (
-      object.length === this._objects.size &&
-      object.every((o) => this._objects.has(o))
+      (object === undefined && this._objects.size === 0) ||
+      (object !== undefined &&
+        object.length === this._objects.size &&
+        object.every((o) => this._objects.has(o)))
     ) {
+      // Value is unchanged, exit early.
       return
     }
 
     this._objects.clear()
-    object.forEach((o) => {
+    this._vim = undefined
+
+    object?.forEach((o) => {
       this.clearOnNewVim(o.vim)
       this._objects.add(o)
     })
