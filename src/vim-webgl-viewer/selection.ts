@@ -57,14 +57,13 @@ export class Selection {
 
   /**
    * Select given objects and unselect all other objects
-   * using undefined as argument will clear selection.
+   * using no or undefined as argument will clear selection.
    */
-  select (...object: Object[] | undefined) {
+  select (...object: Object[]) {
+    object = object.filter((o) => o)
     if (
-      (object === undefined && this._objects.size === 0) ||
-      (object !== undefined &&
-        object.length === this._objects.size &&
-        object.every((o) => this._objects.has(o)))
+      object.length === this._objects.size &&
+      object.every((o) => this._objects.has(o))
     ) {
       // Value is unchanged, exit early.
       return
