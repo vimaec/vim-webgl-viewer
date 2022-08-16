@@ -347,6 +347,11 @@ export class GizmoSection {
   private _interactive: boolean
 
   /**
+   * Callback for when clip, show, or interactive are updated.
+   */
+  onStateChanged: () => void
+
+  /**
    * Callback for when box is done changing
    */
   onBoxConfirm: (box: THREE.Box3) => void
@@ -408,8 +413,10 @@ export class GizmoSection {
   }
 
   set clip (value: boolean) {
+    if (value === this._clip) return
     this._clip = value
     this.renderer.section.active = value
+    this.onStateChanged?.()
   }
 
   /**
@@ -420,10 +427,12 @@ export class GizmoSection {
   }
 
   set interactive (value: boolean) {
+    if (value === this.interactive) return
     if (!this._interactive && value) this._inputs.register()
     if (this._interactive && !value) this._inputs.unregister()
     this._interactive = value
     this._highlight.visible = false
+    this.onStateChanged?.()
   }
 
   /**
@@ -434,11 +443,13 @@ export class GizmoSection {
   }
 
   set visible (value: boolean) {
+    if (value === this.visible) return
     this._show = value
     this._cube.visible = value
     this._outline.visible = value
     this._highlight.visible = value
     if (value) this.update()
+    this.onStateChanged?.()
   }
 
   /**
