@@ -23,6 +23,7 @@ export class SceneBuilder {
     const scene = new Scene(this)
 
     // Add shared geometry
+
     const shared = this.createFromInstanciableMeshes(
       g3d,
       transparency,
@@ -86,7 +87,6 @@ export class SceneBuilder {
   createFromMergeableMeshes (
     g3d: G3d,
     transparency: Transparency.Mode,
-
     instances: number[] | undefined = undefined
   ) {
     const mesh = this.meshBuilder.createMergedMesh(g3d, transparency, instances)

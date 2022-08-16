@@ -151,9 +151,8 @@ export class Vim {
     for (let i = 0; i < instances.length; i++) {
       const instance = instances[i]
       if (instance < 0) continue
-      const [mesh, index] = this.scene.getMeshFromInstance(instance)
-      if (!mesh || index === undefined) continue
-      meshes.push([mesh, index])
+      const pairs = this.scene.getMeshFromInstance(instance)
+      pairs?.forEach((p) => meshes.push(p))
     }
     if (meshes.length === 0) return
     return meshes

@@ -18,7 +18,9 @@ export class Scene {
   // State
   meshes: THREE.Mesh[] = []
   boundingBox: THREE.Box3 = new THREE.Box3()
-  private _instanceToThreeMesh: Map<number, [THREE.Mesh, number]> = new Map()
+  private _instanceToThreeMeshes: Map<number, [THREE.Mesh, number][]> =
+    new Map()
+
   private _threeMeshIdToInstances: Map<number, number[]> = new Map()
   private _material: THREE.Material
 
@@ -32,7 +34,7 @@ export class Scene {
    * For instanced mesh, index refers to instance index.
    */
   getMeshFromInstance (instance: number) {
-    return this._instanceToThreeMesh.get(instance) ?? []
+    return this._instanceToThreeMeshes.get(instance)
   }
 
   /**
@@ -80,7 +82,9 @@ export class Scene {
     }
 
     for (let i = 0; i < instances.length; i++) {
-      this._instanceToThreeMesh.set(instances[i], [mesh, i])
+      const set = this._instanceToThreeMeshes.get(instances[i]) ?? []
+      set.push([mesh, i])
+      this._instanceToThreeMeshes.set(instances[i], set)
     }
 
     mesh.geometry.computeBoundingBox()
@@ -115,7 +119,9 @@ export class Scene {
     }
 
     for (let i = 0; i < instances.length; i++) {
-      this._instanceToThreeMesh.set(instances[i], [mesh, i])
+      const set = this._instanceToThreeMeshes.get(instances[i]) ?? []
+      set.push([mesh, i])
+      this._instanceToThreeMeshes.set(instances[i], set)
     }
     const box = this.computeIntancedMeshBoundingBox(mesh)!
     this.boundingBox = this.boundingBox?.union(box) ?? box.clone()
@@ -127,8 +133,8 @@ export class Scene {
    */
   merge (other: Scene) {
     other.meshes.forEach((mesh) => this.meshes.push(mesh))
-    other._instanceToThreeMesh.forEach((value, key) => {
-      this._instanceToThreeMesh.set(key, value)
+    other._instanceToThreeMeshes.forEach((value, key) => {
+      this._instanceToThreeMeshes.set(key, value)
     })
     other._threeMeshIdToInstances.forEach((value, key) => {
       this._threeMeshIdToInstances.set(key, value)
@@ -172,7 +178,7 @@ export class Scene {
       this.meshes[i].geometry.dispose()
     }
     this.meshes.length = 0
-    this._instanceToThreeMesh.clear()
+    this._instanceToThreeMeshes.clear()
     this._threeMeshIdToInstances.clear()
   }
 
