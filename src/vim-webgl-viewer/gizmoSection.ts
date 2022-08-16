@@ -459,6 +459,7 @@ export class GizmoSection {
     this._cube.fitBox(box)
     this._outline.fitBox(box)
     this.renderer.section.fitBox(box)
+    this.onBoxConfirm?.(this.box)
   }
 
   /**
