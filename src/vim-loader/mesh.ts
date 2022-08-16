@@ -116,7 +116,7 @@ export class MeshBuilder {
     instances?: number[]
   ): THREE.Mesh {
     const merger = instances
-      ? Geometry.Merger.createFromInstances(g3d, instances, transparency)
+      ? Geometry.Merger3.createFromInstances(g3d, instances, transparency)
       : Geometry.Merger3.createFromUniqueMeshes(g3d, transparency)
 
     const geometry = merger.toBufferGeometry()
