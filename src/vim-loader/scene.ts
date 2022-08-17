@@ -76,6 +76,7 @@ export class Scene {
    * where numbers are the indices of the g3d instances that went into creating the mesh
    */
   addMergedMesh (mesh: THREE.Mesh) {
+    if (!mesh) return this
     const instances = mesh.userData.instances
     if (!instances) {
       throw new Error('Expected mesh to have userdata instances : number[]')
@@ -132,9 +133,12 @@ export class Scene {
    * Adds the content of other Scene to this Scene and recomputes fields as needed.
    */
   merge (other: Scene) {
+    if (!other) return this
     other.meshes.forEach((mesh) => this.meshes.push(mesh))
-    other._instanceToThreeMeshes.forEach((value, key) => {
-      this._instanceToThreeMeshes.set(key, value)
+    other._instanceToThreeMeshes.forEach((meshes, instance) => {
+      const set = this._instanceToThreeMeshes.get(instance) ?? []
+      meshes.forEach((m) => set.push(m))
+      this._instanceToThreeMeshes.set(instance, set)
     })
     other._threeMeshIdToInstances.forEach((value, key) => {
       this._threeMeshIdToInstances.set(key, value)

@@ -234,12 +234,10 @@ export class Object {
    * @param color rgb representation of the color to apply
    */
   private applyMergedVisible (mesh: THREE.Mesh, index: number, show: boolean) {
+    const positions = mesh.geometry.getAttribute('position')
     const attribute =
       mesh.geometry.getAttribute('ignoreVertex') ??
-      new Float32BufferAttribute(
-        new Float32Array(mesh.geometry.index!.count * 3),
-        1
-      )
+      new Float32BufferAttribute(new Float32Array(positions.count), 1)
     mesh.geometry.setAttribute('ignoreVertex', attribute)
 
     const start = this.getMergedMeshStart(mesh, index)

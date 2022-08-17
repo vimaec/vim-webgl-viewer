@@ -44,6 +44,8 @@ export class MeshBuilder {
       if (meshInstances.length <= 1) continue
 
       const createMesh = (section: MeshSection, transparent: boolean) => {
+        const count = g3d.getMeshSubmeshCount(mesh, section)
+        if (count <= 0) return
         const geometry = Geometry.createGeometryFromMesh(
           g3d,
           mesh,
@@ -58,23 +60,28 @@ export class MeshBuilder {
         )
       }
 
-      const opaqueSection = transparency === 'allAsOpaque' ? 'all' : 'opaque'
-      const opaque = g3d.getMeshSubmeshCount(mesh, opaqueSection)
-      if (opaque > 0) {
-        const m = createMesh(opaqueSection, false)
-        result.push(m)
-      }
-
-      if (Transparency.requiresAlpha(transparency)) {
-        const transparent = g3d.getMeshSubmeshCount(mesh, 'transparent')
-        if (transparent > 0) {
-          const m = createMesh('transparent', true)
-          result.push(m)
+      switch (transparency) {
+        case 'all': {
+          result.push(createMesh('opaque', false))
+          result.push(createMesh('transparent', true))
+          break
+        }
+        case 'allAsOpaque': {
+          result.push(createMesh('all', false))
+          break
+        }
+        case 'opaqueOnly': {
+          result.push(createMesh('opaque', false))
+          break
+        }
+        case 'transparentOnly': {
+          result.push(createMesh('transparent', true))
+          break
         }
       }
     }
-
-    return result
+    const filter = result.filter((m) => m !== undefined)
+    return filter
   }
 
   /**
@@ -112,22 +119,22 @@ export class MeshBuilder {
    */
   createMergedMesh (
     g3d: G3d,
-    transparency: Transparency.Mode,
+    section: MeshSection,
+    transparent: boolean,
     instances?: number[]
   ): THREE.Mesh {
-    const merger = instances
-      ? Geometry.Merger3.createFromInstances(g3d, instances, transparency)
-      : Geometry.Merger3.createFromUniqueMeshes(g3d, transparency)
+    const merge = instances
+      ? Geometry.mergeInstanceMeshes(g3d, section, transparent, instances)
+      : Geometry.mergeUniqueMeshes(g3d, section, transparent)
 
-    const geometry = merger.toBufferGeometry()
-    const material = Transparency.requiresAlpha(transparency)
+    const material = transparent
       ? this.materials.transparent
       : this.materials.opaque
 
-    const mesh = new THREE.Mesh(geometry, material)
+    const mesh = new THREE.Mesh(merge.geometry, material)
     mesh.userData.merged = true
-    mesh.userData.instances = merger.getInstances()
-    mesh.userData.submeshes = merger.getSubmeshes()
+    mesh.userData.instances = merge.instances
+    mesh.userData.submeshes = merge.submeshes
 
     return mesh
   }

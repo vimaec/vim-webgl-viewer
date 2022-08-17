@@ -46,10 +46,10 @@ export class Vim {
 
     next.applyMatrix4(this.settings.getMatrix())
     next.setVim(this)
+    this.scene = next
     for (const [element, object] of this._elementToObject.entries()) {
       object.updateMeshes(this.getMeshesFromElement(element))
     }
-    this.scene = next
   }
 
   /**
