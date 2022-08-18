@@ -60,6 +60,7 @@ export class Object {
 
   /**
    * Returns Bim data for the element associated with this object.
+   * Returns undefined if no associated bim
    */
   getBimElement () {
     return this.vim.document.getElement(this.element)
@@ -70,6 +71,7 @@ export class Object {
    */
   async getBimElementValue (field: string, resolveString: boolean) {
     const value = await this.vim.document.getElementValue(this.element, field)
+    if (!value) return
     return resolveString ? this.vim.document.getString(value) : value
   }
 
@@ -313,6 +315,7 @@ export class Object {
     let mergedIndex = this.getMergedMeshStart(mesh, index)
 
     const instance = this.vim.scene.getInstanceFromMesh(mesh, index)
+    if (!instance) throw new Error('Could not reset original color.')
     const g3d = this.vim.document.g3d
     const g3dMesh = g3d.instanceMeshes[instance]
     const subStart = g3d.getMeshSubmeshStart(g3dMesh)

@@ -22,7 +22,7 @@ export class Scene {
     new Map()
 
   private _threeMeshIdToInstances: Map<number, number[]> = new Map()
-  private _material: THREE.Material
+  private _material: THREE.Material | undefined
 
   constructor (builder: SceneBuilder) {
     this.builder = builder
@@ -43,10 +43,10 @@ export class Scene {
    * @param index if merged mesh the index into the merged mesh, if instance mesh the instance index.
    * @returns a g3d instance index.
    */
-  getInstanceFromMesh (mesh: THREE.Mesh, index: number): number {
-    if (!mesh || index < 0) return -1
+  getInstanceFromMesh (mesh: THREE.Mesh, index: number) {
+    if (!mesh || index < 0) return
     const instances = this._threeMeshIdToInstances.get(mesh.id)
-    if (!instances) return -1
+    if (!instances) return
     return instances[index]
   }
 
@@ -158,7 +158,7 @@ export class Scene {
   /**
    * Sets and apply a material override to the scene, set to undefined to remove override.
    */
-  set material (value: THREE.Material) {
+  set material (value: THREE.Material | undefined) {
     this._material = value
     if (value) {
       this.meshes.forEach((m) => {

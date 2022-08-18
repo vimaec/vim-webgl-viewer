@@ -176,18 +176,18 @@ class BoxInputs {
   // state
   faceNormal: THREE.Vector3 = new THREE.Vector3()
   dragOrigin: THREE.Vector3 = new THREE.Vector3()
-  dragpPlane: THREE.Plane
-  mouseDown: boolean
+  dragpPlane: THREE.Plane = new THREE.Plane()
+  mouseDown: boolean | undefined
   raycaster: THREE.Raycaster = new THREE.Raycaster()
   lastBox: THREE.Box3 = new THREE.Box3()
   unregisters: (() => void)[] = []
 
   // Called when mouse enters or leave a face
-  onFaceEnter: (normal: THREE.Vector3) => void
+  onFaceEnter: ((normal: THREE.Vector3) => void) | undefined
   // Called the box is reshaped
-  onBoxStretch: (box: THREE.Box3) => void
+  onBoxStretch: ((box: THREE.Box3) => void) | undefined
   // Called when the user is done reshaping the box
-  onBoxConfirm: (box: THREE.Box3) => void
+  onBoxConfirm: ((box: THREE.Box3) => void) | undefined
 
   constructor (viewer: Viewer, cube: THREE.Object3D, box: THREE.Box3) {
     this.viewer = viewer
@@ -272,7 +272,7 @@ class BoxInputs {
     this.dragOrigin.copy(hit.point)
     const dist = hit.point.clone().dot(this.viewer.camera.forward)
 
-    this.dragpPlane = new THREE.Plane(this.viewer.camera.forward, -dist)
+    this.dragpPlane.set(this.viewer.camera.forward, -dist)
     this.mouseDown = true
     this.viewer.inputs.unregisterAll()
     this.onFaceEnter?.(this.faceNormal)
@@ -284,10 +284,9 @@ class BoxInputs {
       this.raycaster
     )
     // We get the mouse raycast intersection on the drag plane.
-    const point = this.raycaster.ray.intersectPlane(
-      this.dragpPlane,
-      new THREE.Vector3()
-    )
+    const point =
+      this.raycaster.ray.intersectPlane(this.dragpPlane, new THREE.Vector3()) ??
+      this.dragOrigin.clone()
 
     // We compute the normal-aligned component of the delta between current drag point and origin drag point.
     const delta = point.sub(this.dragOrigin)
@@ -342,19 +341,19 @@ export class GizmoSection {
 
   // State
   private _normal: THREE.Vector3
-  private _clip: boolean
-  private _show: boolean
-  private _interactive: boolean
+  private _clip: boolean | undefined
+  private _show: boolean | undefined
+  private _interactive: boolean | undefined
 
   /**
    * Callback for when clip, show, or interactive are updated.
    */
-  onStateChanged: () => void
+  onStateChanged: (() => void) | undefined
 
   /**
    * Callback for when box is done changing
    */
-  onBoxConfirm: (box: THREE.Box3) => void
+  onBoxConfirm: ((box: THREE.Box3) => void) | undefined
 
   private get renderer () {
     return this._viewer.renderer
@@ -409,7 +408,7 @@ export class GizmoSection {
    * When true the section gizmo will section the model with clipping planes.
    */
   get clip () {
-    return this._clip
+    return !this._clip
   }
 
   set clip (value: boolean) {
@@ -423,7 +422,7 @@ export class GizmoSection {
    * When true the section gizmo will react to user inputs.
    */
   get interactive () {
-    return this._interactive
+    return !this._interactive
   }
 
   set interactive (value: boolean) {
@@ -439,7 +438,7 @@ export class GizmoSection {
    * When true the section gizmo will be rendered.
    */
   get visible () {
-    return this._show
+    return !this._show
   }
 
   set visible (value: boolean) {

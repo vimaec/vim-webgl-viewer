@@ -3,7 +3,7 @@
  */
 
 import * as THREE from 'three'
-import { Document } from './document'
+import { IDocument } from './document'
 import { Scene } from './scene'
 import { VimSettings } from './vimSettings'
 import { Object } from './object'
@@ -13,14 +13,14 @@ import { Object } from './object'
  * Dispenses Objects for high level scene manipulation
  */
 export class Vim {
-  readonly document: Document
+  readonly document: IDocument
   index: number = -1
   settings: VimSettings
 
   scene: Scene
   private _elementToObject: Map<number, Object> = new Map<number, Object>()
 
-  constructor (vim: Document, scene: Scene, settings: VimSettings) {
+  constructor (vim: IDocument, scene: Scene, settings: VimSettings) {
     this.document = vim
     this.scene = scene
     this.scene.setVim(this)
@@ -74,6 +74,7 @@ export class Vim {
    */
   getObjectFromMesh (mesh: THREE.Mesh, index: number) {
     const element = this.getElementFromMesh(mesh, index)
+    if (!element) return
     return this.getObjectFromElement(element)
   }
 
@@ -83,6 +84,7 @@ export class Vim {
    */
   getObjectFromInstance (instance: number) {
     const element = this.document.getElementFromInstance(instance)
+    if (!element) return
     return this.getObjectFromElement(element)
   }
 
@@ -91,7 +93,7 @@ export class Vim {
    * @param id vim element Id
    */
   getObjectsFromElementId (id: number) {
-    const elements = this.document.getElementFromElementId(id)
+    const elements = this.document.getElementsFromElementId(id)
     return elements?.map((e) => this.getObjectFromElement(e))
   }
 
@@ -99,14 +101,14 @@ export class Vim {
    * Returns vim object from given vim element index
    * @param element vim element index
    */
-  getObjectFromElement (element: number) {
-    if (element === undefined) return
+  getObjectFromElement (element: number): Object | undefined {
+    if (!this.document.hasElement(element)) return
 
     if (this._elementToObject.has(element)) {
       return this._elementToObject.get(element)
     }
 
-    const instances = this.document.getInstanceFromElement(element)
+    const instances = this.document.getInstancesFromElement(element)
     const meshes = this.getMeshesFromInstances(instances)
 
     const result = new Object(this, element, instances, meshes)
@@ -135,12 +137,14 @@ export class Vim {
    */
   * getAllObjects () {
     for (const e of this.document.getAllElements()) {
-      yield this.getObjectFromElement(e)
+      const obj = this.getObjectFromElement(e)
+      if (obj) yield obj
     }
   }
 
-  private getMeshesFromElement (index: number) {
-    const instances = this.document.getInstanceFromElement(index)
+  private getMeshesFromElement (element: number) {
+    const instances = this.document.getInstancesFromElement(element)
+    if (!instances) return
     return this.getMeshesFromInstances(instances)
   }
 
@@ -164,9 +168,10 @@ export class Vim {
    * @param index index into the instanced mesh
    * @returns index of element
    */
-  private getElementFromMesh (mesh: THREE.Mesh, index: number): number {
-    if (!mesh || index < 0) return -1
+  private getElementFromMesh (mesh: THREE.Mesh, index: number) {
+    if (!mesh || index < 0) return
     const instance = this.scene.getInstanceFromMesh(mesh, index)
+    if (!instance) return
     return this.document.getElementFromInstance(instance)
   }
 }

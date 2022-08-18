@@ -7,19 +7,19 @@ import { G3d } from './g3d'
 
 export type ElementInfo = {
   element: number
-  id: number
-  name: string
-  categoryName: string
-  familyName: string
-  familyTypeName: string
-  workset: string
-  documentTitle: string
+  id: number | undefined
+  name: string | undefined
+  categoryName: string | undefined
+  familyName: string | undefined
+  familyTypeName: string | undefined
+  workset: string | undefined
+  documentTitle: string | undefined
 }
 
 export type ElementParameter = {
-  name: string
-  value: string
-  group: string
+  name: string | undefined
+  value: string | undefined
+  group: string | undefined
   isInstance: boolean
 }
 
@@ -92,10 +92,144 @@ const objectModel = {
   }
 }
 
-export class Document {
+export interface IDocument {
+  g3d: G3d
+  /**
+   * Returns all element indices of the vim
+   */
+  getAllElements(): IterableIterator<number>
+
+  /**
+   * Returns true if element exists in the vim.
+   */
+  hasElement(element: number): boolean
+
+  /**
+   * Returns instance indices associated with vim element index
+   * @param element vim element index
+   */
+  getInstancesFromElement(element: number): number[] | undefined
+  /**
+   * Returns all fields of element at given element index
+   * @param element vim element index
+   */
+  getElement(
+    element: number
+  ): Promise<Map<string, number | undefined> | undefined>
+  /**
+   * Returns provided field of at given element index
+   * @param element vim element index
+   * @param field field name
+   */
+  getElementValue(element: number, field: string): Promise<number | undefined>
+
+  /**
+   * Returns the element index associated with the g3d instance index.
+   * @param instance g3d instance index
+   * @returns element index or undefined if not found
+   */
+  getElementFromInstance(instance: number): number | undefined
+  /**
+   * Returns the element index associated with element Id.
+   * @param elementId vim element Id
+   * @returns element index or undefined if not found
+   */
+  getElementsFromElementId(elementId: number): number[] | undefined
+  /**
+   * Returns element id from element index
+   * @param element element index
+   */
+  getElementId(element: number): number | undefined
+  /**
+   * Returns all fields at given indices from buffer with given name
+   * @param name buffer name
+   * @param index row index
+   */
+  getEntity(
+    name: string,
+    index: number
+  ): Promise<Map<string, number | undefined> | undefined>
+
+  /**
+   * Returns string value for string index.
+   * @param index string index.
+   */
+  getString(index: number): string | undefined
+
+  /**
+   * Returns an array of element info for all element indices provided.
+   * @param elements elements indices.
+   */
+  getElementsSummary(elements?: number[]): Promise<ElementInfo[] | undefined>
+
+  /**
+   * Returns all parameters of an element and of its family type and family
+   * @param element element index
+   * @returns An array of paramters with name, value, group
+   */
+  getElementParameters(element: number): Promise<ElementParameter[] | undefined>
+}
+
+export class DocumentNoBim implements IDocument {
+  g3d: G3d
+
+  constructor (g3d: G3d) {
+    this.g3d = g3d
+  }
+
+  getAllElements (): IterableIterator<number> {
+    return [].keys()
+  }
+
+  hasElement (element: number): boolean {
+    return false
+  }
+
+  getInstancesFromElement (element: number) {
+    return undefined
+  }
+
+  async getElement (element: number) {
+    return undefined
+  }
+
+  async getElementValue (element: number, field: string) {
+    return undefined
+  }
+
+  getElementFromInstance (instance: number) {
+    return undefined
+  }
+
+  getElementsFromElementId (elementId: number) {
+    return []
+  }
+
+  getElementId (element: number) {
+    return undefined
+  }
+
+  async getEntity (name: string, index: number) {
+    return undefined
+  }
+
+  getString (index: number) {
+    return undefined
+  }
+
+  async getElementsSummary (elements?: number[]) {
+    return undefined
+  }
+
+  async getElementParameters (element: number) {
+    return undefined
+  }
+}
+
+export class Document implements IDocument {
   g3d: G3d
   private _entities: BFast
-  private _strings: string[]
+  private _strings: string[] | undefined
 
   private _instanceToElement: number[]
   private _elementToInstances: Map<number, number[]>
@@ -105,7 +239,7 @@ export class Document {
   private constructor (
     g3d: G3d,
     entities: BFast,
-    strings: string[],
+    strings: string[] | undefined,
     instanceToElement: number[],
     elementToInstances: Map<number, number[]>,
     elementIds: number[],
@@ -123,13 +257,16 @@ export class Document {
   /**
    * Creates document by fetching all required data from bfast.
    */
-  static async createFromBfast (bfast: BFast, streamG3d: boolean = false) {
+  static async createFromBfast (
+    bfast: BFast,
+    streamG3d: boolean = false
+  ): Promise<IDocument> {
     let g3d: G3d
-    let entity: BFast
-    let strings: string[]
+    let entity: BFast | undefined
+    let strings: string[] | undefined
 
-    let instanceToElement: number[]
-    let elementIds: number[]
+    let instanceToElement: number[] | undefined
+    let elementIds: number[] | undefined
 
     await Promise.all([
       Document.requestG3d(bfast, streamG3d).then((g) => (g3d = g)),
@@ -145,13 +282,16 @@ export class Document {
           ])
         )
     ])
+    if (!entity) {
+      return new DocumentNoBim(g3d!)
+    }
 
     const elementToInstance = Document.invert(instanceToElement!)
     const elementIdToElements = Document.invert(elementIds!)
     return new Document(
       g3d!,
-      entity!,
-      strings!,
+      entity,
+      strings,
       instanceToElement!,
       elementToInstance,
       elementIds!,
@@ -173,7 +313,10 @@ export class Document {
 
   private static async requestStrings (bfast: BFast) {
     const buffer = await bfast.getBuffer('strings')
-    if (!buffer) throw new Error('Could not get String Data from VIM file.')
+    if (!buffer) {
+      console.error('Could not get String Data from VIM file.')
+      return
+    }
     const strings = new TextDecoder('utf-8').decode(buffer).split('\0')
     return strings
   }
@@ -185,6 +328,7 @@ export class Document {
   }
 
   private static async requestInstanceToElement (entities: BFast) {
+    if (!entities) return
     const nodes = await entities.getBfast(objectModel.nodes.table)
     const instances = await nodes?.getArray(objectModel.element.index)
     if (!instances) {
@@ -197,6 +341,7 @@ export class Document {
    * Request element id table from remote with support for legacy name
    */
   private static async requestElementIds (entities: BFast) {
+    if (!entities) return
     const elements = await entities.getBfast(objectModel.element.table)
     const ids =
       (await elements?.getArray('int:Id')) ??
@@ -225,21 +370,24 @@ export class Document {
     return result
   }
 
+  hasElement (element: number) {
+    return element >= 0 && element < this._elementIds.length
+  }
+
   /**
    * Returns all element indices of the vim
    */
-  * getAllElements () {
-    for (let i = 0; i < this._elementIds.length; i++) {
-      yield i
-    }
+  getAllElements () {
+    return this._elementIds.keys()
   }
 
   /**
    * Returns instance indices associated with vim element index
    * @param element vim element index
    */
-  getInstanceFromElement (element: number) {
-    return this._elementToInstances.get(element)
+  getInstancesFromElement (element: number): number[] | undefined {
+    if (!this.hasElement(element)) return
+    return this._elementToInstances.get(element) ?? []
   }
 
   /**
@@ -257,6 +405,7 @@ export class Document {
    */
   async getElementValue (element: number, field: string) {
     const elements = await this._entities.getBfast(objectModel.element.table)
+    if (!elements) return
     const value = await elements.getValue(field, element)
     return value
   }
@@ -264,7 +413,7 @@ export class Document {
   /**
    * Returns the element index associated with the g3d instance index.
    * @param instance g3d instance index
-   * @returns element index or -1 if not found
+   * @returns element index or undefined if not found
    */
   getElementFromInstance (instance: number) {
     return this._instanceToElement[instance]
@@ -273,9 +422,9 @@ export class Document {
   /**
    * Returns the element index associated with element Id.
    * @param elementId vim element Id
-   * @returns element index or -1 if not found
+   * @returns element index or undefined if not found
    */
-  getElementFromElementId (elementId: number) {
+  getElementsFromElementId (elementId: number) {
     return this._elementIdToElements.get(elementId)
   }
 
@@ -301,7 +450,7 @@ export class Document {
   }
 
   getString (index: number) {
-    return this._strings[index]
+    return this._strings?.[index]
   }
 
   async getElementsSummary (elements?: number[]) {
@@ -311,100 +460,115 @@ export class Document {
     )
 
     // Element
-    const elementNameArray = await elementTable.getArray(
+    const elementNameArray = await elementTable?.getArray(
       objectModel.element.columns.name
     )
 
-    const elementIdArray = await elementTable.getArray(
+    const elementIdArray = await elementTable?.getArray(
       objectModel.element.columns.id
     )
 
-    const getElementName = (element: number) =>
-      this._strings[elementNameArray[element]]
+    const getElementName = (element: number) => {
+      if (!elementNameArray) return
+      return this.getString(elementNameArray?.[element])
+    }
 
     // Category
-    const elementCategoryArray = await elementTable.getArray(
+    const elementCategoryArray = await elementTable?.getArray(
       objectModel.category.index
     )
     const categoryTable = await this._entities.getBfast(
       objectModel.category.table
     )
-    const categoryNameArray = await categoryTable.getArray(
+    const categoryNameArray = await categoryTable?.getArray(
       objectModel.category.columns.name
     )
-    const getCategory = (element: number) =>
-      this._strings[categoryNameArray[elementCategoryArray[element]]]
+    const getCategory = (element: number) => {
+      if (!categoryNameArray) return
+      if (!elementCategoryArray) return
+      return this.getString(categoryNameArray[elementCategoryArray[element]])
+    }
 
     // Family
     const familyInstanceTable = await this._entities.getBfast(
       objectModel.familyInstance.table
     )
 
-    const familyNameArray = await elementTable.getArray(
+    const familyNameArray = await elementTable?.getArray(
       objectModel.element.columns.familyName
     )
 
     const getFamilyName = (element: number) =>
-      this._strings[familyNameArray[element]]
+      familyNameArray ? this.getString(familyNameArray[element]) : undefined
 
     // FamilyType
-    const familyInstanceFamilyType = await familyInstanceTable.getArray(
+    const familyInstanceFamilyType = await familyInstanceTable?.getArray(
       objectModel.familyType.index
     )
 
     const familyTypeTable = await this._entities.getBfast(
       objectModel.familyType.table
     )
-    const familyTypeElementArray = await familyTypeTable.getArray(
+    const familyTypeElementArray = await familyTypeTable?.getArray(
       objectModel.element.index
     )
 
-    const getFamilyTypeName = (family: number) =>
-      this._strings[
+    const getFamilyTypeName = (family: number) => {
+      if (!elementNameArray) return
+      if (!familyTypeElementArray) return
+      if (!familyInstanceFamilyType) return
+      return this.getString(
         elementNameArray[
           familyTypeElementArray[familyInstanceFamilyType[family]]
         ]
-      ]
+      )
+    }
 
     // Workset
-    const elementWorksetArray = await elementTable.getArray(
+    const elementWorksetArray = await elementTable?.getArray(
       objectModel.workset.index
     )
     const worksetTable = await this._entities.getBfast(
       objectModel.workset.table
     )
-    const worksetNameArray = await worksetTable.getArray(
+    const worksetNameArray = await worksetTable?.getArray(
       objectModel.workset.columns.name
     )
-    const getWorkset = (element: number) =>
-      this._strings[worksetNameArray[elementWorksetArray[element]]]
+    const getWorkset = (element: number) => {
+      if (!worksetNameArray) return
+      if (!elementWorksetArray) return
+      return this.getString(worksetNameArray[elementWorksetArray[element]])
+    }
 
     // Document
-    const elementDocumentArray = await elementTable.getArray(
+    const elementDocumentArray = await elementTable?.getArray(
       objectModel.document.index
     )
     const documentTable = await this._entities.getBfast(
       objectModel.document.table
     )
-    const documentTitleArray = await documentTable.getArray(
+    const documentTitleArray = await documentTable?.getArray(
       objectModel.document.columns.title
     )
-    const getDocument = (element: number) =>
-      this._strings[documentTitleArray[elementDocumentArray[element]]]
+    const getDocument = (element: number) => {
+      if (!documentTitleArray) return
+      if (!elementDocumentArray) return
+      return this.getString(documentTitleArray[elementDocumentArray[element]])
+    }
 
     // Compilation
 
-    const familyInstanceElement = await familyInstanceTable.getArray(
+    const familyInstanceElement = await familyInstanceTable?.getArray(
       objectModel.element.index
     )
 
     const summary: ElementInfo[] = []
 
-    familyInstanceElement.forEach((e, f) => {
+    familyInstanceElement?.forEach((e, f) => {
       if (!set || set.has(e)) {
         summary.push({
           element: e,
-          id: elementIdArray[e],
+          id: elementIdArray?.[e],
           name: getElementName(e),
           categoryName: getCategory(e),
           familyName: getFamilyName(e),
@@ -422,23 +586,33 @@ export class Document {
    * @param element element index
    * @returns An array of paramters with name, value, group
    */
-  async getElementParameters (element: number): Promise<ElementParameter[]> {
+  async getElementParameters (element: number) {
     const result: ElementParameter[] = []
     const instance = await this.getElementsParameters([element], true)
-    instance.forEach((i) => result.push(i))
+    instance?.forEach((i) => result.push(i))
 
     const familyInstance = await this.getElementFamilyInstance(element)
-    if (familyInstance !== undefined) {
-      const familyType = await this.getFamilyInstanceFamilyType(familyInstance)
-      const family = await this.getFamilyTypeFamily(familyType)
-      const familyTypeElement = await this.getFamiltyTypeElement(familyType)
-      const familyElement = await this.getFamilyElement(family)
-      const type = await this.getElementsParameters(
-        [familyTypeElement, familyElement],
-        false
-      )
-      type.forEach((i) => result.push(i))
-    }
+    const familyType = familyInstance
+      ? await this.getFamilyInstanceFamilyType(familyInstance)
+      : undefined
+
+    const family = familyType
+      ? await this.getFamilyTypeFamily(familyType)
+      : undefined
+
+    const familyTypeElement = familyType
+      ? await this.getFamiltyTypeElement(familyType)
+      : undefined
+
+    const familyElement = family
+      ? await this.getFamilyElement(family)
+      : undefined
+
+    const elements = []
+    if (familyTypeElement) elements.push(familyTypeElement)
+    if (familyElement) elements.push(familyElement)
+    const type = await this.getElementsParameters(elements, false)
+    type?.forEach((i) => result.push(i))
 
     return result
   }
@@ -448,37 +622,63 @@ export class Document {
     const parameterTable = await this._entities.getBfast(
       objectModel.parameter.table
     )
-    const parameterElement = await parameterTable.getArray(
-      objectModel.element.index
-    )
-    const parameterValue = await parameterTable.getArray(
-      objectModel.parameter.columns.value
-    )
-    const parameterDescription = await parameterTable.getArray(
-      objectModel.parameterDescriptor.index
-    )
+    const parameterElement = parameterTable
+      ? await parameterTable.getArray(objectModel.element.index)
+      : undefined
+
+    const parameterValue = parameterTable
+      ? await parameterTable.getArray(objectModel.parameter.columns.value)
+      : undefined
+
+    const getParameterDisplayValue = (index: number) => {
+      if (!parameterValue) return
+      const value = this.getString(parameterValue[index])?.split('|')
+      const displayValue = value?.[value.length - 1]
+      return displayValue
+    }
+
+    const parameterDescription = parameterTable
+      ? await parameterTable.getArray(objectModel.parameterDescriptor.index)
+      : undefined
 
     const parameterDescriptor = await this._entities.getBfast(
       objectModel.parameterDescriptor.table
     )
-    const parameterDescriptorName = await parameterDescriptor.getArray(
-      objectModel.parameterDescriptor.columns.name
-    )
-    const parameterDescriptorGroup = await parameterDescriptor.getArray(
-      objectModel.parameterDescriptor.columns.group
-    )
+
+    const parameterDescriptorName = parameterDescriptor
+      ? await parameterDescriptor.getArray(
+        objectModel.parameterDescriptor.columns.name
+      )
+      : undefined
+
+    const getParameterName = (descriptor: number | undefined) => {
+      if (descriptor === undefined) return
+      if (!parameterDescriptorName) return
+      return this.getString(parameterDescriptorName[descriptor])
+    }
+
+    const parameterDescriptorGroup = parameterDescriptor
+      ? await parameterDescriptor.getArray(
+        objectModel.parameterDescriptor.columns.group
+      )
+      : undefined
+
+    const getParameterGroup = (descriptor: number | undefined) => {
+      if (!descriptor) return
+      if (!parameterDescriptorGroup) return
+      return this.getString(parameterDescriptorGroup[descriptor])
+    }
 
     const result: ElementParameter[] = []
 
+    if (!parameterElement) return undefined
     parameterElement.forEach((e, i) => {
       if (set.has(e)) {
-        const value = this._strings[parameterValue[i]].split('|')
-        const displayValue = value[value.length - 1]
-        const d = parameterDescription[i]
+        const d = parameterDescription?.[i]
         result.push({
-          name: this._strings[parameterDescriptorName[d]],
-          value: displayValue,
-          group: this._strings[parameterDescriptorGroup[d]],
+          name: getParameterName(d),
+          value: getParameterDisplayValue(i),
+          group: getParameterGroup(d),
           isInstance: isInstance
         })
       }
@@ -490,12 +690,12 @@ export class Document {
     const familyInstanceTable = await this._entities.getBfast(
       objectModel.familyInstance.table
     )
-    const familyInstanceElementArray = await familyInstanceTable.getArray(
-      objectModel.element.index
-    )
+    const familyInstanceElementArray = familyInstanceTable
+      ? await familyInstanceTable.getArray(objectModel.element.index)
+      : undefined
 
-    let result: number
-    familyInstanceElementArray.forEach((e, i) => {
+    let result: number | undefined
+    familyInstanceElementArray?.forEach((e, i) => {
       if (e === element) {
         result = i
       }
@@ -508,7 +708,7 @@ export class Document {
       objectModel.familyInstance.table
     )
 
-    const result = await familyInstanceTable.getValue(
+    const result = await familyInstanceTable?.getValue(
       objectModel.familyType.index,
       familyInstance
     )
@@ -521,7 +721,7 @@ export class Document {
       objectModel.familyType.table
     )
 
-    const result = await familyTypeTable.getValue(
+    const result = await familyTypeTable?.getValue(
       objectModel.family.index,
       familyType
     )
@@ -534,7 +734,7 @@ export class Document {
       objectModel.familyType.table
     )
 
-    const result = await familyTypeTable.getValue(
+    const result = await familyTypeTable?.getValue(
       objectModel.element.index,
       familyType
     )
@@ -544,7 +744,10 @@ export class Document {
 
   private async getFamilyElement (family: number) {
     const familyTable = await this._entities.getBfast(objectModel.family.table)
-    const result = await familyTable.getValue(objectModel.element.index, family)
+    const result = await familyTable?.getValue(
+      objectModel.element.index,
+      family
+    )
     return result
   }
 
@@ -552,6 +755,7 @@ export class Document {
    * Associate all string indices with their related strings.
    */
   private resolveStrings (map: Map<string, number | undefined>) {
+    if (!this._strings) return
     const result = <Map<string, string | number | undefined>>map
     for (const key of map.keys()) {
       if (key.startsWith('string:')) {

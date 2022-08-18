@@ -17,7 +17,7 @@ export class Selection {
 
   // State
   private _objects = new Set<Object>()
-  private _vim: Vim
+  private _vim: Vim | undefined
 
   // Disposable State
   private _highlight: THREE.LineSegments | undefined
@@ -25,7 +25,7 @@ export class Selection {
   /**
    * Callback for when selection changes or is cleared
    */
-  onValueChanged: () => void
+  onValueChanged: (() => void) | undefined
 
   constructor (renderer: Renderer) {
     this._renderer = renderer
@@ -48,9 +48,11 @@ export class Selection {
 
   getBoundingBox () {
     if (this._objects.size === 0) return
-    let box: THREE.Box3
+    let box: THREE.Box3 | undefined
     for (const o of this._objects) {
-      box = box ? box.union(o.getBoundingBox()) : o.getBoundingBox()
+      const other = o.getBoundingBox()
+      if (!other) continue
+      box = box ? box.union(other) : other
     }
     return box
   }
@@ -59,7 +61,10 @@ export class Selection {
    * Select given objects and unselect all other objects
    * using no or undefined as argument will clear selection.
    */
-  select (...object: Object[]) {
+  select (object: Object | Object[] | undefined) {
+    object =
+      object === undefined ? [] : object instanceof Object ? [object] : object
+
     object = object.filter((o) => o)
     if (
       object.length === this._objects.size &&
@@ -180,7 +185,7 @@ export class Selection {
   private createHighlights (objects: Set<Object>) {
     if (objects.size === 0) return
 
-    let vim: Vim
+    let vim: Vim | undefined
     const instances: number[] = []
     for (const o of objects.values()) {
       vim = vim ?? o.vim // capture first vim
@@ -188,12 +193,14 @@ export class Selection {
         console.error('Cannot multiselect across vim files')
         return
       }
-      instances.push(...o.instances)
+      if (o.instances) {
+        instances.push(...o.instances)
+      }
     }
 
-    const meshBuilder = vim.scene.builder.meshBuilder
-    this._highlight = meshBuilder.createWireframe(vim.document.g3d, instances)
-    this._highlight.applyMatrix4(vim.getMatrix())
+    const meshBuilder = vim!.scene.builder.meshBuilder
+    this._highlight = meshBuilder.createWireframe(vim!.document.g3d, instances)
+    this._highlight.applyMatrix4(vim!.getMatrix())
     if (this._highlight) this._renderer.add(this._highlight)
   }
 

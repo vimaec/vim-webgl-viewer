@@ -30,7 +30,7 @@ export class MeshBuilder {
     transparency: Transparency.Mode,
     instances?: number[]
   ): THREE.InstancedMesh[] {
-    const result: THREE.InstancedMesh[] = []
+    const result: (THREE.InstancedMesh | undefined)[] = []
     const set = instances ? new Set(instances) : undefined
 
     for (let mesh = 0; mesh < g3d.getMeshCount(); mesh++) {
@@ -80,7 +80,7 @@ export class MeshBuilder {
         }
       }
     }
-    const filter = result.filter((m) => m !== undefined)
+    const filter = result.filter((m): m is THREE.InstancedMesh => !!m)
     return filter
   }
 

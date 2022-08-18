@@ -25,7 +25,7 @@ export interface IMaterialLibrary {
    * Material used for isolation mode to show objects in context.
    */
   get isolation(): THREE.Material
-  dispose()
+  dispose(): void
 }
 
 /**

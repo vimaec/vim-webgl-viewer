@@ -102,7 +102,7 @@ export class Input {
     }
 
     action.object.getBimElement().then((e) => {
-      e.set('Index', action.object.element)
+      e?.set('Index', action.object?.element)
       console.log(e)
     })
   }
