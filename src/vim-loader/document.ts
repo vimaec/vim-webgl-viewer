@@ -314,7 +314,9 @@ export class Document implements IDocument {
   private static async requestStrings (bfast: BFast) {
     const buffer = await bfast.getBuffer('strings')
     if (!buffer) {
-      console.error('Could not get String Data from VIM file.')
+      console.error(
+        'Could not get String Data from VIM file. Bim features will be disabled.'
+      )
       return
     }
     const strings = new TextDecoder('utf-8').decode(buffer).split('\0')
@@ -323,7 +325,11 @@ export class Document implements IDocument {
 
   private static async requestEntities (bfast: BFast) {
     const entities = await bfast.getBfast(objectModel.entities)
-    if (!entities) throw new Error('Could not get Entities Data from VIM file.')
+    if (!entities) {
+      console.error(
+        'Could not get String Data from VIM file. Bim features will be disabled.'
+      )
+    }
     return entities
   }
 
