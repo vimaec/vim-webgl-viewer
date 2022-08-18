@@ -408,7 +408,7 @@ export class GizmoSection {
    * When true the section gizmo will section the model with clipping planes.
    */
   get clip () {
-    return !this._clip
+    return this._clip
   }
 
   set clip (value: boolean) {
@@ -422,7 +422,7 @@ export class GizmoSection {
    * When true the section gizmo will react to user inputs.
    */
   get interactive () {
-    return !this._interactive
+    return this._interactive
   }
 
   set interactive (value: boolean) {
@@ -438,7 +438,7 @@ export class GizmoSection {
    * When true the section gizmo will be rendered.
    */
   get visible () {
-    return !this._show
+    return this._show
   }
 
   set visible (value: boolean) {
