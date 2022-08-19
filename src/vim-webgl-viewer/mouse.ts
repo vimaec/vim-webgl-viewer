@@ -6,6 +6,7 @@ import * as THREE from 'three'
 import { InputHandler } from './inputHandler'
 import { InputAction } from './raycaster'
 
+type Mode = 'normal' | 'orbit' | 'look' | 'pan' | 'dolly'
 /**
  * Manages mouse user inputs
  */
@@ -17,6 +18,17 @@ export class MouseHandler extends InputHandler {
   private _idleTimeout: number
   private _idleDelayMs = 200
   private _lastPosition: THREE.Vector2
+
+  private _mode: Mode = 'normal'
+
+  get mode () {
+    return this._mode
+  }
+
+  set mode (value: Mode) {
+    this.camera.orbitMode = value !== 'look'
+    this._mode = value
+  }
 
   private get camera () {
     return this._viewer.camera
@@ -81,12 +93,12 @@ export class MouseHandler extends InputHandler {
     this._lastPosition = new THREE.Vector2(event.offsetX, event.offsetY)
     this.resetIdleTimeout()
 
-    if (!this.isMouseDown) {
-      return
-    }
+    if (!this.isMouseDown) return
+    this.onMouseDrag(event)
+  }
 
+  private onMouseDrag (event: any) {
     event.preventDefault()
-
     // https://github.com/mrdoob/three.js/blob/master/examples/jsm/controls/PointerLockControls.js
     const deltaX =
       event.movementX || event.mozMovementX || event.webkitMovementX || 0
@@ -98,16 +110,42 @@ export class MouseHandler extends InputHandler {
     this.hasMouseMoved =
       this.hasMouseMoved || Math.abs(deltaX) + Math.abs(deltaY) > 3
 
-    if (event.buttons & 2) {
-      // right button
-      this.camera.move2(delta, 'XY')
-    } else if (event.buttons & 4) {
-      // Midle button
-      // Same as right button
-      this.camera.move2(delta, 'XY')
+    if (event.buttons & 2 || event.buttons & 4) {
+      this.onMouseSecondaryDrag(delta)
     } else {
-      // left button
-      this.camera.rotate(delta)
+      this.onMouseMainDrag(delta)
+    }
+  }
+
+  private onMouseMainDrag (delta: THREE.Vector2) {
+    switch (this._mode) {
+      case 'normal':
+        this.camera.rotate(delta)
+        break
+      case 'orbit':
+        this.camera.rotate(delta)
+        break
+      case 'look':
+        this.camera.rotate(delta)
+        break
+      case 'pan':
+        this.camera.move2(delta, 'XY')
+        break
+      case 'dolly':
+        this.camera.move1(delta.y, 'Z')
+        break
+      default:
+        this.camera.rotate(delta)
+    }
+  }
+
+  private onMouseSecondaryDrag (delta: THREE.Vector2) {
+    switch (this._mode) {
+      case 'normal':
+        this.camera.move2(delta, 'XY')
+        break
+      default:
+        this.onMouseMainDrag(delta)
     }
   }
 
