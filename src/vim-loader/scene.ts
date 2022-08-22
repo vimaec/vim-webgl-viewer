@@ -17,7 +17,7 @@ export class Scene {
 
   // State
   meshes: THREE.Mesh[] = []
-  boundingBox: THREE.Box3 = new THREE.Box3()
+  private _boundingBox: THREE.Box3 = new THREE.Box3()
   private _instanceToThreeMeshes: Map<number, [THREE.Mesh, number][]> =
     new Map()
 
@@ -26,6 +26,13 @@ export class Scene {
 
   constructor (builder: SceneBuilder) {
     this.builder = builder
+  }
+
+  /**
+   * Returns the scene bounding box.
+   */
+  getBoundingBox (target: THREE.Box3 = new THREE.Box3()) {
+    return target.copy(this._boundingBox)
   }
 
   /**
@@ -58,7 +65,7 @@ export class Scene {
       this.meshes[m].matrixAutoUpdate = false
       this.meshes[m].matrix.copy(matrix)
     }
-    this.boundingBox.applyMatrix4(matrix)
+    this._boundingBox.applyMatrix4(matrix)
   }
 
   /**
@@ -90,7 +97,7 @@ export class Scene {
 
     mesh.geometry.computeBoundingBox()
     const box = mesh.geometry.boundingBox!
-    this.boundingBox = this.boundingBox?.union(box) ?? box.clone()
+    this._boundingBox = this._boundingBox?.union(box) ?? box.clone()
 
     this._threeMeshIdToInstances.set(mesh.id, instances)
     this.meshes.push(mesh)
@@ -125,7 +132,7 @@ export class Scene {
       this._instanceToThreeMeshes.set(instances[i], set)
     }
     const box = this.computeIntancedMeshBoundingBox(mesh)!
-    this.boundingBox = this.boundingBox?.union(box) ?? box.clone()
+    this._boundingBox = this._boundingBox?.union(box) ?? box.clone()
     this._threeMeshIdToInstances.set(mesh.id, instances)
   }
 
@@ -143,8 +150,8 @@ export class Scene {
     other._threeMeshIdToInstances.forEach((value, key) => {
       this._threeMeshIdToInstances.set(key, value)
     })
-    this.boundingBox =
-      this.boundingBox?.union(other.boundingBox) ?? other.boundingBox.clone()
+    this._boundingBox =
+      this._boundingBox?.union(other._boundingBox) ?? other._boundingBox.clone()
     return this
   }
 
