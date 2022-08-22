@@ -71,8 +71,8 @@ export class RenderScene {
 
     // Recompute bounding box
     this._boundingBox = this._boundingBox
-      ? this._boundingBox.union(scene.boundingBox)
-      : scene.boundingBox.clone()
+      ? this._boundingBox.union(scene.getBoundingBox())
+      : scene.getBoundingBox()
   }
 
   private removeScene (scene: Scene) {
@@ -88,7 +88,7 @@ export class RenderScene {
     this._boundingBox =
       this._scenes.length > 0
         ? this._scenes
-          .map((s) => s.boundingBox.clone())
+          .map((s) => s.getBoundingBox())
           .reduce((b1, b2) => b1.union(b2))
         : undefined
   }
