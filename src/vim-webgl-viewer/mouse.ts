@@ -25,6 +25,9 @@ export class MouseHandler extends InputHandler {
     return this._mode
   }
 
+  /**
+   * Changes mouse interaction mode. Look mode will set camera orbitMode to false.
+   */
   set mode (value: Mode) {
     this.camera.orbitMode = value !== 'look'
     this._mode = value
