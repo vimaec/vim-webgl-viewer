@@ -46,15 +46,29 @@ export class Selection {
     return this._objects.values()
   }
 
-  getBoundingBox () {
+  /**
+   * Returns the bounding box of the selection or undefined if no selection.
+   * @param target box to use for result.
+   */
+  getBoundingBox (
+    target: THREE.Box3 = new THREE.Box3()
+  ): THREE.Box3 | undefined {
     if (this._objects.size === 0) return
-    let box: THREE.Box3 | undefined
+    let initialized = false
     for (const o of this._objects) {
       const other = o.getBoundingBox()
       if (!other) continue
-      box = box ? box.union(other) : other
+      if (!initialized) {
+        target.copy(other)
+      } else {
+        target.union(other)
+      }
+      initialized = true
     }
-    return box
+    if (!initialized) {
+      return
+    }
+    return target
   }
 
   /**
