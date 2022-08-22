@@ -98,7 +98,7 @@ export interface ICamera {
    * if center is true -> camera.y = target.y
    */
   frame(
-    target: Object | THREE.Sphere | 'all',
+    target: Object | THREE.Sphere | THREE.Box3 | 'all',
     angle?: FrameAngle,
     duration?: number
   ): void
@@ -260,20 +260,22 @@ export class Camera implements ICamera {
   }
 
   frame (
-    target: Object | THREE.Sphere | 'all',
+    target: Object | THREE.Sphere | THREE.Box3 | 'all',
     center: FrameAngle = 'none',
     duration: number = 0
   ) {
-    const sphere =
-      target === 'all'
-        ? this._scene.getBoundingSphere()
-        : target instanceof Object
-          ? target.getBoundingSphere()
-          : target instanceof THREE.Sphere
-            ? target
-            : undefined
-
-    this.frameSphere(sphere, center, duration)
+    if (target instanceof Object) {
+      target = target.getBoundingBox()
+    }
+    if (target === 'all') {
+      target = this._scene.getBoundingBox()
+    }
+    if (target instanceof THREE.Box3) {
+      target = target.getBoundingSphere(new THREE.Sphere())
+    }
+    if (target instanceof THREE.Sphere) {
+      this.frameSphere(target, center, duration)
+    }
   }
 
   applySettings (settings: ViewerSettings) {
