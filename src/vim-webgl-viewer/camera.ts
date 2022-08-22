@@ -164,7 +164,7 @@ export class Camera implements ICamera {
     this._scene = scene
     this._viewport = viewport
     this._viewport.onResize(() => {
-      this.updateProjection(this._scene.getBoundingSphere())
+      this.updateProjection(this._scene.getBoundingBox())
     })
     this.applySettings(settings)
 
@@ -304,7 +304,10 @@ export class Camera implements ICamera {
    * Adapts camera speed to be faster for large model and slower for small models.
    */
   adaptToContent () {
-    const sphere = this._scene.getBoundingSphere()
+    const sphere = this._scene
+      .getBoundingBox()
+      .getBoundingSphere(new THREE.Sphere())
+
     this._sceneSizeMultiplier = sphere
       ? sphere.radius / this._vimReferenceSize
       : 1
@@ -323,7 +326,9 @@ export class Camera implements ICamera {
    * @param amount movement size.
    */
   zoom (amount: number, duration: number = 0) {
-    const sphere = this._scene.getBoundingSphere()
+    const sphere = this._scene
+      .getBoundingBox()
+      .getBoundingSphere(new THREE.Sphere())
 
     if (this.camera instanceof THREE.PerspectiveCamera) {
       const reverse = 1 / (1 - this._zoomSpeed) - 1
@@ -510,16 +515,19 @@ export class Camera implements ICamera {
     this.camera.up.set(0, 1, 0)
   }
 
-  private updateProjection (sphere?: THREE.Sphere) {
+  private updateProjection (target: THREE.Sphere | THREE.Box3) {
+    if (target instanceof THREE.Box3) {
+      target = target.getBoundingSphere(new THREE.Sphere())
+    }
     const aspect = this._viewport.getAspectRatio()
     if (this.camera instanceof THREE.PerspectiveCamera) {
       this.camera.aspect = aspect
     } else {
-      if (sphere) {
-        this.camera.left = -sphere.radius * aspect
-        this.camera.right = sphere.radius * aspect
-        this.camera.top = sphere.radius
-        this.camera.bottom = -sphere.radius
+      if (target) {
+        this.camera.left = -target.radius * aspect
+        this.camera.right = target.radius * aspect
+        this.camera.top = target.radius
+        this.camera.bottom = -target.radius
       }
 
       this.camera.near = -this.cameraPerspective.far
@@ -545,7 +553,7 @@ export class Camera implements ICamera {
     next.rotation.copy(this.camera.rotation)
     this.camera = next
 
-    this.updateProjection(this._scene.getBoundingSphere())
+    this.updateProjection(this._scene.getBoundingBox())
   }
 
   private getBaseMultiplier () {

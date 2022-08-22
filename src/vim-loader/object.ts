@@ -116,14 +116,6 @@ export class Object {
   }
 
   /**
-   * returns the bounding sphere of the object from cache or computed if needed.
-   * Returns undefined if object has no geometry.
-   */
-  getBoundingSphere (target: THREE.Sphere = new THREE.Sphere()) {
-    return this.getBoundingBox()?.getBoundingSphere(target)
-  }
-
-  /**
    * Creates a new three wireframe Line object from the object geometry
    */
   createWireframe () {

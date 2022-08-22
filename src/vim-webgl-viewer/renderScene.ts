@@ -13,17 +13,6 @@ export class RenderScene {
   }
 
   /**
-   * Returns the bounding sphere encompasing all rendererd objects.
-   * @param target sphere in which to copy result, a new instance is created if undefined.
-   */
-  getBoundingSphere (target: THREE.Sphere = new THREE.Sphere()) {
-    return (
-      this._boundingBox?.getBoundingSphere(target) ??
-      target.set(new THREE.Vector3(0, 0, 0), 1)
-    )
-  }
-
-  /**
    * Returns the bounding box encompasing all rendererd objects.
    * @param target box in which to copy result, a new instance is created if undefined.
    */

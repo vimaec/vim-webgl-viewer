@@ -182,10 +182,11 @@ export class KeyboardHandler extends InputHandler {
         case KEYS.KEY_Z:
         case KEYS.KEY_F:
           if (this.selection.count > 0) {
-            const sphere = this.selection
-              .getBoundingBox()
-              .getBoundingSphere(new THREE.Sphere())
-            this.camera.frame(sphere, 'center', this.camera.defaultLerpDuration)
+            this.camera.frame(
+              this.selection.getBoundingBox(),
+              'center',
+              this.camera.defaultLerpDuration
+            )
           } else {
             this.camera.frame('all', 'center', this.camera.defaultLerpDuration)
           }

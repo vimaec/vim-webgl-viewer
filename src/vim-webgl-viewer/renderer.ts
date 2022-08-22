@@ -106,14 +106,6 @@ export class Renderer {
   }
 
   /**
-   * Returns the bounding sphere encompasing all rendererd objects.
-   * @param target sphere in which to copy result, a new instance is created if undefined.
-   */
-  getBoundingSphere (target: THREE.Sphere = new THREE.Sphere()) {
-    return this.scene.getBoundingSphere(target)
-  }
-
-  /**
    * Returns the bounding box encompasing all rendererd objects.
    * @param target box in which to copy result, a new instance is created if undefined.
    */
