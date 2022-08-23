@@ -6,7 +6,7 @@ import * as THREE from 'three'
 import { InputHandler } from './inputHandler'
 import { InputAction } from './raycaster'
 
-type Mode = 'normal' | 'orbit' | 'look' | 'pan' | 'dolly' | 'zone'
+export type PointerMode = 'normal' | 'orbit' | 'look' | 'pan' | 'dolly' | 'zone'
 /**
  * Manages mouse user inputs
  */
@@ -22,7 +22,7 @@ export class MouseHandler extends InputHandler {
   private _lastPosition: THREE.Vector2
   private _downPosition: THREE.Vector2
 
-  private _mode: Mode = 'normal'
+  private _mode: PointerMode = 'normal'
 
   get mode () {
     return this._mode
@@ -31,7 +31,7 @@ export class MouseHandler extends InputHandler {
   /**
    * Changes mouse interaction mode. Look mode will set camera orbitMode to false.
    */
-  set mode (value: Mode) {
+  set mode (value: PointerMode) {
     this.camera.orbitMode = value !== 'look'
     this._mode = value
   }
