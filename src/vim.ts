@@ -2,7 +2,7 @@
 export * as THREE from 'three'
 
 export * from './vim-webgl-viewer/viewer'
-export { PointerMode } from './vim-webgl-viewer/mouse'
+export type { PointerMode } from './vim-webgl-viewer/mouse'
 export * from './vim-webgl-viewer/viewerSettings'
 export { RaycastResult as HitTestResult } from './vim-webgl-viewer/raycaster'
 
