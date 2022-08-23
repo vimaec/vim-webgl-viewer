@@ -6,18 +6,21 @@ import * as THREE from 'three'
 import { InputHandler } from './inputHandler'
 import { InputAction } from './raycaster'
 
-type Mode = 'normal' | 'orbit' | 'look' | 'pan' | 'dolly'
+type Mode = 'normal' | 'orbit' | 'look' | 'pan' | 'dolly' | 'zone'
 /**
  * Manages mouse user inputs
  */
 export class MouseHandler extends InputHandler {
+  private readonly _idleDelayMs = 200
+
   // State
   private isMouseDown: Boolean = false
   private hasMouseMoved: Boolean = false
 
   private _idleTimeout: number
-  private _idleDelayMs = 200
+
   private _lastPosition: THREE.Vector2
+  private _downPosition: THREE.Vector2
 
   private _mode: Mode = 'normal'
 
@@ -68,6 +71,9 @@ export class MouseHandler extends InputHandler {
 
   override reset = () => {
     this.isMouseDown = this.hasMouseMoved = false
+    this._lastPosition = this._downPosition = undefined
+    this.mode = 'normal'
+    clearTimeout(this._idleTimeout)
   }
 
   private resetIdleTimeout () {
@@ -137,6 +143,9 @@ export class MouseHandler extends InputHandler {
       case 'dolly':
         this.camera.move1(delta.y, 'Z')
         break
+      case 'zone':
+        this.drawSelection()
+        break
       default:
         this.camera.rotate(delta)
     }
@@ -170,6 +179,7 @@ export class MouseHandler extends InputHandler {
 
   private onMouseDown = (event: any) => {
     event.preventDefault()
+    this._downPosition = new THREE.Vector2(event.offsetX, event.offsetY)
     this.isMouseDown = true
     this.hasMouseMoved = false
 
@@ -179,7 +189,14 @@ export class MouseHandler extends InputHandler {
   }
 
   private onMouseUp = (event: any) => {
-    if (event.button === 0 && this.isMouseDown && !this.hasMouseMoved) {
+    this._viewer.gizmoSelection.visible = false
+    if (this.mode === 'zone' && this.hasMouseMoved) {
+      this._viewer.camera.frame(
+        this._viewer.gizmoSelection.getBoundingBox(),
+        'none',
+        this._viewer.camera.defaultLerpDuration
+      )
+    } else if (event.button === 0 && this.isMouseDown && !this.hasMouseMoved) {
       this.onMouseClick(new THREE.Vector2(event.offsetX, event.offsetY), false)
     }
     this.isMouseDown = false
@@ -208,5 +225,10 @@ export class MouseHandler extends InputHandler {
       : this.keyboard.isShiftPressed
         ? 'shift'
         : 'none'
+  }
+
+  private drawSelection () {
+    this._viewer.gizmoSelection.visible = true
+    this._viewer.gizmoSelection.update(this._downPosition, this._lastPosition)
   }
 }

@@ -123,18 +123,37 @@ export class Raycaster {
   /**
    * Raycast projecting a ray from camera position to screen position
    */
-  sceneRaycast (position: THREE.Vector2) {
-    let intersections = this.raycast(position)
-
-    if (this._renderer.section.active) {
-      intersections = intersections.filter((i) =>
-        this._renderer.section.box.containsPoint(i.point)
-      )
-    }
-    return new RaycastResult(intersections)
+  raycast2 (position: THREE.Vector2) {
+    this._raycaster = this.fromPoint2(position, this._raycaster)
+    let hits = this._raycaster.intersectObjects(this._scene.scene.children)
+    hits = this.filterHits(hits)
+    return new RaycastResult(hits)
   }
 
-  fromPoint (
+  private filterHits (hits: ThreeIntersectionList) {
+    return this._renderer.section.active
+      ? hits.filter((i) => this._renderer.section.box.containsPoint(i.point))
+      : hits
+  }
+
+  /**
+   * Raycast projecting a ray from camera position to world position
+   */
+  raycast3 (position: THREE.Vector3) {
+    this._raycaster = this.fromPoint3(position, this._raycaster)
+    let hits = this._raycaster.intersectObjects(this._scene.scene.children)
+    hits = this.filterHits(hits)
+    return new RaycastResult(hits)
+  }
+
+  /**
+   * Raycast projecting a ray from camera center
+   */
+  raycastForward () {
+    return this.raycast3(this._camera.orbitPosition)
+  }
+
+  fromPoint2 (
     position: THREE.Vector2,
     target: THREE.Raycaster = new THREE.Raycaster()
   ) {
@@ -145,9 +164,17 @@ export class Raycaster {
     return target
   }
 
-  private raycast (position: THREE.Vector2): ThreeIntersectionList {
-    this._raycaster = this.fromPoint(position, this._raycaster)
-    return this._raycaster.intersectObjects(this._scene.scene.children)
+  fromPoint3 (
+    position: THREE.Vector3,
+    target: THREE.Raycaster = new THREE.Raycaster()
+  ) {
+    const direction = position
+      .clone()
+      .sub(this._camera.camera.position)
+      .normalize()
+
+    target.set(this._camera.camera.position, direction)
+    return target
   }
 }
 type ActionModifier = 'none' | 'shift' | 'ctrl'
@@ -173,8 +200,7 @@ export class InputAction {
   private _raycast: RaycastResult
   get raycast () {
     return (
-      this._raycast ??
-      (this._raycast = this._raycaster.sceneRaycast(this.position))
+      this._raycast ?? (this._raycast = this._raycaster.raycast2(this.position))
     )
   }
 

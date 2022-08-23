@@ -279,7 +279,7 @@ class BoxInputs {
   }
 
   onDrag (event: any) {
-    this.raycaster = this.viewer.raycaster.fromPoint(
+    this.raycaster = this.viewer.raycaster.fromPoint2(
       new THREE.Vector2(event.offsetX, event.offsetY),
       this.raycaster
     )
@@ -321,7 +321,7 @@ class BoxInputs {
   }
 
   raycast (position: THREE.Vector2) {
-    this.raycaster = this.viewer.raycaster.fromPoint(position, this.raycaster)
+    this.raycaster = this.viewer.raycaster.fromPoint2(position, this.raycaster)
     return this.raycaster.intersectObject(this.cube)
   }
 }

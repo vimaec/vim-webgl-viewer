@@ -17,6 +17,7 @@ import { Viewport } from './viewport'
 import { GizmoAxes } from './gizmoAxes'
 import { GizmoSection } from './gizmoSection'
 import { GizmoMeasure } from './gizmoMeasure'
+import { GizmoSelection } from './gizmoSelection'
 
 // loader
 import { VimSettings, VimOptions } from '../vim-loader/vimSettings'
@@ -71,6 +72,8 @@ export class Viewer {
    * Interface to interact with the section gizmo.
    */
   gizmoMeasure: GizmoMeasure
+
+  gizmoSelection: GizmoSelection
 
   /**
    * Interface to manipulate the viewer camera.
@@ -132,6 +135,7 @@ export class Viewer {
     this.viewport.canvas.parentElement?.prepend(this._gizmoAxes.canvas)
 
     this.gizmoSection = new GizmoSection(this)
+    this.gizmoSelection = new GizmoSelection(this)
 
     this._environment = new Environment(this.settings)
     this._environment.getObjects().forEach((o) => this.renderer.add(o))
@@ -165,6 +169,7 @@ export class Viewer {
     this.inputs.unregisterAll()
     this._vims.forEach((v) => v?.dispose())
     this._materials.dispose()
+    this.gizmoSelection.dispose()
     this._disposed = true
   }
 

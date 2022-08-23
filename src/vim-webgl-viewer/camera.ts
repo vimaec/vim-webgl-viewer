@@ -103,7 +103,8 @@ export interface ICamera {
     duration?: number
   ): void
 
-  forward: THREE.Vector3
+  get forward(): THREE.Vector3
+  get orbitPosition(): THREE.Vector3
 
   onChanged: () => void | undefined
 }
@@ -209,6 +210,10 @@ export class Camera implements ICamera {
 
   get forward () {
     return this.camera.getWorldDirection(new THREE.Vector3())
+  }
+
+  get orbitPosition () {
+    return this._orbitTarget
   }
 
   /**
