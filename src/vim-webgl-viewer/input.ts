@@ -8,6 +8,8 @@ import { TouchHandler } from './touch'
 import { MouseHandler } from './mouse'
 import { InputAction } from './raycaster'
 
+export type PointerMode = 'normal' | 'orbit' | 'look' | 'pan' | 'dolly' | 'zone'
+
 /**
  * Manages and registers all viewer user inputs for mouse, keyboard and touch
  */
@@ -27,6 +29,27 @@ export class Input {
    * Keyboard input handler
    */
   keyboard: KeyboardHandler
+
+  private _mode: PointerMode
+
+  get pointerMode () {
+    return this._mode
+  }
+
+  /**
+   * Changes pointer interaction mode. Look mode will set camera orbitMode to false.
+   */
+  set pointerMode (value: PointerMode) {
+    if (value === this._mode) return
+    this._viewer.camera.orbitMode = value !== 'look'
+    this._mode = value
+    this.onPointerModeChanged?.()
+  }
+
+  /**
+   * Callback when pointer interaction mode changes.
+   */
+  onPointerModeChanged: (() => void) | undefined
 
   /**
    * Callback for on mouse click. Replace it to override or combine

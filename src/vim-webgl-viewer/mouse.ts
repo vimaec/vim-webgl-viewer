@@ -6,7 +6,6 @@ import * as THREE from 'three'
 import { InputHandler } from './inputHandler'
 import { InputAction } from './raycaster'
 
-export type PointerMode = 'normal' | 'orbit' | 'look' | 'pan' | 'dolly' | 'zone'
 /**
  * Manages mouse user inputs
  */
@@ -22,20 +21,6 @@ export class MouseHandler extends InputHandler {
   private _lastPosition: THREE.Vector2
   private _downPosition: THREE.Vector2
 
-  private _mode: PointerMode = 'normal'
-
-  get mode () {
-    return this._mode
-  }
-
-  /**
-   * Changes mouse interaction mode. Look mode will set camera orbitMode to false.
-   */
-  set mode (value: PointerMode) {
-    this.camera.orbitMode = value !== 'look'
-    this._mode = value
-  }
-
   private get camera () {
     return this._viewer.camera
   }
@@ -50,6 +35,10 @@ export class MouseHandler extends InputHandler {
 
   private get raycaster () {
     return this._viewer.raycaster
+  }
+
+  private get inputs () {
+    return this._viewer.inputs
   }
 
   private get keyboard () {
@@ -72,7 +61,6 @@ export class MouseHandler extends InputHandler {
   override reset = () => {
     this.isMouseDown = this.hasMouseMoved = false
     this._lastPosition = this._downPosition = undefined
-    this.mode = 'normal'
     clearTimeout(this._idleTimeout)
   }
 
@@ -127,7 +115,7 @@ export class MouseHandler extends InputHandler {
   }
 
   private onMouseMainDrag (delta: THREE.Vector2) {
-    switch (this._mode) {
+    switch (this.inputs.pointerMode) {
       case 'normal':
         this.camera.rotate(delta)
         break
@@ -152,7 +140,7 @@ export class MouseHandler extends InputHandler {
   }
 
   private onMouseSecondaryDrag (delta: THREE.Vector2) {
-    switch (this._mode) {
+    switch (this.inputs.pointerMode) {
       case 'normal':
         this.camera.move2(delta, 'XY')
         break
@@ -190,7 +178,8 @@ export class MouseHandler extends InputHandler {
 
   private onMouseUp = (event: any) => {
     this._viewer.gizmoSelection.visible = false
-    if (this.mode === 'zone' && this.hasMouseMoved) {
+    if (this.inputs.pointerMode === 'zone' && this.hasMouseMoved) {
+      this.inputs.pointerMode = 'normal'
       this._viewer.camera.frame(
         this._viewer.gizmoSelection.getBoundingBox(),
         'none',
