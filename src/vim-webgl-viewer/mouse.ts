@@ -178,18 +178,35 @@ export class MouseHandler extends InputHandler {
 
   private onMouseUp = (event: any) => {
     this._viewer.gizmoSelection.visible = false
-    if (this.inputs.pointerMode === 'zone' && this.hasMouseMoved) {
-      this.inputs.pointerMode = 'normal'
-      this._viewer.camera.frame(
-        this._viewer.gizmoSelection.getBoundingBox(),
-        'none',
-        this._viewer.camera.defaultLerpDuration
-      )
-    } else if (event.button === 0 && this.isMouseDown && !this.hasMouseMoved) {
+    event.preventDefault()
+    if (!this.isMouseDown) return
+
+    const position = new THREE.Vector2(event.offsetX, event.offsetY)
+    const dragged = this._downPosition.distanceTo(position) > 4
+    if (this.inputs.pointerMode === 'zone' && dragged) {
+      this.onRectEnd()
+    } else if (event.button === 0 && !dragged) {
       this.onMouseClick(new THREE.Vector2(event.offsetX, event.offsetY), false)
     }
     this.isMouseDown = false
-    event.preventDefault()
+  }
+
+  private onRectEnd () {
+    this.inputs.pointerMode = 'normal'
+
+    // Shrink box for better camera fit.
+    const box = this._viewer.gizmoSelection.getBoundingBox()
+    const center = box.getCenter(new THREE.Vector3())
+    const size = box.getSize(new THREE.Vector3())
+    size.multiplyScalar(0.5)
+    box.setFromCenterAndSize(center, size)
+
+    // Frame Camera
+    this._viewer.camera.frame(
+      box,
+      'none',
+      this._viewer.camera.defaultLerpDuration
+    )
   }
 
   private onDoubleClick = (event: any) => {

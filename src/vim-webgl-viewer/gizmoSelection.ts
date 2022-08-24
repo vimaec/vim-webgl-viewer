@@ -116,10 +116,10 @@ export class GizmoSelection {
    * |  X  |
    * X-----X
    */
-  getBoundingBox () {
+  getBoundingBox (target: THREE.Box3 = new THREE.Box3()) {
     const position = this.getClosestHit()
     const projections = position ? this.projectPoints(position) : this.points
-    return new THREE.Box3().setFromPoints(projections)
+    return target.setFromPoints(projections)
   }
 
   /**
