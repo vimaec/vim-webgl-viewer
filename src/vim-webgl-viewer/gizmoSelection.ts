@@ -34,6 +34,7 @@ export class GizmoSelection {
 
     this.line = new THREE.LineSegments(geo, mat)
     this.line.name = 'GizmoSelection'
+    this.line.visible = false
     this.viewer.renderer.add(this.line)
   }
 
