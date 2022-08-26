@@ -167,7 +167,7 @@ export class KeyboardHandler extends InputHandler {
           break
         case KEYS.KEY_F8:
         case KEYS.KEY_SPACE:
-          this.camera.orbitMode = !this.camera.orbitMode
+          this._viewer.inputs.pointerMode = this._viewer.inputs.altPointerMode
           event.preventDefault()
           break
         case KEYS.KEY_HOME:

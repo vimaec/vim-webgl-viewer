@@ -8,7 +8,7 @@ import { TouchHandler } from './touch'
 import { MouseHandler } from './mouse'
 import { InputAction } from './raycaster'
 
-export type PointerMode = 'normal' | 'orbit' | 'look' | 'pan' | 'dolly' | 'zone'
+export type PointerMode = 'orbit' | 'look' | 'pan' | 'dolly' | 'zone'
 
 /**
  * Manages and registers all viewer user inputs for mouse, keyboard and touch
@@ -31,7 +31,18 @@ export class Input {
   keyboard: KeyboardHandler
 
   private _mode: PointerMode
+  private _altMode: PointerMode
 
+  /**
+   * Returns the last main mode (orbit, look) that was active.
+   */
+  get altPointerMode () {
+    return this._altMode
+  }
+
+  /**
+   * Returns current pointer mode.
+   */
   get pointerMode () {
     return this._mode
   }
@@ -41,6 +52,11 @@ export class Input {
    */
   set pointerMode (value: PointerMode) {
     if (value === this._mode) return
+    this._altMode =
+      this._mode === 'orbit' || this._mode === 'look'
+        ? this._mode
+        : this._altMode
+
     this._viewer.camera.orbitMode = value !== 'look'
     this._mode = value
     this.onPointerModeChanged?.()
@@ -70,6 +86,8 @@ export class Input {
     this.mouse = new MouseHandler(viewer)
     this.touch = new TouchHandler(viewer)
     this.onMainAction = this.defaultAction
+    this.pointerMode = 'orbit'
+    this._altMode = 'look'
   }
 
   /**

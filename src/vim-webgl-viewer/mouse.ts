@@ -116,9 +116,6 @@ export class MouseHandler extends InputHandler {
 
   private onMouseMainDrag (delta: THREE.Vector2) {
     switch (this.inputs.pointerMode) {
-      case 'normal':
-        this.camera.rotate(delta)
-        break
       case 'orbit':
         this.camera.rotate(delta)
         break
@@ -140,13 +137,7 @@ export class MouseHandler extends InputHandler {
   }
 
   private onMouseSecondaryDrag (delta: THREE.Vector2) {
-    switch (this.inputs.pointerMode) {
-      case 'normal':
-        this.camera.move2(delta, 'XY')
-        break
-      default:
-        this.onMouseMainDrag(delta)
-    }
+    this.camera.move2(delta, 'XY')
   }
 
   private onMouseWheel = (event: any) => {
@@ -192,8 +183,6 @@ export class MouseHandler extends InputHandler {
   }
 
   private onRectEnd () {
-    this.inputs.pointerMode = 'normal'
-
     // Shrink box for better camera fit.
     const box = this._viewer.gizmoSelection.getBoundingBox()
     const center = box.getCenter(new THREE.Vector3())
