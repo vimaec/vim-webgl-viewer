@@ -52,8 +52,10 @@ export class Input {
    */
   set pointerMode (value: PointerMode) {
     if (value === this._mode) return
+
     if (value === 'look') this._altMode = 'orbit'
-    if (value === 'orbit') this._altMode = 'look'
+    else if (value === 'orbit') this._altMode = 'look'
+    else this._altMode = this._mode
 
     this._viewer.camera.orbitMode = value !== 'look'
     this._mode = value
