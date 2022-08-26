@@ -246,7 +246,7 @@ export class Viewer {
     if (buffer instanceof RemoteBuffer) buffer.logger.onUpdate = undefined
 
     this.onVimLoaded(vim)
-    this.camera.frame('all', 'center')
+    this.camera.frame('all', 45)
     return vim
   }
 
