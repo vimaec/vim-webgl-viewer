@@ -3,7 +3,7 @@
  */
 
 import { Viewer } from './viewer'
-import { KeyboardHandler } from './keyboard'
+import { KeyboardHandler, KEYS } from './keyboard'
 import { TouchHandler } from './touch'
 import { MouseHandler } from './mouse'
 import { InputAction } from './raycaster'
@@ -79,6 +79,12 @@ export class Input {
    */
   onIdleAction: ((hit: InputAction) => void) | undefined
 
+  /**
+   * Callback when mouse and camera have been idle for some time.
+   * default behaviour with your custom logic.
+   */
+  onKeyAction: ((key: number) => boolean) | undefined
+
   constructor (viewer: Viewer) {
     this._viewer = viewer
 
@@ -86,6 +92,7 @@ export class Input {
     this.mouse = new MouseHandler(viewer)
     this.touch = new TouchHandler(viewer)
     this.onMainAction = this.defaultAction
+    this.onKeyAction = this.defaultKeyAction
     this.pointerMode = 'orbit'
     this._altMode = 'look'
   }
@@ -146,5 +153,48 @@ export class Input {
       e?.set('Index', action.object?.element)
       console.log(e)
     })
+  }
+
+  defaultKeyAction (key: number) {
+    const camera = this._viewer.camera
+    const selection = this._viewer.selection
+    switch (key) {
+      case KEYS.KEY_O:
+        camera.orthographic = !camera.orthographic
+        return true
+      case KEYS.KEY_ADD:
+      case KEYS.KEY_OEM_PLUS:
+        camera.speed += 1
+        return true
+      case KEYS.KEY_SUBTRACT:
+      case KEYS.KEY_OEM_MINUS:
+        camera.speed -= 1
+        return true
+      case KEYS.KEY_F8:
+      case KEYS.KEY_SPACE:
+        this._viewer.inputs.pointerMode = this._viewer.inputs.altPointerMode
+        return true
+      case KEYS.KEY_HOME:
+        camera.frame('all', 45, camera.defaultLerpDuration)
+        return true
+      // Selection
+      case KEYS.KEY_ESCAPE:
+        selection.clear()
+        return true
+      case KEYS.KEY_Z:
+      case KEYS.KEY_F:
+        if (selection.count > 0) {
+          camera.frame(
+            selection.getBoundingBox(),
+            'center',
+            camera.defaultLerpDuration
+          )
+        } else {
+          camera.frame('all', 'center', camera.defaultLerpDuration)
+        }
+        return true
+      default:
+        return false
+    }
   }
 }

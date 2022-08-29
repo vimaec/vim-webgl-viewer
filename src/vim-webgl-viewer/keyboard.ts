@@ -95,6 +95,8 @@ export const KEYS = {
   KEY_Y: 89,
   KEY_Z: 90
 }
+const KeySet = new Set(Object.values(KEYS))
+
 /**
  * Manages keyboard user inputs
  */
@@ -148,50 +150,53 @@ export class KeyboardHandler extends InputHandler {
     this.onKey(event, true)
   }
 
+  private onActionKey (key: number) {
+    switch (key) {
+      case KEYS.KEY_O:
+        this.camera.orthographic = !this.camera.orthographic
+        return true
+      case KEYS.KEY_ADD:
+      case KEYS.KEY_OEM_PLUS:
+        this.camera.speed += 1
+        return true
+      case KEYS.KEY_SUBTRACT:
+      case KEYS.KEY_OEM_MINUS:
+        this.camera.speed -= 1
+        return true
+      case KEYS.KEY_F8:
+      case KEYS.KEY_SPACE:
+        this._viewer.inputs.pointerMode = this._viewer.inputs.altPointerMode
+        return true
+      case KEYS.KEY_HOME:
+        this.camera.frame('all', 45, this.camera.defaultLerpDuration)
+        event.preventDefault()
+        return true
+      // Selection
+      case KEYS.KEY_ESCAPE:
+        this.selection.clear()
+        return true
+      case KEYS.KEY_Z:
+      case KEYS.KEY_F:
+        if (this.selection.count > 0) {
+          this.camera.frame(
+            this.selection.getBoundingBox(),
+            'center',
+            this.camera.defaultLerpDuration
+          )
+        } else {
+          this.camera.frame('all', 'center', this.camera.defaultLerpDuration)
+        }
+        return true
+      default:
+        return false
+    }
+  }
+
   private onKey = (event: any, keyDown: boolean) => {
     // Buttons that activate once on key up
-    if (!keyDown) {
-      switch (event.keyCode) {
-        case KEYS.KEY_O:
-          this.camera.orthographic = !this.camera.orthographic
-          break
-        case KEYS.KEY_ADD:
-        case KEYS.KEY_OEM_PLUS:
-          this.camera.speed += 1
-          event.preventDefault()
-          break
-        case KEYS.KEY_SUBTRACT:
-        case KEYS.KEY_OEM_MINUS:
-          this.camera.speed -= 1
-          event.preventDefault()
-          break
-        case KEYS.KEY_F8:
-        case KEYS.KEY_SPACE:
-          this._viewer.inputs.pointerMode = this._viewer.inputs.altPointerMode
-          event.preventDefault()
-          break
-        case KEYS.KEY_HOME:
-          this.camera.frame('all', 45, this.camera.defaultLerpDuration)
-          event.preventDefault()
-          break
-        // Selection
-        case KEYS.KEY_ESCAPE:
-          this.selection.clear()
-          event.preventDefault()
-          break
-        case KEYS.KEY_Z:
-        case KEYS.KEY_F:
-          if (this.selection.count > 0) {
-            this.camera.frame(
-              this.selection.getBoundingBox(),
-              'center',
-              this.camera.defaultLerpDuration
-            )
-          } else {
-            this.camera.frame('all', 'center', this.camera.defaultLerpDuration)
-          }
-          event.preventDefault()
-          break
+    if (!keyDown && KeySet.has(event.keyCode)) {
+      if (this._viewer.inputs.onKeyAction?.(event.keyCode)) {
+        event.preventDefault()
       }
     }
 
