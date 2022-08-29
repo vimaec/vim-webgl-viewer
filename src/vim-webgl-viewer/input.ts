@@ -155,7 +155,7 @@ export class Input {
     })
   }
 
-  defaultKeyAction (key: number) {
+  defaultKeyAction = (key: number) => {
     const camera = this._viewer.camera
     const selection = this._viewer.selection
     switch (key) {
