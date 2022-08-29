@@ -111,6 +111,10 @@ export class Environment {
     this.applySettings(settings)
   }
 
+  loadGroundTexture (url: string) {
+    this._groundPlane.applyTexture(url)
+  }
+
   /**
    * Returns all three objects composing the environment
    */
