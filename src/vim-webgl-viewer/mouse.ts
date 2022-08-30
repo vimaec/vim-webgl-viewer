@@ -17,9 +17,6 @@ export class MouseHandler extends InputHandler {
   private hasMouseMoved: Boolean = false
 
   private _idleTimeout: number
-  private _contextMenuTimeout: ReturnType<typeof setTimeout>
-  private _contextMenuOpened: boolean
-
   private _lastPosition: THREE.Vector2
   private _downPosition: THREE.Vector2
 
@@ -115,10 +112,6 @@ export class MouseHandler extends InputHandler {
     } else {
       this.onMouseMainDrag(delta)
     }
-
-    if (this.hasMouseMoved) {
-      clearTimeout(this._contextMenuTimeout)
-    }
   }
 
   private onMouseMainDrag (delta: THREE.Vector2) {
@@ -172,16 +165,6 @@ export class MouseHandler extends InputHandler {
     // Manually set the focus since calling preventDefault above
     // prevents the browser from setting it automatically.
     this.viewport.canvas.focus()
-
-    this._contextMenuOpened = false
-    if (event.button === 2) {
-      this._contextMenuTimeout = setTimeout(() => {
-        this.inputs.onContextMenu?.(
-          new THREE.Vector2(event.clientX, event.clientY)
-        )
-        this._contextMenuOpened = true
-      }, 200)
-    }
   }
 
   private onMouseUp = (event: MouseEvent) => {
@@ -193,15 +176,10 @@ export class MouseHandler extends InputHandler {
       this.onRectEnd()
     } else if (event.button === 0 && !this.hasMouseMoved) {
       this.onMouseClick(new THREE.Vector2(event.offsetX, event.offsetY), false)
-    } else if (
-      event.button === 2 &&
-      !this.hasMouseMoved &&
-      !this._contextMenuOpened
-    ) {
+    } else if (event.button === 2 && !this.hasMouseMoved) {
       this.inputs.onContextMenu?.(
         new THREE.Vector2(event.clientX, event.clientY)
       )
-      clearTimeout(this._contextMenuTimeout)
     }
     this.isMouseDown = false
   }
