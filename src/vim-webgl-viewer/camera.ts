@@ -198,6 +198,7 @@ export class Camera implements ICamera {
 
   set speed (value: number) {
     this._speed = clamp(value, -25, 25)
+    this.onChanged?.()
   }
 
   get localVelocity () {
