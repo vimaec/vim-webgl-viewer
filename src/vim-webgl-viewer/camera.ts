@@ -396,7 +396,7 @@ export class Camera implements ICamera {
     } else {
       v.copy(vector)
       v.applyQuaternion(this.camera.quaternion)
-      v.multiplyScalar(this.getSpeedMultiplier() * this._moveSpeed)
+      v.multiplyScalar(this.getDistSpeedMultiplier() * this._moveSpeed)
     }
 
     this._orbitTarget.add(v)
@@ -566,13 +566,14 @@ export class Camera implements ICamera {
   }
 
   private getSpeedMultiplier () {
-    return (
-      this.getBaseMultiplier() *
-      // (dist / size) * (size / ref). Size gets canceled.
-      (this.orbitMode
-        ? this.orbitDistance / this._vimReferenceSize
-        : this._firstPersonSpeed)
-    )
+    return this.getBaseMultiplier() * this.getDistSpeedMultiplier()
+  }
+
+  private getDistSpeedMultiplier () {
+    // (dist / size) * (size / ref). Size gets canceled.
+    return this.orbitMode
+      ? this.orbitDistance / this._vimReferenceSize
+      : this._firstPersonSpeed
   }
 
   private clampY (
