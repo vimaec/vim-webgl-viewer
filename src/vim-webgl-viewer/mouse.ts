@@ -17,6 +17,8 @@ export class MouseHandler extends InputHandler {
   private hasMouseMoved: Boolean = false
 
   private _idleTimeout: number
+  private _contextMenuTimeout: ReturnType<typeof setTimeout>
+  private _contextMenuOpened: boolean
 
   private _lastPosition: THREE.Vector2
   private _downPosition: THREE.Vector2
@@ -104,13 +106,18 @@ export class MouseHandler extends InputHandler {
     const [width, height] = this.viewport.getSize()
     const delta = new THREE.Vector2(deltaX / width, deltaY / height)
 
+    const position = new THREE.Vector2(event.offsetX, event.offsetY)
     this.hasMouseMoved =
-      this.hasMouseMoved || Math.abs(deltaX) + Math.abs(deltaY) > 3
+      this.hasMouseMoved || this._downPosition.distanceTo(position) > 4
 
     if (event.buttons & 2 || event.buttons & 4) {
       this.onMouseSecondaryDrag(delta)
     } else {
       this.onMouseMainDrag(delta)
+    }
+
+    if (this.hasMouseMoved) {
+      clearTimeout(this._contextMenuTimeout)
     }
   }
 
@@ -156,7 +163,7 @@ export class MouseHandler extends InputHandler {
     }
   }
 
-  private onMouseDown = (event: any) => {
+  private onMouseDown = (event: MouseEvent) => {
     event.preventDefault()
     this._downPosition = new THREE.Vector2(event.offsetX, event.offsetY)
     this.isMouseDown = true
@@ -165,19 +172,32 @@ export class MouseHandler extends InputHandler {
     // Manually set the focus since calling preventDefault above
     // prevents the browser from setting it automatically.
     this.viewport.canvas.focus()
+
+    this._contextMenuOpened = false
+    if (event.button === 2) {
+      this._contextMenuTimeout = setTimeout(() => {
+        this.inputs.onContextMenu?.()
+        this._contextMenuOpened = true
+      }, 200)
+    }
   }
 
-  private onMouseUp = (event: any) => {
+  private onMouseUp = (event: MouseEvent) => {
     this._viewer.gizmoSelection.visible = false
     event.preventDefault()
     if (!this.isMouseDown) return
 
-    const position = new THREE.Vector2(event.offsetX, event.offsetY)
-    const dragged = this._downPosition.distanceTo(position) > 4
-    if (this.inputs.pointerMode === 'zone' && dragged) {
+    if (this.inputs.pointerMode === 'zone' && this.hasMouseMoved) {
       this.onRectEnd()
-    } else if (event.button === 0 && !dragged) {
+    } else if (event.button === 0 && !this.hasMouseMoved) {
       this.onMouseClick(new THREE.Vector2(event.offsetX, event.offsetY), false)
+    } else if (
+      event.button === 2 &&
+      !this.hasMouseMoved &&
+      !this._contextMenuOpened
+    ) {
+      this.inputs.onContextMenu?.()
+      clearTimeout(this._contextMenuTimeout)
     }
     this.isMouseDown = false
   }

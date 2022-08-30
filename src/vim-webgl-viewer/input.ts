@@ -75,15 +75,18 @@ export class Input {
 
   /**
    * Callback when mouse and camera have been idle for some time.
-   * default behaviour with your custom logic.
    */
   onIdleAction: ((hit: InputAction) => void) | undefined
 
   /**
    * Callback when mouse and camera have been idle for some time.
-   * default behaviour with your custom logic.
    */
   onKeyAction: ((key: number) => boolean) | undefined
+
+  /**
+   * Callback when context menu could be displayed
+   */
+  onContextMenu: (() => void) | undefined = () => console.log('Context Menu')
 
   constructor (viewer: Viewer) {
     this._viewer = viewer
