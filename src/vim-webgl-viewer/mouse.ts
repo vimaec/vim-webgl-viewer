@@ -176,7 +176,9 @@ export class MouseHandler extends InputHandler {
     this._contextMenuOpened = false
     if (event.button === 2) {
       this._contextMenuTimeout = setTimeout(() => {
-        this.inputs.onContextMenu?.()
+        this.inputs.onContextMenu?.(
+          new THREE.Vector2(event.clientX, event.clientY)
+        )
         this._contextMenuOpened = true
       }, 200)
     }
@@ -196,7 +198,9 @@ export class MouseHandler extends InputHandler {
       !this.hasMouseMoved &&
       !this._contextMenuOpened
     ) {
-      this.inputs.onContextMenu?.()
+      this.inputs.onContextMenu?.(
+        new THREE.Vector2(event.clientX, event.clientY)
+      )
       clearTimeout(this._contextMenuTimeout)
     }
     this.isMouseDown = false

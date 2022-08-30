@@ -2,6 +2,7 @@
  * @module viw-webgl-viewer
  */
 
+import * as THREE from 'three'
 import { Viewer } from './viewer'
 import { KeyboardHandler, KEYS } from './keyboard'
 import { TouchHandler } from './touch'
@@ -86,7 +87,8 @@ export class Input {
   /**
    * Callback when context menu could be displayed
    */
-  onContextMenu: (() => void) | undefined = () => console.log('Context Menu')
+  onContextMenu: ((position: THREE.Vector2) => void) | undefined = () =>
+    console.log('Context Menu')
 
   constructor (viewer: Viewer) {
     this._viewer = viewer
