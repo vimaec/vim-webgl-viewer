@@ -23,7 +23,7 @@ export type ElementParameter = {
   isInstance: boolean
 }
 
-export type Header = {
+export type VimHeader = {
   vim: string
   id: string
   revision: string
@@ -103,7 +103,7 @@ const objectModel = {
 }
 
 export interface IDocument {
-  header: Header
+  header: VimHeader
   g3d: G3d
   /**
    * Returns all element indices of the vim
@@ -182,10 +182,10 @@ export interface IDocument {
 }
 
 export class DocumentNoBim implements IDocument {
-  header: Header
+  header: VimHeader
   g3d: G3d
 
-  constructor (header: Header, g3d: G3d) {
+  constructor (header: VimHeader, g3d: G3d) {
     this.header = header
     this.g3d = g3d
   }
@@ -240,7 +240,7 @@ export class DocumentNoBim implements IDocument {
 }
 
 export class Document implements IDocument {
-  header: Header
+  header: VimHeader
   g3d: G3d
   private _entities: BFast
   private _strings: string[] | undefined
@@ -251,7 +251,7 @@ export class Document implements IDocument {
   private _elementIdToElements: Map<number, number[]>
 
   private constructor (
-    header: Header,
+    header: VimHeader,
     g3d: G3d,
     entities: BFast,
     strings: string[] | undefined,
@@ -277,7 +277,7 @@ export class Document implements IDocument {
     bfast: BFast,
     streamG3d: boolean = false
   ): Promise<IDocument> {
-    let header: Header
+    let header: VimHeader
     let g3d: G3d
     let entity: BFast | undefined
     let strings: string[] | undefined
@@ -318,7 +318,7 @@ export class Document implements IDocument {
     )
   }
 
-  private static async requestHeader (bfast: BFast): Promise<Header> {
+  private static async requestHeader (bfast: BFast): Promise<VimHeader> {
     const header = await bfast.getBuffer(objectModel.header)
     const pairs = new TextDecoder('utf-8').decode(header).split('\n')
     const map = new Map(pairs.map((p) => p.split('=')).map((p) => [p[0], p[1]]))
