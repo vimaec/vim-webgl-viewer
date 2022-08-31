@@ -13,6 +13,7 @@ import { Object } from './object'
  * Dispenses Objects for high level scene manipulation
  */
 export class Vim {
+  source: string
   readonly document: IDocument
   index: number = -1
   settings: VimSettings

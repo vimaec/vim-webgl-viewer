@@ -232,7 +232,9 @@ export class Viewer {
   ) {
     let buffer: RemoteBuffer | ArrayBuffer
 
+    let url: string
     if (typeof source === 'string') {
+      url = source
       buffer = new RemoteBuffer(source)
       // Add progress listener
       buffer.logger.onUpdate = (log) => onProgress?.(log)
@@ -241,6 +243,7 @@ export class Viewer {
     const settings = new VimSettings(options)
     const bfast = new BFast(buffer, 0, 'vim')
     const vim = await this._loader.load(bfast, settings)
+    vim.source = url
 
     // Remove progress listener
     if (buffer instanceof RemoteBuffer) buffer.logger.onUpdate = undefined

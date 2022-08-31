@@ -23,7 +23,17 @@ export type ElementParameter = {
   isInstance: boolean
 }
 
+export type Header = {
+  vim: string
+  id: string
+  revision: string
+  generator: string
+  created: string
+  schema: string
+}
+
 const objectModel = {
+  header: 'header',
   entities: 'entities',
   nodes: {
     table: 'Vim.Node'
@@ -93,6 +103,7 @@ const objectModel = {
 }
 
 export interface IDocument {
+  header: Header
   g3d: G3d
   /**
    * Returns all element indices of the vim
@@ -171,9 +182,11 @@ export interface IDocument {
 }
 
 export class DocumentNoBim implements IDocument {
+  header: Header
   g3d: G3d
 
-  constructor (g3d: G3d) {
+  constructor (header: Header, g3d: G3d) {
+    this.header = header
     this.g3d = g3d
   }
 
@@ -227,6 +240,7 @@ export class DocumentNoBim implements IDocument {
 }
 
 export class Document implements IDocument {
+  header: Header
   g3d: G3d
   private _entities: BFast
   private _strings: string[] | undefined
@@ -237,6 +251,7 @@ export class Document implements IDocument {
   private _elementIdToElements: Map<number, number[]>
 
   private constructor (
+    header: Header,
     g3d: G3d,
     entities: BFast,
     strings: string[] | undefined,
@@ -245,6 +260,7 @@ export class Document implements IDocument {
     elementIds: number[],
     elementIdToElements: Map<number, number[]>
   ) {
+    this.header = header
     this.g3d = g3d
     this._entities = entities
     this._strings = strings
@@ -261,6 +277,7 @@ export class Document implements IDocument {
     bfast: BFast,
     streamG3d: boolean = false
   ): Promise<IDocument> {
+    let header: Header
     let g3d: G3d
     let entity: BFast | undefined
     let strings: string[] | undefined
@@ -269,6 +286,7 @@ export class Document implements IDocument {
     let elementIds: number[] | undefined
 
     await Promise.all([
+      Document.requestHeader(bfast).then((h) => (header = h)),
       Document.requestG3d(bfast, streamG3d).then((g) => (g3d = g)),
       Document.requestStrings(bfast).then((strs) => (strings = strs)),
       Document.requestEntities(bfast)
@@ -283,12 +301,13 @@ export class Document implements IDocument {
         )
     ])
     if (!entity) {
-      return new DocumentNoBim(g3d!)
+      return new DocumentNoBim(header, g3d!)
     }
 
     const elementToInstance = Document.invert(instanceToElement!)
     const elementIdToElements = Document.invert(elementIds!)
     return new Document(
+      header,
       g3d!,
       entity,
       strings,
@@ -297,6 +316,20 @@ export class Document implements IDocument {
       elementIds!,
       elementIdToElements
     )
+  }
+
+  private static async requestHeader (bfast: BFast): Promise<Header> {
+    const header = await bfast.getBuffer(objectModel.header)
+    const pairs = new TextDecoder('utf-8').decode(header).split('\n')
+    const map = new Map(pairs.map((p) => p.split('=')).map((p) => [p[0], p[1]]))
+    return {
+      vim: map.get('vim'),
+      id: map.get('id'),
+      revision: map.get('revision'),
+      generator: map.get('generator'),
+      created: map.get('created'),
+      schema: map.get('schema')
+    }
   }
 
   private static async requestG3d (bfast: BFast, streamG3d: boolean) {
