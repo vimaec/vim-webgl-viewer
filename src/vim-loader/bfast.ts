@@ -68,7 +68,7 @@ function typeConstructor (type: string): ArrayConstructor {
  * Bfast header, mainly for validation.
  * See https://github.com/vimaec/bfast
  */
-export class Header {
+export class BFastHeader {
   magic: number
   dataStart: number
   dataEnd: number
@@ -99,7 +99,7 @@ export class Header {
     this.numArrays = numArrays
   }
 
-  static createFromArray (array: Uint32Array): Header {
+  static createFromArray (array: Uint32Array): BFastHeader {
     // Check validity of data
     // TODO: check endianness
 
@@ -119,8 +119,8 @@ export class Header {
     return new this(array[0], array[2], array[4], array[6])
   }
 
-  static createFromBuffer (array: ArrayBuffer): Header {
-    return Header.createFromArray(new Uint32Array(array))
+  static createFromBuffer (array: ArrayBuffer): BFastHeader {
+    return BFastHeader.createFromArray(new Uint32Array(array))
   }
 }
 
@@ -134,7 +134,7 @@ export class BFast {
   source: RemoteBuffer | ArrayBuffer
   offset: number
   name: string
-  private _header: RemoteValue<Header>
+  private _header: RemoteValue<BFastHeader>
   private _ranges: RemoteValue<Map<string, Range>>
   private _children: Map<string, RemoteValue<BFast | undefined>>
 
@@ -346,7 +346,7 @@ export class BFast {
   private async requestHeader () {
     const buffer = await this.request(new Range(0, 32), 'Header')
     if (!buffer) throw new Error('Could not get BFAST Header')
-    const result = Header.createFromBuffer(buffer)
+    const result = BFastHeader.createFromBuffer(buffer)
     return result
   }
 
