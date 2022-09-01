@@ -195,6 +195,8 @@ export interface IDocument {
    * @returns An array of paramters with name, value, group
    */
   getElementParameters(element: number): Promise<ElementParameter[] | undefined>
+
+  getBimDocumentSummary(): Promise<BimDocumentInfo[] | undefined>
 }
 
 export class DocumentNoBim implements IDocument {
@@ -251,6 +253,10 @@ export class DocumentNoBim implements IDocument {
   }
 
   async getElementParameters (element: number) {
+    return undefined
+  }
+
+  getBimDocumentSummary () {
     return undefined
   }
 }
