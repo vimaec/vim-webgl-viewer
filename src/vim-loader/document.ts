@@ -16,6 +16,13 @@ export type ElementInfo = {
   documentTitle: string | undefined
 }
 
+export type BimDocumentInfo = {
+  title: string | undefined
+  version: string | undefined
+  author: string | undefined
+  date: string | undefined
+}
+
 export type ElementParameter = {
   name: string | undefined
   value: string | undefined
@@ -35,8 +42,29 @@ export type VimHeader = {
 const objectModel = {
   header: 'header',
   entities: 'entities',
-  nodes: {
-    table: 'Vim.Node'
+  bimDocument: {
+    table: 'Vim.BimDocument',
+    columns: {
+      title: 'string:Title',
+      version: 'string:Version',
+      author: 'string:Author',
+      date: 'string:IssueDate'
+    }
+  },
+  category: {
+    table: 'Vim.Category',
+    index: 'index:Vim.Category:Category',
+    columns: {
+      name: 'string:Name'
+    }
+  },
+  document: {
+    table: 'Vim.BimDocument',
+    index: 'index:Vim.BimDocument:BimDocument',
+    columns: {
+      name: 'string:Name',
+      title: 'string:Title'
+    }
   },
   element: {
     table: 'Vim.Element',
@@ -45,21 +73,6 @@ const objectModel = {
       name: 'string:Name',
       familyName: 'string:FamilyName',
       id: 'int:Id'
-    }
-  },
-  parameter: {
-    table: 'Vim.Parameter',
-    columns: {
-      value: 'string:Value'
-    }
-  },
-  parameterDescriptor: {
-    table: 'Vim.ParameterDescriptor',
-    index: 'index:Vim.ParameterDescriptor:ParameterDescriptor',
-    columns: {
-      name: 'string:Name',
-      group: 'string:Group',
-      isInstance: 'byte:IsInstance'
     }
   },
   familyInstance: {
@@ -78,11 +91,22 @@ const objectModel = {
     index: 'index:Vim.Family:Family',
     columns: {}
   },
-  category: {
-    table: 'Vim.Category',
-    index: 'index:Vim.Category:Category',
+  nodes: {
+    table: 'Vim.Node'
+  },
+  parameter: {
+    table: 'Vim.Parameter',
     columns: {
-      name: 'string:Name'
+      value: 'string:Value'
+    }
+  },
+  parameterDescriptor: {
+    table: 'Vim.ParameterDescriptor',
+    index: 'index:Vim.ParameterDescriptor:ParameterDescriptor',
+    columns: {
+      name: 'string:Name',
+      group: 'string:Group',
+      isInstance: 'byte:IsInstance'
     }
   },
   workset: {
@@ -90,14 +114,6 @@ const objectModel = {
     index: 'index:Vim.Workset:Workset',
     columns: {
       name: 'string:Name'
-    }
-  },
-  document: {
-    table: 'Vim.BimDocument',
-    index: 'index:Vim.BimDocument:BimDocument',
-    columns: {
-      name: 'string:Name',
-      title: 'string:Title'
     }
   }
 }
@@ -240,9 +256,9 @@ export class DocumentNoBim implements IDocument {
 }
 
 export class Document implements IDocument {
-  header: VimHeader
-  g3d: G3d
-  private _entities: BFast
+  readonly header: VimHeader
+  readonly g3d: G3d
+  readonly entities: BFast
   private _strings: string[] | undefined
 
   private _instanceToElement: number[]
@@ -262,7 +278,7 @@ export class Document implements IDocument {
   ) {
     this.header = header
     this.g3d = g3d
-    this._entities = entities
+    this.entities = entities
     this._strings = strings
     this._instanceToElement = instanceToElement
     this._elementToInstances = elementToInstances
@@ -443,7 +459,7 @@ export class Document implements IDocument {
    * @param field field name
    */
   async getElementValue (element: number, field: string) {
-    const elements = await this._entities.getBfast(objectModel.element.table)
+    const elements = await this.entities.getBfast(objectModel.element.table)
     if (!elements) return
     const value = await elements.getValue(field, element)
     return value
@@ -481,7 +497,7 @@ export class Document implements IDocument {
    * @param index row index
    */
   async getEntity (name: string, index: number) {
-    const elements = await this._entities.getBfast(name)
+    const elements = await this.entities.getBfast(name)
     const row = await elements?.getRow(index)
     if (!row) return
     this.resolveStrings(row)
@@ -494,9 +510,7 @@ export class Document implements IDocument {
 
   async getElementsSummary (elements?: number[]) {
     const set = elements ? new Set(elements) : undefined
-    const elementTable = await this._entities.getBfast(
-      objectModel.element.table
-    )
+    const elementTable = await this.entities.getBfast(objectModel.element.table)
 
     // Element
     const elementNameArray = await elementTable?.getArray(
@@ -516,7 +530,7 @@ export class Document implements IDocument {
     const elementCategoryArray = await elementTable?.getArray(
       objectModel.category.index
     )
-    const categoryTable = await this._entities.getBfast(
+    const categoryTable = await this.entities.getBfast(
       objectModel.category.table
     )
     const categoryNameArray = await categoryTable?.getArray(
@@ -529,7 +543,7 @@ export class Document implements IDocument {
     }
 
     // Family
-    const familyInstanceTable = await this._entities.getBfast(
+    const familyInstanceTable = await this.entities.getBfast(
       objectModel.familyInstance.table
     )
 
@@ -545,7 +559,7 @@ export class Document implements IDocument {
       objectModel.familyType.index
     )
 
-    const familyTypeTable = await this._entities.getBfast(
+    const familyTypeTable = await this.entities.getBfast(
       objectModel.familyType.table
     )
     const familyTypeElementArray = await familyTypeTable?.getArray(
@@ -567,9 +581,7 @@ export class Document implements IDocument {
     const elementWorksetArray = await elementTable?.getArray(
       objectModel.workset.index
     )
-    const worksetTable = await this._entities.getBfast(
-      objectModel.workset.table
-    )
+    const worksetTable = await this.entities.getBfast(objectModel.workset.table)
     const worksetNameArray = await worksetTable?.getArray(
       objectModel.workset.columns.name
     )
@@ -583,7 +595,7 @@ export class Document implements IDocument {
     const elementDocumentArray = await elementTable?.getArray(
       objectModel.document.index
     )
-    const documentTable = await this._entities.getBfast(
+    const documentTable = await this.entities.getBfast(
       objectModel.document.table
     )
     const documentTitleArray = await documentTable?.getArray(
@@ -658,7 +670,7 @@ export class Document implements IDocument {
 
   private async getElementsParameters (elements: number[], isInstance: boolean) {
     const set = new Set(elements)
-    const parameterTable = await this._entities.getBfast(
+    const parameterTable = await this.entities.getBfast(
       objectModel.parameter.table
     )
     const parameterElement = parameterTable
@@ -680,7 +692,7 @@ export class Document implements IDocument {
       ? await parameterTable.getArray(objectModel.parameterDescriptor.index)
       : undefined
 
-    const parameterDescriptor = await this._entities.getBfast(
+    const parameterDescriptor = await this.entities.getBfast(
       objectModel.parameterDescriptor.table
     )
 
@@ -726,7 +738,7 @@ export class Document implements IDocument {
   }
 
   private async getElementFamilyInstance (element: number) {
-    const familyInstanceTable = await this._entities.getBfast(
+    const familyInstanceTable = await this.entities.getBfast(
       objectModel.familyInstance.table
     )
     const familyInstanceElementArray = familyInstanceTable
@@ -743,7 +755,7 @@ export class Document implements IDocument {
   }
 
   private async getFamilyInstanceFamilyType (familyInstance: number) {
-    const familyInstanceTable = await this._entities.getBfast(
+    const familyInstanceTable = await this.entities.getBfast(
       objectModel.familyInstance.table
     )
 
@@ -756,7 +768,7 @@ export class Document implements IDocument {
   }
 
   private async getFamilyTypeFamily (familyType: number) {
-    const familyTypeTable = await this._entities.getBfast(
+    const familyTypeTable = await this.entities.getBfast(
       objectModel.familyType.table
     )
 
@@ -769,7 +781,7 @@ export class Document implements IDocument {
   }
 
   private async getFamiltyTypeElement (familyType: number) {
-    const familyTypeTable = await this._entities.getBfast(
+    const familyTypeTable = await this.entities.getBfast(
       objectModel.familyType.table
     )
 
@@ -781,8 +793,43 @@ export class Document implements IDocument {
     return result
   }
 
+  async getBimDocumentSummary () {
+    const documentTable = await this.entities.getBfast(
+      objectModel.bimDocument.table
+    )
+    const titles = (
+      await documentTable.getArray(objectModel.bimDocument.columns.title)
+    ).map((n) => this._strings[n])
+    const versions = (
+      await documentTable.getArray(objectModel.bimDocument.columns.version)
+    ).map((n) => this._strings[n])
+    const authors = (
+      await documentTable.getArray(objectModel.bimDocument.columns.author)
+    ).map((n) => this._strings[n])
+    const dates = (
+      await documentTable.getArray(objectModel.bimDocument.columns.date)
+    ).map((n) => this._strings[n])
+
+    const max = Math.max(
+      titles.length,
+      versions.length,
+      authors.length,
+      dates.length
+    )
+    const summary: BimDocumentInfo[] = []
+    for (let i = 0; i < max; i++) {
+      summary.push({
+        title: titles[i],
+        version: versions[i],
+        author: authors[i],
+        date: dates[i]
+      })
+    }
+    return summary
+  }
+
   private async getFamilyElement (family: number) {
-    const familyTable = await this._entities.getBfast(objectModel.family.table)
+    const familyTable = await this.entities.getBfast(objectModel.family.table)
     const result = await familyTable?.getValue(
       objectModel.element.index,
       family
