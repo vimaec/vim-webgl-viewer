@@ -8,7 +8,7 @@ import { KeyboardHandler, KEYS } from './keyboard'
 import { TouchHandler } from './touch'
 import { MouseHandler } from './mouse'
 import { InputAction } from './raycaster'
-import { SignalDispatcher } from 'ste-signals'
+import { ISignal, SignalDispatcher } from 'ste-signals'
 
 export type PointerMode = 'orbit' | 'look' | 'pan' | 'dolly' | 'zone'
 
@@ -67,9 +67,9 @@ export class Input {
   /**
    * Event called when pointer interaction mode changes.
    */
-  private _onPointerModeChanged: SignalDispatcher
+  private _onPointerModeChanged = new SignalDispatcher()
   get onPointerModeChanged () {
-    return this._onPointerModeChanged.asEvent()
+    return this._onPointerModeChanged.asEvent() as ISignal
   }
 
   /**
