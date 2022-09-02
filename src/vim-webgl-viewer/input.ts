@@ -8,6 +8,7 @@ import { KeyboardHandler, KEYS } from './keyboard'
 import { TouchHandler } from './touch'
 import { MouseHandler } from './mouse'
 import { InputAction } from './raycaster'
+import { SignalDispatcher } from 'ste-signals'
 
 export type PointerMode = 'orbit' | 'look' | 'pan' | 'dolly' | 'zone'
 
@@ -60,13 +61,16 @@ export class Input {
 
     this._viewer.camera.orbitMode = value !== 'look'
     this._mode = value
-    this.onPointerModeChanged?.()
+    this._onPointerModeChanged.dispatch()
   }
 
   /**
-   * Callback when pointer interaction mode changes.
+   * Event called when pointer interaction mode changes.
    */
-  onPointerModeChanged: (() => void) | undefined
+  private _onPointerModeChanged: SignalDispatcher
+  get onPointerModeChanged () {
+    return this._onPointerModeChanged.asEvent()
+  }
 
   /**
    * Callback for on mouse click. Replace it to override or combine
