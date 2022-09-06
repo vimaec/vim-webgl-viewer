@@ -8,8 +8,7 @@ import { KeyboardHandler, KEYS } from './keyboard'
 import { TouchHandler } from './touch'
 import { MouseHandler } from './mouse'
 import { InputAction } from './raycaster'
-import { ISignal, SignalDispatcher } from 'ste-signals'
-import { ISimpleEvent, SimpleEventDispatcher } from 'ste-simple-events'
+import { SignalDispatcher } from 'ste-signals'
 
 export type PointerMode = 'orbit' | 'look' | 'pan' | 'dolly' | 'zone'
 
