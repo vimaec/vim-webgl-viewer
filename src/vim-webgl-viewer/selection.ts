@@ -6,6 +6,7 @@ import * as THREE from 'three'
 import { Vim } from '../vim'
 import { Object } from '../vim-loader/object'
 import { Renderer } from './renderer'
+import { SignalDispatcher } from 'ste-signals'
 
 /**
  * Provides selection behaviour for the viewer
@@ -23,9 +24,12 @@ export class Selection {
   private _highlight: THREE.LineSegments | undefined
 
   /**
-   * Callback for when selection changes or is cleared
+   * Event called when selection changes or is cleared
    */
-  onValueChanged: (() => void) | undefined
+  private _onValueChanged = new SignalDispatcher()
+  get onValueChanged () {
+    return this._onValueChanged.asEvent()
+  }
 
   constructor (renderer: Renderer) {
     this._renderer = renderer
@@ -193,7 +197,7 @@ export class Selection {
   private updateHighlight () {
     this.removeHighlight()
     this.createHighlights(this._objects)
-    this.onValueChanged?.()
+    this._onValueChanged.dispatch()
   }
 
   private createHighlights (objects: Set<Object>) {

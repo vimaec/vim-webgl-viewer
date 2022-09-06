@@ -9,6 +9,7 @@ import { TouchHandler } from './touch'
 import { MouseHandler } from './mouse'
 import { InputAction } from './raycaster'
 import { ISignal, SignalDispatcher } from 'ste-signals'
+import { ISimpleEvent, SimpleEventDispatcher } from 'ste-simple-events'
 
 export type PointerMode = 'orbit' | 'look' | 'pan' | 'dolly' | 'zone'
 
@@ -67,15 +68,22 @@ export class Input {
   /**
    * Event called when pointer interaction mode changes.
    */
-  private _onPointerModeChanged = new SignalDispatcher()
+  public _onPointerModeChanged = new SignalDispatcher()
   get onPointerModeChanged () {
-    return this._onPointerModeChanged.asEvent() as ISignal
+    return this._onPointerModeChanged.asEvent()
   }
 
   /**
-   * Callback for on mouse click. Replace it to override or combine
+   * Event called when mouse clicked or mobile tap.
    * default behaviour with your custom logic.
    */
+  /*
+  private _onMainAction = new SimpleEventDispatcher<InputAction>()
+  get onMainAction () {
+    return this._onMainAction.asEvent()
+  }
+  */
+
   onMainAction: ((hit: InputAction) => void) | undefined
 
   /**

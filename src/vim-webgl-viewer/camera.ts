@@ -10,6 +10,7 @@ import { Object } from '../vim'
 import { RenderScene } from './renderScene'
 import { Quaternion } from 'three'
 import { clamp } from 'three/src/math/MathUtils'
+import { ISignal, SignalDispatcher } from 'ste-signals'
 
 export const DIRECTIONS = {
   forward: new THREE.Vector3(0, 0, -1),
@@ -106,7 +107,7 @@ export interface ICamera {
   get forward(): THREE.Vector3
   get orbitPosition(): THREE.Vector3
 
-  onChanged: () => void | undefined
+  get onChanged(): ISignal
 }
 
 type Lerp = 'None' | 'Position' | 'Rotation' | 'Both'
@@ -137,7 +138,10 @@ export class Camera implements ICamera {
   private _lerpPosition: boolean
   private _lerpRotation: boolean
 
-  onChanged = () => {}
+  private _onChanged = new SignalDispatcher()
+  get onChanged () {
+    return this._onChanged.asEvent()
+  }
 
   // Settings
   defaultLerpDuration: number = 2
@@ -198,7 +202,7 @@ export class Camera implements ICamera {
 
   set speed (value: number) {
     this._speed = clamp(value, -25, 25)
-    this.onChanged?.()
+    this._onChanged.dispatch()
   }
 
   get localVelocity () {
@@ -378,7 +382,7 @@ export class Camera implements ICamera {
       this.camera.bottom -= padY
       this.camera.top += padY
       this.camera.updateProjectionMatrix()
-      this.onChanged?.()
+      this._onChanged.dispatch()
     }
     this.gizmo?.show()
   }
@@ -642,7 +646,7 @@ export class Camera implements ICamera {
       } else if (!this._lockDirection) {
         this.lookAt(this._orbitTarget)
       }
-      this.onChanged?.()
+      this._onChanged.dispatch()
     } else {
       // End any outstanding lerp
       if (this._lerpPosition || this._lerpRotation) {
@@ -741,7 +745,7 @@ export class Camera implements ICamera {
     }
 
     if (this.isSignificant(deltaPosition)) {
-      this.onChanged?.()
+      this._onChanged.dispatch()
       this.gizmo?.show()
     }
   }

@@ -150,10 +150,7 @@ export class Viewer {
     )
     this.inputs = new Input(this)
     this.inputs.registerAll()
-    // Default mouse click behaviour, can be overriden
-    this.inputs.onMainAction = this.inputs.defaultAction.bind(this)
-
-    // this.camera.onChanged = () => this.renderer.render(this.camera.camera)
+    this.inputs._onPointerModeChanged.dispatch()
 
     // Start Loop
     this.animate()
