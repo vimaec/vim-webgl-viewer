@@ -157,9 +157,9 @@ export class Raycaster {
     position: THREE.Vector2,
     target: THREE.Raycaster = new THREE.Raycaster()
   ) {
-    const [width, height] = this._viewport.getSize()
-    const x = (position.x / width) * 2 - 1
-    const y = -(position.y / height) * 2 + 1
+    const size = this._viewport.getSize()
+    const x = (position.x / size.x) * 2 - 1
+    const y = -(position.y / size.y) * 2 + 1
     target.setFromCamera(new THREE.Vector2(x, y), this._camera.camera)
     return target
   }
