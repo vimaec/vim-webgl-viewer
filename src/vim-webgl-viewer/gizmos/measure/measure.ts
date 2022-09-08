@@ -75,7 +75,6 @@ export class Measure implements IMeasure {
         this._viewer.inputs.strategy = undefined
         if (success) resolve()
         else {
-          this.clear()
           reject(new Error('Measurement Aborted'))
         }
       }
