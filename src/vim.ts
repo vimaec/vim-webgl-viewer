@@ -2,12 +2,8 @@
 export * as THREE from 'three'
 
 export * from './vim-webgl-viewer/viewer'
-export type {
-  PointerMode,
-  InputStrategy,
-  DefaultInputStrategy,
-  KEYS
-} from './vim-webgl-viewer/input'
+export type { PointerMode, InputStrategy } from './vim-webgl-viewer/input'
+export { DefaultInputStrategy, KEYS } from './vim-webgl-viewer/input'
 export * from './vim-webgl-viewer/viewerSettings'
 export { RaycastResult as HitTestResult } from './vim-webgl-viewer/raycaster'
 
