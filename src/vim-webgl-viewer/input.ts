@@ -30,7 +30,7 @@ export interface InputStrategy {
   onKeyAction(key: number): boolean
 }
 
-class DefaultStrategy implements InputStrategy {
+export class DefaultStrategy implements InputStrategy {
   private _viewer: Viewer
   constructor (viewer: Viewer) {
     this._viewer = viewer
