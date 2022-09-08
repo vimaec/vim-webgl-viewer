@@ -9,6 +9,7 @@ import { TouchHandler } from './touch'
 import { MouseHandler } from './mouse'
 import { InputAction } from './raycaster'
 import { SignalDispatcher } from 'ste-signals'
+export { KEYS } from './keyboard'
 
 export type PointerMode = 'orbit' | 'look' | 'pan' | 'dolly' | 'zone'
 
@@ -30,7 +31,7 @@ export interface InputStrategy {
   onKeyAction(key: number): boolean
 }
 
-export class DefaultStrategy implements InputStrategy {
+export class DefaultInputStrategy implements InputStrategy {
   private _viewer: Viewer
   constructor (viewer: Viewer) {
     this._viewer = viewer
@@ -189,7 +190,7 @@ export class Input {
   }
 
   set strategy (value: InputStrategy) {
-    this._strategy = value ?? new DefaultStrategy(this._viewer)
+    this._strategy = value ?? new DefaultInputStrategy(this._viewer)
   }
 
   onMainAction (action: InputAction) {
@@ -222,7 +223,7 @@ export class Input {
     this.keyboard = new KeyboardHandler(viewer)
     this.mouse = new MouseHandler(viewer)
     this.touch = new TouchHandler(viewer)
-    this._strategy = new DefaultStrategy(viewer)
+    this._strategy = new DefaultInputStrategy(viewer)
     this.pointerMode = 'orbit'
     this._altMode = 'look'
   }
