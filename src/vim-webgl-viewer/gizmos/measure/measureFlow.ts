@@ -21,7 +21,7 @@ export class MeasureFlow implements InputStrategy {
     return this._stage
   }
 
-  dispose () {
+  private unregister () {
     this.removeMouseListener?.()
     this.removeMouseListener = undefined
   }
@@ -38,7 +38,7 @@ export class MeasureFlow implements InputStrategy {
     if (this.stage === 'active' || this.stage === 'ready') {
       this._stage = undefined
       this.onComplete?.(false)
-      this.dispose()
+      this.unregister()
     }
   }
 
@@ -56,7 +56,7 @@ export class MeasureFlow implements InputStrategy {
           : 'failed'
         this.onProgress?.(this._stage)
         this.onComplete?.(this._stage === 'done')
-        this.dispose()
+        this.unregister()
         break
     }
   }
