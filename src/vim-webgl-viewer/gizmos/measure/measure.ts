@@ -66,7 +66,6 @@ export class Measure implements IMeasure {
   async start (onProgress?: () => void) {
     this.abort()
 
-    this._meshes = new MeasureGizmo(this._viewer)
     this._flow = new MeasureFlow(this)
     this._viewer.inputs.strategy = this._flow
     this._flow.onProgress = onProgress
