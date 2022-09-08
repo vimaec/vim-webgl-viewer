@@ -90,7 +90,7 @@ export class Measure implements IMeasure {
   }
 
   onMouseMove () {
-    this._meshes.hide()
+    this._meshes?.hide()
   }
 
   onMouseIdle (action: InputAction) {
@@ -102,9 +102,9 @@ export class Measure implements IMeasure {
       : undefined
 
     if (action.object) {
-      this._meshes.update(this._startPos, position)
+      this._meshes?.update(this._startPos, position)
     } else {
-      this._meshes.hide()
+      this._meshes?.hide()
     }
   }
 
