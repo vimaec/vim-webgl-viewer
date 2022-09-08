@@ -82,7 +82,7 @@ export class MouseHandler extends InputHandler {
       position,
       this.raycaster
     )
-    this._viewer.inputs.onIdleAction?.(action)
+    this._viewer.inputs.onIdleAction(action)
   }
 
   private onMouseMove = (event: any) => {
@@ -100,8 +100,8 @@ export class MouseHandler extends InputHandler {
       event.movementX || event.mozMovementX || event.webkitMovementX || 0
     const deltaY =
       event.movementY || event.mozMovementY || event.webkitMovementY || 0
-    const [width, height] = this.viewport.getSize()
-    const delta = new THREE.Vector2(deltaX / width, deltaY / height)
+    const size = this.viewport.getSize()
+    const delta = new THREE.Vector2(deltaX / size.x, deltaY / size.y)
 
     const position = new THREE.Vector2(event.offsetX, event.offsetY)
     this.hasMouseMoved =
@@ -213,7 +213,7 @@ export class MouseHandler extends InputHandler {
       this.raycaster
     )
 
-    this._viewer.inputs.onMainAction?.(action)
+    this._viewer.inputs.onMainAction(action)
   }
 
   private getModifier () {

@@ -1,3 +1,4 @@
+import * as THREE from 'three'
 import { ViewerSettings } from './viewerSettings'
 
 export class Viewport {
@@ -42,23 +43,23 @@ export class Viewport {
   /**
    * Returns the pixel size of the parent element.
    */
-  getParentSize (): [width: number, height: number] {
-    return [
+  getParentSize () {
+    return new THREE.Vector2(
       this.canvas.parentElement?.clientWidth ?? this.canvas.clientWidth,
       this.canvas.parentElement?.clientHeight ?? this.canvas.clientHeight
-    ]
+    )
   }
 
   /**
    * Returns the pixel size of the canvas.
    */
-  getSize (): [width: number, height: number] {
-    return [this.canvas.clientWidth, this.canvas.clientHeight]
+  getSize () {
+    return new THREE.Vector2(this.canvas.clientWidth, this.canvas.clientHeight)
   }
 
   getAspectRatio () {
-    const [width, height] = this.getParentSize()
-    return width / height
+    const size = this.getParentSize()
+    return size.x / size.y
   }
 
   onResize (callback: () => void) {

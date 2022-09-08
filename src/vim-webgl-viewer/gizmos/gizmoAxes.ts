@@ -3,7 +3,7 @@
  */
 
 import * as THREE from 'three'
-import { ICamera } from './camera'
+import { ICamera } from '../camera'
 
 class Axis {
   axis: string

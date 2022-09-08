@@ -12,6 +12,106 @@ import { SignalDispatcher } from 'ste-signals'
 
 export type PointerMode = 'orbit' | 'look' | 'pan' | 'dolly' | 'zone'
 
+export interface InputStrategy {
+  /**
+   * Event called when mouse clicked or mobile tap.
+   * default behaviour with your custom logic.
+   */
+  onMainAction(hit: InputAction): void
+
+  /**
+   * Callback when mouse and camera have been idle for some time.
+   */
+  onIdleAction(hit: InputAction): void
+
+  /**
+   * Callback when mouse and camera have been idle for some time.
+   */
+  onKeyAction(key: number): boolean
+}
+
+class DefaultStrategy implements InputStrategy {
+  private _viewer: Viewer
+  constructor (viewer: Viewer) {
+    this._viewer = viewer
+  }
+
+  onMainAction (action: InputAction): void {
+    const camera = this._viewer.camera
+    const selection = this._viewer.selection
+
+    if (!action?.object) {
+      selection.select(undefined)
+      if (action.type === 'double') {
+        camera.frame('all', 'none', camera.defaultLerpDuration)
+      }
+      return
+    }
+
+    if (action.modifier !== 'none') {
+      selection.toggle(action.object)
+    } else {
+      selection.select(action.object)
+    }
+
+    if (action.type === 'double') {
+      camera.frame(action.object, 'none', camera.defaultLerpDuration)
+    }
+
+    action.object.getBimElement().then((e) => {
+      e?.set('Index', action.object?.element)
+      console.log(e)
+    })
+  }
+
+  onIdleAction (hit: InputAction): void {
+    // Do nothing
+  }
+
+  onKeyAction (key: number): boolean {
+    const camera = this._viewer.camera
+    const selection = this._viewer.selection
+    switch (key) {
+      case KEYS.KEY_O:
+        camera.orthographic = !camera.orthographic
+        return true
+      case KEYS.KEY_ADD:
+      case KEYS.KEY_OEM_PLUS:
+        camera.speed += 1
+        return true
+      case KEYS.KEY_SUBTRACT:
+      case KEYS.KEY_OEM_MINUS:
+        camera.speed -= 1
+        return true
+      case KEYS.KEY_F8:
+      case KEYS.KEY_SPACE:
+        this._viewer.inputs.pointerMode = this._viewer.inputs.altPointerMode
+        return true
+      case KEYS.KEY_HOME:
+        camera.frame('all', 45, camera.defaultLerpDuration)
+        return true
+      // Selection
+      case KEYS.KEY_ESCAPE:
+        selection.clear()
+        return true
+      case KEYS.KEY_Z:
+      case KEYS.KEY_F:
+        if (selection.count > 0) {
+          camera.frame(
+            selection.getBoundingBox(),
+            'center',
+            camera.defaultLerpDuration
+          )
+        } else {
+          camera.frame('all', 'center', camera.defaultLerpDuration)
+        }
+        return true
+      default:
+        return false
+    }
+  }
+}
+
 /**
  * Manages and registers all viewer user inputs for mouse, keyboard and touch
  */
@@ -83,17 +183,32 @@ export class Input {
   }
   */
 
-  onMainAction: ((hit: InputAction) => void) | undefined
+  private _strategy: InputStrategy
+  get strategy () {
+    return this._strategy
+  }
+
+  set strategy (value: InputStrategy) {
+    this._strategy = value ?? new DefaultStrategy(this._viewer)
+  }
+
+  onMainAction (action: InputAction) {
+    this._strategy.onMainAction(action)
+  }
 
   /**
    * Callback when mouse and camera have been idle for some time.
    */
-  onIdleAction: ((hit: InputAction) => void) | undefined
+  onIdleAction (action: InputAction) {
+    this._strategy.onIdleAction(action)
+  }
 
   /**
    * Callback when mouse and camera have been idle for some time.
    */
-  onKeyAction: ((key: number) => boolean) | undefined
+  onKeyAction (key: number) {
+    return this._strategy.onKeyAction(key)
+  }
 
   /**
    * Callback when context menu could be displayed
@@ -107,8 +222,7 @@ export class Input {
     this.keyboard = new KeyboardHandler(viewer)
     this.mouse = new MouseHandler(viewer)
     this.touch = new TouchHandler(viewer)
-    this.onMainAction = this.defaultAction
-    this.onKeyAction = this.defaultKeyAction
+    this._strategy = new DefaultStrategy(viewer)
     this.pointerMode = 'orbit'
     this._altMode = 'look'
   }
@@ -138,79 +252,5 @@ export class Input {
     this.mouse.reset()
     this.keyboard.reset()
     this.touch.reset()
-  }
-
-  /**
-   * Default action behaviour on mouse click or touch tap.
-   */
-  public defaultAction = (action: InputAction) => {
-    const camera = this._viewer.camera
-    const selection = this._viewer.selection
-
-    if (!action?.object) {
-      selection.select(undefined)
-      if (action.type === 'double') {
-        camera.frame('all', 'none', camera.defaultLerpDuration)
-      }
-      return
-    }
-
-    if (action.modifier !== 'none') {
-      selection.toggle(action.object)
-    } else {
-      selection.select(action.object)
-    }
-
-    if (action.type === 'double') {
-      camera.frame(action.object, 'none', camera.defaultLerpDuration)
-    }
-
-    action.object.getBimElement().then((e) => {
-      e?.set('Index', action.object?.element)
-      console.log(e)
-    })
-  }
-
-  defaultKeyAction = (key: number) => {
-    const camera = this._viewer.camera
-    const selection = this._viewer.selection
-    switch (key) {
-      case KEYS.KEY_O:
-        camera.orthographic = !camera.orthographic
-        return true
-      case KEYS.KEY_ADD:
-      case KEYS.KEY_OEM_PLUS:
-        camera.speed += 1
-        return true
-      case KEYS.KEY_SUBTRACT:
-      case KEYS.KEY_OEM_MINUS:
-        camera.speed -= 1
-        return true
-      case KEYS.KEY_F8:
-      case KEYS.KEY_SPACE:
-        this._viewer.inputs.pointerMode = this._viewer.inputs.altPointerMode
-        return true
-      case KEYS.KEY_HOME:
-        camera.frame('all', 45, camera.defaultLerpDuration)
-        return true
-      // Selection
-      case KEYS.KEY_ESCAPE:
-        selection.clear()
-        return true
-      case KEYS.KEY_Z:
-      case KEYS.KEY_F:
-        if (selection.count > 0) {
-          camera.frame(
-            selection.getBoundingBox(),
-            'center',
-            camera.defaultLerpDuration
-          )
-        } else {
-          camera.frame('all', 'center', camera.defaultLerpDuration)
-        }
-        return true
-      default:
-        return false
-    }
   }
 }

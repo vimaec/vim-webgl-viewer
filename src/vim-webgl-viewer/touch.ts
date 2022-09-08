@@ -54,7 +54,7 @@ export class TouchHandler extends InputHandler {
       this._viewer.raycaster
     )
 
-    this._viewer.inputs.onMainAction?.(action)
+    this._viewer.inputs.onMainAction(action)
   }
 
   private onTouchStart = (event: any) => {
@@ -98,11 +98,11 @@ export class TouchHandler extends InputHandler {
 
     if (event.touches.length === 1) {
       const pos = this.touchToVector(event.touches[0])
-      const [width, height] = this.viewport.getSize()
+      const size = this.viewport.getSize()
       const delta = pos
         .clone()
         .sub(this._touch)
-        .multiply(new THREE.Vector2(1 / width, 1 / height))
+        .multiply(new THREE.Vector2(1 / size.x, 1 / size.y))
 
       this._touch = pos
       this.onDrag(delta)
@@ -114,18 +114,18 @@ export class TouchHandler extends InputHandler {
       const p1 = this.touchToVector(event.touches[0])
       const p2 = this.touchToVector(event.touches[1])
       const p = this.average(p1, p2)
-      const [width, height] = this.viewport.getSize()
+      const size = this.viewport.getSize()
       const moveDelta = this._touch
         .clone()
         .sub(p)
         .multiply(
           // -1 to invert movement
-          new THREE.Vector2(-1 / width, -1 / height)
+          new THREE.Vector2(-1 / size.x, -1 / size.y)
         )
 
       const zoom = p1.distanceTo(p2)
       const prevZoom = this._touch1.distanceTo(this._touch2)
-      const min = Math.min(width, height)
+      const min = Math.min(size.x, size.y)
       // -1 to invert movement
       const zoomDelta = (zoom - prevZoom) / -min
 

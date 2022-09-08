@@ -3,7 +3,7 @@
 */
 
 import * as THREE from 'three'
-import { CameraGizmo } from './gizmoOrbit'
+import { CameraGizmo } from './gizmos/gizmoOrbit'
 import { Viewport } from './viewport'
 import { ViewerSettings } from './viewerSettings'
 import { Object } from '../vim'

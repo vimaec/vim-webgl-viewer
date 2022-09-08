@@ -1,5 +1,5 @@
 import * as THREE from 'three'
-import { Viewer } from './viewer'
+import { Viewer } from '../viewer'
 
 export class GizmoSelection {
   private line: THREE.LineSegments

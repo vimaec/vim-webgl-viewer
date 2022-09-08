@@ -1,0 +1,82 @@
+import { InputStrategy } from '../../input'
+import { InputAction } from '../../raycaster'
+import { Measure } from './measure'
+
+export type MeasureStage = 'ready' | 'active' | 'done' | 'failed'
+
+export class MeasureFlow implements InputStrategy {
+  private readonly _gizmoMeasure: Measure
+  private _stage: MeasureStage = 'ready'
+  private removeMouseListener: () => void
+
+  constructor (gizmoMeasure: Measure) {
+    this._gizmoMeasure = gizmoMeasure
+    this.registerMouse(() => this.onMouseMove())
+  }
+
+  onProgress: (stage: MeasureStage) => void
+  onComplete: (success: boolean) => void
+
+  get stage () {
+    return this._stage
+  }
+
+  dispose () {
+    this.removeMouseListener?.()
+    this.removeMouseListener = undefined
+  }
+
+  private registerMouse (callBack: (e: MouseEvent) => void) {
+    this.removeMouseListener?.()
+    window.addEventListener('mousemove', callBack)
+    this.removeMouseListener = () => {
+      window.removeEventListener('mousemove', callBack)
+    }
+  }
+
+  abort () {
+    this._stage = undefined
+    this.onComplete?.(false)
+    this.dispose()
+  }
+
+  onMainAction (action: InputAction) {
+    switch (this._stage) {
+      case 'ready':
+        if (!action.object) return
+        this._gizmoMeasure.onFirstClick(action)
+        this._stage = 'active'
+        this.onProgress?.(this._stage)
+        break
+      case 'active':
+        this._stage = this._gizmoMeasure.onSecondClick(action)
+          ? 'done'
+          : 'failed'
+        this.onProgress?.(this._stage)
+        this.onComplete?.(this._stage === 'done')
+        this.dispose()
+        break
+    }
+  }
+
+  onIdleAction (action: InputAction) {
+    switch (this._stage) {
+      case 'active':
+        this._gizmoMeasure.onMouseIdle(action)
+        break
+    }
+  }
+
+  onKeyAction (key: number): boolean {
+    return false
+  }
+
+  onMouseMove () {
+    switch (this._stage) {
+      case 'active':
+      case 'ready':
+        this._gizmoMeasure.onMouseMove()
+        break
+    }
+  }
+}

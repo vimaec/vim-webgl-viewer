@@ -4,9 +4,9 @@
 
 import * as THREE from 'three'
 import { MathUtils } from 'three'
-import { Renderer } from './renderer'
-import { Camera } from './camera'
-import { ViewerSettings } from './viewerSettings'
+import { Renderer } from '../renderer'
+import { Camera } from '../camera'
+import { ViewerSettings } from '../viewerSettings'
 
 /**
  * Manages the camera target gizmo
