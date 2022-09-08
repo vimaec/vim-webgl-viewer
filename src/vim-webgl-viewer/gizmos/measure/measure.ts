@@ -75,12 +75,17 @@ export class Measure implements IMeasure {
       this._flow.onComplete = (success: boolean) => {
         this._viewer.inputs.strategy = undefined
         if (success) resolve()
-        else reject(new Error('Measurement Aborted'))
+        else {
+          this.clear()
+          reject(new Error('Measurement Aborted'))
+        }
       }
     })
   }
 
   onFirstClick (action: InputAction) {
+    this.clear()
+    this._meshes = new MeasureGizmo(this._viewer)
     this._startPos = action.raycast.position
     this._meshes.start(this._startPos)
   }
@@ -126,16 +131,22 @@ export class Measure implements IMeasure {
   }
 
   /**
-   * Aborts the current measure flow, fails the related promise and dispose all resources.
+   * Aborts the current measure flow, fails the related promise.
    */
   abort () {
     this._flow?.abort()
     this._flow = undefined
-    this._meshes?.dispose()
-    this._meshes = undefined
 
     this._startPos = undefined
     this._endPos = undefined
     this._measurement = undefined
+  }
+
+  /**
+   * Clears meshes.
+   */
+  clear () {
+    this._meshes?.dispose()
+    this._meshes = undefined
   }
 }
