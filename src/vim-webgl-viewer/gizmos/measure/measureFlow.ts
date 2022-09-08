@@ -35,9 +35,11 @@ export class MeasureFlow implements InputStrategy {
   }
 
   abort () {
-    this._stage = undefined
-    this.onComplete?.(false)
-    this.dispose()
+    if (this.stage === 'active' || this.stage === 'ready') {
+      this._stage = undefined
+      this.onComplete?.(false)
+      this.dispose()
+    }
   }
 
   onMainAction (action: InputAction) {
@@ -60,11 +62,7 @@ export class MeasureFlow implements InputStrategy {
   }
 
   onIdleAction (action: InputAction) {
-    switch (this._stage) {
-      case 'active':
-        this._gizmoMeasure.onMouseIdle(action)
-        break
-    }
+    if (this._stage === 'active') this._gizmoMeasure.onMouseIdle(action)
   }
 
   onKeyAction (key: number): boolean {
@@ -72,11 +70,6 @@ export class MeasureFlow implements InputStrategy {
   }
 
   onMouseMove () {
-    switch (this._stage) {
-      case 'active':
-      case 'ready':
-        this._gizmoMeasure.onMouseMove()
-        break
-    }
+    if (this._stage === 'active') this._gizmoMeasure.onMouseMove()
   }
 }
