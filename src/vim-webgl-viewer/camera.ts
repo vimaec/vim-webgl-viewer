@@ -564,6 +564,7 @@ export class Camera implements ICamera {
     this.camera = next
 
     this.updateProjection(this._scene.getBoundingBox())
+    this._onChanged.dispatch()
   }
 
   private getBaseMultiplier () {
