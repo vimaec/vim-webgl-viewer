@@ -28,6 +28,7 @@ import { Vim } from '../vim-loader/vim'
 import { IProgressLogs, RemoteBuffer } from '../vim-loader/remoteBuffer'
 import { Renderer } from './renderer'
 import { IMaterialLibrary, VimMaterials } from '../vim'
+import { SignalDispatcher } from 'ste-signals'
 
 /**
  * Viewer and loader for vim files.
@@ -89,6 +90,10 @@ export class Viewer {
     return this._environment as IEnvironment
   }
 
+  get onVimLoaded () {
+    return this._onVimLoaded.asEvent()
+  }
+
   private _environment: Environment
   private _camera: Camera
   private _loader: Loader
@@ -99,6 +104,7 @@ export class Viewer {
   // State
   private _vims: (Vim | undefined)[] = []
   private _disposed: boolean = false
+  private _onVimLoaded = new SignalDispatcher()
 
   /**
    * Will be removed once gizmo axes are cleaned up to expose canvas.
@@ -245,19 +251,20 @@ export class Viewer {
     // Remove progress listener
     if (buffer instanceof RemoteBuffer) buffer.logger.onUpdate = undefined
 
-    this.onVimLoaded(vim)
-    this.camera.frame('all', 45)
+    this.onLoad(vim)
+
     return vim
   }
 
-  private onVimLoaded (vim: Vim) {
+  private onLoad (vim: Vim) {
+    this.camera.frame('all', 45)
     this.addVim(vim)
-
     this.renderer.add(vim.scene)
     const box = this.renderer.getBoundingBox()
     if (box) this._environment.adaptToContent(box)
     this._camera.adaptToContent()
     this.gizmoSection.fitBox(box)
+    this._onVimLoaded.dispatch()
   }
 
   /**
