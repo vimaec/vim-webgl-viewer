@@ -257,13 +257,15 @@ export class Viewer {
   }
 
   private onLoad (vim: Vim) {
-    this.camera.frame('all', 45)
     this.addVim(vim)
     this.renderer.add(vim.scene)
     const box = this.renderer.getBoundingBox()
-    if (box) this._environment.adaptToContent(box)
+    if (box) {
+      this._environment.adaptToContent(box)
+      this.gizmoSection.fitBox(box)
+    }
     this._camera.adaptToContent()
-    this.gizmoSection.fitBox(box)
+    this._camera.frame('all', 45)
     this._onVimLoaded.dispatch()
   }
 
