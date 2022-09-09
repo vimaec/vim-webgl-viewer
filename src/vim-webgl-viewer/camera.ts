@@ -104,6 +104,11 @@ export interface ICamera {
     duration?: number
   ): void
 
+  /**
+   * Restore camera to initial values.
+   */
+  reset()
+
   get forward(): THREE.Vector3
   get orbitPosition(): THREE.Vector3
 
@@ -123,12 +128,12 @@ export class Camera implements ICamera {
   private _viewport: Viewport
   private _scene: RenderScene
 
-  private _targetVelocity: THREE.Vector3
-  private _velocity: THREE.Vector3
+  private _targetVelocity = new THREE.Vector3()
+  private _velocity = new THREE.Vector3()
   private _speed: number = 0
 
   private _orbitMode: boolean = false
-  private _orbitTarget: THREE.Vector3
+  private _orbitTarget = new THREE.Vector3()
   private _minOrbitalDistance: number = 0.05
   private _targetPosition: THREE.Vector3
 
@@ -163,19 +168,13 @@ export class Camera implements ICamera {
   ) {
     this.cameraPerspective = new THREE.PerspectiveCamera()
     this.camera = this.cameraPerspective
-    this.camera.position.set(0, 0, -1000)
-    this._orbitTarget = new THREE.Vector3(0, 0, 0)
-    this.lookAt(this._orbitTarget)
     this._scene = scene
     this._viewport = viewport
     this._viewport.onResize(() => {
       this.updateProjection(this._scene.getBoundingBox())
     })
     this.applySettings(settings)
-
-    this._targetVelocity = new THREE.Vector3(0, 0, 0)
-    this._velocity = new THREE.Vector3(0, 0, 0)
-    this._targetPosition = this.camera.position
+    this.reset()
   }
 
   dispose () {
@@ -187,7 +186,8 @@ export class Camera implements ICamera {
    * Resets camera to default state.
    */
   reset () {
-    this.camera.position.set(0, 0, -5)
+    this.camera.position.set(0, 0, -1000)
+    this._targetPosition = this.camera.position
 
     this._targetVelocity.set(0, 0, 0)
     this._velocity.set(0, 0, 0)
