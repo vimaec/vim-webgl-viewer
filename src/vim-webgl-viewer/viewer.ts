@@ -277,6 +277,7 @@ export class Viewer {
     if (this.selection.vim === vim) {
       this.selection.clear()
     }
+    this._onVimLoaded.dispatch()
   }
 
   /**
