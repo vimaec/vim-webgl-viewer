@@ -22,8 +22,14 @@ export class GroundPlane {
 
   constructor () {
     this._geometry = new THREE.PlaneBufferGeometry()
-    this._material = new THREE.MeshBasicMaterial({ transparent: true })
+    this._material = new THREE.MeshBasicMaterial({
+      transparent: true,
+      depthTest: true,
+      depthWrite: false
+    })
     this.mesh = new THREE.Mesh(this._geometry, this._material)
+    // Draw mesh first so it's always behind stuff.
+    this.mesh.renderOrder = -1
   }
 
   applyViewerSettings (settings: ViewerSettings) {
