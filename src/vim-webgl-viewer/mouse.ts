@@ -6,6 +6,7 @@ import * as THREE from 'three'
 import { InputHandler } from './inputHandler'
 import { InputAction } from './raycaster'
 
+type Button = 'main' | 'secondary' | undefined
 /**
  * Manages mouse user inputs
  */
@@ -14,7 +15,7 @@ export class MouseHandler extends InputHandler {
   private readonly ZOOM_SPEED = 5
 
   // State
-  private isMouseDown: Boolean = false
+  private buttonDown: Button
   private hasMouseMoved: Boolean = false
 
   private _idleTimeout: number
@@ -59,7 +60,8 @@ export class MouseHandler extends InputHandler {
   }
 
   override reset = () => {
-    this.isMouseDown = this.hasMouseMoved = false
+    this.buttonDown = undefined
+    this.hasMouseMoved = false
     this._lastPosition = this._downPosition = undefined
     clearTimeout(this._idleTimeout)
   }
@@ -73,7 +75,8 @@ export class MouseHandler extends InputHandler {
   }
 
   private onMouseOut = (_: any) => {
-    this.isMouseDown = this.hasMouseMoved = false
+    this.buttonDown = undefined
+    this.hasMouseMoved = false
   }
 
   private onMouseIdle = (position: THREE.Vector2) => {
@@ -90,7 +93,7 @@ export class MouseHandler extends InputHandler {
     this._lastPosition = new THREE.Vector2(event.offsetX, event.offsetY)
     this.resetIdleTimeout()
 
-    if (!this.isMouseDown) return
+    if (!this.buttonDown) return
     this.onMouseDrag(event)
   }
 
@@ -108,10 +111,10 @@ export class MouseHandler extends InputHandler {
     this.hasMouseMoved =
       this.hasMouseMoved || this._downPosition.distanceTo(position) > 4
 
-    if (event.buttons & 2 || event.buttons & 4) {
-      this.onMouseSecondaryDrag(delta)
-    } else {
+    if (this.buttonDown === 'main') {
       this.onMouseMainDrag(delta)
+    } else if (this.buttonDown === 'secondary') {
+      this.onMouseSecondaryDrag(delta)
     }
   }
 
@@ -135,6 +138,7 @@ export class MouseHandler extends InputHandler {
       default:
         this.camera.rotate(delta)
     }
+    console.log('main')
   }
 
   private onMouseSecondaryDrag (delta: THREE.Vector2) {
@@ -157,21 +161,38 @@ export class MouseHandler extends InputHandler {
     }
   }
 
+  private getButton (event: MouseEvent) {
+    return event.buttons & 1
+      ? 'main'
+      : event.buttons & 2
+        ? 'secondary'
+        : event.buttons & 4
+          ? 'secondary'
+          : undefined
+  }
+
   private onMouseDown = (event: MouseEvent) => {
     event.preventDefault()
+    if (this.buttonDown) return
     this._downPosition = new THREE.Vector2(event.offsetX, event.offsetY)
-    this.isMouseDown = true
     this.hasMouseMoved = false
 
     // Manually set the focus since calling preventDefault above
     // prevents the browser from setting it automatically.
     this.viewport.canvas.focus()
+    this.buttonDown = this.getButton(event)
+
+    console.log('down ' + this.buttonDown)
   }
 
   private onMouseUp = (event: MouseEvent) => {
+    const btn = this.getButton(event)
+    if (btn === this.buttonDown) return
+    console.log('up ' + this.buttonDown)
+
     this._viewer.gizmoSelection.visible = false
     event.preventDefault()
-    if (!this.isMouseDown) return
+    if (!this.buttonDown) return
 
     if (this.inputs.pointerMode === 'rect' && this.hasMouseMoved) {
       this.onRectEnd()
@@ -182,7 +203,7 @@ export class MouseHandler extends InputHandler {
         new THREE.Vector2(event.clientX, event.clientY)
       )
     }
-    this.isMouseDown = false
+    this.buttonDown = undefined
   }
 
   private onRectEnd () {
