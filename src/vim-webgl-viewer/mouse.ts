@@ -11,6 +11,7 @@ import { InputAction } from './raycaster'
  */
 export class MouseHandler extends InputHandler {
   private readonly _idleDelayMs = 200
+  private readonly ZOOM_SPEED = 5
 
   // State
   private isMouseDown: Boolean = false
@@ -125,10 +126,10 @@ export class MouseHandler extends InputHandler {
       case 'pan':
         this.camera.move2(delta, 'XY')
         break
-      case 'dolly':
-        this.camera.move1(delta.y, 'Z')
+      case 'zoom':
+        this.camera.zoom(delta.y * this.ZOOM_SPEED)
         break
-      case 'zone':
+      case 'rect':
         this.drawSelection()
         break
       default:
@@ -172,7 +173,7 @@ export class MouseHandler extends InputHandler {
     event.preventDefault()
     if (!this.isMouseDown) return
 
-    if (this.inputs.pointerMode === 'zone' && this.hasMouseMoved) {
+    if (this.inputs.pointerMode === 'rect' && this.hasMouseMoved) {
       this.onRectEnd()
     } else if (event.button === 0 && !this.hasMouseMoved) {
       this.onMouseClick(new THREE.Vector2(event.offsetX, event.offsetY), false)

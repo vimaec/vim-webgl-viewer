@@ -11,7 +11,7 @@ import { InputAction } from './raycaster'
 import { SignalDispatcher } from 'ste-signals'
 export { KEYS } from './keyboard'
 
-export type PointerMode = 'orbit' | 'look' | 'pan' | 'dolly' | 'zone'
+export type PointerMode = 'orbit' | 'look' | 'pan' | 'zoom' | 'rect'
 
 export interface InputStrategy {
   /**
