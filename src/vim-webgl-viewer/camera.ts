@@ -507,6 +507,7 @@ export class Camera implements ICamera {
     const delta = direction.normalize().multiplyScalar(this.orbitDistance)
     this._targetPosition = pos.add(delta)
     this.startLerp(duration, 'Position')
+    this._onMoved.dispatch()
   }
 
   /**
