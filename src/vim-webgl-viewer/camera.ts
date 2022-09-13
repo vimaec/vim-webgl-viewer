@@ -268,6 +268,13 @@ export class Camera implements ICamera {
     this._onValueChanged.dispatch()
   }
 
+  private setPosition (position: THREE.Vector3) {
+    if (this.isSignificant(this.camera.position.sub(position))) {
+      this._onMoved.dispatch()
+    }
+    this.camera.position.copy(position)
+  }
+
   /**
    * Sets Orbit mode target and moves camera accordingly
    */
@@ -716,7 +723,7 @@ export class Camera implements ICamera {
 
   private endLerp () {
     this.cancelLerp()
-    this.camera.position.copy(this._targetPosition)
+    this.setPosition(this._targetPosition)
     this.lookAt(this._orbitTarget)
   }
 
@@ -732,8 +739,8 @@ export class Camera implements ICamera {
     this._velocity.add(deltaVelocity)
 
     const deltaPosition = this._velocity.clone().multiplyScalar(deltaTime)
-
-    this.camera.position.add(deltaPosition)
+    const endPosition = this.camera.position.clone().add(deltaPosition)
+    this.setPosition(endPosition)
     this._orbitTarget.add(deltaPosition)
 
     if (this.orthographic) {
@@ -758,11 +765,6 @@ export class Camera implements ICamera {
       this.cameraOrthographic.updateProjectionMatrix()
       this.gizmo?.show()
     }
-
-    if (this.isSignificant(deltaPosition)) {
-      this._onMoved.dispatch()
-      this.gizmo?.show()
-    }
   }
 
   private isSignificant (vector: THREE.Vector3) {
@@ -785,10 +787,7 @@ export class Camera implements ICamera {
       alpha
     )
 
-    if (this.isSignificant(this.camera.position.sub(pos))) {
-      this._onMoved.dispatch()
-    }
-    this.camera.position.copy(pos)
+    this.setPosition(pos)
   }
 
   private applyRotationLerp () {
