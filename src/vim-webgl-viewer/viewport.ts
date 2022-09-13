@@ -80,7 +80,7 @@ export class Viewport {
    * @param timeout time after the last resize before code will be called
    */
   private registerResize (timeout: number) {
-    let timerId: number | undefined
+    let timerId: ReturnType<typeof setTimeout>
     const onResize = () => {
       if (timerId !== undefined) {
         clearTimeout(timerId)
