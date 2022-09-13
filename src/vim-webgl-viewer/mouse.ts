@@ -18,7 +18,7 @@ export class MouseHandler extends InputHandler {
   private buttonDown: Button
   private hasMouseMoved: Boolean = false
 
-  private _idleTimeout: number
+  private _idleTimeout: ReturnType<typeof setTimeout>
   private _lastPosition: THREE.Vector2
   private _downPosition: THREE.Vector2
 
