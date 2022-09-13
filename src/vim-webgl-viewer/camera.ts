@@ -399,7 +399,6 @@ export class Camera implements ICamera {
       this.camera.updateProjectionMatrix()
     }
     this.gizmo?.show()
-    this._onMoved.dispatch()
   }
 
   /**
@@ -507,7 +506,6 @@ export class Camera implements ICamera {
     const delta = direction.normalize().multiplyScalar(this.orbitDistance)
     this._targetPosition = pos.add(delta)
     this.startLerp(duration, 'Position')
-    this._onMoved.dispatch()
   }
 
   /**
@@ -787,11 +785,10 @@ export class Camera implements ICamera {
       alpha
     )
 
-    this.camera.position.copy(pos)
-
-    if (this.isSignificant(this.camera.position.clone().sub(pos))) {
+    if (this.isSignificant(this.camera.position.sub(pos))) {
       this._onMoved.dispatch()
     }
+    this.camera.position.copy(pos)
   }
 
   private applyRotationLerp () {
