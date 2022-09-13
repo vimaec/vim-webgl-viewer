@@ -112,7 +112,15 @@ export interface ICamera {
   get forward(): THREE.Vector3
   get orbitPosition(): THREE.Vector3
 
-  get onChanged(): ISignal
+  /**
+   * Signal dispatched when camera settings are updated.
+   */
+  get onValueChanged(): ISignal
+
+  /**
+   * Signal dispatched when camera is moved.
+   */
+  get onMoved(): ISignal
 }
 
 type Lerp = 'None' | 'Position' | 'Rotation' | 'Both'
@@ -143,9 +151,14 @@ export class Camera implements ICamera {
   private _lerpPosition: boolean
   private _lerpRotation: boolean
 
-  private _onChanged = new SignalDispatcher()
-  get onChanged () {
-    return this._onChanged.asEvent()
+  private _onValueChanged = new SignalDispatcher()
+  get onValueChanged () {
+    return this._onValueChanged.asEvent()
+  }
+
+  private _onMoved = new SignalDispatcher()
+  get onMoved (): ISignal {
+    return this._onMoved.asEvent()
   }
 
   // Settings
@@ -202,7 +215,7 @@ export class Camera implements ICamera {
 
   set speed (value: number) {
     this._speed = clamp(value, -25, 25)
-    this._onChanged.dispatch()
+    this._onValueChanged.dispatch()
   }
 
   get localVelocity () {
@@ -252,6 +265,7 @@ export class Camera implements ICamera {
       this.gizmo.enabled = value
       this.gizmo.show(value)
     }
+    this._onValueChanged.dispatch()
   }
 
   /**
@@ -308,6 +322,7 @@ export class Camera implements ICamera {
 
     // Values
     this._vimReferenceSize = settings.getCameraReferenceVimSize()
+    this._onValueChanged.dispatch()
   }
 
   /**
@@ -382,9 +397,9 @@ export class Camera implements ICamera {
       this.camera.bottom -= padY
       this.camera.top += padY
       this.camera.updateProjectionMatrix()
-      this._onChanged.dispatch()
     }
     this.gizmo?.show()
+    this._onMoved.dispatch()
   }
 
   /**
@@ -471,6 +486,7 @@ export class Camera implements ICamera {
         // apply rotation directly to camera
         this.camera.quaternion.copy(rotation)
         offset.applyQuaternion(this.camera.quaternion)
+        this._onMoved.dispatch()
       } else {
         // apply rotation to target and lerp
         offset.applyQuaternion(rotation)
@@ -564,7 +580,7 @@ export class Camera implements ICamera {
     this.camera = next
 
     this.updateProjection(this._scene.getBoundingBox())
-    this._onChanged.dispatch()
+    this._onValueChanged.dispatch()
   }
 
   private getBaseMultiplier () {
@@ -647,7 +663,7 @@ export class Camera implements ICamera {
       } else if (!this._lockDirection) {
         this.lookAt(this._orbitTarget)
       }
-      this._onChanged.dispatch()
+      this._onMoved.dispatch()
     } else {
       // End any outstanding lerp
       if (this._lerpPosition || this._lerpRotation) {
@@ -746,7 +762,7 @@ export class Camera implements ICamera {
     }
 
     if (this.isSignificant(deltaPosition)) {
-      this._onChanged.dispatch()
+      this._onMoved.dispatch()
       this.gizmo?.show()
     }
   }
