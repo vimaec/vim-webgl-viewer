@@ -664,7 +664,6 @@ export class Camera implements ICamera {
       } else if (!this._lockDirection) {
         this.lookAt(this._orbitTarget)
       }
-      this._onMoved.dispatch()
     } else {
       // End any outstanding lerp
       if (this._lerpPosition || this._lerpRotation) {
@@ -789,6 +788,10 @@ export class Camera implements ICamera {
     )
 
     this.camera.position.copy(pos)
+
+    if (this.isSignificant(this.camera.position.clone().sub(pos))) {
+      this._onMoved.dispatch()
+    }
   }
 
   private applyRotationLerp () {
