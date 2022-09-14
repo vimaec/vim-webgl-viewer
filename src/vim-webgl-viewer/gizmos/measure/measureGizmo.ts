@@ -58,9 +58,9 @@ class MeasureMarker {
   private _material: THREE.Material
   private _materialAlways: THREE.Material
 
-  constructor (position: THREE.Vector3 = new THREE.Vector3()) {
+  constructor (color: THREE.Color) {
     this._material = new THREE.MeshBasicMaterial({
-      color: new THREE.Color(0, 0.75, 1)
+      color: color
     })
 
     this._materialAlways = new THREE.MeshBasicMaterial({
@@ -74,7 +74,6 @@ class MeasureMarker {
     g.addGroup(0, Infinity, 0)
     g.addGroup(0, Infinity, 1)
     this.mesh = new THREE.Mesh(g, [this._material, this._materialAlways])
-    this.mesh.position.copy(position)
   }
 
   setPosition (position: THREE.Vector3) {
@@ -101,8 +100,8 @@ export class MeasureGizmo {
     this._viewer = viewer
     const canvasSize = this._viewer.viewport.getSize()
 
-    this._startMarker = new MeasureMarker()
-    this._endMarker = new MeasureMarker()
+    this._startMarker = new MeasureMarker(new THREE.Color('#FFB700'))
+    this._endMarker = new MeasureMarker(new THREE.Color('#0590CC'))
 
     this._line = new MeasureLine(canvasSize, new THREE.Color(1, 1, 1))
     this._lineX = new MeasureLine(canvasSize, new THREE.Color(1, 0, 0))

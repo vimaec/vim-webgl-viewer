@@ -15,8 +15,8 @@ import { CameraGizmo } from './gizmos/gizmoOrbit'
 import { RenderScene } from './renderScene'
 import { Viewport } from './viewport'
 import { GizmoAxes } from './gizmos/gizmoAxes'
-import { GizmoSection } from './gizmos/gizmoSection'
-import { Measure as IMeasure } from './gizmos/measure/measure'
+import { SectionBox } from './gizmos/sectionBox/sectionBox'
+import { Measure, IMeasure } from './gizmos/measure/measure'
 import { GizmoSelection } from './gizmos/gizmoSelection'
 
 // loader
@@ -67,7 +67,7 @@ export class Viewer {
   /**
    * Interface to interact with the section gizmo.
    */
-  gizmoSection: GizmoSection
+  gizmoSection: SectionBox
 
   /**
    * Interface to interact with measure.
@@ -136,11 +136,11 @@ export class Viewer {
     this.renderer.applyMaterialSettings(this.settings)
 
     // TODO add options
-    this.measure = new IMeasure(this)
+    this.measure = new Measure(this)
     this._gizmoAxes = new GizmoAxes(this.camera)
     this.viewport.canvas.parentElement?.prepend(this._gizmoAxes.canvas)
 
-    this.gizmoSection = new GizmoSection(this)
+    this.gizmoSection = new SectionBox(this)
     this.gizmoSelection = new GizmoSelection(this)
 
     this._environment = new Environment(this.settings)
