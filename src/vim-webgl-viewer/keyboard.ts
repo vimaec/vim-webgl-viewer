@@ -139,7 +139,7 @@ export class KeyboardHandler extends InputHandler {
   }
 
   private get section () {
-    return this._viewer.gizmoSection
+    return this._viewer.sectionBox
   }
 
   private onKeyUp = (event: any) => {

@@ -67,7 +67,7 @@ export class Viewer {
   /**
    * Interface to interact with the section gizmo.
    */
-  gizmoSection: SectionBox
+  sectionBox: SectionBox
 
   /**
    * Interface to interact with measure.
@@ -140,7 +140,7 @@ export class Viewer {
     this._gizmoAxes = new GizmoAxes(this.camera)
     this.viewport.canvas.parentElement?.prepend(this._gizmoAxes.canvas)
 
-    this.gizmoSection = new SectionBox(this)
+    this.sectionBox = new SectionBox(this)
     this.gizmoSelection = new GizmoSelection(this)
 
     this._environment = new Environment(this.settings)
@@ -262,7 +262,7 @@ export class Viewer {
     const box = this.renderer.getBoundingBox()
     if (box) {
       this._environment.adaptToContent(box)
-      this.gizmoSection.fitBox(box)
+      this.sectionBox.fitBox(box)
     }
     this._camera.adaptToContent()
     this._camera.frame('all', 45)
