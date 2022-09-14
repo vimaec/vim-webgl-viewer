@@ -19,6 +19,7 @@ export interface IMeasure {
   get stage(): MeasureStage | undefined
   start(onProgress?: () => void): Promise<void>
   abort()
+  clear()
 }
 
 /**
