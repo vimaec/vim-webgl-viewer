@@ -135,6 +135,7 @@ export class Input {
 
   private _mode: PointerMode
   private _altMode: PointerMode
+  private _tmpMode: PointerMode
 
   /**
    * Returns the last main mode (orbit, look) that was active.
@@ -148,6 +149,14 @@ export class Input {
    */
   get pointerMode () {
     return this._mode
+  }
+
+  get pointerOverride () {
+    return this._tmpMode
+  }
+
+  set pointerOverride (value: PointerMode) {
+    this._tmpMode = value
   }
 
   /**
@@ -172,6 +181,14 @@ export class Input {
   public _onPointerModeChanged = new SignalDispatcher()
   get onPointerModeChanged () {
     return this._onPointerModeChanged.asEvent()
+  }
+
+  /**
+   * Event called when pointer interaction mode changes.
+   */
+  public _onPointerOverrideChanged = new SignalDispatcher()
+  get onPointerOverrideChanged () {
+    return this._onPointerOverrideChanged.asEvent()
   }
 
   /**

@@ -6,7 +6,7 @@ import * as THREE from 'three'
 import { InputHandler } from './inputHandler'
 import { InputAction } from './raycaster'
 
-type Button = 'main' | 'secondary' | undefined
+type Button = 'main' | 'middle' | 'right' | undefined
 /**
  * Manages mouse user inputs
  */
@@ -97,6 +97,28 @@ export class MouseHandler extends InputHandler {
     this.onMouseDrag(event)
   }
 
+  private onMouseDown = (event: MouseEvent) => {
+    event.preventDefault()
+    if (this.buttonDown) return
+    this._downPosition = new THREE.Vector2(event.offsetX, event.offsetY)
+    this.hasMouseMoved = false
+
+    // Manually set the focus since calling preventDefault above
+    // prevents the browser from setting it automatically.
+    this.viewport.canvas.focus()
+    this.buttonDown = this.getButton(event)
+
+    const pointer =
+      this.buttonDown === 'middle'
+        ? 'pan'
+        : this.buttonDown === 'right'
+          ? 'look'
+          : undefined
+    this._viewer.inputs.pointerOverride = pointer
+
+    if (pointer === 'look') this._viewer.camera.orbitMode = false
+  }
+
   private onMouseDrag (event: any) {
     event.preventDefault()
     // https://github.com/mrdoob/three.js/blob/master/examples/jsm/controls/PointerLockControls.js
@@ -111,10 +133,16 @@ export class MouseHandler extends InputHandler {
     this.hasMouseMoved =
       this.hasMouseMoved || this._downPosition.distanceTo(position) > 4
 
-    if (this.buttonDown === 'main') {
-      this.onMouseMainDrag(delta)
-    } else if (this.buttonDown === 'secondary') {
-      this.onMouseSecondaryDrag(delta)
+    switch (this.buttonDown) {
+      case 'main':
+        this.onMouseMainDrag(delta)
+        break
+      case 'middle':
+        this.onMouseMiddleDrag(delta)
+        break
+      case 'right':
+        this.onMouseRightDrag(delta)
+        break
     }
   }
 
@@ -141,8 +169,12 @@ export class MouseHandler extends InputHandler {
     console.log('main')
   }
 
-  private onMouseSecondaryDrag (delta: THREE.Vector2) {
+  private onMouseMiddleDrag (delta: THREE.Vector2) {
     this.camera.move2(delta, 'XY')
+  }
+
+  private onMouseRightDrag (delta: THREE.Vector2) {
+    this.camera.rotate(delta)
   }
 
   private onMouseWheel = (event: any) => {
@@ -165,30 +197,15 @@ export class MouseHandler extends InputHandler {
     return event.buttons & 1
       ? 'main'
       : event.buttons & 2
-        ? 'secondary'
+        ? 'right'
         : event.buttons & 4
-          ? 'secondary'
+          ? 'middle'
           : undefined
-  }
-
-  private onMouseDown = (event: MouseEvent) => {
-    event.preventDefault()
-    if (this.buttonDown) return
-    this._downPosition = new THREE.Vector2(event.offsetX, event.offsetY)
-    this.hasMouseMoved = false
-
-    // Manually set the focus since calling preventDefault above
-    // prevents the browser from setting it automatically.
-    this.viewport.canvas.focus()
-    this.buttonDown = this.getButton(event)
-
-    console.log('down ' + this.buttonDown)
   }
 
   private onMouseUp = (event: MouseEvent) => {
     const btn = this.getButton(event)
-    if (btn === this.buttonDown) return
-    console.log('up ' + this.buttonDown)
+    if (btn === this.buttonDown) return // the active button is still down.
 
     this._viewer.gizmoSelection.visible = false
     event.preventDefault()
@@ -203,7 +220,9 @@ export class MouseHandler extends InputHandler {
         new THREE.Vector2(event.clientX, event.clientY)
       )
     }
+    this.camera.orbitMode = this.inputs.pointerMode === 'orbit'
     this.buttonDown = undefined
+    this.inputs.pointerOverride = undefined
   }
 
   private onRectEnd () {
