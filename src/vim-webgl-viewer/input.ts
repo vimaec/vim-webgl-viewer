@@ -156,7 +156,9 @@ export class Input {
   }
 
   set pointerOverride (value: PointerMode) {
+    if (value === this._tmpMode) return
     this._tmpMode = value
+    this._onPointerOverrideChanged.dispatch()
   }
 
   /**
