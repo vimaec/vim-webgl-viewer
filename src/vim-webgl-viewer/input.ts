@@ -184,7 +184,7 @@ export class Input {
   }
 
   /**
-   * Event called when pointer interaction mode changes.
+   * Event called when the pointer is temporarily overriden.
    */
   public _onPointerOverrideChanged = new SignalDispatcher()
   get onPointerOverrideChanged () {
