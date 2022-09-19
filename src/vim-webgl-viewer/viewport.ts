@@ -1,8 +1,10 @@
 import * as THREE from 'three'
+import { CSS2DRenderer } from 'three/examples/jsm/renderers/CSS2DRenderer'
 import { ViewerSettings } from './viewerSettings'
 
 export class Viewport {
   canvas: HTMLCanvasElement
+  text: HTMLElement
   private _unregisterResize: Function | undefined
   private _ownedCanvas: boolean
   private _resizeCallbacks: (() => void)[] = []
@@ -31,6 +33,20 @@ export class Viewport {
     canvas.tabIndex = 0
     document.body.appendChild(canvas)
     return [canvas, true]
+  }
+
+  createTextRenderer () {
+    const size = this.getParentSize()
+    const renderer = new CSS2DRenderer()
+    renderer.setSize(size.x, size.y)
+    this.text = renderer.domElement
+
+    this.text.className = 'vim-text-renderer'
+    this.text.style.position = 'absolute'
+    this.text.style.top = '0px'
+    this.text.style.pointerEvents = 'none'
+    this.canvas.parentElement.append(this.text)
+    return renderer
   }
 
   dispose () {

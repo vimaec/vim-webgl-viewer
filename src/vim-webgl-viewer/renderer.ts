@@ -92,14 +92,7 @@ export class Renderer {
       logarithmicDepthBuffer: true
     })
 
-    this.textRenderer = new CSS2DRenderer()
-    const size = viewport.getParentSize()
-    this.textRenderer.setSize(size.x, size.y)
-    this.textRenderer.domElement.className = 'vim-text-renderer'
-    this.textRenderer.domElement.style.position = 'absolute'
-    this.textRenderer.domElement.style.top = '0px'
-    this.textRenderer.domElement.style.pointerEvents = 'none'
-    this.viewport.canvas.append(this.textRenderer.domElement)
+    this.textRenderer = this.viewport.createTextRenderer()
 
     this.fitViewport()
     this.viewport.onResize(() => this.fitViewport())
