@@ -95,6 +95,7 @@ export class Renderer {
     this.textRenderer = new CSS2DRenderer()
     const size = viewport.getParentSize()
     this.textRenderer.setSize(size.x, size.y)
+    this.textRenderer.domElement.className = 'vim-text-renderer'
     this.textRenderer.domElement.style.position = 'absolute'
     this.textRenderer.domElement.style.top = '0px'
     this.textRenderer.domElement.style.pointerEvents = 'none'
