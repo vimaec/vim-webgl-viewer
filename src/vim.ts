@@ -1,4 +1,5 @@
 // Links files to generate package type exports
+import 'style.css'
 export * as THREE from 'three'
 
 export * from './vim-webgl-viewer/viewer'
