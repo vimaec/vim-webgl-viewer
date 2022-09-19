@@ -166,7 +166,6 @@ export class MouseHandler extends InputHandler {
       default:
         this.camera.rotate(delta)
     }
-    console.log('main')
   }
 
   private onMouseMiddleDrag (delta: THREE.Vector2) {

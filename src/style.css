@@ -1,0 +1,43 @@
+.vim-measure {
+  background-color: white;
+}
+
+.vim-measure table {
+  border-collapse: collapse;
+}
+
+.vim-measure table tr {
+  border: 1px solid;
+  border-color: black;
+}
+
+.vim-measure-label-d,
+.vim-measure-label-x,
+.vim-measure-label-y,
+.vim-measure-label-z {
+  color: white;
+  width: 10px;
+  text-align: center;
+  padding: 5px;
+}
+
+.vim-measure-label-d {
+  background-color: black;
+}
+.vim-measure-label-x {
+  background-color: red;
+}
+.vim-measure-label-y {
+  background-color: green;
+}
+.vim-measure-label-z {
+  background-color: blue;
+}
+
+.vim-measure-value-d,
+.vim-measure-value-x,
+.vim-measure-value-y,
+.vim-measure-value-z {
+  text-align: center;
+  padding: 5px;
+}

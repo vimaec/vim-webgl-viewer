@@ -8,9 +8,11 @@ import { Viewport } from './viewport'
 import { RenderScene } from './renderScene'
 import { IMaterialLibrary, VimMaterials } from '../vim-loader/materials'
 import { ViewerSettings } from './viewerSettings'
+import { CSS2DRenderer } from 'three/examples/jsm/renderers/CSS2DRenderer'
 
 class Section {
   private _renderer: THREE.WebGLRenderer
+
   private _materials: IMaterialLibrary
   private _active: boolean
 
@@ -69,6 +71,7 @@ class Section {
  */
 export class Renderer {
   renderer: THREE.WebGLRenderer
+  textRenderer: CSS2DRenderer
   viewport: Viewport
   scene: RenderScene
   section: Section
@@ -88,6 +91,14 @@ export class Renderer {
       powerPreference: 'high-performance',
       logarithmicDepthBuffer: true
     })
+
+    this.textRenderer = new CSS2DRenderer()
+    const size = viewport.getParentSize()
+    this.textRenderer.setSize(size.x, size.y)
+    this.textRenderer.domElement.style.position = 'absolute'
+    this.textRenderer.domElement.style.top = '0px'
+    this.textRenderer.domElement.style.pointerEvents = 'none'
+    document.body.appendChild(this.textRenderer.domElement)
 
     this.fitViewport()
     this.viewport.onResize(() => this.fitViewport())
@@ -118,6 +129,7 @@ export class Renderer {
    */
   render (camera: THREE.Camera) {
     this.renderer.render(this.scene.scene, camera)
+    this.textRenderer.render(this.scene.scene, camera)
   }
 
   /**
@@ -156,5 +168,6 @@ export class Renderer {
     const size = this.viewport.getParentSize()
     this.renderer.setPixelRatio(window.devicePixelRatio)
     this.renderer.setSize(size.x, size.y)
+    this.textRenderer.setSize(size.x, size.y)
   }
 }
