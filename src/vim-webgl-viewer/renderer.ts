@@ -99,7 +99,7 @@ export class Renderer {
     this.textRenderer.domElement.style.position = 'absolute'
     this.textRenderer.domElement.style.top = '0px'
     this.textRenderer.domElement.style.pointerEvents = 'none'
-    document.body.appendChild(this.textRenderer.domElement)
+    this.viewport.canvas.parentElement.append(this.textRenderer.domElement)
 
     this.fitViewport()
     this.viewport.onResize(() => this.fitViewport())
