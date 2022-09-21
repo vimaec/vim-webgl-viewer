@@ -82,7 +82,7 @@ class MeasureLine {
  * Markers meshes used for measure endpoints
  */
 class MeasureMarker {
-  readonly MARKER_SIZE = 0.02
+  readonly MARKER_SIZE = 0.01
   mesh: THREE.Mesh
   private _material: THREE.Material
   private _materialAlways: THREE.Material
