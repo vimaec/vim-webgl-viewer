@@ -109,6 +109,8 @@ export interface ICamera {
    */
   reset()
 
+  heightAt(point: THREE.Vector3)
+
   get forward(): THREE.Vector3
   get orbitPosition(): THREE.Vector3
 
@@ -190,6 +192,15 @@ export class Camera implements ICamera {
     this.reset()
   }
 
+  heightAt (point: THREE.Vector3) {
+    if (this.orthographic) {
+      return this.cameraOrthographic.top - this.cameraOrthographic.bottom
+    } else {
+      const dist = this.camera.position.distanceTo(point)
+      return dist * Math.tan((this.cameraPerspective.fov / 2) * (Math.PI / 180))
+    }
+  }
+
   dispose () {
     this.gizmo?.dispose()
     this.gizmo = undefined
@@ -269,10 +280,9 @@ export class Camera implements ICamera {
   }
 
   private setPosition (position: THREE.Vector3) {
-    if (this.isSignificant(this.camera.position.sub(position))) {
-      this._onMoved.dispatch()
-    }
+    const changed = this.isSignificant(this.camera.position.sub(position))
     this.camera.position.copy(position)
+    if (changed) this._onMoved.dispatch()
   }
 
   /**
