@@ -68,7 +68,7 @@ class MeasureLine {
 
     this.length = start.distanceTo(end)
     this.label.visible = this.length > 0
-    this._text.textContent = start.distanceTo(end).toFixed(2)
+    this._text.textContent = `~${start.distanceTo(end).toFixed(2)}`
   }
 
   dispose () {
