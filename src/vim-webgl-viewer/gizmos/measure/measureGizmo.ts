@@ -1,6 +1,7 @@
 import * as THREE from 'three'
 import { CSS2DObject } from 'three/examples/jsm/renderers/CSS2DRenderer'
 import { MeshLine, MeshLineMaterial } from '../../../utils/meshLine'
+import { ICamera } from '../../camera'
 import { Viewer } from '../../viewer'
 import {
   createMeasureElement,
@@ -81,11 +82,14 @@ class MeasureLine {
  * Markers meshes used for measure endpoints
  */
 class MeasureMarker {
+  readonly MARKER_SIZE = 0.02
   mesh: THREE.Mesh
   private _material: THREE.Material
   private _materialAlways: THREE.Material
+  private _camera: ICamera
+  private disconnect: () => void
 
-  constructor (color: THREE.Color) {
+  constructor (color: THREE.Color, camera: ICamera, viewer: Viewer) {
     this._material = new THREE.MeshBasicMaterial({
       color: color
     })
@@ -97,10 +101,21 @@ class MeasureMarker {
       color: new THREE.Color(0, 0.75, 1)
     })
 
-    const g = new THREE.SphereGeometry(0.25)
+    const g = new THREE.SphereGeometry(1)
     g.addGroup(0, Infinity, 0)
     g.addGroup(0, Infinity, 1)
     this.mesh = new THREE.Mesh(g, [this._material, this._materialAlways])
+    this.mesh.visible = false
+
+    this.disconnect = camera.onMoved.subscribe(() => this.updateScale())
+    this._camera = camera
+    this.updateScale()
+  }
+
+  updateScale () {
+    const scale = this._camera.heightAt(this.mesh.position) * this.MARKER_SIZE
+    this.mesh.scale.set(scale, scale, scale)
+    this.mesh.updateMatrix()
   }
 
   setPosition (position: THREE.Vector3) {
@@ -110,6 +125,7 @@ class MeasureMarker {
   dispose () {
     this.mesh.geometry.dispose()
     this._material.dispose()
+    this.disconnect()
   }
 }
 
@@ -130,8 +146,16 @@ export class MeasureGizmo {
     this._viewer = viewer
     const canvasSize = this._viewer.viewport.getSize()
 
-    this._startMarker = new MeasureMarker(new THREE.Color('#FFB700'))
-    this._endMarker = new MeasureMarker(new THREE.Color('#0590CC'))
+    this._startMarker = new MeasureMarker(
+      new THREE.Color('#FFB700'),
+      this._viewer.camera,
+      this._viewer
+    )
+    this._endMarker = new MeasureMarker(
+      new THREE.Color('#0590CC'),
+      this._viewer.camera,
+      this._viewer
+    )
 
     this._line = new MeasureLine(canvasSize, new THREE.Color(1, 1, 1), 'Dist')
     this._lineX = new MeasureLine(canvasSize, new THREE.Color(1, 0, 0), 'X')
@@ -189,18 +213,15 @@ export class MeasureGizmo {
 
   screenDist (first: THREE.Vector3, second: THREE.Vector3) {
     if (!first || !second) return
-    const camera = this._viewer.camera.camera as THREE.PerspectiveCamera
-    const camDist = first.distanceTo(this._viewer.camera.camera.position)
-    const screenLength = camDist * Math.tan((camera.fov / 2) * (Math.PI / 180))
-
     const length = first.distanceTo(second)
-    const ratio = length / screenLength
+    const ratio = length / this._viewer.camera.heightAt(first)
     return ratio
   }
 
   start (start: THREE.Vector3) {
     // Set start marker
     this._startMarker.setPosition(start)
+    this._startMarker.mesh.visible = true
   }
 
   hide () {
@@ -225,6 +246,7 @@ export class MeasureGizmo {
 
     // Set end marker
     this._endMarker.setPosition(end)
+    this._endMarker.mesh.visible = true
 
     // Compute measurement vector component
     const delta = end.clone().sub(start)
