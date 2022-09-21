@@ -169,7 +169,6 @@ export class Input {
 
     if (value === 'look') this._altMode = 'orbit'
     else if (value === 'orbit') this._altMode = 'look'
-    else this._altMode = this._mode
     this._viewer.gizmoSelection.visible = false
 
     this._viewer.camera.orbitMode = value !== 'look'
