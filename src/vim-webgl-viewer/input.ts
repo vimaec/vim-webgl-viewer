@@ -73,7 +73,7 @@ export class DefaultInputStrategy implements InputStrategy {
     const camera = this._viewer.camera
     const selection = this._viewer.selection
     switch (key) {
-      case KEYS.KEY_O:
+      case KEYS.KEY_P:
         camera.orthographic = !camera.orthographic
         return true
       case KEYS.KEY_ADD:
