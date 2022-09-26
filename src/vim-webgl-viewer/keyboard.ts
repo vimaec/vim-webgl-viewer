@@ -152,7 +152,7 @@ export class KeyboardHandler extends InputHandler {
 
   private onActionKey (key: number) {
     switch (key) {
-      case KEYS.KEY_O:
+      case KEYS.KEY_P:
         this.camera.orthographic = !this.camera.orthographic
         return true
       case KEYS.KEY_ADD:
