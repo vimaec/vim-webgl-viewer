@@ -25,6 +25,11 @@ export interface IMaterialLibrary {
    * Material used for isolation mode to show objects in context.
    */
   get isolation(): THREE.Material
+
+  /**
+   * Material used for isolation mode to show objects in context.
+   */
+  get focus(): THREE.Material
   dispose(): void
 }
 
@@ -36,17 +41,20 @@ export class VimMaterials implements IMaterialLibrary {
   transparent: THREE.MeshPhongMaterial
   wireframe: THREE.LineBasicMaterial
   isolation: THREE.Material
+  focus: THREE.Material
 
   constructor (
     opaque?: THREE.Material,
     transparent?: THREE.MeshPhongMaterial,
     wireframe?: THREE.LineBasicMaterial,
-    isolation?: THREE.Material
+    isolation?: THREE.Material,
+    focus?: THREE.Material
   ) {
     this.opaque = opaque ?? createOpaque()
     this.transparent = transparent ?? createTransparent()
     this.wireframe = wireframe ?? createWireframe()
     this.isolation = isolation ?? createIsolationMaterial()
+    this.focus = focus ?? createFocus()
   }
 
   applyWireframeSettings (color: THREE.Color, opacity: number) {
@@ -118,6 +126,19 @@ export function createWireframe () {
   return material
 }
 
+/**
+ * Creates a new instance of the default wireframe material
+ * @returns a THREE.LineBasicMaterial
+ */
+export function createFocus () {
+  const material = new THREE.MeshBasicMaterial({
+    depthTest: false,
+    opacity: 0.2,
+    color: new THREE.Color(1, 1, 1),
+    transparent: true
+  })
+  return material
+}
 /**
  * Patches phong shader to be able to control when lighting should be applied to resulting color.
  * Instanced meshes ignore light when InstanceColor is defined

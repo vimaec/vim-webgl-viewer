@@ -21,7 +21,8 @@ export class Selection {
   private _vim: Vim | undefined
 
   // Disposable State
-  private _highlight: THREE.LineSegments | undefined
+  private _selectionMesh: THREE.LineSegments | undefined
+  private _focusMesh: THREE.Mesh | undefined
 
   /**
    * Event called when selection changes or is cleared
@@ -73,6 +74,22 @@ export class Selection {
       return
     }
     return target
+  }
+
+  /**
+   * Adds focus highlight to a single object.
+   * Pass undefined to remove highlight
+   */
+  focus (object: Object) {
+    this._focusMesh?.geometry.dispose()
+    this._renderer.remove(this._focusMesh)
+
+    if (!object) return
+    this._focusMesh = new THREE.Mesh(
+      object.createGeometry(),
+      this._renderer.materials.focus
+    )
+    this._renderer.add(this._focusMesh)
   }
 
   /**
@@ -217,16 +234,19 @@ export class Selection {
     }
 
     const meshBuilder = vim!.scene.builder.meshBuilder
-    this._highlight = meshBuilder.createWireframe(vim!.document.g3d, instances)
-    this._highlight.applyMatrix4(vim!.getMatrix())
-    if (this._highlight) this._renderer.add(this._highlight)
+    this._selectionMesh = meshBuilder.createWireframe(
+      vim!.document.g3d,
+      instances
+    )
+    this._selectionMesh.applyMatrix4(vim!.getMatrix())
+    if (this._selectionMesh) this._renderer.add(this._selectionMesh)
   }
 
   private removeHighlight () {
-    if (this._highlight) {
-      this._highlight.geometry.dispose()
-      this._renderer.remove(this._highlight)
-      this._highlight = undefined
+    if (this._selectionMesh) {
+      this._selectionMesh.geometry.dispose()
+      this._renderer.remove(this._selectionMesh)
+      this._selectionMesh = undefined
     }
   }
 }

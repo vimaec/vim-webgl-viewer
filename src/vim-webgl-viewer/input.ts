@@ -66,7 +66,7 @@ export class DefaultInputStrategy implements InputStrategy {
   }
 
   onIdleAction (hit: InputAction): void {
-    // Do nothing
+    this._viewer.selection.focus(hit.object)
   }
 
   onKeyAction (key: number): boolean {
