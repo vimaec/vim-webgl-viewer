@@ -86,7 +86,7 @@ export class MouseHandler extends InputHandler {
       position,
       this.raycaster
     )
-    this._viewer.inputs.onIdleAction(action)
+    this._viewer.inputs.IdleAction(action)
   }
 
   private onMouseMove = (event: any) => {
@@ -147,7 +147,7 @@ export class MouseHandler extends InputHandler {
   }
 
   private onMouseMainDrag (delta: THREE.Vector2) {
-    switch (this.inputs.pointerMode) {
+    switch (this.inputs.pointerActive) {
       case 'orbit':
         this.camera.rotate(delta)
         break
@@ -210,16 +210,14 @@ export class MouseHandler extends InputHandler {
     event.preventDefault()
     if (!this.buttonDown) return
 
-    if (this.inputs.pointerMode === 'rect' && this.hasMouseMoved) {
+    if (this.inputs.pointerActive === 'rect' && this.hasMouseMoved) {
       this.onRectEnd()
     } else if (event.button === 0 && !this.hasMouseMoved) {
       this.onMouseClick(new THREE.Vector2(event.offsetX, event.offsetY), false)
     } else if (event.button === 2 && !this.hasMouseMoved) {
-      this.inputs.onContextMenu?.(
-        new THREE.Vector2(event.clientX, event.clientY)
-      )
+      this.inputs.ContextMenu(new THREE.Vector2(event.clientX, event.clientY))
     }
-    this.camera.orbitMode = this.inputs.pointerMode === 'orbit'
+    this.camera.orbitMode = this.inputs.pointerActive === 'orbit'
     this.buttonDown = undefined
     this.inputs.pointerOverride = undefined
   }
@@ -244,8 +242,7 @@ export class MouseHandler extends InputHandler {
     this.onMouseClick(new THREE.Vector2(event.offsetX, event.offsetY), true)
   }
 
-  // TODO Make private
-  onMouseClick = (position: THREE.Vector2, doubleClick: boolean) => {
+  private onMouseClick = (position: THREE.Vector2, doubleClick: boolean) => {
     const action = new InputAction(
       doubleClick ? 'double' : 'main',
       this.getModifier(),
@@ -253,7 +250,7 @@ export class MouseHandler extends InputHandler {
       this.raycaster
     )
 
-    this._viewer.inputs.onMainAction(action)
+    this._viewer.inputs.MainAction(action)
   }
 
   private getModifier () {

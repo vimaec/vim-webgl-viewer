@@ -68,12 +68,12 @@ export class Measure implements IMeasure {
     this.abort()
 
     this._flow = new MeasureFlow(this)
-    this._viewer.inputs.strategy = this._flow
+    this._viewer.inputs.scheme = this._flow
     this._flow.onProgress = onProgress
 
     return new Promise<void>((resolve, reject) => {
       this._flow.onComplete = (success: boolean) => {
-        this._viewer.inputs.strategy = undefined
+        this._viewer.inputs.scheme = undefined
         if (success) resolve()
         else {
           reject(new Error('Measurement Aborted'))

@@ -54,7 +54,7 @@ export class TouchHandler extends InputHandler {
       this._viewer.raycaster
     )
 
-    this._viewer.inputs.onMainAction(action)
+    this._viewer.inputs.MainAction(action)
   }
 
   private onTouchStart = (event: any) => {

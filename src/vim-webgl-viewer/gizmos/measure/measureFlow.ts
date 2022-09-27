@@ -1,10 +1,10 @@
-import { InputStrategy } from '../../input'
+import { InputScheme } from '../../input'
 import { InputAction } from '../../raycaster'
 import { Measure } from './measure'
 
 export type MeasureStage = 'ready' | 'active' | 'done' | 'failed'
 
-export class MeasureFlow implements InputStrategy {
+export class MeasureFlow implements InputScheme {
   private readonly _gizmoMeasure: Measure
   private _stage: MeasureStage = 'ready'
   private removeMouseListener: () => void

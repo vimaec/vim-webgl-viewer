@@ -153,7 +153,7 @@ export class KeyboardHandler extends InputHandler {
   private onKey = (event: any, keyDown: boolean) => {
     // Buttons that activate once on key up
     if (!keyDown && KeySet.has(event.keyCode)) {
-      if (this._viewer.inputs.onKeyAction(event.keyCode)) {
+      if (this._viewer.inputs.KeyAction(event.keyCode)) {
         event.preventDefault()
       }
     }

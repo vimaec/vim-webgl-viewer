@@ -9,29 +9,35 @@ import { TouchHandler } from './touch'
 import { MouseHandler } from './mouse'
 import { InputAction } from './raycaster'
 import { SignalDispatcher } from 'ste-signals'
+import { SimpleEventDispatcher } from 'ste-simple-events'
 export { KEYS } from './keyboard'
 
 export type PointerMode = 'orbit' | 'look' | 'pan' | 'zoom' | 'rect'
 
-export interface InputStrategy {
+/**
+ * Defines an input scheme for the viewer.
+ */
+export interface InputScheme {
   /**
-   * Event called when mouse clicked or mobile tap.
-   * default behaviour with your custom logic.
+   * Called when mouse clicked or mobile tap.
    */
   onMainAction(hit: InputAction): void
 
   /**
-   * Callback when mouse and camera have been idle for some time.
+   * Called when mouse and camera have been idle for some time.
    */
   onIdleAction(hit: InputAction): void
 
   /**
-   * Callback when mouse and camera have been idle for some time.
+   * Called when a key is pressed and released.
    */
   onKeyAction(key: number): boolean
 }
 
-export class DefaultInputStrategy implements InputStrategy {
+/**
+ * Vim viewer default input scheme
+ */
+export class DefaultInputScheme implements InputScheme {
   private _viewer: Viewer
   constructor (viewer: Viewer) {
     this._viewer = viewer
@@ -86,7 +92,7 @@ export class DefaultInputStrategy implements InputStrategy {
         return true
       case KEYS.KEY_F8:
       case KEYS.KEY_SPACE:
-        this._viewer.inputs.pointerMode = this._viewer.inputs.altPointerMode
+        this._viewer.inputs.pointerActive = this._viewer.inputs.pointerFallback
         return true
       case KEYS.KEY_HOME:
         camera.frame('all', 45, camera.defaultLerpDuration)
@@ -133,53 +139,56 @@ export class Input {
    */
   keyboard: KeyboardHandler
 
-  private _mode: PointerMode
-  private _altMode: PointerMode
-  private _tmpMode: PointerMode
+  private _pointerActive: PointerMode
+  private _pointerFallback: PointerMode
+  private _pointerOverride: PointerMode
 
   /**
    * Returns the last main mode (orbit, look) that was active.
    */
-  get altPointerMode () {
-    return this._altMode
+  get pointerFallback () {
+    return this._pointerFallback
   }
 
   /**
    * Returns current pointer mode.
    */
-  get pointerMode () {
-    return this._mode
+  get pointerActive () {
+    return this._pointerActive
   }
 
+  /**
+   * A temporary pointer mode used for temporary icons.
+   */
   get pointerOverride () {
-    return this._tmpMode
+    return this._pointerOverride
   }
 
   set pointerOverride (value: PointerMode) {
-    if (value === this._tmpMode) return
-    this._tmpMode = value
+    if (value === this._pointerOverride) return
+    this._pointerOverride = value
     this._onPointerOverrideChanged.dispatch()
   }
 
   /**
    * Changes pointer interaction mode. Look mode will set camera orbitMode to false.
    */
-  set pointerMode (value: PointerMode) {
-    if (value === this._mode) return
+  set pointerActive (value: PointerMode) {
+    if (value === this._pointerActive) return
 
-    if (value === 'look') this._altMode = 'orbit'
-    else if (value === 'orbit') this._altMode = 'look'
+    if (value === 'look') this._pointerFallback = 'orbit'
+    else if (value === 'orbit') this._pointerFallback = 'look'
     this._viewer.gizmoSelection.visible = false
 
     this._viewer.camera.orbitMode = value !== 'look'
-    this._mode = value
+    this._pointerActive = value
     this._onPointerModeChanged.dispatch()
   }
 
   /**
    * Event called when pointer interaction mode changes.
    */
-  public _onPointerModeChanged = new SignalDispatcher()
+  private _onPointerModeChanged = new SignalDispatcher()
   get onPointerModeChanged () {
     return this._onPointerModeChanged.asEvent()
   }
@@ -187,54 +196,59 @@ export class Input {
   /**
    * Event called when the pointer is temporarily overriden.
    */
-  public _onPointerOverrideChanged = new SignalDispatcher()
+  private _onPointerOverrideChanged = new SignalDispatcher()
   get onPointerOverrideChanged () {
     return this._onPointerOverrideChanged.asEvent()
   }
 
   /**
-   * Event called when mouse clicked or mobile tap.
-   * default behaviour with your custom logic.
+   * Event called when when context menu could be displayed
    */
-  /*
-  private _onMainAction = new SimpleEventDispatcher<InputAction>()
-  get onMainAction () {
-    return this._onMainAction.asEvent()
-  }
-  */
-
-  private _strategy: InputStrategy
-  get strategy () {
-    return this._strategy
+  private _onContextMenu = new SimpleEventDispatcher<THREE.Vector2>()
+  get onContextMenu () {
+    return this._onContextMenu.asEvent()
   }
 
-  set strategy (value: InputStrategy) {
-    this._strategy = value ?? new DefaultInputStrategy(this._viewer)
+  private _scheme: InputScheme
+
+  /**
+   * Get or set the current viewer input scheme
+   */
+  get scheme () {
+    return this._scheme
   }
 
-  onMainAction (action: InputAction) {
-    this._strategy.onMainAction(action)
+  set scheme (value: InputScheme) {
+    this._scheme = value ?? new DefaultInputScheme(this._viewer)
   }
 
   /**
-   * Callback when mouse and camera have been idle for some time.
+   * Calls main action on the current input scheme
    */
-  onIdleAction (action: InputAction) {
-    this._strategy.onIdleAction(action)
+  MainAction (action: InputAction) {
+    this._scheme.onMainAction(action)
   }
 
   /**
-   * Callback when mouse and camera have been idle for some time.
+   * Calls idle action on the current input scheme
    */
-  onKeyAction (key: number) {
-    return this._strategy.onKeyAction(key)
+  IdleAction (action: InputAction) {
+    this._scheme.onIdleAction(action)
   }
 
   /**
-   * Callback when context menu could be displayed
+   * Calls key action on the current input scheme
    */
-  onContextMenu: ((position: THREE.Vector2) => void) | undefined = () =>
-    console.log('Context Menu')
+  KeyAction (key: number) {
+    return this._scheme.onKeyAction(key)
+  }
+
+  /**
+   * Calls context menu action
+   */
+  ContextMenu (position: THREE.Vector2) {
+    this._onContextMenu.dispatch(position)
+  }
 
   constructor (viewer: Viewer) {
     this._viewer = viewer
@@ -242,9 +256,9 @@ export class Input {
     this.keyboard = new KeyboardHandler(viewer)
     this.mouse = new MouseHandler(viewer)
     this.touch = new TouchHandler(viewer)
-    this._strategy = new DefaultInputStrategy(viewer)
-    this.pointerMode = 'orbit'
-    this._altMode = 'look'
+    this._scheme = new DefaultInputScheme(viewer)
+    this.pointerActive = 'orbit'
+    this._pointerFallback = 'look'
   }
 
   /**
