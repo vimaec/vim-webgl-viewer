@@ -1,7 +1,11 @@
+/**
+ @module viw-webgl-viewer
+*/
+
 import * as THREE from 'three'
 import { Viewer } from '../viewer'
 
-export class GizmoSelection {
+export class GizmoRectangle {
   private line: THREE.LineSegments
   private viewer: Viewer
   private points: THREE.Vector3[]
@@ -38,20 +42,28 @@ export class GizmoSelection {
     this.viewer.renderer.add(this.line)
   }
 
+  /**
+   * Removes the object from rendering and dispose resources from memory
+   */
   dispose () {
     this.viewer.renderer.remove(this.line)
     this.line.geometry.dispose()
     ;(this.line.material as THREE.Material).dispose()
   }
 
+  /** Gizmo gets renderer if true */
   get visible () {
     return this.line.visible
   }
 
+  /** Gizmo gets renderer if true */
   set visible (value: boolean) {
     this.line.visible = value
   }
 
+  /**
+   * Sets the 2 corner points defining the rectangle.
+   */
   update (posA: THREE.Vector2, posB: THREE.Vector2) {
     // Plane perpedicular to camera
     const plane = new THREE.Plane().setFromNormalAndCoplanarPoint(

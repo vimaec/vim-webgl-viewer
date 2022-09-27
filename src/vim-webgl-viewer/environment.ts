@@ -168,6 +168,4 @@ export interface IEnvironment {
   skyLight: THREE.HemisphereLight
   sunLights: THREE.DirectionalLight[]
   groundPlane: THREE.Mesh
-
-  loadGroundTexture(url: string)
 }

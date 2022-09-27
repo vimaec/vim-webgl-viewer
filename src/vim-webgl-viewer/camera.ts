@@ -21,6 +21,11 @@ export const DIRECTIONS = {
   down: new THREE.Vector3(0, -1, 0)
 }
 
+/**
+ * None : Frame from current position
+ * Center : Cam.y = Object.y
+ * number: Angle between the xz plane and the camera
+ */
 type FrameAngle = 'none' | 'center' | number
 
 export interface ICamera {
@@ -49,11 +54,10 @@ export interface ICamera {
    * Current local velocity
    */
   localVelocity: THREE.Vector3
-  /**
-   * Rotates the camera around the X or Y axis or both
-   * @param vector where coordinates are in relative screen size. ie [-1, 1]
-   */
 
+  /**
+   * defines a common lerp duration
+   */
   defaultLerpDuration: number
 
   /**
@@ -109,9 +113,19 @@ export interface ICamera {
    */
   reset()
 
+  /**
+   * Returns the world height of a plane perpendicular to camera intersecting given point.
+   */
   heightAt(point: THREE.Vector3)
 
+  /**
+   * Returns world forward of the camera.
+   */
   get forward(): THREE.Vector3
+
+  /**
+   * Returns the position of the orbit center.
+   */
   get orbitPosition(): THREE.Vector3
 
   /**
@@ -132,9 +146,10 @@ type Lerp = 'None' | 'Position' | 'Rotation' | 'Both'
  */
 export class Camera implements ICamera {
   camera: THREE.PerspectiveCamera | THREE.OrthographicCamera
+  gizmo: CameraGizmo | undefined
   private cameraPerspective: THREE.PerspectiveCamera
   private cameraOrthographic: THREE.OrthographicCamera
-  gizmo: CameraGizmo | undefined
+
   private _viewport: Viewport
   private _scene: RenderScene
 

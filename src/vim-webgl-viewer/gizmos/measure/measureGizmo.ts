@@ -1,3 +1,7 @@
+/**
+ @module viw-webgl-viewer
+*/
+
 import * as THREE from 'three'
 import { CSS2DObject } from 'three/examples/jsm/renderers/CSS2DRenderer'
 import { MeshLine, MeshLineMaterial } from '../../../utils/meshLine'

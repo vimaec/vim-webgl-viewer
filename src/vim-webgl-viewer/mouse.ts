@@ -206,7 +206,7 @@ export class MouseHandler extends InputHandler {
     const btn = this.getButton(event)
     if (btn === this.buttonDown) return // the active button is still down.
 
-    this._viewer.gizmoSelection.visible = false
+    this._viewer.gizmoRectangle.visible = false
     event.preventDefault()
     if (!this.buttonDown) return
 
@@ -224,7 +224,7 @@ export class MouseHandler extends InputHandler {
 
   private onRectEnd () {
     // Shrink box for better camera fit.
-    const box = this._viewer.gizmoSelection.getBoundingBox()
+    const box = this._viewer.gizmoRectangle.getBoundingBox()
     const center = box.getCenter(new THREE.Vector3())
     const size = box.getSize(new THREE.Vector3())
     size.multiplyScalar(0.5)
@@ -262,7 +262,7 @@ export class MouseHandler extends InputHandler {
   }
 
   private drawSelection () {
-    this._viewer.gizmoSelection.visible = true
-    this._viewer.gizmoSelection.update(this._downPosition, this._lastPosition)
+    this._viewer.gizmoRectangle.visible = true
+    this._viewer.gizmoRectangle.update(this._downPosition, this._lastPosition)
   }
 }

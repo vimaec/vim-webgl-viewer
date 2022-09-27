@@ -5,6 +5,7 @@
 import * as THREE from 'three'
 import { ICamera } from '../camera'
 
+// TODO make things private cleanup api.
 class Axis {
   axis: string
   direction: THREE.Vector3

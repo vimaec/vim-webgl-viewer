@@ -1,3 +1,7 @@
+/**
+ @module viw-webgl-viewer
+*/
+
 import { Viewer } from '../../viewer'
 import * as THREE from 'three'
 

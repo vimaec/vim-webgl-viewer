@@ -17,7 +17,7 @@ import { Viewport } from './viewport'
 import { GizmoAxes } from './gizmos/gizmoAxes'
 import { SectionBox } from './gizmos/sectionBox/sectionBox'
 import { Measure, IMeasure } from './gizmos/measure/measure'
-import { GizmoSelection } from './gizmos/gizmoSelection'
+import { GizmoRectangle } from './gizmos/gizmoRectangle'
 
 // loader
 import { VimSettings, VimOptions } from '../vim-loader/vimSettings'
@@ -74,7 +74,10 @@ export class Viewer {
    */
   measure: IMeasure
 
-  gizmoSelection: GizmoSelection
+  /**
+   * Interface to interact with the rectanglwe gizmo.
+   */
+  gizmoRectangle: GizmoRectangle
 
   /**
    * Interface to manipulate the viewer camera.
@@ -141,7 +144,7 @@ export class Viewer {
     this.viewport.canvas.parentElement?.prepend(this._gizmoAxes.canvas)
 
     this.sectionBox = new SectionBox(this)
-    this.gizmoSelection = new GizmoSelection(this)
+    this.gizmoRectangle = new GizmoRectangle(this)
 
     this._environment = new Environment(this.settings)
     this._environment.getObjects().forEach((o) => this.renderer.add(o))
@@ -171,7 +174,7 @@ export class Viewer {
     this.inputs.unregisterAll()
     this._vims.forEach((v) => v?.dispose())
     this._materials.dispose()
-    this.gizmoSelection.dispose()
+    this.gizmoRectangle.dispose()
     this._disposed = true
   }
 

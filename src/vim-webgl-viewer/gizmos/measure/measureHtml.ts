@@ -1,3 +1,7 @@
+/**
+ @module viw-webgl-viewer
+*/
+
 export type MeasureStyle = 'all' | 'Dist' | 'X' | 'Y' | 'Z'
 
 export type MeasureElement = {

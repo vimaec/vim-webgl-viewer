@@ -178,7 +178,7 @@ export class Input {
 
     if (value === 'look') this._pointerFallback = 'orbit'
     else if (value === 'orbit') this._pointerFallback = 'look'
-    this._viewer.gizmoSelection.visible = false
+    this._viewer.gizmoRectangle.visible = false
 
     this._viewer.camera.orbitMode = value !== 'look'
     this._pointerActive = value
