@@ -93,6 +93,9 @@ export class Viewer {
     return this._environment as IEnvironment
   }
 
+  /**
+   * Signal dispatched when a new vim is loaded or unloaded.
+   */
   get onVimLoaded () {
     return this._onVimLoaded.asEvent()
   }

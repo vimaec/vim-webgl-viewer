@@ -12,13 +12,42 @@ import { MeasureGizmo } from './measureGizmo'
  * Interacts with the measure tool.
  */
 export interface IMeasure {
+  /**
+   * Start point of the current measure or undefined if no active measure.
+   */
   get startPoint()
+
+  /**
+   * End point of the current measure or undefined if no active measure.
+   */
   get endPoint()
+
+  /**
+   * Vector from start to end of the current measure or undefined if no active measure.
+   */
   get measurement()
 
+  /**
+   * Stage of the current measure or undefined if no active measure.
+   */
   get stage(): MeasureStage | undefined
+
+  /**
+   * Starts a new measure flow where the two next click are overriden.
+   * Currently running flow if any will be aborted.
+   * Promise is resolved if flow is succesfully completed, rejected otherwise.
+   * Do not override viewer.onMouseClick while this flow is active.
+   */
   start(onProgress?: () => void): Promise<void>
+
+  /**
+   * Aborts the current measure flow, fails the related promise.
+   */
   abort()
+
+  /**
+   * Clears meshes.
+   */
   clear()
 }
 
@@ -34,22 +63,35 @@ export class Measure implements IMeasure {
 
   // results
   private _startPos: THREE.Vector3
+
   private _endPos: THREE.Vector3
   private _measurement: THREE.Vector3
   private _flow: MeasureFlow
 
+  /**
+   * Start point of the current measure or undefined if no active measure.
+   */
   get startPoint () {
     return this._startPos
   }
 
+  /**
+   * End point of the current measure or undefined if no active measure.
+   */
   get endPoint () {
     return this._endPos
   }
 
+  /**
+   * Vector from start to end of the current measure or undefined if no active measure.
+   */
   get measurement () {
     return this._measurement
   }
 
+  /**
+   * Stage of the current measure or undefined if no active measure.
+   */
   get stage (): MeasureStage | undefined {
     return this._flow?.stage
   }

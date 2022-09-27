@@ -172,7 +172,7 @@ All raw `G3d` and `BIM` data is stored using the `BFast` format.
 
 ```javascript
 const vim = viewer.vims[0] // or keep vim reference from load
-const object = vim.getObjectFromElementId(ELEMENT_ID)
+const object = vim.getObjectsFromElementId(ELEMENT_ID)[0]
 viewer.camera.frame(object)
 ```
 
@@ -180,7 +180,7 @@ viewer.camera.frame(object)
 
 ```javascript
 const vim = viewer.vims[0] // or keep vim reference from load
-const object = vim.getObjectFromElementId(ELEMENT_ID)
+const object = vim.getObjectsFromElementId(ELEMENT_ID)[0]
 const wireframe = object.createWireframe()
 this.viewer.renderer.add(wireframe)
 

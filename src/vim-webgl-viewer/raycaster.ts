@@ -153,6 +153,9 @@ export class Raycaster {
     return this.raycast3(this._camera.orbitPosition)
   }
 
+  /**
+   * Returns a THREE.Raycaster projecting a ray from camera position to screen position
+   */
   fromPoint2 (
     position: THREE.Vector2,
     target: THREE.Raycaster = new THREE.Raycaster()
@@ -164,6 +167,9 @@ export class Raycaster {
     return target
   }
 
+  /**
+   * Returns a THREE.Raycaster projecting a ray from camera position to world position
+   */
   fromPoint3 (
     position: THREE.Vector3,
     target: THREE.Raycaster = new THREE.Raycaster()

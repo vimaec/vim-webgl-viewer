@@ -102,6 +102,9 @@ export class Renderer {
     this.section = new Section(this.renderer, this.materials)
   }
 
+  /**
+   * Removes all objects from rendering and dispose the WEBGL Context
+   */
   dispose () {
     this.clear()
 
@@ -147,14 +150,11 @@ export class Renderer {
     this.scene.clear()
   }
 
+  /** Update material settings from config */
   applyMaterialSettings (settings: ViewerSettings) {
     this.materials.applyWireframeSettings(
       settings.getHighlightColor(),
       settings.getHighlightOpacity()
-    )
-    this.materials.applyIsolationSettings(
-      settings.getIsolationColor(),
-      settings.getIsolationOpacity()
     )
   }
 

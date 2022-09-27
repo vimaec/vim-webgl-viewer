@@ -3,7 +3,9 @@ import { CSS2DRenderer } from 'three/examples/jsm/renderers/CSS2DRenderer'
 import { ViewerSettings } from './viewerSettings'
 
 export class Viewport {
+  /** HTML Canvas on which the model is rendered */
   canvas: HTMLCanvasElement
+  /** HTML Element in which text is rendered */
   text: HTMLElement
   private _unregisterResize: Function | undefined
   private _ownedCanvas: boolean
@@ -35,6 +37,7 @@ export class Viewport {
     return [canvas, true]
   }
 
+  /** Returns a text renderer that will render html in an html element sibbling to canvas */
   createTextRenderer () {
     const size = this.getParentSize()
     const renderer = new CSS2DRenderer()
@@ -49,6 +52,7 @@ export class Viewport {
     return renderer
   }
 
+  /** Removes canvas if owned */
   dispose () {
     this._unregisterResize?.()
     this._unregisterResize = undefined
@@ -73,6 +77,7 @@ export class Viewport {
     return new THREE.Vector2(this.canvas.clientWidth, this.canvas.clientHeight)
   }
 
+  /** Returns x/y of the parent size */
   getAspectRatio () {
     const size = this.getParentSize()
     return size.x / size.y

@@ -24,10 +24,10 @@ export class Selection {
   private _selectionMesh: THREE.LineSegments | undefined
   private _focusMesh: THREE.Mesh | undefined
 
+  private _onValueChanged = new SignalDispatcher()
   /**
    * Event called when selection changes or is cleared
    */
-  private _onValueChanged = new SignalDispatcher()
   get onValueChanged () {
     return this._onValueChanged.asEvent()
   }

@@ -27,7 +27,7 @@ export interface IMaterialLibrary {
   get isolation(): THREE.Material
 
   /**
-   * Material used for isolation mode to show objects in context.
+   * Material used for focus highlight.
    */
   get focus(): THREE.Material
   dispose(): void
@@ -57,22 +57,19 @@ export class VimMaterials implements IMaterialLibrary {
     this.focus = focus ?? createFocus()
   }
 
+  /** Apply settings to wireframe material */
   applyWireframeSettings (color: THREE.Color, opacity: number) {
     this.wireframe.color = color
     this.wireframe.opacity = opacity
   }
 
-  applyIsolationSettings (color: THREE.Color, opacity: number) {
-    // this.isolation.uniforms.fillColor.value = color
-    // this.isolation.uniforms.opacity.value = opacity
-    // this.isolation.uniformsNeedUpdate = true
-  }
-
+  /** dispose all materials. */
   dispose () {
     this.opaque.dispose()
     this.transparent.dispose()
     this.wireframe.dispose()
     this.isolation.dispose()
+    this.focus.dispose()
   }
 }
 

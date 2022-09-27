@@ -169,6 +169,7 @@ export class SectionBox {
     this._highlight.highlight(this.section.box, this._normal)
   }
 
+  /** Removes gizmo from rendering and inputs and dispose all resources. */
   dispose () {
     this.renderer.remove(this._cube)
     this.renderer.remove(this._outline)
