@@ -65,7 +65,7 @@ export class MeasureFlow implements InputScheme {
     if (this._stage === 'active') this._gizmoMeasure.onMouseIdle(action)
   }
 
-  onKeyAction (key: number): boolean {
+  onKeyAction (key: number) {
     return false
   }
 

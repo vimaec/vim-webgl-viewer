@@ -212,7 +212,7 @@ export class Input {
   private _scheme: InputScheme
 
   /**
-   * Get or set the current viewer input scheme
+   * Get or set the current viewer input scheme, set undefined to revert to default.
    */
   get scheme () {
     return this._scheme
