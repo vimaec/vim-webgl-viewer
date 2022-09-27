@@ -95,7 +95,9 @@ export class Vim {
    */
   getObjectsFromElementId (id: number) {
     const elements = this.document.getElementsFromElementId(id)
-    return elements?.map((e) => this.getObjectFromElement(e))
+    return elements
+      ?.map((e) => this.getObjectFromElement(e))
+      .filter((o): o is Object => o !== undefined)
   }
 
   /**

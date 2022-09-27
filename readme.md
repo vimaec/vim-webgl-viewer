@@ -193,8 +193,8 @@ this.viewer.renderer.add(wireframe)
 
 ```javascript
 const vim = viewer.vims[0] // or keep vim reference from load
-const object = vim.getObjectFromElementId(ELEMENT_ID)
-object.color = new THREE.Color(1, 0, 0)
+const objects = vim.getObjectsFromElementId(ELEMENT_ID) // Many element can share the same id
+objects?.forEach((o) => (o.color = new THREE.Color(1, 0, 0)))
 
 // Revert to original color
 // object.color = undefined
@@ -205,18 +205,18 @@ object.color = new THREE.Color(1, 0, 0)
 ```javascript
 const base = new DefaultInputScheme(viewer)
 const customScheme = {
-  onIdleAction (hit) {
+  onIdleAction(hit) {
     console.log('onIdleAction')
     base.onIdleAction(hit)
   },
-  onKeyAction (key) {
+  onKeyAction(key) {
     console.log('onKeyAction')
     return base.onKeyAction(key)
   },
-  onMainAction (hit) {
+  onMainAction(hit) {
     console.log('onMainAction')
     base.onMainAction(hit)
-  }
+  },
 }
 
 viewer.inputs.scheme = customScheme
