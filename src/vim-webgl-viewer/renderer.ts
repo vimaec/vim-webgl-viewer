@@ -9,6 +9,8 @@ import { RenderScene } from './renderScene'
 import { IMaterialLibrary, VimMaterials } from '../vim-loader/materials'
 import { ViewerSettings } from './viewerSettings'
 import { CSS2DRenderer } from 'three/examples/jsm/renderers/CSS2DRenderer'
+import { SimpleEventDispatcher } from 'ste-simple-events'
+import { Vim } from '../vim'
 
 class Section {
   private _renderer: THREE.WebGLRenderer
@@ -77,6 +79,11 @@ export class Renderer {
   section: Section
   materials: VimMaterials
 
+  private _onVisibilityChanged = new SimpleEventDispatcher<Vim>()
+  get onVisibilityChanged () {
+    return this._onVisibilityChanged.asEvent()
+  }
+
   constructor (scene: RenderScene, viewport: Viewport, materials: VimMaterials) {
     this.viewport = viewport
 
@@ -127,6 +134,10 @@ export class Renderer {
   render (camera: THREE.Camera) {
     this.renderer.render(this.scene.scene, camera)
     this.textRenderer.render(this.scene.scene, camera)
+    this.scene
+      .getUpdatedScenes()
+      .forEach((s) => this._onVisibilityChanged.dispatch(s.vim))
+    this.scene.clearUpdateFlags()
   }
 
   /**

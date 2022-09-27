@@ -17,12 +17,14 @@ export class Scene {
 
   // State
   meshes: THREE.Mesh[] = []
+  vim: Vim
   private _boundingBox: THREE.Box3 = new THREE.Box3()
   private _instanceToThreeMeshes: Map<number, [THREE.Mesh, number][]> =
     new Map()
 
   private _threeMeshIdToInstances: Map<number, number[]> = new Map()
   private _material: THREE.Material | undefined
+  _visibilityChanged: boolean
 
   constructor (builder: SceneBuilder) {
     this.builder = builder
@@ -72,6 +74,7 @@ export class Scene {
    * Sets vim index for this scene and all its THREE.Meshes.
    */
   setVim (vim: Vim) {
+    this.vim = vim
     for (let m = 0; m < this.meshes.length; m++) {
       this.meshes[m].userData.vim = vim
     }

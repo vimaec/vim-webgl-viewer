@@ -16,6 +16,20 @@ export class RenderScene {
     this.scene = new THREE.Scene()
   }
 
+  /** Returns an array of all the scenes that were updated since last clearUpdateFlags */
+  getUpdatedScenes () {
+    const result: Scene[] = []
+    for (const s of this._scenes) {
+      if (s._visibilityChanged) result.push(s)
+    }
+    return result
+  }
+
+  /** Clears the scene updated flags */
+  clearUpdateFlags () {
+    this._scenes.forEach((s) => (s._visibilityChanged = false))
+  }
+
   /**
    * Returns the bounding box encompasing all rendererd objects.
    * @param target box in which to copy result, a new instance is created if undefined.

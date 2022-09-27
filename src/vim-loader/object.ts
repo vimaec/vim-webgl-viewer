@@ -45,6 +45,8 @@ export class Object {
     return this._meshes?.length!!
   }
 
+  onVisibilityChanged: () => void
+
   /**
    * Internal - Replace this object meshes and apply color as needed.
    */
@@ -189,6 +191,7 @@ export class Object {
     if (this._visible === value) return
     this._visible = value
     this.applyVisible(value)
+    this.vim.scene._visibilityChanged = true
   }
 
   private applyVisible (value: boolean) {
