@@ -156,7 +156,6 @@ export class Viewer {
     )
     this.inputs = new Input(this)
     this.inputs.registerAll()
-    this.inputs._onPointerModeChanged.dispatch()
 
     // Start Loop
     this.animate()
