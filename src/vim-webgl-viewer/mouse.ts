@@ -60,7 +60,7 @@ export class MouseHandler extends InputHandler {
 
     // Disable right click menu
     this.reg(this.canvas, 'contextmenu', (e) => e.preventDefault())
-    super._unregisters.push(
+    this._unregisters.push(
       this.camera.onMoved.subscribe(() => this.onCameraMoved())
     )
   }
