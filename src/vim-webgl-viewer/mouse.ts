@@ -11,7 +11,7 @@ type Button = 'main' | 'middle' | 'right' | undefined
  * Manages mouse user inputs
  */
 export class MouseHandler extends InputHandler {
-  private readonly _idleDelayMs = 200
+  private readonly _idleDelayMs = 150
   private readonly ZOOM_SPEED = 5
 
   // State
@@ -19,6 +19,9 @@ export class MouseHandler extends InputHandler {
   private hasMouseMoved: Boolean = false
 
   private _idleTimeout: ReturnType<typeof setTimeout>
+  private _idle: boolean
+  private _idlePosition: THREE.Vector2
+
   private _lastPosition: THREE.Vector2
   private _downPosition: THREE.Vector2
 
@@ -57,6 +60,9 @@ export class MouseHandler extends InputHandler {
 
     // Disable right click menu
     this.reg(this.canvas, 'contextmenu', (e) => e.preventDefault())
+    super._unregisters.push(
+      this.camera.onMoved.subscribe(() => this.onCameraMoved())
+    )
   }
 
   override reset = () => {
@@ -80,6 +86,7 @@ export class MouseHandler extends InputHandler {
   }
 
   private onMouseIdle = (position: THREE.Vector2) => {
+    if (this.buttonDown) return
     const action = new InputAction(
       'idle',
       this.getModifier(),
@@ -87,11 +94,27 @@ export class MouseHandler extends InputHandler {
       this.raycaster
     )
     this._viewer.inputs.IdleAction(action)
+    this._idle = true
+    this._idlePosition = position
+  }
+
+  private onCameraMoved = () => {
+    if (this._idle) {
+      this._viewer.inputs.IdleAction(undefined)
+    }
+    this.resetIdleTimeout()
   }
 
   private onMouseMove = (event: any) => {
     this._lastPosition = new THREE.Vector2(event.offsetX, event.offsetY)
-    this.resetIdleTimeout()
+
+    if (this._idle && this._lastPosition.distanceTo(this._idlePosition) > 5) {
+      this._viewer.inputs.IdleAction(undefined)
+      this.resetIdleTimeout()
+    }
+    if (!this._idle) {
+      this.resetIdleTimeout()
+    }
 
     if (!this.buttonDown) return
     this.onMouseDrag(event)
@@ -203,6 +226,7 @@ export class MouseHandler extends InputHandler {
   }
 
   private onMouseUp = (event: MouseEvent) => {
+    this.resetIdleTimeout()
     const btn = this.getButton(event)
     if (btn === this.buttonDown) return // the active button is still down.
 

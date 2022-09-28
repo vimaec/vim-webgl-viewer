@@ -24,7 +24,8 @@ export interface InputScheme {
   onMainAction(hit: InputAction): void
 
   /**
-   * Called when mouse and camera have been idle for some time.
+   * Called once when mouse and camera have been idle for some time with the position where it stopped.
+   * Called once when the mouse moves again with undefined
    */
   onIdleAction(hit: InputAction): void
 
@@ -72,7 +73,7 @@ export class DefaultInputScheme implements InputScheme {
   }
 
   onIdleAction (hit: InputAction): void {
-    this._viewer.selection.focus(hit.object)
+    this._viewer.selection.focus(hit?.object)
   }
 
   onKeyAction (key: number): boolean {

@@ -130,7 +130,7 @@ export function createWireframe () {
 export function createFocus () {
   const material = new THREE.MeshBasicMaterial({
     depthTest: false,
-    opacity: 0.2,
+    opacity: 0.15,
     color: new THREE.Color(1, 1, 1),
     transparent: true
   })

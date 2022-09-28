@@ -23,8 +23,11 @@ export class Selection {
   // Disposable State
   private _selectionMesh: THREE.LineSegments | undefined
   private _focusMesh: THREE.Mesh | undefined
+  private _focusMaterial: THREE.Material
+  private _focusStart: number
 
   private _onValueChanged = new SignalDispatcher()
+
   /**
    * Event called when selection changes or is cleared
    */
@@ -34,6 +37,7 @@ export class Selection {
 
   constructor (renderer: Renderer) {
     this._renderer = renderer
+    this._focusMaterial = renderer.materials.focus.clone()
   }
 
   /**
@@ -83,13 +87,24 @@ export class Selection {
   focus (object: Object) {
     this._focusMesh?.geometry.dispose()
     this._renderer.remove(this._focusMesh)
+    this._focusMaterial.opacity = 0
+    this._focusStart = new Date().getTime()
 
     if (!object) return
     this._focusMesh = new THREE.Mesh(
       object.createGeometry(),
-      this._renderer.materials.focus
+      this._focusMaterial
     )
     this._renderer.add(this._focusMesh)
+    this.focusTransition()
+  }
+
+  focusTransition () {
+    const t = (new Date().getTime() - this._focusStart) / 90
+    this._focusMaterial.opacity = t * 0.15
+    if (t < 1) {
+      requestAnimationFrame(() => this.focusTransition())
+    }
   }
 
   /**

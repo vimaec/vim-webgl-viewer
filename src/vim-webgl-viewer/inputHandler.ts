@@ -6,7 +6,7 @@ import { Viewer } from './viewer'
 
 export class InputHandler {
   protected _viewer: Viewer
-  private _unregisters: Function[] = []
+  protected _unregisters: Function[] = []
 
   constructor (viewer: Viewer) {
     this._viewer = viewer

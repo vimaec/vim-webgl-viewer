@@ -18,7 +18,6 @@ export class MeasureFlow implements InputScheme {
 
   constructor (gizmoMeasure: Measure) {
     this._gizmoMeasure = gizmoMeasure
-    this.registerMouse(() => this.onMouseMove())
   }
 
   onProgress: (stage: MeasureStage) => void
@@ -31,14 +30,6 @@ export class MeasureFlow implements InputScheme {
   private unregister () {
     this.removeMouseListener?.()
     this.removeMouseListener = undefined
-  }
-
-  private registerMouse (callBack: (e: MouseEvent) => void) {
-    this.removeMouseListener?.()
-    window.addEventListener('mousemove', callBack)
-    this.removeMouseListener = () => {
-      window.removeEventListener('mousemove', callBack)
-    }
   }
 
   abort () {
@@ -74,9 +65,5 @@ export class MeasureFlow implements InputScheme {
 
   onKeyAction (key: number) {
     return false
-  }
-
-  onMouseMove () {
-    if (this._stage === 'active') this._gizmoMeasure.onMouseMove()
   }
 }

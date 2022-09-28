@@ -137,6 +137,10 @@ export class Measure implements IMeasure {
 
   onMouseIdle (action: InputAction) {
     // Show markers and line on hit
+    if (!action) {
+      this._meshes?.hide()
+      return
+    }
     const position = action.raycast.position
 
     this._measurement = action.object
