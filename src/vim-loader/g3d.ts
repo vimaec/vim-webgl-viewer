@@ -132,11 +132,10 @@ class G3dAttribute {
 
       case 'int64':
       case 'uint64':
-        throw new Error(
-          '64-bit buffers unsuported in the javascript implementation.'
-        )
+        console.error('G3d: 64-bit buffers unsuported')
+        return
       default:
-        throw new Error('Unrecognized attribute data type ' + dataType)
+        console.error('Unrecognized attribute data type ' + dataType)
     }
   }
 }

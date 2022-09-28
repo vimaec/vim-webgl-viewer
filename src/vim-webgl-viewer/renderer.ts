@@ -6,10 +6,15 @@ import * as THREE from 'three'
 import { Scene } from '../vim-loader/scene'
 import { Viewport } from './viewport'
 import { RenderScene } from './renderScene'
-import { IMaterialLibrary } from '../vim-loader/materials'
+import { IMaterialLibrary, VimMaterials } from '../vim-loader/materials'
+import { ViewerSettings } from './viewerSettings'
+import { CSS2DRenderer } from 'three/examples/jsm/renderers/CSS2DRenderer'
+import { SimpleEventDispatcher } from 'ste-simple-events'
+import { Vim } from '../vim'
 
 class Section {
   private _renderer: THREE.WebGLRenderer
+
   private _materials: IMaterialLibrary
   private _active: boolean
 
@@ -68,16 +73,18 @@ class Section {
  */
 export class Renderer {
   renderer: THREE.WebGLRenderer
+  textRenderer: CSS2DRenderer
   viewport: Viewport
   scene: RenderScene
   section: Section
-  materials: IMaterialLibrary
+  materials: VimMaterials
 
-  constructor (
-    scene: RenderScene,
-    viewport: Viewport,
-    materials: IMaterialLibrary
-  ) {
+  private _onVisibilityChanged = new SimpleEventDispatcher<Vim>()
+  get onVisibilityChanged () {
+    return this._onVisibilityChanged.asEvent()
+  }
+
+  constructor (scene: RenderScene, viewport: Viewport, materials: VimMaterials) {
     this.viewport = viewport
 
     this.scene = scene
@@ -92,6 +99,8 @@ export class Renderer {
       logarithmicDepthBuffer: true
     })
 
+    this.textRenderer = this.viewport.createTextRenderer()
+
     this.fitViewport()
     this.viewport.onResize(() => this.fitViewport())
 
@@ -100,20 +109,15 @@ export class Renderer {
     this.section = new Section(this.renderer, this.materials)
   }
 
+  /**
+   * Removes all objects from rendering and dispose the WEBGL Context
+   */
   dispose () {
     this.clear()
 
     this.renderer.clear()
     this.renderer.forceContextLoss()
     this.renderer.dispose()
-  }
-
-  /**
-   * Returns the bounding sphere encompasing all rendererd objects.
-   * @param target sphere in which to copy result, a new instance is created if undefined.
-   */
-  getBoundingSphere (target: THREE.Sphere = new THREE.Sphere()) {
-    return this.scene.getBoundingSphere(target)
   }
 
   /**
@@ -129,6 +133,11 @@ export class Renderer {
    */
   render (camera: THREE.Camera) {
     this.renderer.render(this.scene.scene, camera)
+    this.textRenderer.render(this.scene.scene, camera)
+    this.scene
+      .getUpdatedScenes()
+      .forEach((s) => this._onVisibilityChanged.dispatch(s.vim))
+    this.scene.clearUpdateFlags()
   }
 
   /**
@@ -152,9 +161,18 @@ export class Renderer {
     this.scene.clear()
   }
 
+  /** Update material settings from config */
+  applyMaterialSettings (settings: ViewerSettings) {
+    this.materials.applyWireframeSettings(
+      settings.getHighlightColor(),
+      settings.getHighlightOpacity()
+    )
+  }
+
   private fitViewport = () => {
-    const [width, height] = this.viewport.getParentSize()
+    const size = this.viewport.getParentSize()
     this.renderer.setPixelRatio(window.devicePixelRatio)
-    this.renderer.setSize(width, height)
+    this.renderer.setSize(size.x, size.y)
+    this.textRenderer.setSize(size.x, size.y)
   }
 }

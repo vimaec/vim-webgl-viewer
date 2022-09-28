@@ -17,13 +17,24 @@ export class Scene {
 
   // State
   meshes: THREE.Mesh[] = []
-  boundingBox: THREE.Box3 = new THREE.Box3()
-  private _instanceToThreeMesh: Map<number, [THREE.Mesh, number]> = new Map()
+  vim: Vim
+  private _boundingBox: THREE.Box3 = new THREE.Box3()
+  private _instanceToThreeMeshes: Map<number, [THREE.Mesh, number][]> =
+    new Map()
+
   private _threeMeshIdToInstances: Map<number, number[]> = new Map()
-  private _material: THREE.Material
+  private _material: THREE.Material | undefined
+  _visibilityChanged: boolean
 
   constructor (builder: SceneBuilder) {
     this.builder = builder
+  }
+
+  /**
+   * Returns the scene bounding box.
+   */
+  getBoundingBox (target: THREE.Box3 = new THREE.Box3()) {
+    return target.copy(this._boundingBox)
   }
 
   /**
@@ -32,7 +43,7 @@ export class Scene {
    * For instanced mesh, index refers to instance index.
    */
   getMeshFromInstance (instance: number) {
-    return this._instanceToThreeMesh.get(instance) ?? []
+    return this._instanceToThreeMeshes.get(instance)
   }
 
   /**
@@ -41,10 +52,10 @@ export class Scene {
    * @param index if merged mesh the index into the merged mesh, if instance mesh the instance index.
    * @returns a g3d instance index.
    */
-  getInstanceFromMesh (mesh: THREE.Mesh, index: number): number {
-    if (!mesh || index < 0) return -1
+  getInstanceFromMesh (mesh: THREE.Mesh, index: number) {
+    if (!mesh || index < 0) return
     const instances = this._threeMeshIdToInstances.get(mesh.id)
-    if (!instances) return -1
+    if (!instances) return
     return instances[index]
   }
 
@@ -56,13 +67,14 @@ export class Scene {
       this.meshes[m].matrixAutoUpdate = false
       this.meshes[m].matrix.copy(matrix)
     }
-    this.boundingBox.applyMatrix4(matrix)
+    this._boundingBox.applyMatrix4(matrix)
   }
 
   /**
    * Sets vim index for this scene and all its THREE.Meshes.
    */
   setVim (vim: Vim) {
+    this.vim = vim
     for (let m = 0; m < this.meshes.length; m++) {
       this.meshes[m].userData.vim = vim
     }
@@ -74,18 +86,21 @@ export class Scene {
    * where numbers are the indices of the g3d instances that went into creating the mesh
    */
   addMergedMesh (mesh: THREE.Mesh) {
+    if (!mesh) return this
     const instances = mesh.userData.instances
     if (!instances) {
       throw new Error('Expected mesh to have userdata instances : number[]')
     }
 
     for (let i = 0; i < instances.length; i++) {
-      this._instanceToThreeMesh.set(instances[i], [mesh, i])
+      const set = this._instanceToThreeMeshes.get(instances[i]) ?? []
+      set.push([mesh, i])
+      this._instanceToThreeMeshes.set(instances[i], set)
     }
 
     mesh.geometry.computeBoundingBox()
     const box = mesh.geometry.boundingBox!
-    this.boundingBox = this.boundingBox?.union(box) ?? box.clone()
+    this._boundingBox = this._boundingBox?.union(box) ?? box.clone()
 
     this._threeMeshIdToInstances.set(mesh.id, instances)
     this.meshes.push(mesh)
@@ -115,10 +130,12 @@ export class Scene {
     }
 
     for (let i = 0; i < instances.length; i++) {
-      this._instanceToThreeMesh.set(instances[i], [mesh, i])
+      const set = this._instanceToThreeMeshes.get(instances[i]) ?? []
+      set.push([mesh, i])
+      this._instanceToThreeMeshes.set(instances[i], set)
     }
     const box = this.computeIntancedMeshBoundingBox(mesh)!
-    this.boundingBox = this.boundingBox?.union(box) ?? box.clone()
+    this._boundingBox = this._boundingBox?.union(box) ?? box.clone()
     this._threeMeshIdToInstances.set(mesh.id, instances)
   }
 
@@ -126,15 +143,18 @@ export class Scene {
    * Adds the content of other Scene to this Scene and recomputes fields as needed.
    */
   merge (other: Scene) {
+    if (!other) return this
     other.meshes.forEach((mesh) => this.meshes.push(mesh))
-    other._instanceToThreeMesh.forEach((value, key) => {
-      this._instanceToThreeMesh.set(key, value)
+    other._instanceToThreeMeshes.forEach((meshes, instance) => {
+      const set = this._instanceToThreeMeshes.get(instance) ?? []
+      meshes.forEach((m) => set.push(m))
+      this._instanceToThreeMeshes.set(instance, set)
     })
     other._threeMeshIdToInstances.forEach((value, key) => {
       this._threeMeshIdToInstances.set(key, value)
     })
-    this.boundingBox =
-      this.boundingBox?.union(other.boundingBox) ?? other.boundingBox.clone()
+    this._boundingBox =
+      this._boundingBox?.union(other._boundingBox) ?? other._boundingBox.clone()
     return this
   }
 
@@ -148,7 +168,7 @@ export class Scene {
   /**
    * Sets and apply a material override to the scene, set to undefined to remove override.
    */
-  set material (value: THREE.Material) {
+  set material (value: THREE.Material | undefined) {
     this._material = value
     if (value) {
       this.meshes.forEach((m) => {
@@ -172,7 +192,7 @@ export class Scene {
       this.meshes[i].geometry.dispose()
     }
     this.meshes.length = 0
-    this._instanceToThreeMesh.clear()
+    this._instanceToThreeMeshes.clear()
     this._threeMeshIdToInstances.clear()
   }
 

@@ -3,21 +3,17 @@
  */
 
 import * as THREE from 'three'
-import { Mouse } from './mouse'
-import { Viewer } from './viewer'
+import { InputHandler } from './inputHandler'
+import { InputAction } from './raycaster'
 
 /**
  * Manages user touch inputs.
  */
-export class Touch {
-  readonly TAP_DURATION_MS: number = 500
-  readonly DOUBLE_TAP_DELAY_MS = 500
-  readonly TAP_MAX_MOVE_PIXEL = 5
-  readonly ZOOM_SPEED = 5
-
-  // Dependencies
-  private _viewer: Viewer
-  private _mouse: Mouse
+export class TouchHandler extends InputHandler {
+  private readonly TAP_DURATION_MS: number = 500
+  private readonly DOUBLE_TAP_DELAY_MS = 500
+  private readonly TAP_MAX_MOVE_PIXEL = 5
+  private readonly ZOOM_SPEED = 5
 
   private get camera () {
     return this._viewer.camera
@@ -35,23 +31,33 @@ export class Touch {
   private _lastTapMs: number
   private _touchStart: THREE.Vector2
 
-  constructor (viewer: Viewer, mouse: Mouse) {
-    this._viewer = viewer
-    this._mouse = mouse
+  protected override addListeners (): void {
+    const canvas = this.viewport.canvas
+    this.reg(canvas, 'touchstart', this.onTouchStart)
+    this.reg(canvas, 'touchend', this.onTouchEnd)
+    this.reg(canvas, 'touchmove', this.onTouchMove)
   }
 
-  reset = () => {
+  override reset = () => {
     this._touch = this._touch1 = this._touch2 = this._touchStartTime = undefined
   }
 
   private onTap = (position: THREE.Vector2) => {
     const time = new Date().getTime()
     const double = time - this._lastTapMs < this.DOUBLE_TAP_DELAY_MS
-    this._mouse.onMouseClick(position, double)
     this._lastTapMs = new Date().getTime()
+
+    const action = new InputAction(
+      double ? 'double' : 'main',
+      'none',
+      position,
+      this._viewer.raycaster
+    )
+
+    this._viewer.inputs.MainAction(action)
   }
 
-  onTouchStart = (event: any) => {
+  private onTouchStart = (event: any) => {
     event.preventDefault() // prevent scrolling
     if (!event || !event.touches || !event.touches.length) {
       return
@@ -69,15 +75,15 @@ export class Touch {
     this._touchStart = this._touch
   }
 
-  onDrag = (delta: THREE.Vector2) => {
+  private onDrag = (delta: THREE.Vector2) => {
     this.camera.rotate(delta)
   }
 
-  onDoubleDrag = (delta: THREE.Vector2) => {
+  private onDoubleDrag = (delta: THREE.Vector2) => {
     this.camera.move2(delta, 'XY')
   }
 
-  onPinchOrSpread = (delta: number) => {
+  private onPinchOrSpread = (delta: number) => {
     if (this.camera.orbitMode) {
       this.camera.zoom(delta * this.ZOOM_SPEED)
     } else {
@@ -85,18 +91,18 @@ export class Touch {
     }
   }
 
-  onTouchMove = (event: any) => {
+  private onTouchMove = (event: any) => {
     event.preventDefault()
     if (!event || !event.touches || !event.touches.length) return
     if (!this._touch) return
 
     if (event.touches.length === 1) {
       const pos = this.touchToVector(event.touches[0])
-      const [width, height] = this.viewport.getSize()
+      const size = this.viewport.getSize()
       const delta = pos
         .clone()
         .sub(this._touch)
-        .multiply(new THREE.Vector2(1 / width, 1 / height))
+        .multiply(new THREE.Vector2(1 / size.x, 1 / size.y))
 
       this._touch = pos
       this.onDrag(delta)
@@ -108,18 +114,18 @@ export class Touch {
       const p1 = this.touchToVector(event.touches[0])
       const p2 = this.touchToVector(event.touches[1])
       const p = this.average(p1, p2)
-      const [width, height] = this.viewport.getSize()
+      const size = this.viewport.getSize()
       const moveDelta = this._touch
         .clone()
         .sub(p)
         .multiply(
           // -1 to invert movement
-          new THREE.Vector2(-1 / width, -1 / height)
+          new THREE.Vector2(-1 / size.x, -1 / size.y)
         )
 
       const zoom = p1.distanceTo(p2)
       const prevZoom = this._touch1.distanceTo(this._touch2)
-      const min = Math.min(width, height)
+      const min = Math.min(size.x, size.y)
       // -1 to invert movement
       const zoomDelta = (zoom - prevZoom) / -min
 
@@ -135,7 +141,7 @@ export class Touch {
     }
   }
 
-  onTouchEnd = (event: any) => {
+  private onTouchEnd = (event: any) => {
     if (this.isSingleTouch()) {
       const touchDurationMs = new Date().getTime() - this._touchStartTime!
       const length = this._touch.clone().sub(this._touchStart).length()

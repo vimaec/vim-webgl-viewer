@@ -45,6 +45,8 @@ export class Object {
     return this._meshes?.length!!
   }
 
+  onVisibilityChanged: () => void
+
   /**
    * Internal - Replace this object meshes and apply color as needed.
    */
@@ -60,6 +62,7 @@ export class Object {
 
   /**
    * Returns Bim data for the element associated with this object.
+   * Returns undefined if no associated bim
    */
   getBimElement () {
     return this.vim.document.getElement(this.element)
@@ -70,6 +73,7 @@ export class Object {
    */
   async getBimElementValue (field: string, resolveString: boolean) {
     const value = await this.vim.document.getElementValue(this.element, field)
+    if (!value) return
     return resolveString ? this.vim.document.getString(value) : value
   }
 
@@ -111,14 +115,6 @@ export class Object {
    */
   public getCenter (target: THREE.Vector3 = new THREE.Vector3()) {
     return this.getBoundingBox()?.getCenter(target)
-  }
-
-  /**
-   * returns the bounding sphere of the object from cache or computed if needed.
-   * Returns undefined if object has no geometry.
-   */
-  getBoundingSphere (target: THREE.Sphere = new THREE.Sphere()) {
-    return this.getBoundingBox()?.getBoundingSphere(target)
   }
 
   /**
@@ -195,6 +191,7 @@ export class Object {
     if (this._visible === value) return
     this._visible = value
     this.applyVisible(value)
+    this.vim.scene._visibilityChanged = true
   }
 
   private applyVisible (value: boolean) {
@@ -234,12 +231,10 @@ export class Object {
    * @param color rgb representation of the color to apply
    */
   private applyMergedVisible (mesh: THREE.Mesh, index: number, show: boolean) {
+    const positions = mesh.geometry.getAttribute('position')
     const attribute =
       mesh.geometry.getAttribute('ignoreVertex') ??
-      new Float32BufferAttribute(
-        new Float32Array(mesh.geometry.index!.count * 3),
-        1
-      )
+      new Float32BufferAttribute(new Float32Array(positions.count), 1)
     mesh.geometry.setAttribute('ignoreVertex', attribute)
 
     const start = this.getMergedMeshStart(mesh, index)
@@ -315,6 +310,7 @@ export class Object {
     let mergedIndex = this.getMergedMeshStart(mesh, index)
 
     const instance = this.vim.scene.getInstanceFromMesh(mesh, index)
+    if (!instance) throw new Error('Could not reset original color.')
     const g3d = this.vim.document.g3d
     const g3dMesh = g3d.instanceMeshes[instance]
     const subStart = g3d.getMeshSubmeshStart(g3dMesh)

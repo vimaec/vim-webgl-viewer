@@ -1,7 +1,10 @@
 // Links files to generate package type exports
+import './style.css'
 export * as THREE from 'three'
 
 export * from './vim-webgl-viewer/viewer'
+export type { PointerMode, InputScheme } from './vim-webgl-viewer/input'
+export { DefaultInputScheme, KEYS } from './vim-webgl-viewer/input'
 export * from './vim-webgl-viewer/viewerSettings'
 export { RaycastResult as HitTestResult } from './vim-webgl-viewer/raycaster'
 

@@ -1,4 +1,8 @@
-import { G3d } from './g3d'
+/**
+ * @module vim-loader
+ */
+
+import { G3d, MeshSection } from './g3d'
 import { Transparency } from './geometry'
 import { MeshBuilder } from './mesh'
 import { Scene } from './scene'
@@ -22,7 +26,7 @@ export class SceneBuilder {
   ): Scene {
     const scene = new Scene(this)
 
-    // Add shared geometry
+    // Add instanced geometry
     const shared = this.createFromInstanciableMeshes(
       g3d,
       transparency,
@@ -30,24 +34,35 @@ export class SceneBuilder {
     )
     scene.merge(shared)
 
-    // Add unique opaque geometry
-    if (transparency !== 'transparentOnly') {
-      const opaque = this.createFromMergeableMeshes(
-        g3d,
-        transparency === 'allAsOpaque' ? 'allAsOpaque' : 'opaqueOnly',
-        instances
-      )
-      if (opaque) scene.merge(opaque)
-    }
-
-    // Add unique transparent geometry
-    if (Transparency.requiresAlpha(transparency)) {
-      const transparent = this.createFromMergeableMeshes(
-        g3d,
-        'transparentOnly',
-        instances
-      )
-      if (transparent) scene.merge(transparent)
+    // Add merged geometry
+    switch (transparency) {
+      case 'all': {
+        scene.merge(
+          this.createFromMergeableMeshes(g3d, 'opaque', false, instances)
+        )
+        scene.merge(
+          this.createFromMergeableMeshes(g3d, 'transparent', true, instances)
+        )
+        break
+      }
+      case 'opaqueOnly': {
+        scene.merge(
+          this.createFromMergeableMeshes(g3d, 'opaque', false, instances)
+        )
+        break
+      }
+      case 'transparentOnly': {
+        scene.merge(
+          this.createFromMergeableMeshes(g3d, 'transparent', true, instances)
+        )
+        break
+      }
+      case 'allAsOpaque': {
+        scene.merge(
+          this.createFromMergeableMeshes(g3d, 'all', false, instances)
+        )
+        break
+      }
     }
 
     return scene
@@ -85,12 +100,16 @@ export class SceneBuilder {
    */
   createFromMergeableMeshes (
     g3d: G3d,
-    transparency: Transparency.Mode,
-
-    instances: number[] | undefined = undefined
+    section: MeshSection,
+    transparent: boolean,
+    instances?: number[]
   ) {
-    const mesh = this.meshBuilder.createMergedMesh(g3d, transparency, instances)
-    if (!mesh) return
+    const mesh = this.meshBuilder.createMergedMesh(
+      g3d,
+      section,
+      transparent,
+      instances
+    )
     return new Scene(this).addMergedMesh(mesh)
   }
 }

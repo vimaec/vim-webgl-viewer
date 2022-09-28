@@ -10,13 +10,14 @@ import { Camera, ICamera } from './camera'
 import { Input } from './input'
 import { Selection } from './selection'
 import { Environment, IEnvironment } from './environment'
-import { Raycaster, RaycastResult } from './raycaster'
-import { CameraGizmo } from './gizmoOrbit'
+import { Raycaster } from './raycaster'
+import { CameraGizmo } from './gizmos/gizmoOrbit'
 import { RenderScene } from './renderScene'
 import { Viewport } from './viewport'
-import { GizmoAxes } from './gizmoAxes'
-import { GizmoSection } from './gizmoSection'
-import { GizmoMeasure } from './gizmoMeasure'
+import { GizmoAxes } from './gizmos/gizmoAxes'
+import { SectionBox } from './gizmos/sectionBox/sectionBox'
+import { Measure, IMeasure } from './gizmos/measure/measure'
+import { GizmoRectangle } from './gizmos/gizmoRectangle'
 
 // loader
 import { VimSettings, VimOptions } from '../vim-loader/vimSettings'
@@ -27,6 +28,7 @@ import { Vim } from '../vim-loader/vim'
 import { IProgressLogs, RemoteBuffer } from '../vim-loader/remoteBuffer'
 import { Renderer } from './renderer'
 import { IMaterialLibrary, VimMaterials } from '../vim'
+import { SignalDispatcher } from 'ste-signals'
 
 /**
  * Viewer and loader for vim files.
@@ -65,12 +67,17 @@ export class Viewer {
   /**
    * Interface to interact with the section gizmo.
    */
-  gizmoSection: GizmoSection
+  sectionBox: SectionBox
 
   /**
-   * Interface to interact with the section gizmo.
+   * Interface to interact with measure.
    */
-  gizmoMeasure: GizmoMeasure
+  measure: IMeasure
+
+  /**
+   * Interface to interact with the rectanglwe gizmo.
+   */
+  gizmoRectangle: GizmoRectangle
 
   /**
    * Interface to manipulate the viewer camera.
@@ -86,6 +93,13 @@ export class Viewer {
     return this._environment as IEnvironment
   }
 
+  /**
+   * Signal dispatched when a new vim is loaded or unloaded.
+   */
+  get onVimLoaded () {
+    return this._onVimLoaded.asEvent()
+  }
+
   private _environment: Environment
   private _camera: Camera
   private _loader: Loader
@@ -96,30 +110,21 @@ export class Viewer {
   // State
   private _vims: (Vim | undefined)[] = []
   private _disposed: boolean = false
-
-  // TODO: Cleanup axes so that it can be exposed.
-  get axesCanvas () {
-    return this._gizmoAxes.canvas
-  }
+  private _onVimLoaded = new SignalDispatcher()
 
   /**
-   * Callback for on mouse click. Replace it to override or combine
-   * default behaviour with your custom logic.
+   * Will be removed once gizmo axes are cleaned up to expose canvas.
+   * @deprecated
    */
-  private _onMouseClick: (hit: RaycastResult) => void
-  get onMouseClick () {
-    return this._onMouseClick
-  }
-
-  set onMouseClick (callback: (hit: RaycastResult) => void) {
-    this._onMouseClick = callback ?? function (hit: RaycastResult) {}
+  get axesCanvas () {
+    return this._gizmoAxes.canvas
   }
 
   constructor (options?: Partial<ViewerOptions.Root>) {
     this.settings = new ViewerSettings(options)
 
     const materials = new VimMaterials()
-    this.applyMaterialSettings(materials, this.settings)
+
     this._loader = new Loader(materials)
     this._materials = materials
 
@@ -134,19 +139,18 @@ export class Viewer {
         this.settings
       )
     }
+    this.renderer.applyMaterialSettings(this.settings)
 
     // TODO add options
-    this.gizmoMeasure = new GizmoMeasure(this)
+    this.measure = new Measure(this)
     this._gizmoAxes = new GizmoAxes(this.camera)
     this.viewport.canvas.parentElement?.prepend(this._gizmoAxes.canvas)
 
-    this.gizmoSection = new GizmoSection(this)
+    this.sectionBox = new SectionBox(this)
+    this.gizmoRectangle = new GizmoRectangle(this)
 
     this._environment = new Environment(this.settings)
     this._environment.getObjects().forEach((o) => this.renderer.add(o))
-
-    // Default mouse click behaviour, can be overriden
-    this._onMouseClick = this.defaultOnClick
 
     // Input and Selection
     this.selection = new Selection(this.renderer)
@@ -157,7 +161,7 @@ export class Viewer {
       this.renderer
     )
     this.inputs = new Input(this)
-    this.inputs.register()
+    this.inputs.registerAll()
 
     // Start Loop
     this.animate()
@@ -170,9 +174,10 @@ export class Viewer {
     this._camera.dispose()
     this.viewport.dispose()
     this.renderer.dispose()
-    this.inputs.unregister()
+    this.inputs.unregisterAll()
     this._vims.forEach((v) => v?.dispose())
     this._materials.dispose()
+    this.gizmoRectangle.dispose()
     this._disposed = true
   }
 
@@ -182,7 +187,6 @@ export class Viewer {
     if (this._disposed) return
 
     requestAnimationFrame(() => this.animate())
-
     // Camera
     this._camera.update(this._clock.getDelta())
     // Rendering
@@ -236,7 +240,9 @@ export class Viewer {
   ) {
     let buffer: RemoteBuffer | ArrayBuffer
 
+    let url: string
     if (typeof source === 'string') {
+      url = source
       buffer = new RemoteBuffer(source)
       // Add progress listener
       buffer.logger.onUpdate = (log) => onProgress?.(log)
@@ -245,23 +251,27 @@ export class Viewer {
     const settings = new VimSettings(options)
     const bfast = new BFast(buffer, 0, 'vim')
     const vim = await this._loader.load(bfast, settings)
+    vim.source = url
 
     // Remove progress listener
     if (buffer instanceof RemoteBuffer) buffer.logger.onUpdate = undefined
 
-    this.onVimLoaded(vim, new VimSettings(options))
-    this.camera.frame('all', true)
+    this.onLoad(vim)
+
     return vim
   }
 
-  private onVimLoaded (vim: Vim, settings: VimSettings) {
+  private onLoad (vim: Vim) {
     this.addVim(vim)
-
     this.renderer.add(vim.scene)
     const box = this.renderer.getBoundingBox()
-    if (box) this._environment.adaptToContent(box)
+    if (box) {
+      this._environment.adaptToContent(box)
+      this.sectionBox.fitBox(box)
+    }
     this._camera.adaptToContent()
-    this.gizmoSection.fitBox(box)
+    this._camera.frame('all', 45)
+    this._onVimLoaded.dispatch()
   }
 
   /**
@@ -271,7 +281,10 @@ export class Viewer {
     this.removeVim(vim)
     this.renderer.remove(vim.scene)
     vim.dispose()
-    if (this.selection.object?.vim === vim) this.selection.clear()
+    if (this.selection.vim === vim) {
+      this.selection.clear()
+    }
+    this._onVimLoaded.dispatch()
   }
 
   /**
@@ -293,41 +306,5 @@ export class Viewer {
     this.renderer.remove(vim.scene)
     vim.filter(instances)
     this.renderer.add(vim.scene)
-  }
-
-  applyMaterialSettings (materials: VimMaterials, settings: ViewerSettings) {
-    materials.applyWireframeSettings(
-      settings.getHighlightColor(),
-      settings.getHighlightOpacity()
-    )
-    materials.applyIsolationSettings(
-      settings.getIsolationColor(),
-      settings.getIsolationOpacity()
-    )
-  }
-
-  /**
-   * Default click behaviour.
-   */
-  public defaultOnClick (hit: RaycastResult) {
-    console.log(hit)
-    if (!hit?.object) {
-      this.selection.select(undefined)
-      if (hit.doubleClick) {
-        this.camera.frame('all', false, this.camera.defaultLerpDuration)
-      }
-      return
-    }
-
-    this.selection.select(hit.object)
-
-    if (hit.doubleClick) {
-      this._camera.frame(hit.object, false, this.camera.defaultLerpDuration)
-    }
-
-    hit.object.getBimElement().then((e) => {
-      e.set('Index', hit.object.element)
-      console.log(e)
-    })
   }
 }

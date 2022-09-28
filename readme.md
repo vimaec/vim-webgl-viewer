@@ -4,6 +4,7 @@
 [![Website](https://img.shields.io/website?url=https%3A%2F%2Fvimaec.github.io%2Fvim-webgl-viewer)](https://vimaec.github.io/vim-webgl-viewer/)
 
 # Documentation
+
 https://vimaec.github.io/vim-webgl-viewer/api/
 
 # Live Demo
@@ -14,12 +15,12 @@ https://vimaec.github.io/vim-webgl-viewer/api/
 
 # Overview
 
-The VIM WebGL Viewer is an open-source high-performance 3D model viewer built on top of the popular
-[Three.JS](https://threejs.org) WebGL framework that specializes
+The VIM WebGL Viewer is an open-source high-performance 3D model viewer that specializes
 in loading extremely large AEC (Architectural/Engineering/Construction)
 models represented as VIM files.
 
-The VIM WebGL viewer combines the Three.JS library with several common loaders and utilities, to reduce boilerplate code. It can be simply included via script tags or consumed using esm imports.
+It is built on top of the popular [Three.JS](https://threejs.org) WebGL framework to provide commonly used AEC related features.
+It can be simply included via script tags or consumed using esm imports.
 
 The VIM file format is a high-performance 3D scene format that supports rich BIM data, and can be easily extended to support
 other relational or non-relation data sets.
@@ -41,15 +42,11 @@ Virtually the simplest usage of the VIM viewer is the following example:
     <script src="https://unpkg.com/three@0.133.1/build/three.min.js"></script>
     <script src="https://unpkg.com/vim-webgl-viewer"></script>
     <script>
-
       const viewer = new vim.Viewer()
 
-      viewer.loadVim(
-        'https://vim.azureedge.net/samples/residence.vim',
-        {
-          rotation: { x: 270, y: 0, z: 0 },
-        }
-      )
+      viewer.loadVim('https://vim.azureedge.net/samples/residence.vim', {
+        rotation: { x: 270, y: 0, z: 0 },
+      })
     </script>
   </body>
 </html>
@@ -86,7 +83,6 @@ Virtually the simplest usage of the VIM viewer is the following example:
 6. Use `npm run serve-docs` to test the npm dev package locally.
 7. When satisfied merge current PR into `main`.
 
-
 ## Making a Patch Release
 
 1. Make sure the dev release is working properly at `https://vimaec.github.io/vim-webgl-viewer/index-dev.html`
@@ -102,8 +98,6 @@ The following scripts are defined in the package.json, and can each be
 executed from within VSCode by right-clicking the script name, or from the
 command line by writing `npm run <script-name>` where `<script-name>` is the name of the script.
 
-
-
 - `dev` - launch a dev environment using Vite
 - `build` - compiles an IIFE JavaScript module and ES module using Vite and the configuration file, placing the output in the `dist` folder.
 - `bump-dev` - increments the pre-release version of the NPM package, with the id `dev`. This will update the `package.json` version number with a pre-release tag and number value (e.g. 1.0.0-dev.42). It will also create corresponding tag and commit it to Git.
@@ -113,7 +107,7 @@ command line by writing `npm run <script-name>` where `<script-name>` is the nam
 - `release-dev` - Increments the prerelease number and publishes an NPM prerelease package using the `@dev` tag. Intended to be called from the `main` branch after the features has been tested and built locally.
 - `eslint` - Runs eslint and reports all syntactic inconsistencies.
 - `documentation` - Generates api documentation at `docs/api`.
-- `declarations` - Generates typescript declrations at `dist/types`. 
+- `declarations` - Generates typescript declrations at `dist/types`.
 
 ## Contributing:
 
@@ -127,6 +121,7 @@ The distributable files do not contain the underlying source for [Three.JS](http
 ## Camera Controls
 
 ### Keyboard
+
 **W/Up:** Move camera forward  
 **A/Left:** Move camera to the left  
 **S/Down:** Move camera backward  
@@ -135,27 +130,28 @@ The distributable files do not contain the underlying source for [Three.JS](http
 **Q:** Move camera down  
 **Shift + direction:** faster camera movement  
 **+:** Increase camera speed  
-**-:** Decrease camera speed  
+**-:** Decrease camera speed
 
 **F8:** Toggle orbit mode  
 **Home:** Look at model  
 **Escape:** Clear selection  
-**Z:** Look at selection  
+**Z:** Look at selection
 
 ### Mouse
+
 **Hold left click + Move mouse:** Tilt/Pan camera  
 **Hold right click + Move mouse:** Truck/Pedestal camera  
 **Mouse wheel:** Dolly Camera  
 **Left click:** Select object  
-**Ctrl + Mouse wheel:** Increase/Decrease camera speed  
+**Ctrl + Mouse wheel:** Increase/Decrease camera speed
 
 ### Touch
+
 **One Finger swipe:** Tilt/Pan camera  
 **Two Finger swipe:** Truck/Pedestal camera  
-**Two Finger pinch/spread:** Dolly Camera  
+**Two Finger pinch/spread:** Dolly Camera
 
 (https://blog.storyblocks.com/video-tutorials/7-basic-camera-movements/)
-
 
 ## Vim
 
@@ -173,16 +169,18 @@ All raw `G3d` and `BIM` data is stored using the `BFast` format.
 ## How To
 
 **Frame camera on an element**
+
 ```javascript
 const vim = viewer.vims[0] // or keep vim reference from load
-const object =  vim.getObjectFromElementId(ELEMENT_ID)
+const object = vim.getObjectsFromElementId(ELEMENT_ID)[0]
 viewer.camera.frame(object)
 ```
 
 **Highlight an element**
+
 ```javascript
 const vim = viewer.vims[0] // or keep vim reference from load
-const object =  vim.getObjectFromElementId(ELEMENT_ID)
+const object = vim.getObjectsFromElementId(ELEMENT_ID)[0]
 const wireframe = object.createWireframe()
 this.viewer.renderer.add(wireframe)
 
@@ -192,31 +190,40 @@ this.viewer.renderer.add(wireframe)
 ```
 
 **Change Color of an element**
+
 ```javascript
 const vim = viewer.vims[0] // or keep vim reference from load
-const object =  vim.getObjectFromElementId(ELEMENT_ID)
-object.color = new THREE.Color(1,0,0)
+const objects = vim.getObjectsFromElementId(ELEMENT_ID) // Many element can share the same id
+objects?.forEach((o) => (o.color = new THREE.Color(1, 0, 0)))
 
 // Revert to original color
 // object.color = undefined
 ```
 
 **Replace or add behavior on click**
-```javascript
-// Capture default behavior
-const defaultClick = viewer.onMouseClick.bind(viewer)
-// Override the onClick callback
-viewer.onMouseClick = (hit) => {
-  // Call the default behavior
-  defaultClick(hit)
 
-  // Add extra logic here
-  console.log('My extra behaviour with this entity')
-  console.log(hit.object.getBimElement())
+```javascript
+const base = new DefaultInputScheme(viewer)
+const customScheme = {
+  onIdleAction(hit) {
+    console.log('onIdleAction')
+    base.onIdleAction(hit)
+  },
+  onKeyAction(key) {
+    console.log('onKeyAction')
+    return base.onKeyAction(key)
+  },
+  onMainAction(hit) {
+    console.log('onMainAction')
+    base.onMainAction(hit)
+  },
 }
+
+viewer.inputs.scheme = customScheme
 ```
 
 **Load from a custom http request**
+
 ```javascript
 // Make request as usual
 const xhr = new XMLHttpRequest()
@@ -225,9 +232,9 @@ xhr.responseType = 'arraybuffer'
 xhr.open('GET', url)
 xhr.send()
 xhr.onload = () => {
-// Load vim by passing the array buffer
+  // Load vim by passing the array buffer
   viewer.loadVim(xhr.response, {
-    rotation: { x: 270, y: 0, z: 0 }
+    rotation: { x: 270, y: 0, z: 0 },
   })
 }
 ```

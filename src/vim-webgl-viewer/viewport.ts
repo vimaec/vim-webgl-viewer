@@ -1,7 +1,16 @@
+/**
+ @module viw-webgl-viewer
+*/
+
+import * as THREE from 'three'
+import { CSS2DRenderer } from 'three/examples/jsm/renderers/CSS2DRenderer'
 import { ViewerSettings } from './viewerSettings'
 
 export class Viewport {
+  /** HTML Canvas on which the model is rendered */
   canvas: HTMLCanvasElement
+  /** HTML Element in which text is rendered */
+  text: HTMLElement
   private _unregisterResize: Function | undefined
   private _ownedCanvas: boolean
   private _resizeCallbacks: (() => void)[] = []
@@ -32,6 +41,22 @@ export class Viewport {
     return [canvas, true]
   }
 
+  /** Returns a text renderer that will render html in an html element sibbling to canvas */
+  createTextRenderer () {
+    const size = this.getParentSize()
+    const renderer = new CSS2DRenderer()
+    renderer.setSize(size.x, size.y)
+    this.text = renderer.domElement
+
+    this.text.className = 'vim-text-renderer'
+    this.text.style.position = 'absolute'
+    this.text.style.top = '0px'
+    this.text.style.pointerEvents = 'none'
+    this.canvas.parentElement.append(this.text)
+    return renderer
+  }
+
+  /** Removes canvas if owned */
   dispose () {
     this._unregisterResize?.()
     this._unregisterResize = undefined
@@ -42,23 +67,24 @@ export class Viewport {
   /**
    * Returns the pixel size of the parent element.
    */
-  getParentSize (): [width: number, height: number] {
-    return [
+  getParentSize () {
+    return new THREE.Vector2(
       this.canvas.parentElement?.clientWidth ?? this.canvas.clientWidth,
       this.canvas.parentElement?.clientHeight ?? this.canvas.clientHeight
-    ]
+    )
   }
 
   /**
    * Returns the pixel size of the canvas.
    */
-  getSize (): [width: number, height: number] {
-    return [this.canvas.clientWidth, this.canvas.clientHeight]
+  getSize () {
+    return new THREE.Vector2(this.canvas.clientWidth, this.canvas.clientHeight)
   }
 
+  /** Returns x/y of the parent size */
   getAspectRatio () {
-    const [width, height] = this.getParentSize()
-    return width / height
+    const size = this.getParentSize()
+    return size.x / size.y
   }
 
   onResize (callback: () => void) {
@@ -79,7 +105,7 @@ export class Viewport {
    * @param timeout time after the last resize before code will be called
    */
   private registerResize (timeout: number) {
-    let timerId: number | undefined
+    let timerId: ReturnType<typeof setTimeout>
     const onResize = () => {
       if (timerId !== undefined) {
         clearTimeout(timerId)

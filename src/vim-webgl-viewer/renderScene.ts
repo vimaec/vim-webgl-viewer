@@ -1,3 +1,7 @@
+/**
+ * @module viw-webgl-viewer
+ */
+
 import * as THREE from 'three'
 import { Scene } from '../vim-loader/scene'
 
@@ -12,15 +16,18 @@ export class RenderScene {
     this.scene = new THREE.Scene()
   }
 
-  /**
-   * Returns the bounding sphere encompasing all rendererd objects.
-   * @param target sphere in which to copy result, a new instance is created if undefined.
-   */
-  getBoundingSphere (target: THREE.Sphere = new THREE.Sphere()) {
-    return (
-      this._boundingBox?.getBoundingSphere(target) ??
-      target.set(new THREE.Vector3(0, 0, 0), 1)
-    )
+  /** Returns an array of all the scenes that were updated since last clearUpdateFlags */
+  getUpdatedScenes () {
+    const result: Scene[] = []
+    for (const s of this._scenes) {
+      if (s._visibilityChanged) result.push(s)
+    }
+    return result
+  }
+
+  /** Clears the scene updated flags */
+  clearUpdateFlags () {
+    this._scenes.forEach((s) => (s._visibilityChanged = false))
   }
 
   /**
@@ -71,8 +78,8 @@ export class RenderScene {
 
     // Recompute bounding box
     this._boundingBox = this._boundingBox
-      ? this._boundingBox.union(scene.boundingBox)
-      : scene.boundingBox.clone()
+      ? this._boundingBox.union(scene.getBoundingBox())
+      : scene.getBoundingBox()
   }
 
   private removeScene (scene: Scene) {
@@ -88,7 +95,7 @@ export class RenderScene {
     this._boundingBox =
       this._scenes.length > 0
         ? this._scenes
-          .map((s) => s.boundingBox.clone())
+          .map((s) => s.getBoundingBox())
           .reduce((b1, b2) => b1.union(b2))
         : undefined
   }

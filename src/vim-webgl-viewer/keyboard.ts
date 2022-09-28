@@ -3,7 +3,7 @@
  */
 
 import * as THREE from 'three'
-import { Viewer } from './viewer'
+import { InputHandler } from './inputHandler'
 
 export const KEYS = {
   KEY_0: 48,
@@ -95,28 +95,14 @@ export const KEYS = {
   KEY_Y: 89,
   KEY_Z: 90
 }
+const KeySet = new Set(Object.values(KEYS))
 
 /**
  * Manages keyboard user inputs
  */
-export class Keyboard {
+export class KeyboardHandler extends InputHandler {
   // Settings
   private SHIFT_MULTIPLIER: number = 3.0
-
-  // Dependencies
-  private _viewer: Viewer
-
-  private get camera () {
-    return this._viewer.camera
-  }
-
-  private get selection () {
-    return this._viewer.selection
-  }
-
-  private get section () {
-    return this._viewer.gizmoSection
-  }
 
   // State
   isUpPressed: boolean = false
@@ -128,11 +114,12 @@ export class Keyboard {
   isShiftPressed: boolean = false
   isCtrlPressed: boolean = false
 
-  constructor (viewer: Viewer) {
-    this._viewer = viewer
+  protected override addListeners (): void {
+    this.reg(document, 'keydown', this.onKeyDown)
+    this.reg(document, 'keyup', this.onKeyUp)
   }
 
-  reset = () => {
+  override reset () {
     this.isUpPressed = false
     this.isDownPressed = false
     this.isLeftPressed = false
@@ -143,58 +130,31 @@ export class Keyboard {
     this.isCtrlPressed = false
   }
 
-  onKeyUp = (event: any) => {
+  private get camera () {
+    return this._viewer.camera
+  }
+
+  private get selection () {
+    return this._viewer.selection
+  }
+
+  private get section () {
+    return this._viewer.sectionBox
+  }
+
+  private onKeyUp = (event: any) => {
     this.onKey(event, false)
   }
 
-  onKeyDown = (event: any) => {
+  private onKeyDown = (event: any) => {
     this.onKey(event, true)
   }
 
-  onKey = (event: any, keyDown: boolean) => {
+  private onKey = (event: any, keyDown: boolean) => {
     // Buttons that activate once on key up
-    if (!keyDown) {
-      switch (event.keyCode) {
-        case KEYS.KEY_O:
-          this.camera.orthographic = !this.camera.orthographic
-          break
-        case KEYS.KEY_ADD:
-        case KEYS.KEY_OEM_PLUS:
-          this.camera.speed += 1
-          event.preventDefault()
-          break
-        case KEYS.KEY_SUBTRACT:
-        case KEYS.KEY_OEM_MINUS:
-          this.camera.speed -= 1
-          event.preventDefault()
-          break
-        case KEYS.KEY_F8:
-        case KEYS.KEY_SPACE:
-          this.camera.orbitMode = !this.camera.orbitMode
-          event.preventDefault()
-          break
-        case KEYS.KEY_HOME:
-          this.camera.frame('all', true, this.camera.defaultLerpDuration)
-          event.preventDefault()
-          break
-        // Selection
-        case KEYS.KEY_ESCAPE:
-          this.selection.clear()
-          event.preventDefault()
-          break
-        case KEYS.KEY_Z:
-        case KEYS.KEY_F:
-          if (this.selection.object) {
-            this.camera.frame(
-              this.selection.object,
-              false,
-              this.camera.defaultLerpDuration
-            )
-          } else {
-            this.camera.frame('all', false, this.camera.defaultLerpDuration)
-          }
-          event.preventDefault()
-          break
+    if (!keyDown && KeySet.has(event.keyCode)) {
+      if (this._viewer.inputs.KeyAction(event.keyCode)) {
+        event.preventDefault()
       }
     }
 

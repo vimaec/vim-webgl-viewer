@@ -64,6 +64,7 @@ function load2 (vim: string | ArrayBuffer) {
           vim,
           {
             rotation: { x: 270, y: 0, z: 0 },
+            position: { x: i * 100, y: 0, z: j * 100 },
             transparency: transparency,
             download: download
           },

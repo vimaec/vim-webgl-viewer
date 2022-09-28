@@ -2,7 +2,7 @@
  * @module vim-loader
  */
 
-import { Document } from './document'
+import { Document, IDocument } from './document'
 import { SceneBuilder } from './sceneBuilder'
 import { BFast } from './bfast'
 import { Vim } from './vim'
@@ -24,7 +24,7 @@ export class Loader {
   }
 
   async load (bfast: BFast, settings: VimSettings) {
-    let document: Document
+    let document: IDocument
 
     const mode = settings.getDownloadMode()
     if (mode === 'download') await bfast.forceDownload()

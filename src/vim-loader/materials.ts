@@ -25,7 +25,12 @@ export interface IMaterialLibrary {
    * Material used for isolation mode to show objects in context.
    */
   get isolation(): THREE.Material
-  dispose()
+
+  /**
+   * Material used for focus highlight.
+   */
+  get focus(): THREE.Material
+  dispose(): void
 }
 
 /**
@@ -36,35 +41,35 @@ export class VimMaterials implements IMaterialLibrary {
   transparent: THREE.MeshPhongMaterial
   wireframe: THREE.LineBasicMaterial
   isolation: THREE.Material
+  focus: THREE.Material
 
   constructor (
     opaque?: THREE.Material,
     transparent?: THREE.MeshPhongMaterial,
     wireframe?: THREE.LineBasicMaterial,
-    isolation?: THREE.Material
+    isolation?: THREE.Material,
+    focus?: THREE.Material
   ) {
     this.opaque = opaque ?? createOpaque()
     this.transparent = transparent ?? createTransparent()
     this.wireframe = wireframe ?? createWireframe()
     this.isolation = isolation ?? createIsolationMaterial()
+    this.focus = focus ?? createFocus()
   }
 
+  /** Apply settings to wireframe material */
   applyWireframeSettings (color: THREE.Color, opacity: number) {
     this.wireframe.color = color
     this.wireframe.opacity = opacity
   }
 
-  applyIsolationSettings (color: THREE.Color, opacity: number) {
-    // this.isolation.uniforms.fillColor.value = color
-    // this.isolation.uniforms.opacity.value = opacity
-    // this.isolation.uniformsNeedUpdate = true
-  }
-
+  /** dispose all materials. */
   dispose () {
     this.opaque.dispose()
     this.transparent.dispose()
     this.wireframe.dispose()
     this.isolation.dispose()
+    this.focus.dispose()
   }
 }
 
@@ -118,6 +123,19 @@ export function createWireframe () {
   return material
 }
 
+/**
+ * Creates a new instance of the default wireframe material
+ * @returns a THREE.LineBasicMaterial
+ */
+export function createFocus () {
+  const material = new THREE.MeshBasicMaterial({
+    depthTest: false,
+    opacity: 0.15,
+    color: new THREE.Color(1, 1, 1),
+    transparent: true
+  })
+  return material
+}
 /**
  * Patches phong shader to be able to control when lighting should be applied to resulting color.
  * Instanced meshes ignore light when InstanceColor is defined
