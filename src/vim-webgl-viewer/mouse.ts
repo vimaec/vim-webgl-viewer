@@ -86,7 +86,7 @@ export class MouseHandler extends InputHandler {
   }
 
   private onMouseIdle = (position: THREE.Vector2) => {
-    if (this.buttonDown) return
+    if (this.buttonDown || !position) return
     const action = new InputAction(
       'idle',
       this.getModifier(),
