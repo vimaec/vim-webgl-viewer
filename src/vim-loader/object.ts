@@ -93,18 +93,18 @@ export class Object {
    * Returns undefined if object has no geometry.
    */
   getBoundingBox () {
-    if (!this.instances) return
+    if (!this.instances || !this._meshes) return
     if (this._boundingBox) return this._boundingBox
 
-    const geometry = Geometry.createGeometryFromInstances(
-      this.vim.document.g3d,
-      this.instances
-    )
-    geometry.applyMatrix4(this.vim.getMatrix())
+    let box: THREE.Box3
+    this._meshes.forEach((m) => {
+      const [mesh, index] = m
+      const b = mesh.userData.boxes[index]
+      box = box ? box.union(b) : b.clone()
+    })
+    box.applyMatrix4(this.vim.getMatrix())
+    this._boundingBox = box
 
-    geometry.computeBoundingBox()
-    this._boundingBox = geometry.boundingBox ?? undefined
-    geometry.dispose()
     return this._boundingBox
   }
 

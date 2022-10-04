@@ -102,12 +102,16 @@ export class MeshBuilder {
       : this.materials.opaque
 
     const result = new THREE.InstancedMesh(geometry, material, instances.length)
+    geometry.computeBoundingBox()
 
+    const boxes: THREE.Box3[] = []
     for (let i = 0; i < instances.length; i++) {
       const matrix = Geometry.getInstanceMatrix(g3d, instances[i])
       result.setMatrixAt(i, matrix)
+      boxes[i] = geometry.boundingBox.clone().applyMatrix4(matrix)
     }
     result.userData.instances = instances
+    result.userData.boxes = boxes
     return result
   }
 
@@ -135,6 +139,7 @@ export class MeshBuilder {
     mesh.userData.merged = true
     mesh.userData.instances = merge.instances
     mesh.userData.submeshes = merge.submeshes
+    mesh.userData.boxes = merge.boxes
 
     return mesh
   }

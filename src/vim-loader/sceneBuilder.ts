@@ -86,7 +86,7 @@ export class SceneBuilder {
     )
     const scene = new Scene(this)
     for (let m = 0; m < meshes.length; m++) {
-      scene.addInstancedMesh(meshes[m])
+      scene.addMesh(meshes[m])
     }
     return scene
   }
@@ -110,6 +110,6 @@ export class SceneBuilder {
       transparent,
       instances
     )
-    return new Scene(this).addMergedMesh(mesh)
+    return new Scene(this).addMesh(mesh)
   }
 }

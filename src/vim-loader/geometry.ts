@@ -181,7 +181,12 @@ export namespace Geometry {
     const buffer = new MergeBuffer(info, g3d.POSITION_SIZE, transparent ? 4 : 3)
     fillBuffers(g3d, buffer, info)
     const geometry = buffer.toBufferGeometry()
-    return new MergeResult(geometry, info.instances, buffer.groups)
+    return new MergeResult(
+      geometry,
+      info.instances,
+      buffer.groups,
+      buffer.boxes
+    )
   }
 
   /**
@@ -284,12 +289,21 @@ export namespace Geometry {
       const vertexStart = g3d.getMeshVertexStart(mesh)
       const vertexEnd = g3d.getMeshVertexEnd(mesh)
 
-      for (let p = vertexStart; p < vertexEnd; p++) {
+      if (vertexEnd > vertexStart) {
+        // First point is computed before to initialize box
+        vector.fromArray(g3d.positions, vertexStart * g3d.POSITION_SIZE)
+        vector.applyMatrix4(matrix)
+        vector.toArray(buffer.vertices, vertex)
+        vertex += g3d.POSITION_SIZE
+        buffer.boxes[i] = new THREE.Box3(vector.clone(), vector.clone())
+      }
+
+      for (let p = vertexStart + 1; p < vertexEnd; p++) {
         vector.fromArray(g3d.positions, p * g3d.POSITION_SIZE)
         vector.applyMatrix4(matrix)
         vector.toArray(buffer.vertices, vertex)
-
         vertex += g3d.POSITION_SIZE
+        buffer.boxes[i].expandByPoint(vector)
       }
 
       // Keep offset for next mesh
@@ -329,6 +343,7 @@ export namespace Geometry {
     colors: Float32Array
     groups: number[]
     colorSize: number
+    boxes: THREE.Box3[]
 
     constructor (info: MergeInfo, positionSize: number, colorSize: number) {
       // allocate all memory required for merge
@@ -336,6 +351,7 @@ export namespace Geometry {
       this.vertices = new Float32Array(info.vertexCount * positionSize)
       this.colors = new Float32Array(info.vertexCount * colorSize)
       this.groups = new Array(info.instances.length)
+      this.boxes = new Array(info.instances.length)
       this.colorSize = colorSize
     }
 
@@ -355,15 +371,18 @@ export namespace Geometry {
     geometry: THREE.BufferGeometry
     instances: number[]
     submeshes: number[]
+    boxes: THREE.Box3[]
 
     constructor (
       geometry: THREE.BufferGeometry,
       instance: number[],
-      submeshes: number[]
+      submeshes: number[],
+      boxes: THREE.Box3[]
     ) {
       this.geometry = geometry
       this.instances = instance
       this.submeshes = submeshes
+      this.boxes = boxes
     }
   }
 }
