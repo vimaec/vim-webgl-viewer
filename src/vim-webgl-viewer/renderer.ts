@@ -84,6 +84,8 @@ export class Renderer {
     return this._onVisibilityChanged.asEvent()
   }
 
+  public renderText: boolean
+
   constructor (scene: RenderScene, viewport: Viewport, materials: VimMaterials) {
     this.viewport = viewport
 
@@ -133,7 +135,10 @@ export class Renderer {
    */
   render (camera: THREE.Camera) {
     this.renderer.render(this.scene.scene, camera)
-    this.textRenderer.render(this.scene.scene, camera)
+    if (this.renderText) {
+      this.textRenderer.render(this.scene.scene, camera)
+    }
+
     this.scene
       .getUpdatedScenes()
       .forEach((s) => this._onVisibilityChanged.dispatch(s.vim))

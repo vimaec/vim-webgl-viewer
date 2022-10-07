@@ -187,6 +187,7 @@ export class MeasureGizmo {
     )
 
     this._viewer.renderer.add(this._group)
+    this._viewer.renderer.renderText = true
   }
 
   private _animate () {
@@ -293,5 +294,6 @@ export class MeasureGizmo {
     this._lineX.dispose()
     this._lineY.dispose()
     this._lineZ.dispose()
+    this._viewer.renderer.renderText = false
   }
 }
