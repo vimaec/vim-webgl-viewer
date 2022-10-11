@@ -143,9 +143,18 @@ export class Environment {
       if (!this.sunLights[i]) {
         this.sunLights[i] = new THREE.DirectionalLight()
       }
-      this.sunLights[i].color.copy(settings.getSunlightColor(i))
-      this.sunLights[i].position.copy(settings.getSunlightPosition(i))
-      this.sunLights[i].intensity = settings.getSunlightIntensity(i)
+      const color = settings.getSunlightColor(i)
+      const pos = settings.getSunlightPosition(i)
+      const intensity = settings.getSunlightIntensity(i)
+      if (color) {
+        this.sunLights[i].color.copy(color)
+      }
+      if (pos) {
+        this.sunLights[i].position.copy(pos)
+      }
+      if (intensity) {
+        this.sunLights[i].intensity = intensity
+      }
     }
   }
 

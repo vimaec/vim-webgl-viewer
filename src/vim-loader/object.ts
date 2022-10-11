@@ -121,7 +121,7 @@ export class Object {
    * Creates a new three wireframe Line object from the object geometry
    */
   createWireframe () {
-    if (!this.instances) return
+    if (!this.instances || !this.vim.document.g3d) return
 
     const wireframe = this.meshBuilder.createWireframe(
       this.vim.document.g3d,
@@ -136,7 +136,7 @@ export class Object {
    * Returns undefined if object has no geometry.
    */
   createGeometry () {
-    if (!this.instances) return
+    if (!this.instances || !this.vim.document.g3d) return
 
     const geometry = Geometry.createGeometryFromInstances(
       this.vim.document.g3d,
@@ -304,6 +304,7 @@ export class Object {
    * @param index index of the merged mesh instance
    */
   private resetMergedColor (mesh: THREE.Mesh, index: number) {
+    if (!this.vim.document.g3d) return
     const colors = mesh.geometry.getAttribute('color')
     const colored = this.getOrAddColoredAttribute(mesh)
     const indices = mesh.geometry.index!

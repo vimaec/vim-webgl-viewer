@@ -231,28 +231,32 @@ export class ViewerSettings {
 
   // Sunlight
   getSunlightCount = () => this.options.sunLights.length
-  getSunlightColor = (index: number) =>
-    toHSLColor(this.options.sunLights[index].color!)
+  getSunlightColor = (index: number) => {
+    const color = this.options.sunLights[index]?.color
+    return color ? toHSLColor(color) : undefined
+  }
 
-  getSunlightPosition = (index: number) =>
-    toVec(this.options.sunLights[index].position!)
+  getSunlightPosition = (index: number) => {
+    const pos = this.options.sunLights[index]?.position
+    return pos ? toVec(pos) : undefined
+  }
 
   getSunlightIntensity = (index: number) =>
-    this.options.sunLights[index].intensity!
+    this.options.sunLights[index]?.intensity
 
   private get highlight () {
     return this.options.materials.highlight
   }
 
-  getHighlightColor = () => toRGBColor(this.highlight.color!)
-  getHighlightOpacity = () => this.highlight.opacity!
+  getHighlightColor = () => toRGBColor(this.highlight!.color!)
+  getHighlightOpacity = () => this.highlight!.opacity!
 
   private get isolation () {
     return this.options.materials.isolation
   }
 
-  getIsolationColor = () => toRGBColor(this.isolation.color!)
-  getIsolationOpacity = () => this.isolation.opacity!
+  getIsolationColor = () => toRGBColor(this.isolation!.color!)
+  getIsolationOpacity = () => this.isolation!.opacity!
 
   // Camera
   private get camera () {

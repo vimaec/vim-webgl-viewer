@@ -15,17 +15,17 @@ export interface IMeasure {
   /**
    * Start point of the current measure or undefined if no active measure.
    */
-  get startPoint()
+  get startPoint(): THREE.Vector3 | undefined
 
   /**
    * End point of the current measure or undefined if no active measure.
    */
-  get endPoint()
+  get endPoint(): THREE.Vector3 | undefined
 
   /**
    * Vector from start to end of the current measure or undefined if no active measure.
    */
-  get measurement()
+  get measurement(): THREE.Vector3 | undefined
 
   /**
    * Stage of the current measure or undefined if no active measure.
@@ -43,12 +43,12 @@ export interface IMeasure {
   /**
    * Aborts the current measure flow, fails the related promise.
    */
-  abort()
+  abort(): void
 
   /**
    * Clears meshes.
    */
-  clear()
+  clear(): void
 }
 
 /**
@@ -59,14 +59,14 @@ export class Measure implements IMeasure {
   private _viewer: Viewer
 
   // resources
-  private _meshes: MeasureGizmo
+  private _meshes: MeasureGizmo | undefined
 
   // results
-  private _startPos: THREE.Vector3
+  private _startPos: THREE.Vector3 | undefined
 
-  private _endPos: THREE.Vector3
-  private _measurement: THREE.Vector3
-  private _flow: MeasureFlow
+  private _endPos: THREE.Vector3 | undefined
+  private _measurement: THREE.Vector3 | undefined
+  private _flow: MeasureFlow | undefined
 
   /**
    * Start point of the current measure or undefined if no active measure.
@@ -111,14 +111,16 @@ export class Measure implements IMeasure {
 
     this._flow = new MeasureFlow(this)
     this._viewer.inputs.scheme = this._flow
-    this._flow.onProgress = onProgress
+    this._flow.onProgress = () => onProgress?.()
 
     return new Promise<void>((resolve, reject) => {
-      this._flow.onComplete = (success: boolean) => {
-        this._viewer.inputs.scheme = undefined
-        if (success) resolve()
-        else {
-          reject(new Error('Measurement Aborted'))
+      if (this._flow) {
+        this._flow.onComplete = (success: boolean) => {
+          this._viewer.inputs.scheme = undefined
+          if (success) resolve()
+          else {
+            reject(new Error('Measurement Aborted'))
+          }
         }
       }
     })
@@ -128,7 +130,9 @@ export class Measure implements IMeasure {
     this.clear()
     this._meshes = new MeasureGizmo(this._viewer)
     this._startPos = action.raycast.position
-    this._meshes.start(this._startPos)
+    if (this._startPos) {
+      this._meshes.start(this._startPos)
+    }
   }
 
   onMouseMove () {
@@ -142,12 +146,13 @@ export class Measure implements IMeasure {
       return
     }
     const position = action.raycast.position
+    if (position && this._startPos) {
+      this._measurement = action.object
+        ? position.clone().sub(this._startPos)
+        : undefined
+    }
 
-    this._measurement = action.object
-      ? position.clone().sub(this._startPos)
-      : undefined
-
-    if (action.object) {
+    if (action.object && position && this._startPos) {
       this._meshes?.update(this._startPos, position)
     } else {
       this._meshes?.hide()
@@ -155,12 +160,14 @@ export class Measure implements IMeasure {
   }
 
   onSecondClick (action: InputAction) {
-    if (!action.object) {
+    if (!action.object || !this._startPos) {
       return false
     }
 
     // Compute measurement vector component
     this._endPos = action.raycast.position
+    if (!this._endPos) return false
+
     this._measurement = this._endPos.clone().sub(this._startPos)
     console.log(`Distance: ${this._measurement.length()}`)
     console.log(
@@ -170,7 +177,7 @@ export class Measure implements IMeasure {
       Z: ${this._measurement.z} 
       `
     )
-    this._meshes.finish(this._startPos, this._endPos)
+    this._meshes?.finish(this._startPos, this._endPos)
 
     return true
   }

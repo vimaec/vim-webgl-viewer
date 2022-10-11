@@ -18,12 +18,12 @@ export class MouseHandler extends InputHandler {
   private buttonDown: Button
   private hasMouseMoved: Boolean = false
 
-  private _idleTimeout: ReturnType<typeof setTimeout>
-  private _idle: boolean
-  private _idlePosition: THREE.Vector2
+  private _idleTimeout: ReturnType<typeof setTimeout> | undefined
+  private _idle: boolean | undefined
+  private _idlePosition: THREE.Vector2 | undefined
 
-  private _lastPosition: THREE.Vector2
-  private _downPosition: THREE.Vector2
+  private _lastPosition: THREE.Vector2 | undefined
+  private _downPosition: THREE.Vector2 | undefined
 
   private get camera () {
     return this._viewer.camera
@@ -74,10 +74,9 @@ export class MouseHandler extends InputHandler {
 
   private resetIdleTimeout () {
     clearTimeout(this._idleTimeout)
-    this._idleTimeout = setTimeout(
-      () => this.onMouseIdle(this._lastPosition),
-      this._idleDelayMs
-    )
+    this._idleTimeout = setTimeout(() => {
+      this.onMouseIdle(this._lastPosition)
+    }, this._idleDelayMs)
   }
 
   private onMouseOut = (_: any) => {
@@ -85,7 +84,7 @@ export class MouseHandler extends InputHandler {
     this.hasMouseMoved = false
   }
 
-  private onMouseIdle = (position: THREE.Vector2) => {
+  private onMouseIdle = (position: THREE.Vector2 | undefined) => {
     if (this.buttonDown || !position) return
     const action = new InputAction(
       'idle',
@@ -108,7 +107,11 @@ export class MouseHandler extends InputHandler {
   private onMouseMove = (event: any) => {
     this._lastPosition = new THREE.Vector2(event.offsetX, event.offsetY)
 
-    if (this._idle && this._lastPosition.distanceTo(this._idlePosition) > 5) {
+    if (
+      this._idle &&
+      this._idlePosition &&
+      this._lastPosition.distanceTo(this._idlePosition) > 5
+    ) {
       this._viewer.inputs.IdleAction(undefined)
       this.resetIdleTimeout()
     }
@@ -154,7 +157,8 @@ export class MouseHandler extends InputHandler {
 
     const position = new THREE.Vector2(event.offsetX, event.offsetY)
     this.hasMouseMoved =
-      this.hasMouseMoved || this._downPosition.distanceTo(position) > 4
+      this.hasMouseMoved ||
+      (this._downPosition && this._downPosition?.distanceTo(position) > 4)
 
     switch (this.buttonDown) {
       case 'main':
@@ -249,6 +253,8 @@ export class MouseHandler extends InputHandler {
   private onRectEnd () {
     // Shrink box for better camera fit.
     const box = this._viewer.gizmoRectangle.getBoundingBox()
+    if (!box) return
+
     const center = box.getCenter(new THREE.Vector3())
     const size = box.getSize(new THREE.Vector3())
     size.multiplyScalar(0.5)
@@ -287,6 +293,8 @@ export class MouseHandler extends InputHandler {
 
   private drawSelection () {
     this._viewer.gizmoRectangle.visible = true
-    this._viewer.gizmoRectangle.update(this._downPosition, this._lastPosition)
+    if (this._downPosition && this._lastPosition) {
+      this._viewer.gizmoRectangle.update(this._downPosition, this._lastPosition)
+    }
   }
 }

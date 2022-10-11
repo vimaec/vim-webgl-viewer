@@ -31,12 +31,12 @@ export type ElementParameter = {
 }
 
 export type VimHeader = {
-  vim: string
-  id: string
-  revision: string
-  generator: string
-  created: string
-  schema: string
+  vim: string | undefined
+  id: string | undefined
+  revision: string | undefined
+  generator: string | undefined
+  created: string | undefined
+  schema: string | undefined
 }
 
 const objectModel = {
@@ -119,8 +119,8 @@ const objectModel = {
 }
 
 export interface IDocument {
-  header: VimHeader
-  g3d: G3d
+  header: VimHeader | undefined
+  g3d: G3d | undefined
   /**
    * Returns all element indices of the vim
    */
@@ -200,10 +200,10 @@ export interface IDocument {
 }
 
 export class DocumentNoBim implements IDocument {
-  header: VimHeader
+  header: VimHeader | undefined
   g3d: G3d
 
-  constructor (header: VimHeader, g3d: G3d) {
+  constructor (header: VimHeader | undefined, g3d: G3d) {
     this.header = header
     this.g3d = g3d
   }
@@ -256,13 +256,13 @@ export class DocumentNoBim implements IDocument {
     return undefined
   }
 
-  getBimDocumentSummary () {
+  async getBimDocumentSummary () {
     return undefined
   }
 }
 
 export class Document implements IDocument {
-  readonly header: VimHeader
+  readonly header: VimHeader | undefined
   readonly g3d: G3d
   readonly entities: BFast
   private _strings: string[] | undefined
@@ -273,7 +273,7 @@ export class Document implements IDocument {
   private _elementIdToElements: Map<number, number[]>
 
   private constructor (
-    header: VimHeader,
+    header: VimHeader | undefined,
     g3d: G3d,
     entities: BFast,
     strings: string[] | undefined,
@@ -299,8 +299,8 @@ export class Document implements IDocument {
     bfast: BFast,
     streamG3d: boolean = false
   ): Promise<IDocument> {
-    let header: VimHeader
-    let g3d: G3d
+    let header: VimHeader | undefined
+    let g3d: G3d | undefined
     let entity: BFast | undefined
     let strings: string[] | undefined
 
@@ -313,14 +313,16 @@ export class Document implements IDocument {
       Document.requestStrings(bfast).then((strs) => (strings = strs)),
       Document.requestEntities(bfast)
         .then((ets) => (entity = ets))
-        .then((ets) =>
-          Promise.all([
-            Document.requestInstanceToElement(ets).then(
-              (array) => (instanceToElement = array)
-            ),
-            Document.requestElementIds(ets).then((v) => (elementIds = v))
-          ])
-        )
+        .then((ets) => {
+          if (ets) {
+            return Promise.all([
+              Document.requestInstanceToElement(ets).then(
+                (array) => (instanceToElement = array)
+              ),
+              Document.requestElementIds(ets).then((v) => (elementIds = v))
+            ])
+          }
+        })
     ])
     if (!entity) {
       return new DocumentNoBim(header, g3d!)
@@ -804,31 +806,32 @@ export class Document implements IDocument {
       objectModel.bimDocument.table
     )
     const titles = (
-      await documentTable.getArray(objectModel.bimDocument.columns.title)
-    ).map((n) => this._strings[n])
+      await documentTable?.getArray(objectModel.bimDocument.columns.title)
+    )?.map((n) => this._strings?.[n])
+
     const versions = (
-      await documentTable.getArray(objectModel.bimDocument.columns.version)
-    ).map((n) => this._strings[n])
+      await documentTable?.getArray(objectModel.bimDocument.columns.version)
+    )?.map((n) => this._strings?.[n])
     const authors = (
-      await documentTable.getArray(objectModel.bimDocument.columns.author)
-    ).map((n) => this._strings[n])
+      await documentTable?.getArray(objectModel.bimDocument.columns.author)
+    )?.map((n) => this._strings?.[n])
     const dates = (
-      await documentTable.getArray(objectModel.bimDocument.columns.date)
-    ).map((n) => this._strings[n])
+      await documentTable?.getArray(objectModel.bimDocument.columns.date)
+    )?.map((n) => this._strings?.[n])
 
     const max = Math.max(
-      titles.length,
-      versions.length,
-      authors.length,
-      dates.length
+      titles?.length ?? 0,
+      versions?.length ?? 0,
+      authors?.length ?? 0,
+      dates?.length ?? 0
     )
     const summary: BimDocumentInfo[] = []
     for (let i = 0; i < max; i++) {
       summary.push({
-        title: titles[i],
-        version: versions[i],
-        author: authors[i],
-        date: dates[i]
+        title: titles?.[i],
+        version: versions?.[i],
+        author: authors?.[i],
+        date: dates?.[i]
       })
     }
     return summary

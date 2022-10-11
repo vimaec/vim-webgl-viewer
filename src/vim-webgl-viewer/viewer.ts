@@ -240,7 +240,7 @@ export class Viewer {
   ) {
     let buffer: RemoteBuffer | ArrayBuffer
 
-    let url: string
+    let url: string | undefined
     if (typeof source === 'string') {
       url = source
       buffer = new RemoteBuffer(source)

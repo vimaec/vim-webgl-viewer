@@ -24,9 +24,9 @@ export class SectionBox {
 
   // State
   private _normal: THREE.Vector3
-  private _clip: boolean
-  private _show: boolean
-  private _interactive: boolean
+  private _clip: boolean | undefined = undefined
+  private _visible: boolean | undefined = undefined
+  private _interactive: boolean | undefined = undefined
 
   private _onStateChanged = new SignalDispatcher()
   private _onBoxConfirm = new SimpleEventDispatcher<THREE.Box3>()
@@ -108,7 +108,7 @@ export class SectionBox {
    * When true the section gizmo will section the model with clipping planes.
    */
   get clip () {
-    return this._clip
+    return this._clip ?? false
   }
 
   set clip (value: boolean) {
@@ -122,11 +122,11 @@ export class SectionBox {
    * When true the section gizmo will react to user inputs.
    */
   get interactive () {
-    return this._interactive
+    return this._interactive ?? false
   }
 
   set interactive (value: boolean) {
-    if (value === this.interactive) return
+    if (value === this._interactive) return
     if (!this._interactive && value) this._inputs.register()
     if (this._interactive && !value) this._inputs.unregister()
     this._interactive = value
@@ -138,12 +138,12 @@ export class SectionBox {
    * When true the section gizmo will be rendered.
    */
   get visible () {
-    return this._show
+    return this._visible ?? false
   }
 
   set visible (value: boolean) {
-    if (value === this.visible) return
-    this._show = value
+    if (value === this._visible) return
+    this._visible = value
     this._cube.visible = value
     this._outline.visible = value
     this._highlight.visible = value

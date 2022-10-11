@@ -16,7 +16,7 @@ class Section {
   private _renderer: THREE.WebGLRenderer
 
   private _materials: IMaterialLibrary
-  private _active: boolean
+  private _active: boolean = true
 
   readonly box: THREE.Box3 = new THREE.Box3(
     new THREE.Vector3(-100, -100, -100),
@@ -84,7 +84,8 @@ export class Renderer {
     return this._onVisibilityChanged.asEvent()
   }
 
-  public renderText: boolean
+  /** 2D renderer will be rendered when this is true. */
+  public renderText: boolean = false
 
   constructor (scene: RenderScene, viewport: Viewport, materials: VimMaterials) {
     this.viewport = viewport
@@ -139,9 +140,9 @@ export class Renderer {
       this.textRenderer.render(this.scene.scene, camera)
     }
 
-    this.scene
-      .getUpdatedScenes()
-      .forEach((s) => this._onVisibilityChanged.dispatch(s.vim))
+    this.scene.getUpdatedScenes().forEach((s) => {
+      if (s.vim) this._onVisibilityChanged.dispatch(s.vim)
+    })
     this.scene.clearUpdateFlags()
   }
 

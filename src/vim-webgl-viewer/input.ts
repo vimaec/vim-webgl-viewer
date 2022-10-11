@@ -27,7 +27,7 @@ export interface InputScheme {
    * Called once when mouse and camera have been idle for some time with the position where it stopped.
    * Called once when the mouse moves again with undefined
    */
-  onIdleAction(hit: InputAction): void
+  onIdleAction(hit: InputAction | undefined): void
 
   /**
    * Called when a key is pressed and released.
@@ -140,9 +140,9 @@ export class Input {
    */
   keyboard: KeyboardHandler
 
-  private _pointerActive: PointerMode
-  private _pointerFallback: PointerMode
-  private _pointerOverride: PointerMode
+  private _pointerActive: PointerMode = 'orbit'
+  private _pointerFallback: PointerMode = 'look'
+  private _pointerOverride: PointerMode | undefined
 
   /**
    * Returns the last main mode (orbit, look) that was active.
@@ -165,7 +165,7 @@ export class Input {
     return this._pointerOverride
   }
 
-  set pointerOverride (value: PointerMode) {
+  set pointerOverride (value: PointerMode | undefined) {
     if (value === this._pointerOverride) return
     this._pointerOverride = value
     this._onPointerOverrideChanged.dispatch()
@@ -219,7 +219,7 @@ export class Input {
     return this._scheme
   }
 
-  set scheme (value: InputScheme) {
+  set scheme (value: InputScheme | undefined) {
     this._scheme = value ?? new DefaultInputScheme(this._viewer)
   }
 
@@ -233,7 +233,7 @@ export class Input {
   /**
    * Calls idle action on the current input scheme
    */
-  IdleAction (action: InputAction) {
+  IdleAction (action: InputAction | undefined) {
     this._scheme.onIdleAction(action)
   }
 

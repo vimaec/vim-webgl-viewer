@@ -28,8 +28,8 @@ export class TouchHandler extends InputHandler {
   private _touch1: THREE.Vector2 | undefined = undefined // The first touch when multiple touches occur, otherwise left undefined
   private _touch2: THREE.Vector2 | undefined = undefined // The second touch when multiple touches occur, otherwise left undefined
   private _touchStartTime: number | undefined = undefined // In ms since epoch
-  private _lastTapMs: number
-  private _touchStart: THREE.Vector2
+  private _lastTapMs: number | undefined
+  private _touchStart: THREE.Vector2 | undefined
 
   protected override addListeners (): void {
     const canvas = this.viewport.canvas
@@ -44,7 +44,8 @@ export class TouchHandler extends InputHandler {
 
   private onTap = (position: THREE.Vector2) => {
     const time = new Date().getTime()
-    const double = time - this._lastTapMs < this.DOUBLE_TAP_DELAY_MS
+    const double =
+      this._lastTapMs && time - this._lastTapMs < this.DOUBLE_TAP_DELAY_MS
     this._lastTapMs = new Date().getTime()
 
     const action = new InputAction(
@@ -142,9 +143,9 @@ export class TouchHandler extends InputHandler {
   }
 
   private onTouchEnd = (event: any) => {
-    if (this.isSingleTouch()) {
+    if (this.isSingleTouch() && this._touchStart && this._touch) {
       const touchDurationMs = new Date().getTime() - this._touchStartTime!
-      const length = this._touch.clone().sub(this._touchStart).length()
+      const length = this._touch.distanceTo(this._touchStart)
       console.log(length)
       if (
         touchDurationMs < this.TAP_DURATION_MS &&

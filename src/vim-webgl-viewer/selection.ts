@@ -84,7 +84,7 @@ export class Selection {
    * Adds focus highlight to a single object.
    * Pass undefined to remove highlight
    */
-  focus (object: Object) {
+  focus (object: Object | undefined) {
     if (this._focusMesh) {
       this._focusMesh.geometry.dispose()
       this._renderer.remove(this._focusMesh)
@@ -250,10 +250,11 @@ export class Selection {
         instances.push(...o.instances)
       }
     }
+    if (!vim?.document.g3d) return
 
     const meshBuilder = vim!.scene.builder.meshBuilder
     this._selectionMesh = meshBuilder.createWireframe(
-      vim!.document.g3d,
+      vim.document.g3d,
       instances
     )
     if (this._selectionMesh) {

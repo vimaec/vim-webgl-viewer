@@ -8,7 +8,7 @@ import { Viewer } from '../viewer'
 export class GizmoRectangle {
   private line: THREE.LineSegments
   private viewer: Viewer
-  private points: THREE.Vector3[]
+  private points: THREE.Vector3[] | undefined
 
   constructor (viewer: Viewer) {
     this.viewer = viewer
@@ -74,6 +74,7 @@ export class GizmoRectangle {
     // Points intersections with plane
     const A = this.getIntersection(plane, posA)
     const B = this.getIntersection(plane, posB)
+    if (!A || !B) return
 
     // Center is average of both points.
     const center = A.clone().add(B).multiplyScalar(0.5)
@@ -84,12 +85,14 @@ export class GizmoRectangle {
     // Keep 4 corners and center for bounding box
     const AB = this.getIntersection(plane, new THREE.Vector2(posA.x, posB.y))
     const BA = this.getIntersection(plane, new THREE.Vector2(posB.x, posA.y))
+    if (!AB || !BA) return
+
     this.points = [A, B, AB, BA, center]
   }
 
   private getIntersection (plane: THREE.Plane, position: THREE.Vector2) {
     const raycaster = this.viewer.raycaster.fromPoint2(position)
-    return raycaster.ray.intersectPlane(plane, new THREE.Vector3())
+    return raycaster.ray.intersectPlane(plane, new THREE.Vector3()) ?? undefined
   }
 
   private updateRect (position: THREE.Vector3, dx: number, dy: number) {
@@ -131,6 +134,7 @@ export class GizmoRectangle {
   getBoundingBox (target: THREE.Box3 = new THREE.Box3()) {
     const position = this.getClosestHit()
     const projections = position ? this.projectPoints(position) : this.points
+    if (!projections) return
     return target.setFromPoints(projections)
   }
 
@@ -138,14 +142,20 @@ export class GizmoRectangle {
    * Raycast from camera to all points, return closest hit position.
    */
   getClosestHit () {
+    if (!this.points) return
+
     const hits = this.points
       .map((p) => this.viewer.raycaster.raycast3(p))
       .filter((h) => h.isHit)
 
-    let position: THREE.Vector3
+    let position: THREE.Vector3 | undefined
     let dist: number
     hits.forEach((h) => {
-      if (dist === undefined || h.distance < dist) {
+      if (
+        h.distance !== undefined &&
+        h.position !== undefined &&
+        (dist === undefined || h.distance < dist)
+      ) {
         dist = h.distance
         position = h.position
       }
@@ -162,6 +172,6 @@ export class GizmoRectangle {
       position
     )
 
-    return this.points.map((p) => plane.projectPoint(p, new THREE.Vector3()))
+    return this.points?.map((p) => plane.projectPoint(p, new THREE.Vector3()))
   }
 }

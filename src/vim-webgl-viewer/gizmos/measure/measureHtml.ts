@@ -6,12 +6,12 @@ export type MeasureStyle = 'all' | 'Dist' | 'X' | 'Y' | 'Z'
 
 export type MeasureElement = {
   div: HTMLElement
-  value: HTMLTableCellElement
+  value: HTMLTableCellElement | undefined
   values: {
-    dist: HTMLTableCellElement
-    x: HTMLTableCellElement
-    y: HTMLTableCellElement
-    z: HTMLTableCellElement
+    dist: HTMLTableCellElement | undefined
+    x: HTMLTableCellElement | undefined
+    y: HTMLTableCellElement | undefined
+    z: HTMLTableCellElement | undefined
   }
 }
 
@@ -27,10 +27,10 @@ export function createMeasureElement (style: MeasureStyle): MeasureElement {
   const table = document.createElement('table')
   div.appendChild(table)
 
-  let distValue: HTMLTableCellElement
-  let xValue: HTMLTableCellElement
-  let yValue: HTMLTableCellElement
-  let zValue: HTMLTableCellElement
+  let distValue: HTMLTableCellElement | undefined
+  let xValue: HTMLTableCellElement | undefined
+  let yValue: HTMLTableCellElement | undefined
+  let zValue: HTMLTableCellElement | undefined
 
   if (style === 'all' || style === 'Dist') {
     const trDist = document.createElement('tr')

@@ -13,15 +13,16 @@ export type MeasureStage = 'ready' | 'active' | 'done' | 'failed'
  */
 export class MeasureFlow implements InputScheme {
   private readonly _gizmoMeasure: Measure
-  private _stage: MeasureStage = 'ready'
-  private removeMouseListener: () => void
+  private _stage: MeasureStage | undefined
+  private removeMouseListener: (() => void) | undefined
 
   constructor (gizmoMeasure: Measure) {
     this._gizmoMeasure = gizmoMeasure
+    this._stage = 'ready'
   }
 
-  onProgress: (stage: MeasureStage) => void
-  onComplete: (success: boolean) => void
+  onProgress: ((stage: MeasureStage) => void) | undefined
+  onComplete: ((success: boolean) => void) | undefined
 
   get stage () {
     return this._stage
