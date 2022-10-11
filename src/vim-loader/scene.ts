@@ -17,14 +17,15 @@ export class Scene {
 
   // State
   meshes: THREE.Mesh[] = []
-  vim: Vim
+  vim: Vim | undefined
+  /** Marks the scene as changed */
+  visibilityChanged: boolean = false
   private _boundingBox: THREE.Box3 = new THREE.Box3()
   private _instanceToThreeMeshes: Map<number, [THREE.Mesh, number][]> =
     new Map()
 
   private _threeMeshIdToInstances: Map<number, number[]> = new Map()
   private _material: THREE.Material | undefined
-  _visibilityChanged: boolean
 
   constructor (builder: SceneBuilder) {
     this.builder = builder

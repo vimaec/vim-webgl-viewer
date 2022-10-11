@@ -35,7 +35,7 @@ export namespace Geometry {
    * @returns a BufferGeometry
    */
   export function createGeometryFromInstances (g3d: G3d, instances: number[]) {
-    return Geometry.mergeInstanceMeshes(g3d, 'all', false, instances).geometry
+    return Geometry.mergeInstanceMeshes(g3d, 'all', false, instances)?.geometry
   }
 
   /**
@@ -145,6 +145,7 @@ export namespace Geometry {
 
   /**
    * Returns a merged mesh of all meshes related to given instances along with picking related metadata
+   * Returns undefined if mesh would be empty
    * @param section mesh sections to include in the merged mesh.
    * @param transparent true to use a transparent material.
    * @param instances instances for which to merge meshes.
@@ -156,6 +157,7 @@ export namespace Geometry {
     instances: number[]
   ) {
     const info = getInstanceMergeInfo(g3d, instances, section)
+    if (info.instances.length === 0 || info.indexCount === 0) return
     return merge(g3d, info, transparent)
   }
 
@@ -171,6 +173,7 @@ export namespace Geometry {
     transparent: boolean
   ) {
     const info = getUniqueMeshMergeInfo(g3d, section)
+    if (info.instances.length === 0 || info.indexCount === 0) return
     return merge(g3d, info, transparent)
   }
 

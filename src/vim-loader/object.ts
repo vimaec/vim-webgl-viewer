@@ -45,8 +45,6 @@ export class Object {
     return this._meshes?.length!!
   }
 
-  onVisibilityChanged: () => void
-
   /**
    * Internal - Replace this object meshes and apply color as needed.
    */
@@ -96,14 +94,16 @@ export class Object {
     if (!this.instances || !this._meshes) return
     if (this._boundingBox) return this._boundingBox
 
-    let box: THREE.Box3
+    let box: THREE.Box3 | undefined
     this._meshes.forEach((m) => {
       const [mesh, index] = m
       const b = mesh.userData.boxes[index]
       box = box ? box.union(b) : b.clone()
     })
-    box.applyMatrix4(this.vim.getMatrix())
-    this._boundingBox = box
+    if (box) {
+      box.applyMatrix4(this.vim.getMatrix())
+      this._boundingBox = box
+    }
 
     return this._boundingBox
   }
@@ -127,7 +127,7 @@ export class Object {
       this.vim.document.g3d,
       this.instances
     )
-    wireframe.applyMatrix4(this.vim.getMatrix())
+    wireframe?.applyMatrix4(this.vim.getMatrix())
     return wireframe
   }
 
@@ -142,7 +142,7 @@ export class Object {
       this.vim.document.g3d,
       this.instances
     )
-    geometry.applyMatrix4(this.vim.getMatrix())
+    geometry?.applyMatrix4(this.vim.getMatrix())
     return geometry
   }
 
@@ -191,7 +191,7 @@ export class Object {
     if (this._visible === value) return
     this._visible = value
     this.applyVisible(value)
-    this.vim.scene._visibilityChanged = true
+    this.vim.scene.visibilityChanged = true
   }
 
   private applyVisible (value: boolean) {
