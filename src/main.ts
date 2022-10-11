@@ -22,15 +22,7 @@ if (params.has('download')) {
 }
 
 // Create Viewer
-const viewer = new VIM.Viewer({
-  groundPlane: {
-    visible: true,
-    texture:
-      'https://vimdevelopment01storage.blob.core.windows.net/textures/vim-floor-soft.png',
-    opacity: 1,
-    size: 5
-  }
-})
+const viewer = new VIM.Viewer()
 
 load2(url)
 

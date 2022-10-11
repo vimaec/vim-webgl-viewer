@@ -5,6 +5,9 @@
 import * as THREE from 'three'
 import deepmerge from 'deepmerge'
 import { VimOptions } from '../vim-loader/vimSettings'
+import { floor } from '../images'
+
+export type TextureEncoding = 'url' | 'base64' | undefined
 
 export namespace ViewerOptions {
   export type ColorRGB = {
@@ -25,6 +28,7 @@ export namespace ViewerOptions {
   export type GroundPlane = {
     /** Enables/Disables plane under scene */
     visible: boolean
+    encoding: TextureEncoding
     /** Local or remote texture url for plane */
     texture: string
     /** Opacity of the plane */
@@ -174,11 +178,12 @@ export class ViewerSettings {
         }
       },
       groundPlane: {
-        visible: false,
-        texture: undefined,
+        visible: true,
+        encoding: 'base64',
+        texture: floor,
         opacity: 1,
         color: { r: 0xff, g: 0xff, b: 0xff },
-        size: 3
+        size: 5
       },
       skylight: {
         skyColor: { h: 0.6, s: 1, l: 0.6 },
@@ -217,11 +222,16 @@ export class ViewerSettings {
   getCanvasId = () => this.options.canvas.id
 
   // Plane
-  getGroundPlaneVisible = () => this.options.groundPlane.visible!
-  getGroundPlaneColor = () => toRGBColor(this.options.groundPlane.color!)
-  getGroundPlaneTextureUrl = () => this.options.groundPlane.texture!
-  getGroundPlaneOpacity = () => this.options.groundPlane.opacity!
-  getGroundPlaneSize = () => this.options.groundPlane.size!
+  private get groundPlane () {
+    return this.options.groundPlane
+  }
+
+  getGroundPlaneVisible = () => this.groundPlane.visible!
+  getGroundPlaneColor = () => toRGBColor(this.groundPlane.color!)
+  getGroundPlaneEncoding = () => this.groundPlane.encoding
+  getGroundPlaneTexture = () => this.groundPlane.texture!
+  getGroundPlaneOpacity = () => this.groundPlane.opacity!
+  getGroundPlaneSize = () => this.groundPlane.size!
 
   // Skylight
   getSkylightColor = () => toHSLColor(this.options.skylight.skyColor!)
