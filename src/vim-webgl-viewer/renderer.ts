@@ -85,7 +85,16 @@ export class Renderer {
   }
 
   /** 2D renderer will be rendered when this is true. */
-  public renderText: boolean = false
+  private _renderText: boolean = false
+  get renderText () {
+    return this._renderText
+  }
+
+  set renderText (value: boolean) {
+    if (value === this._renderText) return
+    this._renderText = value
+    this.textRenderer.domElement.style.display = value ? 'block' : 'none'
+  }
 
   constructor (scene: RenderScene, viewport: Viewport, materials: VimMaterials) {
     this.viewport = viewport
