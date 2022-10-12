@@ -6,7 +6,10 @@ export * from './vim-webgl-viewer/viewer'
 export type { PointerMode, InputScheme } from './vim-webgl-viewer/input'
 export { DefaultInputScheme, KEYS } from './vim-webgl-viewer/input'
 export * from './vim-webgl-viewer/viewerSettings'
-export { RaycastResult as HitTestResult } from './vim-webgl-viewer/raycaster'
+export {
+  RaycastResult as HitTestResult,
+  InputAction
+} from './vim-webgl-viewer/raycaster'
 
 export * from './vim-loader/bfast'
 export * from './vim-loader/document'
