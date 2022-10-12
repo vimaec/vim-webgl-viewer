@@ -85,9 +85,9 @@ export class Renderer {
   }
 
   /** 2D renderer will be rendered when this is true. */
-  private _renderText: boolean = false
+  private _renderText: boolean | undefined
   get renderText () {
-    return this._renderText
+    return this._renderText ?? false
   }
 
   set renderText (value: boolean) {
@@ -112,6 +112,7 @@ export class Renderer {
     })
 
     this.textRenderer = this.viewport.createTextRenderer()
+    this.renderText = false
 
     this.fitViewport()
     this.viewport.onResize(() => this.fitViewport())
