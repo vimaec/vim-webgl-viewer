@@ -36,6 +36,7 @@ export class CameraGizmo {
   private _timeout: ReturnType<typeof setTimeout> | undefined
   private _fadeEnd: number = 0
   private _active: boolean = true
+  private _animation: number = 0
 
   constructor (renderer: Renderer, camera: Camera, settings: ViewerSettings) {
     this._renderer = renderer
@@ -44,6 +45,7 @@ export class CameraGizmo {
   }
 
   dispose () {
+    cancelAnimationFrame(this._animation)
     clearTimeout(this._timeout)
 
     this._box?.dispose()
@@ -98,7 +100,7 @@ export class CameraGizmo {
       this._materialAlways!.opacity = this._opacityAlways
     } else {
       // lerp and loop until fade is over
-      requestAnimationFrame(() => this.fadeOut(true))
+      this._animation = requestAnimationFrame(() => this.fadeOut(true))
       const t = Math.pow((this._fadeEnd - now) / this._fadeDurationMs, 4)
       this._material!.opacity = MathUtils.lerp(0, this._opacity, t)
       this._materialAlways!.opacity = MathUtils.lerp(0, this._opacityAlways, t)
