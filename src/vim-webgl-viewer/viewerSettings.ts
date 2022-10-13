@@ -6,8 +6,10 @@ import * as THREE from 'three'
 import deepmerge from 'deepmerge'
 import { VimOptions } from '../vim-loader/vimSettings'
 import { floor } from '../images'
+import { GizmoOptions } from './gizmos/gizmoAxes'
 
 export type TextureEncoding = 'url' | 'base64' | undefined
+export { GizmoOptions } from './gizmos/gizmoAxes'
 
 export namespace ViewerOptions {
   export type ColorRGB = {
@@ -22,10 +24,10 @@ export namespace ViewerOptions {
     l: number
   }
 
-  /**
+  export /**
    * Plane under Scene related options
    */
-  export type GroundPlane = {
+  type GroundPlane = {
     /** Enables/Disables plane under scene */
     visible: boolean
     encoding: TextureEncoding
@@ -140,6 +142,11 @@ export namespace ViewerOptions {
      * Object highlight on click options
      */
     materials: Partial<Materials>
+
+    /**
+     * Axes gizmo options
+     */
+    axes: Partial<GizmoOptions>
   }
 }
 
@@ -211,7 +218,8 @@ export class ViewerSettings {
           color: { r: 0x40, g: 0x40, b: 0x40 },
           opacity: 0.1
         }
-      }
+      },
+      axes: new GizmoOptions()
     }
 
     this.options = options ? deepmerge(fallback, options, undefined) : fallback
@@ -293,6 +301,8 @@ export class ViewerSettings {
   getCameraRotateSpeed = () => this.cameraControls.rotateSpeed!
   getCameraOrbitSpeed = () => this.cameraControls.orbitSpeed!
   getCameraReferenceVimSize = () => this.cameraControls.vimReferenceSize!
+
+  getAxesConfig = () => this.options.axes
 }
 
 function toRGBColor (c: ViewerOptions.ColorRGB): THREE.Color {
