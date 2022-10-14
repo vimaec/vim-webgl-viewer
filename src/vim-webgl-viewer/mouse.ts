@@ -82,7 +82,8 @@ export class MouseHandler extends InputHandler {
     }, this._idleDelayMs)
   }
 
-  private onMouseOut = (_: any) => {
+  private onMouseOut = (event: MouseEvent) => {
+    event.stopImmediatePropagation()
     this.buttonDown = undefined
     this.hasMouseMoved = false
     this._lastPosition = undefined
@@ -106,6 +107,7 @@ export class MouseHandler extends InputHandler {
   }
 
   private onMouseMove = (event: any) => {
+    event.stopImmediatePropagation()
     this._lastPosition = new THREE.Vector2(event.offsetX, event.offsetY)
 
     if (
@@ -120,6 +122,7 @@ export class MouseHandler extends InputHandler {
   }
 
   private onMouseDown = (event: MouseEvent) => {
+    event.stopImmediatePropagation()
     event.preventDefault()
     if (this.buttonDown) return
     this._downPosition = new THREE.Vector2(event.offsetX, event.offsetY)
@@ -142,6 +145,7 @@ export class MouseHandler extends InputHandler {
   }
 
   private onMouseDrag (event: any) {
+    event.stopImmediatePropagation()
     event.preventDefault()
     // https://github.com/mrdoob/three.js/blob/master/examples/jsm/controls/PointerLockControls.js
     const deltaX =
@@ -201,7 +205,7 @@ export class MouseHandler extends InputHandler {
 
   private onMouseWheel = (event: any) => {
     event.preventDefault()
-    event.stopPropagation()
+    event.stopImmediatePropagation()
 
     // Value of event.deltaY will change from browser to browser
     // https://stackoverflow.com/questions/38942821/wheel-event-javascript-give-inconsistent-values
@@ -226,6 +230,7 @@ export class MouseHandler extends InputHandler {
   }
 
   private onMouseUp = (event: MouseEvent) => {
+    event.stopImmediatePropagation()
     this.resetIdle()
     const btn = this.getButton(event)
     if (btn === this.buttonDown) return // the active button is still down.
@@ -264,7 +269,8 @@ export class MouseHandler extends InputHandler {
     )
   }
 
-  private onDoubleClick = (event: any) => {
+  private onDoubleClick = (event: MouseEvent) => {
+    event.stopImmediatePropagation()
     this.onMouseClick(new THREE.Vector2(event.offsetX, event.offsetY), true)
   }
 
