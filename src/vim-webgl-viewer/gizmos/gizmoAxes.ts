@@ -33,7 +33,7 @@ class Axis {
 }
 
 export class GizmoOptions {
-  size: number = 96
+  size: number = 84
   padding: number = 4
   bubbleSizePrimary: number = 8
   bubbleSizeSecondary: number = 6
