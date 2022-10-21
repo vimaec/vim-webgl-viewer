@@ -75,7 +75,7 @@ type TypedArray =
 class G3dAttribute {
   descriptor: G3dAttributeDescriptor
   bytes: Uint8Array
-  data: TypedArray
+  data: TypedArray | undefined
 
   constructor (descriptor: G3dAttributeDescriptor, bytes: Uint8Array) {
     this.descriptor = descriptor
@@ -88,7 +88,7 @@ class G3dAttribute {
   }
 
   // Converts a VIM attribute into a typed array from its raw data
-  static castData (bytes: Uint8Array, dataType: string): TypedArray {
+  static castData (bytes: Uint8Array, dataType: string): TypedArray | undefined {
     switch (dataType) {
       case 'float32':
         return new Float32Array(

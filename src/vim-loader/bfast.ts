@@ -182,6 +182,7 @@ export class BFast {
 
   async getLocalBfast (name: string) {
     const buffer = await this.getBuffer(name)
+    if (!buffer) return
     return new BFast(buffer, 0, name)
   }
 

@@ -10,7 +10,7 @@ export class Viewport {
   /** HTML Canvas on which the model is rendered */
   canvas: HTMLCanvasElement
   /** HTML Element in which text is rendered */
-  text: HTMLElement
+  text: HTMLElement | undefined
   private _unregisterResize: Function | undefined
   private _ownedCanvas: boolean
   private _resizeCallbacks: (() => void)[] = []
@@ -43,6 +43,10 @@ export class Viewport {
 
   /** Returns a text renderer that will render html in an html element sibbling to canvas */
   createTextRenderer () {
+    if (!this.canvas.parentElement) {
+      throw new Error('Cannot create text renderer without a canvas')
+    }
+
     const size = this.getParentSize()
     const renderer = new CSS2DRenderer()
     renderer.setSize(size.x, size.y)
@@ -105,7 +109,7 @@ export class Viewport {
    * @param timeout time after the last resize before code will be called
    */
   private registerResize (timeout: number) {
-    let timerId: ReturnType<typeof setTimeout>
+    let timerId: ReturnType<typeof setTimeout> | undefined
     const onResize = () => {
       if (timerId !== undefined) {
         clearTimeout(timerId)

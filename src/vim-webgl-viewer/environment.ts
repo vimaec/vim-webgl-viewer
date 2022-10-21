@@ -3,7 +3,7 @@
  */
 
 import * as THREE from 'three'
-import { ViewerSettings } from './viewerSettings'
+import { TextureEncoding, ViewerSettings } from './viewerSettings'
 import { Box3 } from 'three'
 
 /**
@@ -38,7 +38,10 @@ export class GroundPlane {
     this.mesh.visible = settings.getGroundPlaneVisible()
 
     // Looks
-    this.applyTexture(settings.getGroundPlaneTextureUrl())
+    this.applyTexture(
+      settings.getGroundPlaneEncoding(),
+      settings.getGroundPlaneTexture()
+    )
     this._material.color.copy(settings.getGroundPlaneColor())
     this._material.opacity = settings.getGroundPlaneOpacity()
   }
@@ -65,23 +68,34 @@ export class GroundPlane {
     this.mesh.scale.copy(scale)
   }
 
-  applyTexture (texUrl: string) {
+  applyTexture (encoding: 'url' | 'base64' | undefined, source: string) {
     // Check for changes
-    if (texUrl === this._source) return
-    this._source = texUrl
+    if (source === this._source) return
+    this._source = source
 
     // dispose previous texture
     this._texture?.dispose()
     this._texture = undefined
-
     // Bail if new texture url, is no texture
-    if (!texUrl) return
+    if (!source || !encoding) return
 
-    // load texture
-    const loader = new THREE.TextureLoader()
-    this._texture = loader.load(texUrl)
+    if (encoding === 'url') {
+      // load texture
+      const loader = new THREE.TextureLoader()
+      this._texture = loader.load(source)
+    }
+    if (encoding === 'base64') {
+      const image = new Image()
+      image.src = source
+      const txt = new THREE.Texture()
+      this._texture = txt
+      this._texture.image = image
+      image.onload = () => {
+        txt.needsUpdate = true
+      }
+    }
     if (!this._texture) {
-      console.error('Failed to load texture: ' + texUrl)
+      console.error('Failed to load texture: ' + source)
       return
     }
 
@@ -117,8 +131,8 @@ export class Environment {
     this.applySettings(settings)
   }
 
-  loadGroundTexture (url: string) {
-    this._groundPlane.applyTexture(url)
+  loadGroundTexture (encoding: TextureEncoding, url: string) {
+    this._groundPlane.applyTexture(encoding, url)
   }
 
   /**
@@ -143,9 +157,18 @@ export class Environment {
       if (!this.sunLights[i]) {
         this.sunLights[i] = new THREE.DirectionalLight()
       }
-      this.sunLights[i].color.copy(settings.getSunlightColor(i))
-      this.sunLights[i].position.copy(settings.getSunlightPosition(i))
-      this.sunLights[i].intensity = settings.getSunlightIntensity(i)
+      const color = settings.getSunlightColor(i)
+      const pos = settings.getSunlightPosition(i)
+      const intensity = settings.getSunlightIntensity(i)
+      if (color) {
+        this.sunLights[i].color.copy(color)
+      }
+      if (pos) {
+        this.sunLights[i].position.copy(pos)
+      }
+      if (intensity) {
+        this.sunLights[i].intensity = intensity
+      }
     }
   }
 

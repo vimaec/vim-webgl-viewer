@@ -203,7 +203,7 @@ export class InputAction {
     this._raycaster = raycaster
   }
 
-  private _raycast: RaycastResult
+  private _raycast: RaycastResult | undefined
   get raycast () {
     return (
       this._raycast ?? (this._raycast = this._raycaster.raycast2(this.position))

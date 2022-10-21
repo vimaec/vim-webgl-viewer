@@ -45,8 +45,6 @@ export class Object {
     return this._meshes?.length!!
   }
 
-  onVisibilityChanged: () => void
-
   /**
    * Internal - Replace this object meshes and apply color as needed.
    */
@@ -93,18 +91,20 @@ export class Object {
    * Returns undefined if object has no geometry.
    */
   getBoundingBox () {
-    if (!this.instances) return
+    if (!this.instances || !this._meshes) return
     if (this._boundingBox) return this._boundingBox
 
-    const geometry = Geometry.createGeometryFromInstances(
-      this.vim.document.g3d,
-      this.instances
-    )
-    geometry.applyMatrix4(this.vim.getMatrix())
+    let box: THREE.Box3 | undefined
+    this._meshes.forEach((m) => {
+      const [mesh, index] = m
+      const b = mesh.userData.boxes[index]
+      box = box ? box.union(b) : b.clone()
+    })
+    if (box) {
+      box.applyMatrix4(this.vim.getMatrix())
+      this._boundingBox = box
+    }
 
-    geometry.computeBoundingBox()
-    this._boundingBox = geometry.boundingBox ?? undefined
-    geometry.dispose()
     return this._boundingBox
   }
 
@@ -121,13 +121,13 @@ export class Object {
    * Creates a new three wireframe Line object from the object geometry
    */
   createWireframe () {
-    if (!this.instances) return
+    if (!this.instances || !this.vim.document.g3d) return
 
     const wireframe = this.meshBuilder.createWireframe(
       this.vim.document.g3d,
       this.instances
     )
-    wireframe.applyMatrix4(this.vim.getMatrix())
+    wireframe?.applyMatrix4(this.vim.getMatrix())
     return wireframe
   }
 
@@ -136,13 +136,13 @@ export class Object {
    * Returns undefined if object has no geometry.
    */
   createGeometry () {
-    if (!this.instances) return
+    if (!this.instances || !this.vim.document.g3d) return
 
     const geometry = Geometry.createGeometryFromInstances(
       this.vim.document.g3d,
       this.instances
     )
-    geometry.applyMatrix4(this.vim.getMatrix())
+    geometry?.applyMatrix4(this.vim.getMatrix())
     return geometry
   }
 
@@ -191,7 +191,7 @@ export class Object {
     if (this._visible === value) return
     this._visible = value
     this.applyVisible(value)
-    this.vim.scene._visibilityChanged = true
+    this.vim.scene.visibilityChanged = true
   }
 
   private applyVisible (value: boolean) {
@@ -304,6 +304,7 @@ export class Object {
    * @param index index of the merged mesh instance
    */
   private resetMergedColor (mesh: THREE.Mesh, index: number) {
+    if (!this.vim.document.g3d) return
     const colors = mesh.geometry.getAttribute('color')
     const colored = this.getOrAddColoredAttribute(mesh)
     const indices = mesh.geometry.index!

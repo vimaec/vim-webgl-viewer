@@ -17,14 +17,15 @@ export class Scene {
 
   // State
   meshes: THREE.Mesh[] = []
-  vim: Vim
+  vim: Vim | undefined
+  /** Marks the scene as changed */
+  visibilityChanged: boolean = false
   private _boundingBox: THREE.Box3 = new THREE.Box3()
   private _instanceToThreeMeshes: Map<number, [THREE.Mesh, number][]> =
     new Map()
 
   private _threeMeshIdToInstances: Map<number, number[]> = new Map()
   private _material: THREE.Material | undefined
-  _visibilityChanged: boolean
 
   constructor (builder: SceneBuilder) {
     this.builder = builder
@@ -82,61 +83,34 @@ export class Scene {
 
   /**
    * Add an instanced mesh to the Scene and recomputes fields as needed.
-   * @param mesh Is expected to have userData.instances = number[]
-   * where numbers are the indices of the g3d instances that went into creating the mesh
+   * @param mesh Is expected to have
+   *  {
+   *    userData.instances = number[] (indices of the g3d instances that went into creating the mesh)
+   *    userData.boxes = THREE.Box3[] (bounding box of each instance)
+   *  }
    */
-  addMergedMesh (mesh: THREE.Mesh) {
-    if (!mesh) return this
-    const instances = mesh.userData.instances
-    if (!instances) {
-      throw new Error('Expected mesh to have userdata instances : number[]')
-    }
-
-    for (let i = 0; i < instances.length; i++) {
-      const set = this._instanceToThreeMeshes.get(instances[i]) ?? []
-      set.push([mesh, i])
-      this._instanceToThreeMeshes.set(instances[i], set)
-    }
-
-    mesh.geometry.computeBoundingBox()
-    const box = mesh.geometry.boundingBox!
-    this._boundingBox = this._boundingBox?.union(box) ?? box.clone()
-
-    this._threeMeshIdToInstances.set(mesh.id, instances)
-    this.meshes.push(mesh)
-    return this
-  }
-
-  /**
-   * Add an instanced mesh to the Scene and recomputes fields as needed.
-   * @param mesh Is expected to have userData.instances = number[]
-   * where numbers are the indices of the g3d instances that went into creating the mesh
-   */
-  addInstancedMesh (mesh: THREE.InstancedMesh) {
-    this.registerInstancedMesh(mesh)
-    this.meshes.push(mesh)
-    return this
-  }
-
-  private registerInstancedMesh (mesh: THREE.InstancedMesh) {
+  addMesh (mesh: THREE.Mesh) {
     const instances = mesh.userData.instances as number[]
     if (!instances || instances.length === 0) {
       throw new Error(
         'Expected mesh to have userdata instances : number[] with at least one member'
       )
     }
-    if (mesh.count === 0) {
-      throw new Error('Expected mesh to have at least one instance')
-    }
-
     for (let i = 0; i < instances.length; i++) {
       const set = this._instanceToThreeMeshes.get(instances[i]) ?? []
       set.push([mesh, i])
       this._instanceToThreeMeshes.set(instances[i], set)
     }
-    const box = this.computeIntancedMeshBoundingBox(mesh)!
+
+    const box = mesh.userData.boxes[0].clone() as THREE.Box3
+    for (let i = 1; i < instances.length; i++) {
+      box.union(mesh.userData.boxes[i])
+    }
     this._boundingBox = this._boundingBox?.union(box) ?? box.clone()
+
     this._threeMeshIdToInstances.set(mesh.id, instances)
+    this.meshes.push(mesh)
+    return this
   }
 
   /**
@@ -194,22 +168,5 @@ export class Scene {
     this.meshes.length = 0
     this._instanceToThreeMeshes.clear()
     this._threeMeshIdToInstances.clear()
-  }
-
-  /**
-   * Computes the bounding box around all instances in world position of an InstancedMesh.
-   */
-  private computeIntancedMeshBoundingBox (mesh: THREE.InstancedMesh) {
-    let result
-    const matrix = new THREE.Matrix4()
-    const box = new THREE.Box3()
-    mesh.geometry.computeBoundingBox()
-    for (let i = 0; i < mesh.count; i++) {
-      mesh.getMatrixAt(i, matrix)
-      box.copy(mesh.geometry.boundingBox!)
-      box.applyMatrix4(matrix)
-      result = result ? result.union(box) : box.clone()
-    }
-    return result
   }
 }

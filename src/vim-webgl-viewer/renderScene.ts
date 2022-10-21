@@ -20,14 +20,14 @@ export class RenderScene {
   getUpdatedScenes () {
     const result: Scene[] = []
     for (const s of this._scenes) {
-      if (s._visibilityChanged) result.push(s)
+      if (s.visibilityChanged) result.push(s)
     }
     return result
   }
 
   /** Clears the scene updated flags */
   clearUpdateFlags () {
-    this._scenes.forEach((s) => (s._visibilityChanged = false))
+    this._scenes.forEach((s) => (s.visibilityChanged = false))
   }
 
   /**

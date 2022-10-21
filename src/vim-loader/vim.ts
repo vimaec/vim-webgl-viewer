@@ -13,7 +13,7 @@ import { Object } from './object'
  * Dispenses Objects for high level scene manipulation
  */
 export class Vim {
-  source: string
+  source: string | undefined
   readonly document: IDocument
   index: number = -1
   settings: VimSettings
@@ -24,7 +24,7 @@ export class Vim {
   constructor (vim: IDocument, scene: Scene, settings: VimSettings) {
     this.document = vim
     this.scene = scene
-    this.scene.setVim(this)
+    this.scene?.setVim(this)
     this.settings = settings
     this.scene.applyMatrix4(this.settings.getMatrix())
   }
@@ -38,6 +38,7 @@ export class Vim {
    * @param instances g3d instance indices to keep
    */
   filter (instances?: number[]) {
+    if (!this.document.g3d) return
     const next = this.scene.builder.createFromG3d(
       this.document.g3d,
       this.settings.getTransparency(),

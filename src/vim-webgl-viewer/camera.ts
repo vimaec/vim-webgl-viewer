@@ -103,7 +103,7 @@ export interface ICamera {
    * if center is true -> camera.y = target.y
    */
   frame(
-    target: Object | THREE.Sphere | THREE.Box3 | 'all',
+    target: Object | THREE.Sphere | THREE.Box3 | 'all' | undefined,
     angle?: FrameAngle,
     duration?: number
   ): void
@@ -111,12 +111,12 @@ export interface ICamera {
   /**
    * Restore camera to initial values.
    */
-  reset()
+  reset(): void
 
   /**
    * Returns the world height of a plane perpendicular to camera intersecting given point.
    */
-  heightAt(point: THREE.Vector3)
+  heightAt(point: THREE.Vector3): number
 
   /**
    * Returns world forward of the camera.
@@ -148,7 +148,7 @@ export class Camera implements ICamera {
   camera: THREE.PerspectiveCamera | THREE.OrthographicCamera
   gizmo: CameraGizmo | undefined
   private cameraPerspective: THREE.PerspectiveCamera
-  private cameraOrthographic: THREE.OrthographicCamera
+  private cameraOrthographic: THREE.OrthographicCamera | undefined
 
   private _viewport: Viewport
   private _scene: RenderScene
@@ -160,13 +160,13 @@ export class Camera implements ICamera {
   private _orbitMode: boolean = false
   private _orbitTarget = new THREE.Vector3()
   private _minOrbitalDistance: number = 0.05
-  private _targetPosition: THREE.Vector3
+  private _targetPosition: THREE.Vector3 = new THREE.Vector3()
 
   private _lerpStartMs: number = 0
   private _lerpEndMs: number = 0
   private _lockDirection: boolean = false
-  private _lerpPosition: boolean
-  private _lerpRotation: boolean
+  private _lerpPosition: boolean = false
+  private _lerpRotation: boolean = false
 
   private _onValueChanged = new SignalDispatcher()
   get onValueChanged () {
@@ -208,7 +208,7 @@ export class Camera implements ICamera {
   }
 
   heightAt (point: THREE.Vector3) {
-    if (this.orthographic) {
+    if (this.orthographic && this.cameraOrthographic) {
       return this.cameraOrthographic.top - this.cameraOrthographic.bottom
     } else {
       const dist = this.camera.position.distanceTo(point)
@@ -316,7 +316,7 @@ export class Camera implements ICamera {
   }
 
   frame (
-    target: Object | THREE.Sphere | THREE.Box3 | 'all',
+    target: Object | THREE.Sphere | THREE.Box3 | 'all' | undefined,
     center: FrameAngle = 'none',
     duration: number = 0
   ) {
@@ -439,7 +439,7 @@ export class Camera implements ICamera {
   move3 (vector: THREE.Vector3) {
     this.cancelLerp()
     const v = new THREE.Vector3()
-    if (this.orthographic) {
+    if (this.orthographic && this.cameraOrthographic) {
       const aspect = this._viewport.getAspectRatio()
       const dx = this.cameraOrthographic.right - this.cameraOrthographic.left
       const dy = this.cameraOrthographic.top - this.cameraOrthographic.bottom
@@ -605,7 +605,7 @@ export class Camera implements ICamera {
       this.cameraOrthographic = new THREE.OrthographicCamera(-1, 1, 1, -1, -1, 1)
     }
 
-    const next = value ? this.cameraOrthographic : this.cameraPerspective
+    const next = value ? this.cameraOrthographic! : this.cameraPerspective
     next.position.copy(this.camera.position)
     next.rotation.copy(this.camera.rotation)
     this.camera = next
@@ -768,7 +768,7 @@ export class Camera implements ICamera {
     this.setPosition(endPosition)
     this._orbitTarget.add(deltaPosition)
 
-    if (this.orthographic) {
+    if (this.orthographic && this.cameraOrthographic) {
       const aspect = this._viewport.getAspectRatio()
       const d = -deltaPosition.dot(this.forward)
 

@@ -102,12 +102,16 @@ export class MeshBuilder {
       : this.materials.opaque
 
     const result = new THREE.InstancedMesh(geometry, material, instances.length)
+    geometry.computeBoundingBox()
 
+    const boxes: THREE.Box3[] = []
     for (let i = 0; i < instances.length; i++) {
       const matrix = Geometry.getInstanceMatrix(g3d, instances[i])
       result.setMatrixAt(i, matrix)
+      boxes[i] = geometry.boundingBox!.clone().applyMatrix4(matrix)
     }
     result.userData.instances = instances
+    result.userData.boxes = boxes
     return result
   }
 
@@ -115,17 +119,18 @@ export class MeshBuilder {
    * Create a merged mesh from g3d instance indices
    * @param transparency Specify wheter color is RBG or RGBA and whether material is opaque or transparent
    * @param instances g3d instance indices to be included in the merged mesh. All mergeable meshes if undefined.
-   * @returns a THREE.Mesh
+   * @returns a THREE.Mesh or undefined if the mesh would be empty
    */
   createMergedMesh (
     g3d: G3d,
     section: MeshSection,
     transparent: boolean,
     instances?: number[]
-  ): THREE.Mesh {
+  ): THREE.Mesh | undefined {
     const merge = instances
       ? Geometry.mergeInstanceMeshes(g3d, section, transparent, instances)
       : Geometry.mergeUniqueMeshes(g3d, section, transparent)
+    if (!merge) return
 
     const material = transparent
       ? this.materials.transparent
@@ -135,6 +140,7 @@ export class MeshBuilder {
     mesh.userData.merged = true
     mesh.userData.instances = merge.instances
     mesh.userData.submeshes = merge.submeshes
+    mesh.userData.boxes = merge.boxes
 
     return mesh
   }
@@ -146,6 +152,7 @@ export class MeshBuilder {
    */
   createWireframe (g3d: G3d, instances: number[]) {
     const geometry = Geometry.createGeometryFromInstances(g3d, instances)
+    if (!geometry) return
     const wireframe = new THREE.WireframeGeometry(geometry)
     return new THREE.LineSegments(wireframe, this.materials.wireframe)
   }

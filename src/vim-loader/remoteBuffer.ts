@@ -123,15 +123,15 @@ export class RequestLogger {
 
 class RetryRequest {
   url: string
-  range: string
+  range: string | undefined
   // eslint-disable-next-line no-undef
   responseType: XMLHttpRequestResponseType
-  msg: string
-  xhr: XMLHttpRequest
+  msg: string | undefined
+  xhr: XMLHttpRequest | undefined
 
   constructor (
     url: string,
-    range: string,
+    range: string | undefined,
     // eslint-disable-next-line no-undef
     responseType: XMLHttpRequestResponseType
   ) {
@@ -140,9 +140,9 @@ class RetryRequest {
     this.responseType = responseType
   }
 
-  onLoad: (result: any) => void
-  onError: () => void
-  onProgress: (e: ProgressEvent<EventTarget>) => void
+  onLoad: ((result: any) => void) | undefined
+  onError: (() => void) | undefined
+  onProgress: ((e: ProgressEvent<EventTarget>) => void) | undefined
 
   send () {
     this.xhr?.abort()
@@ -193,17 +193,17 @@ export class RemoteBuffer {
     xhr.send()
     console.log(`Requesting header for ${this.url}`)
 
-    const promise = new Promise<string>((resolve, reject) => {
+    const promise = new Promise<string | undefined>((resolve, reject) => {
       xhr.onload = (_) => {
-        let encoding = null
+        let encoding: string | null | undefined
         try {
           encoding = xhr.getResponseHeader('content-encoding')
         } catch (e) {
           console.error(e)
         }
-        resolve(encoding)
+        resolve(encoding ?? undefined)
       }
-      xhr.onerror = (_) => resolve(null)
+      xhr.onerror = (_) => resolve(undefined)
     })
 
     const encoding = await promise

@@ -16,7 +16,7 @@ class Section {
   private _renderer: THREE.WebGLRenderer
 
   private _materials: IMaterialLibrary
-  private _active: boolean
+  private _active: boolean = true
 
   readonly box: THREE.Box3 = new THREE.Box3(
     new THREE.Vector3(-100, -100, -100),
@@ -84,6 +84,18 @@ export class Renderer {
     return this._onVisibilityChanged.asEvent()
   }
 
+  /** 2D renderer will be rendered when this is true. */
+  private _renderText: boolean | undefined
+  get renderText () {
+    return this._renderText ?? false
+  }
+
+  set renderText (value: boolean) {
+    if (value === this._renderText) return
+    this._renderText = value
+    this.textRenderer.domElement.style.display = value ? 'block' : 'none'
+  }
+
   constructor (scene: RenderScene, viewport: Viewport, materials: VimMaterials) {
     this.viewport = viewport
 
@@ -100,6 +112,7 @@ export class Renderer {
     })
 
     this.textRenderer = this.viewport.createTextRenderer()
+    this.renderText = false
 
     this.fitViewport()
     this.viewport.onResize(() => this.fitViewport())
@@ -133,10 +146,13 @@ export class Renderer {
    */
   render (camera: THREE.Camera) {
     this.renderer.render(this.scene.scene, camera)
-    this.textRenderer.render(this.scene.scene, camera)
-    this.scene
-      .getUpdatedScenes()
-      .forEach((s) => this._onVisibilityChanged.dispatch(s.vim))
+    if (this.renderText) {
+      this.textRenderer.render(this.scene.scene, camera)
+    }
+
+    this.scene.getUpdatedScenes().forEach((s) => {
+      if (s.vim) this._onVisibilityChanged.dispatch(s.vim)
+    })
     this.scene.clearUpdateFlags()
   }
 

@@ -19,12 +19,12 @@ import {
 class MeasureLine {
   mesh: THREE.Mesh
   label: CSS2DObject
-  position: THREE.Vector3
-  length: number
+  position: THREE.Vector3 | undefined
+  length: number | undefined
   private _meshLine: any
   private _material: any
   private _materialAlways: any
-  private _text: HTMLElement
+  private _text: HTMLElement | undefined
 
   constructor (
     canvasSize: THREE.Vector2,
@@ -55,7 +55,7 @@ class MeasureLine {
     ])
 
     const element = createMeasureElement(style)
-    this._text = element.value
+    if (element.value) this._text = element.value
     this.label = new CSS2DObject(element.div)
     this.label.visible = false
 
@@ -72,7 +72,9 @@ class MeasureLine {
 
     this.length = start.distanceTo(end)
     this.label.visible = this.length > 0
-    this._text.textContent = `~${start.distanceTo(end).toFixed(2)}`
+    if (this._text) {
+      this._text.textContent = `~${start.distanceTo(end).toFixed(2)}`
+    }
   }
 
   dispose () {
@@ -144,7 +146,7 @@ export class MeasureGizmo {
   private _group: THREE.Group
   private _label: CSS2DObject
   private _html: MeasureElement
-  private _animId: number
+  private _animId: number | undefined
 
   constructor (viewer: Viewer) {
     this._viewer = viewer
@@ -187,6 +189,7 @@ export class MeasureGizmo {
     )
 
     this._viewer.renderer.add(this._group)
+    this._viewer.renderer.renderText = true
   }
 
   private _animate () {
@@ -200,12 +203,12 @@ export class MeasureGizmo {
     const yz = this.screenDist(this._lineY.position, this._lineZ.position)
 
     let conflicts = 0
-    if (lx < 0.1) conflicts++
-    if (ly < 0.1) conflicts++
-    if (lz < 0.1) conflicts++
-    if (xy < 0.1) conflicts++
-    if (xz < 0.1) conflicts++
-    if (yz < 0.1) conflicts++
+    if (lx !== undefined && lx < 0.1) conflicts++
+    if (ly !== undefined && ly < 0.1) conflicts++
+    if (lz !== undefined && lz < 0.1) conflicts++
+    if (xy !== undefined && xy < 0.1) conflicts++
+    if (xz !== undefined && xz < 0.1) conflicts++
+    if (yz !== undefined && yz < 0.1) conflicts++
 
     const collapse = conflicts > 1
     this._label.visible = collapse
@@ -215,7 +218,10 @@ export class MeasureGizmo {
     this._lineZ.label.visible = !collapse
   }
 
-  screenDist (first: THREE.Vector3, second: THREE.Vector3) {
+  screenDist (
+    first: THREE.Vector3 | undefined,
+    second: THREE.Vector3 | undefined
+  ) {
     if (!first || !second) return
     const length = first.distanceTo(second)
     const ratio = length / this._viewer.camera.heightAt(first)
@@ -265,10 +271,18 @@ export class MeasureGizmo {
 
     // Set Measurement labels in case of collapse
     this._label.position.copy(this._line.label.position)
-    this._html.values.dist.textContent = this._line.length.toFixed(2)
-    this._html.values.x.textContent = this._lineX.length.toFixed(2)
-    this._html.values.y.textContent = this._lineY.length.toFixed(2)
-    this._html.values.z.textContent = this._lineZ.length.toFixed(2)
+    if (this._html.values.dist) {
+      this._html.values.dist.textContent = this._line.length?.toFixed(2) ?? ''
+    }
+    if (this._html.values.x) {
+      this._html.values.x.textContent = this._lineX.length?.toFixed(2) ?? ''
+    }
+    if (this._html.values.y) {
+      this._html.values.y.textContent = this._lineY.length?.toFixed(2) ?? ''
+    }
+    if (this._html.values.z) {
+      this._html.values.z.textContent = this._lineZ.length?.toFixed(2) ?? ''
+    }
 
     // Start update of collapse.
     this._animate()
@@ -277,7 +291,7 @@ export class MeasureGizmo {
   }
 
   dispose () {
-    cancelAnimationFrame(this._animId)
+    if (this._animId !== undefined) cancelAnimationFrame(this._animId)
     // A quirk of css2d object is they need to be removed individually.
     this._group.remove(this._label)
     this._group.remove(this._line.label)
@@ -293,5 +307,6 @@ export class MeasureGizmo {
     this._lineX.dispose()
     this._lineY.dispose()
     this._lineZ.dispose()
+    this._viewer.renderer.renderText = false
   }
 }

@@ -86,7 +86,7 @@ export class SceneBuilder {
     )
     const scene = new Scene(this)
     for (let m = 0; m < meshes.length; m++) {
-      scene.addInstancedMesh(meshes[m])
+      scene.addMesh(meshes[m])
     }
     return scene
   }
@@ -104,12 +104,14 @@ export class SceneBuilder {
     transparent: boolean,
     instances?: number[]
   ) {
+    const scene = new Scene(this)
     const mesh = this.meshBuilder.createMergedMesh(
       g3d,
       section,
       transparent,
       instances
     )
-    return new Scene(this).addMergedMesh(mesh)
+    if (mesh) scene.addMesh(mesh)
+    return scene
   }
 }

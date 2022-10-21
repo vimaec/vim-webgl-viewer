@@ -24,7 +24,7 @@ export class Selection {
   private _selectionMesh: THREE.LineSegments | undefined
   private _focusMesh: THREE.Mesh | undefined
   private _focusMaterial: THREE.Material
-  private _focusStart: number
+  private _focusStart: number = 0
 
   private _onValueChanged = new SignalDispatcher()
 
@@ -84,19 +84,22 @@ export class Selection {
    * Adds focus highlight to a single object.
    * Pass undefined to remove highlight
    */
-  focus (object: Object) {
-    this._focusMesh?.geometry.dispose()
-    this._renderer.remove(this._focusMesh)
+  focus (object: Object | undefined) {
+    if (this._focusMesh) {
+      this._focusMesh.geometry.dispose()
+      this._renderer.remove(this._focusMesh)
+    }
+
     this._focusMaterial.opacity = 0
     this._focusStart = new Date().getTime()
 
     if (!object) return
-    this._focusMesh = new THREE.Mesh(
-      object.createGeometry(),
-      this._focusMaterial
-    )
-    this._renderer.add(this._focusMesh)
-    this.focusTransition()
+    const geometry = object.createGeometry()
+    if (geometry) {
+      this._focusMesh = new THREE.Mesh(geometry, this._focusMaterial)
+      this._renderer.add(this._focusMesh)
+      this.focusTransition()
+    }
   }
 
   focusTransition () {
@@ -247,14 +250,17 @@ export class Selection {
         instances.push(...o.instances)
       }
     }
+    if (!vim?.document.g3d) return
 
     const meshBuilder = vim!.scene.builder.meshBuilder
     this._selectionMesh = meshBuilder.createWireframe(
-      vim!.document.g3d,
+      vim.document.g3d,
       instances
     )
-    this._selectionMesh.applyMatrix4(vim!.getMatrix())
-    if (this._selectionMesh) this._renderer.add(this._selectionMesh)
+    if (this._selectionMesh) {
+      this._selectionMesh.applyMatrix4(vim!.getMatrix())
+      if (this._selectionMesh) this._renderer.add(this._selectionMesh)
+    }
   }
 
   private removeHighlight () {

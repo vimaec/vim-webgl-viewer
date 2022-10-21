@@ -109,6 +109,8 @@ export class BoxHighlight extends THREE.Mesh {
       side: THREE.DoubleSide
     })
     super(geo, mat)
+    // Because position is always (0,0,0)
+    this.frustumCulled = false
   }
 
   highlight (box: THREE.Box3, normal: THREE.Vector3) {

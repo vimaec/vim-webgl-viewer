@@ -143,7 +143,7 @@ export class Viewer {
 
     // TODO add options
     this.measure = new Measure(this)
-    this._gizmoAxes = new GizmoAxes(this.camera)
+    this._gizmoAxes = new GizmoAxes(this.camera, this.settings.getAxesConfig())
     this.viewport.canvas.parentElement?.prepend(this._gizmoAxes.canvas)
 
     this.sectionBox = new SectionBox(this)
@@ -240,7 +240,7 @@ export class Viewer {
   ) {
     let buffer: RemoteBuffer | ArrayBuffer
 
-    let url: string
+    let url: string | undefined
     if (typeof source === 'string') {
       url = source
       buffer = new RemoteBuffer(source)

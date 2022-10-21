@@ -18,12 +18,11 @@ export class MouseHandler extends InputHandler {
   private buttonDown: Button
   private hasMouseMoved: Boolean = false
 
-  private _idleTimeout: ReturnType<typeof setTimeout>
-  private _idle: boolean
-  private _idlePosition: THREE.Vector2
+  private _idleTimeout: ReturnType<typeof setTimeout> | undefined
+  private _idlePosition: THREE.Vector2 | undefined
 
-  private _lastPosition: THREE.Vector2
-  private _downPosition: THREE.Vector2
+  private _lastPosition: THREE.Vector2 | undefined
+  private _downPosition: THREE.Vector2 | undefined
 
   private get camera () {
     return this._viewer.camera
@@ -72,21 +71,27 @@ export class MouseHandler extends InputHandler {
     clearTimeout(this._idleTimeout)
   }
 
-  private resetIdleTimeout () {
+  private resetIdle () {
+    if (this._idlePosition) {
+      this._viewer.inputs.IdleAction(undefined)
+      this._idlePosition = undefined
+    }
     clearTimeout(this._idleTimeout)
-    this._idleTimeout = setTimeout(
-      () => this.onMouseIdle(this._lastPosition),
-      this._idleDelayMs
-    )
+    this._idleTimeout = setTimeout(() => {
+      this.onMouseIdle(this._lastPosition)
+    }, this._idleDelayMs)
   }
 
-  private onMouseOut = (_: any) => {
+  private onMouseOut = (event: MouseEvent) => {
+    event.stopImmediatePropagation()
     this.buttonDown = undefined
     this.hasMouseMoved = false
+    this._lastPosition = undefined
+    this.resetIdle()
   }
 
-  private onMouseIdle = (position: THREE.Vector2) => {
-    if (this.buttonDown) return
+  private onMouseIdle = (position: THREE.Vector2 | undefined) => {
+    if (this.buttonDown || !position) return
     const action = new InputAction(
       'idle',
       this.getModifier(),
@@ -94,26 +99,22 @@ export class MouseHandler extends InputHandler {
       this.raycaster
     )
     this._viewer.inputs.IdleAction(action)
-    this._idle = true
     this._idlePosition = position
   }
 
   private onCameraMoved = () => {
-    if (this._idle) {
-      this._viewer.inputs.IdleAction(undefined)
-    }
-    this.resetIdleTimeout()
+    this.resetIdle()
   }
 
   private onMouseMove = (event: any) => {
+    event.stopImmediatePropagation()
     this._lastPosition = new THREE.Vector2(event.offsetX, event.offsetY)
 
-    if (this._idle && this._lastPosition.distanceTo(this._idlePosition) > 5) {
-      this._viewer.inputs.IdleAction(undefined)
-      this.resetIdleTimeout()
-    }
-    if (!this._idle) {
-      this.resetIdleTimeout()
+    if (
+      !this._idlePosition ||
+      this._lastPosition.distanceTo(this._idlePosition) > 5
+    ) {
+      this.resetIdle()
     }
 
     if (!this.buttonDown) return
@@ -121,6 +122,7 @@ export class MouseHandler extends InputHandler {
   }
 
   private onMouseDown = (event: MouseEvent) => {
+    event.stopImmediatePropagation()
     event.preventDefault()
     if (this.buttonDown) return
     this._downPosition = new THREE.Vector2(event.offsetX, event.offsetY)
@@ -143,6 +145,7 @@ export class MouseHandler extends InputHandler {
   }
 
   private onMouseDrag (event: any) {
+    event.stopImmediatePropagation()
     event.preventDefault()
     // https://github.com/mrdoob/three.js/blob/master/examples/jsm/controls/PointerLockControls.js
     const deltaX =
@@ -154,7 +157,8 @@ export class MouseHandler extends InputHandler {
 
     const position = new THREE.Vector2(event.offsetX, event.offsetY)
     this.hasMouseMoved =
-      this.hasMouseMoved || this._downPosition.distanceTo(position) > 4
+      this.hasMouseMoved ||
+      (this._downPosition && this._downPosition?.distanceTo(position) > 4)
 
     switch (this.buttonDown) {
       case 'main':
@@ -201,7 +205,7 @@ export class MouseHandler extends InputHandler {
 
   private onMouseWheel = (event: any) => {
     event.preventDefault()
-    event.stopPropagation()
+    event.stopImmediatePropagation()
 
     // Value of event.deltaY will change from browser to browser
     // https://stackoverflow.com/questions/38942821/wheel-event-javascript-give-inconsistent-values
@@ -226,7 +230,8 @@ export class MouseHandler extends InputHandler {
   }
 
   private onMouseUp = (event: MouseEvent) => {
-    this.resetIdleTimeout()
+    event.stopImmediatePropagation()
+    this.resetIdle()
     const btn = this.getButton(event)
     if (btn === this.buttonDown) return // the active button is still down.
 
@@ -249,6 +254,8 @@ export class MouseHandler extends InputHandler {
   private onRectEnd () {
     // Shrink box for better camera fit.
     const box = this._viewer.gizmoRectangle.getBoundingBox()
+    if (!box) return
+
     const center = box.getCenter(new THREE.Vector3())
     const size = box.getSize(new THREE.Vector3())
     size.multiplyScalar(0.5)
@@ -262,7 +269,8 @@ export class MouseHandler extends InputHandler {
     )
   }
 
-  private onDoubleClick = (event: any) => {
+  private onDoubleClick = (event: MouseEvent) => {
+    event.stopImmediatePropagation()
     this.onMouseClick(new THREE.Vector2(event.offsetX, event.offsetY), true)
   }
 
@@ -287,6 +295,8 @@ export class MouseHandler extends InputHandler {
 
   private drawSelection () {
     this._viewer.gizmoRectangle.visible = true
-    this._viewer.gizmoRectangle.update(this._downPosition, this._lastPosition)
+    if (this._downPosition && this._lastPosition) {
+      this._viewer.gizmoRectangle.update(this._downPosition, this._lastPosition)
+    }
   }
 }

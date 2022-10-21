@@ -5,6 +5,11 @@
 import * as THREE from 'three'
 import deepmerge from 'deepmerge'
 import { VimOptions } from '../vim-loader/vimSettings'
+import { floor } from '../images'
+import { GizmoOptions } from './gizmos/gizmoAxes'
+
+export type TextureEncoding = 'url' | 'base64' | undefined
+export { GizmoOptions } from './gizmos/gizmoAxes'
 
 export namespace ViewerOptions {
   export type ColorRGB = {
@@ -19,12 +24,13 @@ export namespace ViewerOptions {
     l: number
   }
 
-  /**
+  export /**
    * Plane under Scene related options
    */
-  export type GroundPlane = {
+  type GroundPlane = {
     /** Enables/Disables plane under scene */
     visible: boolean
+    encoding: TextureEncoding
     /** Local or remote texture url for plane */
     texture: string
     /** Opacity of the plane */
@@ -136,6 +142,11 @@ export namespace ViewerOptions {
      * Object highlight on click options
      */
     materials: Partial<Materials>
+
+    /**
+     * Axes gizmo options
+     */
+    axes: Partial<GizmoOptions>
   }
 }
 
@@ -174,11 +185,12 @@ export class ViewerSettings {
         }
       },
       groundPlane: {
-        visible: false,
-        texture: undefined,
+        visible: true,
+        encoding: 'base64',
+        texture: floor,
         opacity: 1,
         color: { r: 0xff, g: 0xff, b: 0xff },
-        size: 3
+        size: 5
       },
       skylight: {
         skyColor: { h: 0.6, s: 1, l: 0.6 },
@@ -206,7 +218,8 @@ export class ViewerSettings {
           color: { r: 0x40, g: 0x40, b: 0x40 },
           opacity: 0.1
         }
-      }
+      },
+      axes: new GizmoOptions()
     }
 
     this.options = options ? deepmerge(fallback, options, undefined) : fallback
@@ -217,11 +230,16 @@ export class ViewerSettings {
   getCanvasId = () => this.options.canvas.id
 
   // Plane
-  getGroundPlaneVisible = () => this.options.groundPlane.visible!
-  getGroundPlaneColor = () => toRGBColor(this.options.groundPlane.color!)
-  getGroundPlaneTextureUrl = () => this.options.groundPlane.texture!
-  getGroundPlaneOpacity = () => this.options.groundPlane.opacity!
-  getGroundPlaneSize = () => this.options.groundPlane.size!
+  private get groundPlane () {
+    return this.options.groundPlane
+  }
+
+  getGroundPlaneVisible = () => this.groundPlane.visible!
+  getGroundPlaneColor = () => toRGBColor(this.groundPlane.color!)
+  getGroundPlaneEncoding = () => this.groundPlane.encoding
+  getGroundPlaneTexture = () => this.groundPlane.texture!
+  getGroundPlaneOpacity = () => this.groundPlane.opacity!
+  getGroundPlaneSize = () => this.groundPlane.size!
 
   // Skylight
   getSkylightColor = () => toHSLColor(this.options.skylight.skyColor!)
@@ -231,28 +249,32 @@ export class ViewerSettings {
 
   // Sunlight
   getSunlightCount = () => this.options.sunLights.length
-  getSunlightColor = (index: number) =>
-    toHSLColor(this.options.sunLights[index].color!)
+  getSunlightColor = (index: number) => {
+    const color = this.options.sunLights[index]?.color
+    return color ? toHSLColor(color) : undefined
+  }
 
-  getSunlightPosition = (index: number) =>
-    toVec(this.options.sunLights[index].position!)
+  getSunlightPosition = (index: number) => {
+    const pos = this.options.sunLights[index]?.position
+    return pos ? toVec(pos) : undefined
+  }
 
   getSunlightIntensity = (index: number) =>
-    this.options.sunLights[index].intensity!
+    this.options.sunLights[index]?.intensity
 
   private get highlight () {
     return this.options.materials.highlight
   }
 
-  getHighlightColor = () => toRGBColor(this.highlight.color!)
-  getHighlightOpacity = () => this.highlight.opacity!
+  getHighlightColor = () => toRGBColor(this.highlight!.color!)
+  getHighlightOpacity = () => this.highlight!.opacity!
 
   private get isolation () {
     return this.options.materials.isolation
   }
 
-  getIsolationColor = () => toRGBColor(this.isolation.color!)
-  getIsolationOpacity = () => this.isolation.opacity!
+  getIsolationColor = () => toRGBColor(this.isolation!.color!)
+  getIsolationOpacity = () => this.isolation!.opacity!
 
   // Camera
   private get camera () {
@@ -279,6 +301,8 @@ export class ViewerSettings {
   getCameraRotateSpeed = () => this.cameraControls.rotateSpeed!
   getCameraOrbitSpeed = () => this.cameraControls.orbitSpeed!
   getCameraReferenceVimSize = () => this.cameraControls.vimReferenceSize!
+
+  getAxesConfig = () => this.options.axes
 }
 
 function toRGBColor (c: ViewerOptions.ColorRGB): THREE.Color {
