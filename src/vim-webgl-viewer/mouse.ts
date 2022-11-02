@@ -7,6 +7,7 @@ import { InputHandler } from './inputHandler'
 import { InputAction } from './raycaster'
 
 type Button = 'main' | 'middle' | 'right' | undefined
+type Modifier = 'ctrl' | 'shift' | 'none'
 /**
  * Manages mouse user inputs
  */
@@ -42,10 +43,6 @@ export class MouseHandler extends InputHandler {
 
   private get inputs () {
     return this._viewer.inputs
-  }
-
-  private get keyboard () {
-    return this._viewer.inputs.keyboard
   }
 
   protected override addListeners (): void {
@@ -92,12 +89,7 @@ export class MouseHandler extends InputHandler {
 
   private onMouseIdle = (position: THREE.Vector2 | undefined) => {
     if (this.buttonDown || !position) return
-    const action = new InputAction(
-      'idle',
-      this.getModifier(),
-      position,
-      this.raycaster
-    )
+    const action = new InputAction('idle', 'none', position, this.raycaster)
     this._viewer.inputs.IdleAction(action)
     this._idlePosition = position
   }
@@ -203,7 +195,7 @@ export class MouseHandler extends InputHandler {
     this.camera.rotate(delta)
   }
 
-  private onMouseWheel = (event: any) => {
+  private onMouseWheel = (event: WheelEvent) => {
     event.preventDefault()
     event.stopImmediatePropagation()
 
@@ -212,7 +204,7 @@ export class MouseHandler extends InputHandler {
     // Thus we only use the direction of the value
     const scrollValue = Math.sign(event.deltaY)
 
-    if (this.keyboard.isCtrlPressed) {
+    if (event.ctrlKey) {
       this.camera.speed -= scrollValue
     } else {
       this.camera.zoom(scrollValue, this.camera.defaultLerpDuration)
@@ -242,7 +234,11 @@ export class MouseHandler extends InputHandler {
     if (this.inputs.pointerActive === 'rect' && this.hasMouseMoved) {
       this.onRectEnd()
     } else if (event.button === 0 && !this.hasMouseMoved) {
-      this.onMouseClick(new THREE.Vector2(event.offsetX, event.offsetY), false)
+      this.onMouseClick(
+        new THREE.Vector2(event.offsetX, event.offsetY),
+        false,
+        this.getModifier(event)
+      )
     } else if (event.button === 2 && !this.hasMouseMoved) {
       this.inputs.ContextMenu(new THREE.Vector2(event.clientX, event.clientY))
     }
@@ -271,13 +267,21 @@ export class MouseHandler extends InputHandler {
 
   private onDoubleClick = (event: MouseEvent) => {
     event.stopImmediatePropagation()
-    this.onMouseClick(new THREE.Vector2(event.offsetX, event.offsetY), true)
+    this.onMouseClick(
+      new THREE.Vector2(event.offsetX, event.offsetY),
+      true,
+      this.getModifier(event)
+    )
   }
 
-  private onMouseClick = (position: THREE.Vector2, doubleClick: boolean) => {
+  private onMouseClick = (
+    position: THREE.Vector2,
+    doubleClick: boolean,
+    modifier: Modifier
+  ) => {
     const action = new InputAction(
       doubleClick ? 'double' : 'main',
-      this.getModifier(),
+      modifier,
       position,
       this.raycaster
     )
@@ -285,12 +289,8 @@ export class MouseHandler extends InputHandler {
     this._viewer.inputs.MainAction(action)
   }
 
-  private getModifier () {
-    return this.keyboard.isCtrlPressed
-      ? 'ctrl'
-      : this.keyboard.isShiftPressed
-        ? 'shift'
-        : 'none'
+  private getModifier (event: MouseEvent | WheelEvent) {
+    return event.ctrlKey ? 'ctrl' : event.shiftKey ? 'shift' : 'none'
   }
 
   private drawSelection () {
