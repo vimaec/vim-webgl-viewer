@@ -14,7 +14,7 @@ export class InputHandler {
 
   protected reg = (
     // eslint-disable-next-line no-undef
-    handler: DocumentAndElementEventHandlers,
+    handler: DocumentAndElementEventHandlers | Window,
     type: string,
     listener: (event: any) => void
   ) => {

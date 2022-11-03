@@ -18,6 +18,8 @@ export type ElementInfo = {
 
 export type BimDocumentInfo = {
   title: string | undefined
+  pathName: string | undefined
+  isLinked: boolean | undefined
   version: string | undefined
   author: string | undefined
   date: string | undefined
@@ -46,6 +48,8 @@ const objectModel = {
     table: 'Vim.BimDocument',
     columns: {
       title: 'string:Title',
+      pathName: 'string:PathName',
+      isLinked: 'byte:IsLinked',
       version: 'string:Version',
       author: 'string:Author',
       date: 'string:IssueDate'
@@ -809,6 +813,13 @@ export class Document implements IDocument {
       await documentTable?.getArray(objectModel.bimDocument.columns.title)
     )?.map((n) => this._strings?.[n])
 
+    const isLinked = await documentTable?.getArray(
+      objectModel.bimDocument.columns.isLinked
+    )
+    const pathName = (
+      await documentTable?.getArray(objectModel.bimDocument.columns.pathName)
+    )?.map((n) => this._strings?.[n])
+
     const versions = (
       await documentTable?.getArray(objectModel.bimDocument.columns.version)
     )?.map((n) => this._strings?.[n])
@@ -829,6 +840,8 @@ export class Document implements IDocument {
     for (let i = 0; i < max; i++) {
       summary.push({
         title: titles?.[i],
+        pathName: pathName?.[i],
+        isLinked: isLinked[i] > 0,
         version: versions?.[i],
         author: authors?.[i],
         date: dates?.[i]

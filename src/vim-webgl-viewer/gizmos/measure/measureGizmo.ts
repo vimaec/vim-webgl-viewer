@@ -126,6 +126,7 @@ class MeasureMarker {
 
   setPosition (position: THREE.Vector3) {
     this.mesh.position.copy(position)
+    this.updateScale()
   }
 
   dispose () {

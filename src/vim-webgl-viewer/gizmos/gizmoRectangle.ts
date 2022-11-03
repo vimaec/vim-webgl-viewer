@@ -15,7 +15,10 @@ export class GizmoRectangle {
 
     const mat = new THREE.LineBasicMaterial({
       depthTest: false,
-      color: new THREE.Color(0, 1, 0)
+      color: new THREE.Color(0, 1, 0),
+      // Transparent so it is drawn in the transparent pass, and always appear on top.
+      transparent: true,
+      opacity: 1
     })
 
     // prettier-ignore
@@ -37,6 +40,7 @@ export class GizmoRectangle {
     geo.setAttribute('position', new THREE.BufferAttribute(vertices, 3))
 
     this.line = new THREE.LineSegments(geo, mat)
+    this.line.renderOrder = 1
     this.line.name = 'GizmoSelection'
     this.line.visible = false
     this.viewer.renderer.add(this.line)

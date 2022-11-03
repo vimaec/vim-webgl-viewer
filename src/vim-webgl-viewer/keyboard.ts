@@ -115,8 +115,10 @@ export class KeyboardHandler extends InputHandler {
   isCtrlPressed: boolean = false
 
   protected override addListeners (): void {
-    this.reg(document, 'keydown', this.onKeyDown)
-    this.reg(document, 'keyup', this.onKeyUp)
+    this.reg(document, 'keydown', (e) => this.onKeyDown(e))
+    this.reg(document, 'keyup', (e) => this.onKeyUp(e))
+    this.reg(this._viewer.viewport.canvas, 'focusout', () => this.reset())
+    this.reg(window, 'resize', () => this.reset())
   }
 
   override reset () {
@@ -128,29 +130,22 @@ export class KeyboardHandler extends InputHandler {
     this.isQPressed = false
     this.isShiftPressed = false
     this.isCtrlPressed = false
+    this.applyMove()
   }
 
   private get camera () {
     return this._viewer.camera
   }
 
-  private get selection () {
-    return this._viewer.selection
-  }
-
-  private get section () {
-    return this._viewer.sectionBox
-  }
-
-  private onKeyUp = (event: any) => {
+  private onKeyUp (event: KeyboardEvent) {
     this.onKey(event, false)
   }
 
-  private onKeyDown = (event: any) => {
+  private onKeyDown (event: KeyboardEvent) {
     this.onKey(event, true)
   }
 
-  private onKey = (event: any, keyDown: boolean) => {
+  private onKey (event: KeyboardEvent, keyDown: boolean) {
     // Buttons that activate once on key up
     if (!keyDown && KeySet.has(event.keyCode)) {
       if (this._viewer.inputs.KeyAction(event.keyCode)) {
@@ -201,13 +196,12 @@ export class KeyboardHandler extends InputHandler {
         break
       case KEYS.KEY_CTRL:
         this.isCtrlPressed = keyDown
-        console.log('Control:' + keyDown)
         event.preventDefault()
         break
     }
   }
 
-  private applyMove = () => {
+  private applyMove () {
     const move = new THREE.Vector3(
       (this.isRightPressed ? 1 : 0) - (this.isLeftPressed ? 1 : 0),
       (this.isEPressed ? 1 : 0) - (this.isQPressed ? 1 : 0),
@@ -215,7 +209,6 @@ export class KeyboardHandler extends InputHandler {
     )
     const speed = this.isShiftPressed ? this.SHIFT_MULTIPLIER : 1
     move.multiplyScalar(speed)
-    // this.camera.move3(move)
     this.camera.localVelocity = move
   }
 }
