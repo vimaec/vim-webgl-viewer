@@ -227,11 +227,41 @@ export function patchBaseMaterial (material: THREE.Material) {
           if (vIgnore > 0.0f)
             discard;
          
+
+
+
+
           // COLORING
           // vColored == 1 -> Vertex Color * light 
           // vColored == 0 -> Phong Color 
           float d = length(outgoingLight);
           gl_FragColor = vec4(vColored * vColor.xyz * d + (1.0f - vColored) * outgoingLight.xyz, diffuseColor.a);
+
+
+          // STROKES WHERE GEOMETRY INTERSECTS CLIPPING PLANE
+          #if NUM_CLIPPING_PLANES > 0
+            vec4 strokePlane;
+            float strokeDot;
+            #pragma unroll_loop_start
+            for ( int i = 0; i < UNION_CLIPPING_PLANES; i ++ ) {
+              strokePlane = clippingPlanes[ i ];
+              strokeDot = dot(vClipPosition, strokePlane.xyz);
+              if (strokeDot > strokePlane.w) discard;
+              if ((strokePlane.w - strokeDot) < 0.15f) {
+                float strength = (strokePlane.w - strokeDot) / 0.15f;
+                strength = pow(strength, 4.0f);
+                
+                gl_FragColor = vec4(
+                  gl_FragColor.x * strength,
+                  gl_FragColor.y * strength,
+                  gl_FragColor.z * strength,
+                  1.0f);
+                return;
+              }
+            }
+            #pragma unroll_loop_end
+          #endif  
+
         `
       )
   }
