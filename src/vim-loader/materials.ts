@@ -249,13 +249,15 @@ export function patchBaseMaterial (material: THREE.Material) {
               if (strokeDot > strokePlane.w) discard;
               if ((strokePlane.w - strokeDot) < 0.15f) {
                 float strength = (strokePlane.w - strokeDot) / 0.15f;
-                strength = pow(strength, 4.0f);
-                
+                float soft = 1.0f / (5.0f * gl_FragDepth * gl_FragDepth) +0.8f;
+                strength = pow(strength, soft); 
+
                 gl_FragColor = vec4(
                   gl_FragColor.x * strength,
                   gl_FragColor.y * strength,
                   gl_FragColor.z * strength,
                   1.0f);
+
                 return;
               }
             }
