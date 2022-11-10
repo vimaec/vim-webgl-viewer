@@ -50,15 +50,7 @@
 
 
       // Create Viewer
-      const viewer = new VIM.Viewer({
-        groundPlane: {
-          show: true,
-          texture:
-            'https://vimdevelopment01storage.blob.core.windows.net/textures/vim-floor-soft.png',
-          opacity: 1,
-          size: 5,
-        },
-      })
+      const viewer = new VIM.Viewer()
 
       // Load function string | arrayBuffer
       function load(vim) {
