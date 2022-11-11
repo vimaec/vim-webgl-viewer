@@ -183,6 +183,10 @@ export class Renderer {
       settings.getHighlightColor(),
       settings.getHighlightOpacity()
     )
+    this.materials.applySectionSettings(
+      settings.getSectionStrokeWidth(),
+      settings.getSectionStrokeFalloff()
+    )
   }
 
   private fitViewport = () => {

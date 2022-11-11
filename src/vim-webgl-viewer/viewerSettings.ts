@@ -112,6 +112,10 @@ export namespace ViewerOptions {
   export type Materials = {
     highlight: Partial<ColorRGBA>
     isolation: Partial<ColorRGBA>
+    section: Partial<{
+      strokeWidth: number
+      strokeFalloff: number
+    }>
   }
 
   /** Viewer related options independant from vims */
@@ -217,6 +221,10 @@ export class ViewerSettings {
         isolation: {
           color: { r: 0x40, g: 0x40, b: 0x40 },
           opacity: 0.1
+        },
+        section: {
+          strokeWidth: 0.005,
+          strokeFalloff: 0.8
         }
       },
       axes: new GizmoOptions()
@@ -266,6 +274,7 @@ export class ViewerSettings {
     return this.options.materials.highlight
   }
 
+  // Material
   getHighlightColor = () => toRGBColor(this.highlight!.color!)
   getHighlightOpacity = () => this.highlight!.opacity!
 
@@ -275,6 +284,13 @@ export class ViewerSettings {
 
   getIsolationColor = () => toRGBColor(this.isolation!.color!)
   getIsolationOpacity = () => this.isolation!.opacity!
+
+  private get section () {
+    return this.options.materials.section
+  }
+
+  getSectionStrokeWidth = () => this.section!.strokeWidth!
+  getSectionStrokeFalloff = () => this.section!.strokeFalloff!
 
   // Camera
   private get camera () {

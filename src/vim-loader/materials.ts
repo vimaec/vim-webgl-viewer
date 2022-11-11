@@ -63,6 +63,22 @@ export class VimMaterials implements IMaterialLibrary {
     this.wireframe.opacity = opacity
   }
 
+  applySectionSettings (strokeWidth: number, stokeFalloff: number) {
+    // Update user data for compilation
+    this.opaque.userData.strokeWidth = strokeWidth
+    this.opaque.userData.strokeFalloff = stokeFalloff
+    this.transparent.userData.strokeWidth = strokeWidth
+    this.transparent.userData.stokeFalloff = stokeFalloff
+
+    // Update uniforms
+    applySectionUniforms(this.opaque.userData.shader, strokeWidth, stokeFalloff)
+    applySectionUniforms(
+      this.transparent.userData.shader,
+      strokeWidth,
+      stokeFalloff
+    )
+  }
+
   /** dispose all materials. */
   dispose () {
     this.opaque.dispose()
@@ -136,6 +152,22 @@ export function createFocus () {
   })
   return material
 }
+
+function applySectionUniforms (
+  shader: THREE.Shader,
+  strokeWidth: number,
+  strokeFalloff: number
+) {
+  if (!shader) return
+  if (shader.uniforms.sectionWidth && shader.uniforms.sectionFalloff) {
+    shader.uniforms.sectionWidth.value = strokeWidth
+    shader.uniforms.sectionFalloff.value = strokeFalloff
+  } else {
+    shader.uniforms.sectionWidth = { value: strokeWidth }
+    shader.uniforms.sectionFalloff = { value: strokeFalloff }
+  }
+}
+
 /**
  * Patches phong shader to be able to control when lighting should be applied to resulting color.
  * Instanced meshes ignore light when InstanceColor is defined
@@ -144,6 +176,13 @@ export function createFocus () {
  */
 export function patchBaseMaterial (material: THREE.Material) {
   material.onBeforeCompile = (shader) => {
+    console.log('compiling:')
+    console.log(material)
+    applySectionUniforms(
+      shader,
+      material.userData.strokeWidth,
+      material.userData.strokeFalloff
+    )
     material.userData.shader = shader
     shader.vertexShader = shader.vertexShader
       // VERTEX DECLARATIONS
@@ -217,6 +256,8 @@ export function patchBaseMaterial (material: THREE.Material) {
         #include <clipping_planes_pars_fragment>
         varying float vIgnore;
         varying float vColored;
+        uniform float sectionWidth;
+        uniform float sectionFalloff;
         `
       )
       // FRAGMENT IMPLEMENTATION
@@ -227,10 +268,6 @@ export function patchBaseMaterial (material: THREE.Material) {
           if (vIgnore > 0.0f)
             discard;
          
-
-
-
-
           // COLORING
           // vColored == 1 -> Vertex Color * light 
           // vColored == 0 -> Phong Color 
@@ -242,15 +279,14 @@ export function patchBaseMaterial (material: THREE.Material) {
           #if NUM_CLIPPING_PLANES > 0
             vec4 strokePlane;
             float strokeDot;
+            float thick = pow(vFragDepth,sectionFalloff) * sectionWidth;
             #pragma unroll_loop_start
             for ( int i = 0; i < UNION_CLIPPING_PLANES; i ++ ) {
               strokePlane = clippingPlanes[ i ];
               strokeDot = dot(vClipPosition, strokePlane.xyz);
               if (strokeDot > strokePlane.w) discard;
-              if ((strokePlane.w - strokeDot) < 0.15f) {
-                float strength = (strokePlane.w - strokeDot) / 0.15f;
-                float soft = 1.0f / (5.0f * gl_FragDepth * gl_FragDepth) +0.8f;
-                strength = pow(strength, soft); 
+              if ((strokePlane.w - strokeDot) < thick) {
+                float strength = (strokePlane.w - strokeDot) / thick;
 
                 gl_FragColor = vec4(
                   gl_FragColor.x * strength,

@@ -154,10 +154,11 @@ export class SectionBox {
   /**
    * Sets the section gizmo size to match given box
    */
-  public fitBox (box: THREE.Box3) {
-    this._cube.fitBox(box)
-    this._outline.fitBox(box)
-    this.renderer.section.fitBox(box)
+  public fitBox (box: THREE.Box3, padding = 0.1) {
+    const b = box.expandByScalar(padding)
+    this._cube.fitBox(b)
+    this._outline.fitBox(b)
+    this.renderer.section.fitBox(b)
     this._onBoxConfirm.dispatch(this.box)
   }
 
