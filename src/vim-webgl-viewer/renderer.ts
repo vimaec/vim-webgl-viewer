@@ -185,7 +185,8 @@ export class Renderer {
     )
     this.materials.applySectionSettings(
       settings.getSectionStrokeWidth(),
-      settings.getSectionStrokeFalloff()
+      settings.getSectionStrokeFalloff(),
+      settings.getSectionStrokeColor()
     )
   }
 

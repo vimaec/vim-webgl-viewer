@@ -115,6 +115,7 @@ export namespace ViewerOptions {
     section: Partial<{
       strokeWidth: number
       strokeFalloff: number
+      strokeColor: ColorRGB
     }>
   }
 
@@ -224,7 +225,8 @@ export class ViewerSettings {
         },
         section: {
           strokeWidth: 0.005,
-          strokeFalloff: 0.8
+          strokeFalloff: 0.8,
+          strokeColor: { r: 0, g: 0, b: 0 }
         }
       },
       axes: new GizmoOptions()
@@ -291,6 +293,7 @@ export class ViewerSettings {
 
   getSectionStrokeWidth = () => this.section!.strokeWidth!
   getSectionStrokeFalloff = () => this.section!.strokeFalloff!
+  getSectionStrokeColor = () => toRGBColor(this.section!.strokeColor!)
 
   // Camera
   private get camera () {

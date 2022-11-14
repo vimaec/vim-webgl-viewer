@@ -63,19 +63,32 @@ export class VimMaterials implements IMaterialLibrary {
     this.wireframe.opacity = opacity
   }
 
-  applySectionSettings (strokeWidth: number, stokeFalloff: number) {
+  applySectionSettings (
+    strokeWidth: number,
+    strokeFalloff: number,
+    strokeColor: THREE.Color
+  ) {
     // Update user data for compilation
     this.opaque.userData.strokeWidth = strokeWidth
-    this.opaque.userData.strokeFalloff = stokeFalloff
+    this.opaque.userData.strokeFalloff = strokeFalloff
+    this.opaque.userData.strokeColor = strokeColor
+
     this.transparent.userData.strokeWidth = strokeWidth
-    this.transparent.userData.stokeFalloff = stokeFalloff
+    this.transparent.userData.strokeFalloff = strokeFalloff
+    this.transparent.userData.strokeColor = strokeColor
 
     // Update uniforms
-    applySectionUniforms(this.opaque.userData.shader, strokeWidth, stokeFalloff)
+    applySectionUniforms(
+      this.opaque.userData.shader,
+      strokeWidth,
+      strokeFalloff,
+      strokeColor
+    )
     applySectionUniforms(
       this.transparent.userData.shader,
       strokeWidth,
-      stokeFalloff
+      strokeFalloff,
+      strokeColor
     )
   }
 
@@ -156,15 +169,22 @@ export function createFocus () {
 function applySectionUniforms (
   shader: THREE.Shader,
   strokeWidth: number,
-  strokeFalloff: number
+  strokeFalloff: number,
+  strokeColor: THREE.Color
 ) {
   if (!shader) return
-  if (shader.uniforms.sectionWidth && shader.uniforms.sectionFalloff) {
+  if (
+    shader.uniforms.sectionWidth &&
+    shader.uniforms.sectionFalloff &&
+    shader.uniforms.sectionColor
+  ) {
     shader.uniforms.sectionWidth.value = strokeWidth
     shader.uniforms.sectionFalloff.value = strokeFalloff
+    shader.uniforms.sectionColor.value = strokeColor
   } else {
     shader.uniforms.sectionWidth = { value: strokeWidth }
     shader.uniforms.sectionFalloff = { value: strokeFalloff }
+    shader.uniforms.sectionColor = { value: strokeColor }
   }
 }
 
@@ -176,12 +196,11 @@ function applySectionUniforms (
  */
 export function patchBaseMaterial (material: THREE.Material) {
   material.onBeforeCompile = (shader) => {
-    console.log('compiling:')
-    console.log(material)
     applySectionUniforms(
       shader,
       material.userData.strokeWidth,
-      material.userData.strokeFalloff
+      material.userData.strokeFalloff,
+      material.userData.strokeColor
     )
     material.userData.shader = shader
     shader.vertexShader = shader.vertexShader
@@ -258,6 +277,7 @@ export function patchBaseMaterial (material: THREE.Material) {
         varying float vColored;
         uniform float sectionWidth;
         uniform float sectionFalloff;
+        uniform vec3 sectionColor;
         `
       )
       // FRAGMENT IMPLEMENTATION
@@ -289,9 +309,9 @@ export function patchBaseMaterial (material: THREE.Material) {
                 float strength = (strokePlane.w - strokeDot) / thick;
 
                 gl_FragColor = vec4(
-                  gl_FragColor.x * strength,
-                  gl_FragColor.y * strength,
-                  gl_FragColor.z * strength,
+                  sectionColor.x + (gl_FragColor.x - sectionColor.x) * strength,
+                  sectionColor.y + (gl_FragColor.y - sectionColor.y) * strength,
+                  sectionColor.z + (gl_FragColor.z - sectionColor.z) * strength,
                   1.0f);
 
                 return;

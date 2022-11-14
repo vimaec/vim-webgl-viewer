@@ -154,7 +154,7 @@ export class SectionBox {
   /**
    * Sets the section gizmo size to match given box
    */
-  public fitBox (box: THREE.Box3, padding = 0.1) {
+  public fitBox (box: THREE.Box3, padding = 1) {
     const b = box.expandByScalar(padding)
     this._cube.fitBox(b)
     this._outline.fitBox(b)
@@ -166,7 +166,7 @@ export class SectionBox {
    * Call this if there were direct changes to renderer.section
    */
   update () {
-    this.fitBox(this.section.box)
+    this.fitBox(this.section.box, 0)
     this._highlight.highlight(this.section.box, this._normal)
   }
 
