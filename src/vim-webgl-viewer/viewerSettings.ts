@@ -224,9 +224,9 @@ export class ViewerSettings {
           opacity: 0.1
         },
         section: {
-          strokeWidth: 0.005,
-          strokeFalloff: 0.8,
-          strokeColor: { r: 0, g: 0, b: 0 }
+          strokeWidth: 0.01,
+          strokeFalloff: 0.65,
+          strokeColor: { r: 0xf6, g: 0xf6, b: 0xf6 }
         }
       },
       axes: new GizmoOptions()
