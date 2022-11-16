@@ -54,7 +54,8 @@ class Section {
   }
 
   set active (value: boolean) {
-    const p = value ? this.planes : undefined
+    // Has to be null and not undefined because some three code depends on it.
+    const p = value ? this.planes : null
     this._materials.opaque.clippingPlanes = p
     this._materials.transparent.clippingPlanes = p
     this._materials.wireframe.clippingPlanes = p
