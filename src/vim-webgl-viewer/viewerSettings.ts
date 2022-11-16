@@ -225,7 +225,7 @@ export class ViewerSettings {
         },
         section: {
           strokeWidth: 0.01,
-          strokeFalloff: 0.65,
+          strokeFalloff: 0.75,
           strokeColor: { r: 0xf6, g: 0xf6, b: 0xf6 }
         }
       },
