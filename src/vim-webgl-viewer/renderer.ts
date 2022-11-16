@@ -59,6 +59,7 @@ class Section {
     this._materials.transparent.clippingPlanes = p
     this._materials.wireframe.clippingPlanes = p
     this._materials.isolation.clippingPlanes = p
+    this._materials.focus.clippingPlanes = p
     this._renderer.localClippingEnabled = value
     this._active = value
   }
