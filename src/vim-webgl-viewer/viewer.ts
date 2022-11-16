@@ -307,4 +307,10 @@ export class Viewer {
     vim.filter(instances)
     this.renderer.add(vim.scene)
   }
+
+  loadMore (vim: Vim, flagTest: (flag: number) => boolean) {
+    this.renderer.remove(vim.scene)
+    vim.loadMore(flagTest)
+    this.renderer.add(vim.scene)
+  }
 }

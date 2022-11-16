@@ -54,6 +54,12 @@ export class Vim {
     }
   }
 
+  loadMore (flagTest: (flag: number) => boolean) {
+    const scene = this.scene.builder.createFromFlag(this.document.g3d, flagTest)
+    scene.applyMatrix4(this.settings.getMatrix())
+    this.scene.merge(scene)
+  }
+
   /**
    * Applies new settings to the vim
    */
