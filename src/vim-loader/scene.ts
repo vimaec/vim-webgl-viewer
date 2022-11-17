@@ -146,16 +146,20 @@ export class Scene {
     this._material = value
     if (value) {
       this.meshes.forEach((m) => {
-        if (!m.userData.mat) {
-          m.userData.mat = m.material
+        if (m.userData.ignoreSceneMaterial) {
+          if (!m.userData.mat) {
+            m.userData.mat = m.material
+          }
+          m.material = value
         }
-        m.material = value
       })
     } else {
       this.meshes.forEach((m) => {
-        if (m.userData.mat) {
-          m.material = m.userData.mat
-          m.userData.mat = undefined
+        if (m.userData.ignoreSceneMaterial) {
+          if (m.userData.mat) {
+            m.material = m.userData.mat
+            m.userData.mat = undefined
+          }
         }
       })
     }
