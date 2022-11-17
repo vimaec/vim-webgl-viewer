@@ -310,7 +310,10 @@ export class Viewer {
 
   loadMore (vim: Vim, flagTest: (flag: number) => boolean) {
     this.renderer.remove(vim.scene)
-    vim.loadMore(flagTest)
+    const more = vim.loadMore(flagTest)
+    vim.scene.merge(more)
     this.renderer.add(vim.scene)
+
+    return more
   }
 }
