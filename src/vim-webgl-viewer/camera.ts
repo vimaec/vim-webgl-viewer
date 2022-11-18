@@ -559,7 +559,7 @@ export class Camera implements ICamera {
       offset.setY(y)
     }
     offset.normalize()
-    offset.multiplyScalar(sphere.radius * 3)
+    offset.multiplyScalar(Math.max(sphere.radius * 3, 1))
     this._targetPosition = sphere.center.clone().add(offset)
     this._orbitTarget = sphere.center
     this.startLerp(duration, 'Both')
