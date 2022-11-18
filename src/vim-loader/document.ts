@@ -695,8 +695,10 @@ export class Document implements IDocument {
 
     const getParameterDisplayValue = (index: number) => {
       if (!parameterValue) return
-      const value = this.getString(parameterValue[index])?.split('|')
-      const displayValue = value?.[value.length - 1]
+      const value = this.getString(parameterValue[index])
+        ?.split('|')
+        .filter((s) => s.length > 0)
+      const displayValue = value?.[value.length - 1] ?? value?.[0]
       return displayValue
     }
 
