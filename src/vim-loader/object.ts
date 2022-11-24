@@ -179,6 +179,70 @@ export class Object {
     }
   }
 
+  private _selected: boolean
+  get selected () {
+    return this._selected
+  }
+
+  set selected (value: boolean) {
+    if (this._selected === value) return
+    this._selected = value
+    this.applySelected(value)
+  }
+
+  applySelected (value: boolean) {
+    if (!this._meshes) return
+
+    for (let m = 0; m < this._meshes.length; m++) {
+      const [mesh, index] = this._meshes[m]
+      if (mesh.userData.merged) {
+        this.applyMergedSelected(mesh, index, value)
+      } else {
+        this.applyInstancedSelected(mesh as THREE.InstancedMesh, index, value)
+      }
+    }
+  }
+
+  applyInstancedSelected (
+    mesh: THREE.InstancedMesh<
+      THREE.BufferGeometry,
+      THREE.Material | THREE.Material[]
+    >,
+    index: number,
+    value: boolean
+  ) {
+    let attribute = mesh.geometry.getAttribute('instanceSelected')
+    if (!attribute) {
+      attribute = new InstancedBufferAttribute(new Float32Array(mesh.count), 1)
+      mesh.geometry.setAttribute('instanceSelected', attribute)
+    }
+
+    attribute.setX(index, value ? 1 : 0)
+    attribute.needsUpdate = true
+  }
+
+  applyMergedSelected (
+    mesh: THREE.Mesh<THREE.BufferGeometry, THREE.Material | THREE.Material[]>,
+    index: number,
+    value: boolean
+  ) {
+    const positions = mesh.geometry.getAttribute('position')
+    const attribute =
+      mesh.geometry.getAttribute('vertexSelected') ??
+      new Float32BufferAttribute(new Float32Array(positions.count), 1)
+    mesh.geometry.setAttribute('vertexSelected', attribute)
+
+    const start = this.getMergedMeshStart(mesh, index)
+    const end = this.getMergedMeshEnd(mesh, index)
+    const indices = mesh.geometry.index!
+
+    for (let i = start; i < end; i++) {
+      const v = indices.getX(i)
+      attribute.setX(v, value ? 1 : 0)
+    }
+    attribute.needsUpdate = true
+  }
+
   /**
    * Toggles visibility of this object.
    * @param value true to show object, false to hide object.

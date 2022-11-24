@@ -131,7 +131,7 @@ export class Viewer {
     const scene = new RenderScene()
     this.viewport = new Viewport(this.settings)
     this._camera = new Camera(scene, this.viewport, this.settings)
-    this.renderer = new Renderer(scene, this.viewport, materials)
+    this.renderer = new Renderer(scene, this.viewport, materials, this._camera)
     if (this.settings.getCameraGizmoEnable()) {
       this._camera.gizmo = new CameraGizmo(
         this.renderer,

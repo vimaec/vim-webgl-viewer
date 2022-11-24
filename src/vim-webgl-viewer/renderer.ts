@@ -11,6 +11,14 @@ import { ViewerSettings } from './viewerSettings'
 import { CSS2DRenderer } from 'three/examples/jsm/renderers/CSS2DRenderer'
 import { SimpleEventDispatcher } from 'ste-simple-events'
 import { Vim } from '../vim'
+import { CustomOutlinePass } from './selectionOutlinePass'
+
+import { Camera } from './camera'
+
+import { EffectComposer } from 'three/examples/jsm/postprocessing/EffectComposer.js'
+import { RenderPass } from 'three/examples/jsm/postprocessing/RenderPass.js'
+import { ShaderPass } from 'three/examples/jsm/postprocessing/ShaderPass.js'
+import { FXAAShader } from 'three/examples/jsm/shaders/FXAAShader.js'
 
 class Section {
   private _renderer: THREE.WebGLRenderer
@@ -61,6 +69,7 @@ class Section {
     this._materials.wireframe.clippingPlanes = p
     this._materials.isolation.clippingPlanes = p
     this._materials.focus.clippingPlanes = p
+    this._materials.outline.clippingPlanes = p
     this._renderer.localClippingEnabled = value
     this._active = value
   }
@@ -80,6 +89,14 @@ export class Renderer {
   scene: RenderScene
   section: Section
   materials: VimMaterials
+  camera: Camera
+
+  selectionComposer: EffectComposer
+  selectionTarget: THREE.WebGLRenderTarget
+  sceneComposer: EffectComposer
+  sceneTarget: THREE.WebGLRenderTarget
+  depthTexture: THREE.DepthTexture
+  outlinePass: any
 
   private _onVisibilityChanged = new SimpleEventDispatcher<Vim>()
   get onVisibilityChanged () {
@@ -98,14 +115,20 @@ export class Renderer {
     this.textRenderer.domElement.style.display = value ? 'block' : 'none'
   }
 
-  constructor (scene: RenderScene, viewport: Viewport, materials: VimMaterials) {
+  constructor (
+    scene: RenderScene,
+    viewport: Viewport,
+    materials: VimMaterials,
+    camera: Camera
+  ) {
     this.viewport = viewport
 
     this.scene = scene
     this.materials = materials
+    this.camera = camera
     this.renderer = new THREE.WebGLRenderer({
       canvas: viewport.canvas,
-      antialias: true,
+      antialias: false,
       precision: 'highp', // 'lowp', 'mediump', 'highp'
       alpha: true,
       stencil: false,
@@ -113,6 +136,7 @@ export class Renderer {
       logarithmicDepthBuffer: true
     })
 
+    this.section = new Section(this.renderer, this.materials)
     this.textRenderer = this.viewport.createTextRenderer()
     this.renderText = false
 
@@ -120,8 +144,50 @@ export class Renderer {
     this.viewport.onResize(() => this.fitViewport())
 
     this.renderer.setPixelRatio(window.devicePixelRatio)
-    this.renderer.shadowMap.enabled = false
-    this.section = new Section(this.renderer, this.materials)
+
+    const size = this.viewport.getSize()
+
+    // Composer for regular scene rendering
+    this.sceneTarget = new THREE.WebGLRenderTarget(size.x, size.y)
+
+    this.sceneComposer = new EffectComposer(this.renderer, this.sceneTarget)
+    this.sceneComposer.renderToScreen = false
+    this.sceneComposer.addPass(
+      new RenderPass(this.scene.scene, this.camera.camera)
+    )
+
+    // Composer for selection effect
+    this.depthTexture = new THREE.DepthTexture(size.x, size.y)
+    this.selectionTarget = new THREE.WebGLRenderTarget(size.x, size.y, {
+      depthTexture: this.depthTexture,
+      depthBuffer: true
+    })
+    this.selectionComposer = new EffectComposer(
+      this.renderer,
+      this.selectionTarget
+    )
+
+    // Render only selected objects
+    this.selectionComposer.addPass(
+      new RenderPass(this.scene.scene, this.camera.camera, materials.outline)
+    )
+
+    // Render higlight from selected object on top of regular scene
+    this.outlinePass = new CustomOutlinePass(
+      new THREE.Vector2(size.x, size.y),
+      this.scene.scene,
+      this.camera.camera
+    )
+    this.selectionComposer.addPass(this.outlinePass)
+
+    // Insert the result of scene composer into the outline composer
+    const uniforms = this.outlinePass.fsQuad.material.uniforms
+    uniforms.sceneColorBuffer.value = this.sceneComposer.readBuffer.texture
+
+    // Lastly a antialiasing pass to replace browser AA.
+    const effectFXAA = new ShaderPass(FXAAShader)
+    effectFXAA.uniforms.resolution.value.set(1 / size.x, 1 / size.y)
+    this.selectionComposer.addPass(effectFXAA)
   }
 
   /**
@@ -133,6 +199,9 @@ export class Renderer {
     this.renderer.clear()
     this.renderer.forceContextLoss()
     this.renderer.dispose()
+    this.sceneTarget.dispose()
+    this.selectionTarget.dispose()
+    this.depthTexture.dispose()
   }
 
   /**
@@ -147,7 +216,9 @@ export class Renderer {
    * Render what is in camera.
    */
   render (camera: THREE.Camera) {
-    this.renderer.render(this.scene.scene, camera)
+    this.sceneComposer.render()
+    this.selectionComposer.render()
+
     if (this.renderText) {
       this.textRenderer.render(this.scene.scene, camera)
     }
