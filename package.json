@@ -54,7 +54,7 @@
     "lodash-es": "^4.17.21",
     "ste-events": "^3.0.5",
     "ste-simple-events": "^3.0.5",
-    "three": "^0.133.1"
+    "three": "^0.146.0"
   },
   "keywords": [
     "3d",
