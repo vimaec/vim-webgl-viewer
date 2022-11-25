@@ -5,7 +5,7 @@
 import * as THREE from 'three'
 import { Vim } from '../vim'
 import { Object } from '../vim-loader/object'
-import { Renderer } from './renderer'
+import { Renderer } from './rendering/renderer'
 import { SignalDispatcher } from 'ste-signals'
 
 /**

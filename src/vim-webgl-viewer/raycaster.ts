@@ -8,7 +8,7 @@ import { Vim } from '../vim-loader/vim'
 import { RenderScene } from './renderScene'
 import { Viewport } from './viewport'
 import { Camera } from './camera'
-import { Renderer } from './renderer'
+import { Renderer } from './rendering/renderer'
 
 type ThreeIntersectionList = THREE.Intersection<THREE.Object3D<THREE.Event>>[]
 

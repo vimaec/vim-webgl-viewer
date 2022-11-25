@@ -26,7 +26,7 @@ import { Object } from '../vim-loader/object'
 import { BFast } from '../vim-loader/bfast'
 import { Vim } from '../vim-loader/vim'
 import { IProgressLogs, RemoteBuffer } from '../vim-loader/remoteBuffer'
-import { Renderer } from './renderer'
+import { Renderer } from './rendering/renderer'
 import { IMaterialLibrary, VimMaterials } from '../vim'
 import { SignalDispatcher } from 'ste-signals'
 
@@ -190,7 +190,9 @@ export class Viewer {
     // Camera
     this._camera.update(this._clock.getDelta())
     // Rendering
-    if (this._vims.length) this.renderer.render(this.camera.camera)
+    if (this._vims.length) {
+      this.renderer.render(this.camera.camera, this.selection.count > 0)
+    }
   }
 
   /**

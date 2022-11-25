@@ -35,6 +35,11 @@ export interface IMaterialLibrary {
    * Material used for outline effect.
    */
   get outline(): THREE.Material
+
+  /**
+   * Apply clipping planes to all material uniforms
+   */
+  applyClippingPlanes(planes: THREE.Plane[] | null)
   dispose(): void
 }
 
@@ -98,6 +103,15 @@ export class VimMaterials implements IMaterialLibrary {
       strokeFalloff,
       strokeColor
     )
+  }
+
+  applyClippingPlanes (planes: THREE.Plane[]) {
+    this.opaque.clippingPlanes = planes
+    this.transparent.clippingPlanes = planes
+    this.wireframe.clippingPlanes = planes
+    this.isolation.clippingPlanes = planes
+    this.focus.clippingPlanes = planes
+    this.outline.clippingPlanes = planes
   }
 
   /** dispose all materials. */
