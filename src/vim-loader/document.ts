@@ -20,6 +20,7 @@ export type BimDocumentInfo = {
   title: string | undefined
   pathName: string | undefined
   isLinked: boolean | undefined
+  product: string | undefined
   version: string | undefined
   author: string | undefined
   date: string | undefined
@@ -50,6 +51,7 @@ const objectModel = {
       title: 'string:Title',
       pathName: 'string:PathName',
       isLinked: 'byte:IsLinked',
+      product: 'string:Product',
       version: 'string:Version',
       author: 'string:Author',
       date: 'string:IssueDate'
@@ -815,38 +817,42 @@ export class Document implements IDocument {
       await documentTable?.getArray(objectModel.bimDocument.columns.title)
     )?.map((n) => this._strings?.[n])
 
-    const isLinked = await documentTable?.getArray(
+    const isLinkedArray = await documentTable?.getArray(
       objectModel.bimDocument.columns.isLinked
     )
     const pathName = (
       await documentTable?.getArray(objectModel.bimDocument.columns.pathName)
     )?.map((n) => this._strings?.[n])
 
-    const versions = (
+    const product = (
+      await documentTable?.getArray(objectModel.bimDocument.columns.product)
+    )?.map((n) => this._strings?.[n])
+    const version = (
       await documentTable?.getArray(objectModel.bimDocument.columns.version)
     )?.map((n) => this._strings?.[n])
-    const authors = (
+    const author = (
       await documentTable?.getArray(objectModel.bimDocument.columns.author)
     )?.map((n) => this._strings?.[n])
-    const dates = (
+    const date = (
       await documentTable?.getArray(objectModel.bimDocument.columns.date)
     )?.map((n) => this._strings?.[n])
 
     const max = Math.max(
       titles?.length ?? 0,
-      versions?.length ?? 0,
-      authors?.length ?? 0,
-      dates?.length ?? 0
+      version?.length ?? 0,
+      author?.length ?? 0,
+      date?.length ?? 0
     )
     const summary: BimDocumentInfo[] = []
     for (let i = 0; i < max; i++) {
       summary.push({
         title: titles?.[i],
         pathName: pathName?.[i],
-        isLinked: isLinked[i] > 0,
-        version: versions?.[i],
-        author: authors?.[i],
-        date: dates?.[i]
+        isLinked: isLinkedArray?.[i] > 0,
+        product: product?.[i],
+        version: version?.[i],
+        author: author?.[i],
+        date: date?.[i]
       })
     }
     return summary
