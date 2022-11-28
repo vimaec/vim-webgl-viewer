@@ -23,6 +23,7 @@ export type BimDocumentInfo = {
   product: string | undefined
   version: string | undefined
   author: string | undefined
+  user: string | undefined
   date: string | undefined
 }
 
@@ -53,6 +54,7 @@ const objectModel = {
       isLinked: 'byte:IsLinked',
       product: 'string:Product',
       version: 'string:Version',
+      user: 'string:User',
       author: 'string:Author',
       date: 'string:IssueDate'
     }
@@ -810,6 +812,8 @@ export class Document implements IDocument {
   }
 
   async getBimDocumentSummary () {
+    this.entities.getLocalBfast('Vim.BimDocument')
+
     const documentTable = await this.entities.getBfast(
       objectModel.bimDocument.table
     )
@@ -829,6 +833,10 @@ export class Document implements IDocument {
     )?.map((n) => this._strings?.[n])
     const version = (
       await documentTable?.getArray(objectModel.bimDocument.columns.version)
+    )?.map((n) => this._strings?.[n])
+
+    const user = (
+      await documentTable?.getArray(objectModel.bimDocument.columns.user)
     )?.map((n) => this._strings?.[n])
     const author = (
       await documentTable?.getArray(objectModel.bimDocument.columns.author)
@@ -851,6 +859,7 @@ export class Document implements IDocument {
         isLinked: isLinkedArray?.[i] > 0,
         product: product?.[i],
         version: version?.[i],
+        user: user?.[i],
         author: author?.[i],
         date: date?.[i]
       })
