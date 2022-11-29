@@ -27,7 +27,7 @@
   </head>
   <body>
     <script src="https://unpkg.com/three@0.133.1/build/three.min.js"></script>
-    <script src="https://unpkg.com/vim-webgl-viewer@1.2.30"></script>
+    <script src="https://unpkg.com/vim-webgl-viewer@1.4.5-dev.3"></script>
     <script>
       // Parse URL
       const params = new URLSearchParams(window.location.search)
@@ -50,15 +50,7 @@
 
 
       // Create Viewer
-      const viewer = new VIM.Viewer({
-        groundPlane: {
-          show: true,
-          texture:
-            'https://vimdevelopment01storage.blob.core.windows.net/textures/vim-floor-soft.png',
-          opacity: 1,
-          size: 5,
-        },
-      })
+      const viewer = new VIM.Viewer()
 
       // Load function string | arrayBuffer
       function load(vim) {

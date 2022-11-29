@@ -9,6 +9,7 @@ https://vimaec.github.io/vim-webgl-viewer/api/
 
 # Live Demo
 
+- [JsFiddle](https://jsfiddle.net/mavimaec/ou174Lz9/)
 - [Small Model Demo - Residence](https://vimaec.github.io/vim-webgl-viewer)
 - [Medium Model Demo - Medical Tower](https://vimaec.github.io/vim-webgl-viewer?vim=https://vim.azureedge.net/samples/skanska.vim)
 - [Large Model Demo - Stadium](https://vimaec.github.io/vim-webgl-viewer?vim=https://vim.azureedge.net/samples/stadium.vim) (_Warning_: slow download times)
@@ -31,7 +32,7 @@ More information on the vim format can be found here: https://github.com/vimaec/
 
 # Using the Viewer from a Web Page
 
-Virtually the simplest usage of the VIM viewer is the following example:
+The following is an example of the simplest usage of the VIM viewer:
 
 ```html
 <html>
@@ -42,7 +43,7 @@ Virtually the simplest usage of the VIM viewer is the following example:
     <script src="https://unpkg.com/three@0.133.1/build/three.min.js"></script>
     <script src="https://unpkg.com/vim-webgl-viewer"></script>
     <script>
-      const viewer = new vim.Viewer()
+      const viewer = new VIM.Viewer()
 
       viewer.loadVim('https://vim.azureedge.net/samples/residence.vim', {
         rotation: { x: 270, y: 0, z: 0 },
@@ -51,6 +52,8 @@ Virtually the simplest usage of the VIM viewer is the following example:
   </body>
 </html>
 ```
+
+You can also [try it out in a JsFiddle](https://jsfiddle.net/mavimaec/ou174Lz9/)!
 
 # Running Locally
 
