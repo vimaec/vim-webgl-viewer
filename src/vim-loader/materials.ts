@@ -251,14 +251,9 @@ export function patchBaseMaterial (material: THREE.Material) {
         
         // VISIBILITY
 
-        // Instance or vertex attribute to hide objects 
-        #ifdef USE_INSTANCING
-          attribute float ignoreInstance;
-        #else
-          attribute float ignoreVertex;
-        #endif
-
-
+        // Instance or vertex attribute to hide objects
+        // Used as instance attribute for instanced mesh and as vertex attribute for merged meshes. 
+        attribute float ignore; 
 
         // Passed to fragment to discard them
         varying float vIgnore;
@@ -279,17 +274,8 @@ export function patchBaseMaterial (material: THREE.Material) {
             vColor.xyz = colored * instanceColor.xyz + (1.0f - colored) * color.xyz;
           #endif
 
-
           // VISIBILITY
-          // Set flag to ignore fragment from instance or vertex attribute
-          #ifdef USE_INSTANCING
-            vIgnore = ignoreInstance;
-          #else
-            vIgnore = ignoreVertex;
-          #endif
-
-
-
+          vIgnore = ignore;
         `
       )
     // FRAGMENT DECLARATIONS
@@ -363,15 +349,10 @@ function createOutlineMaterial () {
       #include <logdepthbuf_pars_vertex>
       #include <clipping_planes_pars_vertex>
       
-      // SELECTION
-      // Instance or vertex attribute to create selection effect
-      #ifdef USE_INSTANCING
-        attribute float instanceSelected;
-      #else
-        attribute float vertexSelected;
-      #endif
+      // Used as instance attribute for instanced mesh and as vertex attribute for merged meshes. 
+      attribute float selected;
 
-      varying float vIgnore;
+      varying float vKeep;
 
       void main() {
         #include <begin_vertex>
@@ -380,21 +361,17 @@ function createOutlineMaterial () {
         #include <logdepthbuf_vertex>
 
         // SELECTION
-        // Set frag ignore from instance or vertex attribute
-        #ifdef USE_INSTANCING
-          vIgnore = instanceSelected;
-        #else
-          vIgnore = vertexSelected;
-        #endif
+        // selected 
+        vKeep = selected;
       }
     `,
     fragmentShader: `
       #include <clipping_planes_pars_fragment>
-      varying float vIgnore;
+      varying float vKeep;
 
       void main() {
         #include <clipping_planes_fragment>
-        if(vIgnore == 0.0f) discard;
+        if(vKeep == 0.0f) discard;
 
         gl_FragColor =  vec4(1.0f,1.0f,1.0f,1.0f);
       }
@@ -424,12 +401,9 @@ export function createIsolationMaterial () {
       #include <clipping_planes_pars_vertex>
         
       // VISIBILITY
-      // Instance or vertex attribute to hide objects 
-      #ifdef USE_INSTANCING
-        attribute float ignoreInstance;
-      #else 
-        attribute float ignoreVertex;
-      #endif
+      // Instance or vertex attribute to hide objects
+      // Used as instance attribute for instanced mesh and as vertex attribute for merged meshes. 
+      attribute float ignore;
 
       // Passed to fragment to discard them
       varying float vIgnore;
@@ -448,7 +422,7 @@ export function createIsolationMaterial () {
       // doesn't properly set USE_INSTANCING_COLOR
       // so we always use it as a fix
       #ifndef USE_INSTANCING_COLOR
-      attribute vec3 instanceColor;
+        attribute vec3 instanceColor;
       #endif
 
       void main() {
@@ -459,11 +433,7 @@ export function createIsolationMaterial () {
 
         // VISIBILITY
         // Set frag ignore from instance or vertex attribute
-        #ifdef USE_INSTANCING
-          vIgnore = ignoreInstance;
-        #else
-          vIgnore = ignoreVertex;
-        #endif
+        vIgnore = ignore;
 
         // COLORING
         vColor = color.xyz;

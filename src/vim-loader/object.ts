@@ -37,16 +37,16 @@ export class Object {
 
     this.selectedAttribute = new ObjectAttribute(
       false,
-      'vertexSelected',
-      'instanceSelected',
+      'selected',
+      'selected',
       meshes,
       (v) => (v ? 1 : 0)
     )
 
     this.visibleAttribute = new ObjectAttribute(
       true,
-      'ignoreVertex',
-      'ignoreInstance',
+      'ignore',
+      'ignore',
       meshes,
       (v) => (v ? 0 : 1)
     )
