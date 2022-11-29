@@ -91,6 +91,7 @@ export class Object {
   }
 
   set visible (value: boolean) {
+    this.vim.scene.visibilityChanged = true
     this.visibleAttribute.apply(value)
   }
 
