@@ -5,7 +5,7 @@
 import * as THREE from 'three'
 import { Vim } from '../vim'
 import { Object } from '../vim-loader/object'
-import { Renderer } from './renderer'
+import { Renderer } from './rendering/renderer'
 import { SignalDispatcher } from 'ste-signals'
 
 /**
@@ -21,7 +21,6 @@ export class Selection {
   private _vim: Vim | undefined
 
   // Disposable State
-  private _selectionMesh: THREE.LineSegments | undefined
   private _focusMesh: THREE.Mesh | undefined
   private _focusMaterial: THREE.Material
   private _focusStart: number = 0
@@ -127,14 +126,16 @@ export class Selection {
       return
     }
 
+    this._objects.forEach((o) => (o.selected = false))
     this._objects.clear()
     this._vim = undefined
 
     object?.forEach((o) => {
       this.clearOnNewVim(o.vim)
       this._objects.add(o)
+      o.selected = true
     })
-    this.updateHighlight()
+    this._onValueChanged.dispatch()
   }
 
   /**
@@ -162,10 +163,11 @@ export class Selection {
     objects.forEach((o) => {
       this.clearOnNewVim(o.vim)
       this._objects.add(o)
+      o.selected = true
     })
     if (oldVim === this._vim && this._objects.size === count) return
 
-    this.updateHighlight()
+    this._onValueChanged.dispatch()
   }
 
   /**
@@ -176,6 +178,7 @@ export class Selection {
     if (objects.length === 0) return
     const count = this._objects.size
     objects.forEach((o) => {
+      o.selected = false
       this._objects.delete(o)
     })
     if (this._objects.size === count) return
@@ -183,7 +186,7 @@ export class Selection {
       this._vim = undefined
     }
 
-    this.updateHighlight()
+    this._onValueChanged.dispatch()
   }
 
   /**
@@ -198,13 +201,15 @@ export class Selection {
     objects.forEach((o) => {
       if (this._objects.has(o)) {
         this._objects.delete(o)
+        o.selected = false
       } else {
         this.clearOnNewVim(o.vim)
         this._objects.add(o)
+        o.selected = true
       }
     })
     if (oldVim === this._vim && this._objects.size === count) return
-    this.updateHighlight()
+    this._onValueChanged.dispatch()
   }
 
   /**
@@ -213,8 +218,9 @@ export class Selection {
   clear () {
     this._vim = undefined
     if (this._objects.size === 0) return
+    this._objects.forEach((o) => (o.selected = false))
     this._objects.clear()
-    this.updateHighlight()
+    this._onValueChanged.dispatch()
   }
 
   private clearOnNewVim (vim: Vim) {
@@ -226,48 +232,6 @@ export class Selection {
       }
     } else {
       this._vim = vim
-    }
-  }
-
-  private updateHighlight () {
-    this.removeHighlight()
-    this.createHighlights(this._objects)
-    this._onValueChanged.dispatch()
-  }
-
-  private createHighlights (objects: Set<Object>) {
-    if (objects.size === 0) return
-
-    let vim: Vim | undefined
-    const instances: number[] = []
-    for (const o of objects.values()) {
-      vim = vim ?? o.vim // capture first vim
-      if (o.vim !== vim) {
-        console.error('Cannot multiselect across vim files')
-        return
-      }
-      if (o.instances) {
-        instances.push(...o.instances)
-      }
-    }
-    if (!vim?.document.g3d) return
-
-    const meshBuilder = vim!.scene.builder.meshBuilder
-    this._selectionMesh = meshBuilder.createWireframe(
-      vim.document.g3d,
-      instances
-    )
-    if (this._selectionMesh) {
-      this._selectionMesh.applyMatrix4(vim!.getMatrix())
-      if (this._selectionMesh) this._renderer.add(this._selectionMesh)
-    }
-  }
-
-  private removeHighlight () {
-    if (this._selectionMesh) {
-      this._selectionMesh.geometry.dispose()
-      this._renderer.remove(this._selectionMesh)
-      this._selectionMesh = undefined
     }
   }
 }

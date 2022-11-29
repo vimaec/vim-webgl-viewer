@@ -30,6 +30,16 @@ export interface IMaterialLibrary {
    * Material used for focus highlight.
    */
   get focus(): THREE.Material
+
+  /**
+   * Material used for outline effect.
+   */
+  get outline(): THREE.Material
+
+  /**
+   * Apply clipping planes to all material uniforms
+   */
+  applyClippingPlanes(planes: THREE.Plane[] | null)
   dispose(): void
 }
 
@@ -42,6 +52,7 @@ export class VimMaterials implements IMaterialLibrary {
   wireframe: THREE.LineBasicMaterial
   isolation: THREE.Material
   focus: THREE.Material
+  outline: THREE.Material
 
   constructor (
     opaque?: THREE.Material,
@@ -55,6 +66,8 @@ export class VimMaterials implements IMaterialLibrary {
     this.wireframe = wireframe ?? createWireframe()
     this.isolation = isolation ?? createIsolationMaterial()
     this.focus = focus ?? createFocus()
+    this.outline = createOutlineMaterial()
+    this.outline.onBeforeCompile = (s) => console.log(s.fragmentShader)
   }
 
   /** Apply settings to wireframe material */
@@ -90,6 +103,15 @@ export class VimMaterials implements IMaterialLibrary {
       strokeFalloff,
       strokeColor
     )
+  }
+
+  applyClippingPlanes (planes: THREE.Plane[]) {
+    this.opaque.clippingPlanes = planes
+    this.transparent.clippingPlanes = planes
+    this.wireframe.clippingPlanes = planes
+    this.isolation.clippingPlanes = planes
+    this.focus.clippingPlanes = planes
+    this.outline.clippingPlanes = planes
   }
 
   /** dispose all materials. */
@@ -236,6 +258,8 @@ export function patchBaseMaterial (material: THREE.Material) {
           attribute float ignoreVertex;
         #endif
 
+
+
         // Passed to fragment to discard them
         varying float vIgnore;
 
@@ -257,12 +281,14 @@ export function patchBaseMaterial (material: THREE.Material) {
 
 
           // VISIBILITY
-          // Set frag ignore from instance or vertex attribute
+          // Set flag to ignore fragment from instance or vertex attribute
           #ifdef USE_INSTANCING
             vIgnore = ignoreInstance;
           #else
             vIgnore = ignoreVertex;
           #endif
+
+
 
         `
       )
@@ -326,6 +352,57 @@ export function patchBaseMaterial (material: THREE.Material) {
 }
 
 /**
+ * Simple material used for selection outline it only renders selection in white and discards the rests.
+ */
+function createOutlineMaterial () {
+  return new THREE.ShaderMaterial({
+    uniforms: {},
+    clipping: true,
+    vertexShader: `
+      #include <common>
+      #include <logdepthbuf_pars_vertex>
+      #include <clipping_planes_pars_vertex>
+      
+      // SELECTION
+      // Instance or vertex attribute to create selection effect
+      #ifdef USE_INSTANCING
+        attribute float instanceSelected;
+      #else
+        attribute float vertexSelected;
+      #endif
+
+      varying float vIgnore;
+
+      void main() {
+        #include <begin_vertex>
+        #include <project_vertex>
+        #include <clipping_planes_vertex>
+        #include <logdepthbuf_vertex>
+
+        // SELECTION
+        // Set frag ignore from instance or vertex attribute
+        #ifdef USE_INSTANCING
+          vIgnore = instanceSelected;
+        #else
+          vIgnore = vertexSelected;
+        #endif
+      }
+    `,
+    fragmentShader: `
+      #include <clipping_planes_pars_fragment>
+      varying float vIgnore;
+
+      void main() {
+        #include <clipping_planes_fragment>
+        if(vIgnore == 0.0f) discard;
+
+        gl_FragColor =  vec4(1.0f,1.0f,1.0f,1.0f);
+      }
+    `
+  })
+}
+
+/**
  * Material for isolation mode
  * Non visible item appear as transparent.
  * Visible items are flat shaded with a basic pseudo lighting.
@@ -350,7 +427,7 @@ export function createIsolationMaterial () {
       // Instance or vertex attribute to hide objects 
       #ifdef USE_INSTANCING
         attribute float ignoreInstance;
-      #else
+      #else 
         attribute float ignoreVertex;
       #endif
 

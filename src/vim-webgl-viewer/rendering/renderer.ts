@@ -3,72 +3,19 @@
  */
 
 import * as THREE from 'three'
-import { Scene } from '../vim-loader/scene'
-import { Viewport } from './viewport'
-import { RenderScene } from './renderScene'
-import { IMaterialLibrary, VimMaterials } from '../vim-loader/materials'
-import { ViewerSettings } from './viewerSettings'
+import { Scene } from '../../vim-loader/scene'
+import { Viewport } from '../viewport'
+import { RenderScene } from '../renderScene'
+import { VimMaterials } from '../../vim-loader/materials'
+import { ViewerSettings } from '../viewerSettings'
 import { CSS2DRenderer } from 'three/examples/jsm/renderers/CSS2DRenderer'
 import { SimpleEventDispatcher } from 'ste-simple-events'
-import { Vim } from '../vim'
+import { Vim } from '../../vim'
 
-class Section {
-  private _renderer: THREE.WebGLRenderer
-
-  private _materials: IMaterialLibrary
-  private _active: boolean = true
-
-  readonly box: THREE.Box3 = new THREE.Box3(
-    new THREE.Vector3(-100, -100, -100),
-    new THREE.Vector3(100, 100, 100)
-  )
-
-  private maxX: THREE.Plane = new THREE.Plane(new THREE.Vector3(-1, 0, 0))
-  private minX: THREE.Plane = new THREE.Plane(new THREE.Vector3(1, 0, 0))
-  private maxY: THREE.Plane = new THREE.Plane(new THREE.Vector3(0, -1, 0))
-  private minY: THREE.Plane = new THREE.Plane(new THREE.Vector3(0, 1, 0))
-  private maxZ: THREE.Plane = new THREE.Plane(new THREE.Vector3(0, 0, -1))
-  private minZ: THREE.Plane = new THREE.Plane(new THREE.Vector3(0, 0, 1))
-  private planes: THREE.Plane[] = [
-    this.maxX,
-    this.minX,
-    this.maxY,
-    this.minY,
-    this.maxZ,
-    this.minZ
-  ]
-
-  constructor (renderer: THREE.WebGLRenderer, materials: IMaterialLibrary) {
-    this._renderer = renderer
-    this._materials = materials
-  }
-
-  fitBox (box: THREE.Box3) {
-    this.maxX.constant = box.max.x
-    this.minX.constant = -box.min.x
-    this.maxY.constant = box.max.y
-    this.minY.constant = -box.min.y
-    this.maxZ.constant = box.max.z
-    this.minZ.constant = -box.min.z
-    this.box.copy(box)
-  }
-
-  set active (value: boolean) {
-    // Has to be null and not undefined because some three code depends on it.
-    const p = value ? this.planes : null
-    this._materials.opaque.clippingPlanes = p
-    this._materials.transparent.clippingPlanes = p
-    this._materials.wireframe.clippingPlanes = p
-    this._materials.isolation.clippingPlanes = p
-    this._materials.focus.clippingPlanes = p
-    this._renderer.localClippingEnabled = value
-    this._active = value
-  }
-
-  get active () {
-    return this._active
-  }
-}
+import { Camera } from '../camera'
+import { RenderingSection } from './renderingSection'
+import { SelectionRenderer } from './selectionRenderer'
+import { StandardRenderer } from './standardRenderer'
 
 /**
  * Manages how vim objects are added and removed from the THREE.Scene to be rendered
@@ -78,8 +25,12 @@ export class Renderer {
   textRenderer: CSS2DRenderer
   viewport: Viewport
   scene: RenderScene
-  section: Section
   materials: VimMaterials
+  camera: Camera
+
+  section: RenderingSection
+  selectionRenderer: SelectionRenderer
+  standardRenderer: StandardRenderer
 
   private _onVisibilityChanged = new SimpleEventDispatcher<Vim>()
   get onVisibilityChanged () {
@@ -98,14 +49,20 @@ export class Renderer {
     this.textRenderer.domElement.style.display = value ? 'block' : 'none'
   }
 
-  constructor (scene: RenderScene, viewport: Viewport, materials: VimMaterials) {
+  constructor (
+    scene: RenderScene,
+    viewport: Viewport,
+    materials: VimMaterials,
+    camera: Camera
+  ) {
     this.viewport = viewport
-
     this.scene = scene
     this.materials = materials
+    this.camera = camera
+
     this.renderer = new THREE.WebGLRenderer({
       canvas: viewport.canvas,
-      antialias: true,
+      antialias: false,
       precision: 'highp', // 'lowp', 'mediump', 'highp'
       alpha: true,
       stencil: false,
@@ -116,12 +73,25 @@ export class Renderer {
     this.textRenderer = this.viewport.createTextRenderer()
     this.renderText = false
 
+    this.selectionRenderer = new SelectionRenderer(
+      this.renderer,
+      scene,
+      viewport,
+      materials,
+      camera
+    )
+
+    this.standardRenderer = new StandardRenderer(
+      this.renderer,
+      scene,
+      viewport,
+      camera
+    )
+
+    this.section = new RenderingSection(this.renderer, this.materials)
+
     this.fitViewport()
     this.viewport.onResize(() => this.fitViewport())
-
-    this.renderer.setPixelRatio(window.devicePixelRatio)
-    this.renderer.shadowMap.enabled = false
-    this.section = new Section(this.renderer, this.materials)
   }
 
   /**
@@ -133,6 +103,8 @@ export class Renderer {
     this.renderer.clear()
     this.renderer.forceContextLoss()
     this.renderer.dispose()
+    this.standardRenderer.dispose()
+    this.selectionRenderer.dispose()
   }
 
   /**
@@ -146,8 +118,10 @@ export class Renderer {
   /**
    * Render what is in camera.
    */
-  render (camera: THREE.Camera) {
-    this.renderer.render(this.scene.scene, camera)
+  render (camera: THREE.Camera, hasSelection: boolean) {
+    const r = hasSelection ? this.selectionRenderer : this.standardRenderer
+    r.render()
+
     if (this.renderText) {
       this.textRenderer.render(this.scene.scene, camera)
     }
@@ -196,6 +170,8 @@ export class Renderer {
     const size = this.viewport.getParentSize()
     this.renderer.setPixelRatio(window.devicePixelRatio)
     this.renderer.setSize(size.x, size.y)
+    this.standardRenderer.setSize(size.x, size.y)
+    this.selectionRenderer.setSize(size.x, size.y)
     this.textRenderer.setSize(size.x, size.y)
   }
 }

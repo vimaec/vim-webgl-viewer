@@ -5,13 +5,8 @@
 // external
 import * as THREE from 'three'
 import { Geometry } from './geometry'
-import {
-  BufferAttribute,
-  Float32BufferAttribute,
-  InstancedBufferAttribute,
-  InstancedMesh
-} from 'three'
 import { Vim } from './vim'
+import { ObjectAttribute, ColorAttribute } from './objectAttributes'
 
 /**
  * High level api to interact with the loaded vim geometry and data.
@@ -21,9 +16,13 @@ export class Object {
   element: number
   instances: number[] | undefined
   private _color: THREE.Color | undefined
-  private _visible: boolean = true
   private _boundingBox: THREE.Box3 | undefined
   private _meshes: [THREE.Mesh, number][] | undefined
+
+  private selectedAttribute: ObjectAttribute<boolean>
+  private visibleAttribute: ObjectAttribute<boolean>
+  private coloredAttribute: ObjectAttribute<boolean>
+  private colorAttribute: ColorAttribute
 
   constructor (
     vim: Vim,
@@ -35,6 +34,32 @@ export class Object {
     this.element = element
     this.instances = instances
     this._meshes = meshes
+
+    this.selectedAttribute = new ObjectAttribute(
+      false,
+      'vertexSelected',
+      'instanceSelected',
+      meshes,
+      (v) => (v ? 1 : 0)
+    )
+
+    this.visibleAttribute = new ObjectAttribute(
+      true,
+      'ignoreVertex',
+      'ignoreInstance',
+      meshes,
+      (v) => (v ? 0 : 1)
+    )
+
+    this.coloredAttribute = new ObjectAttribute(
+      false,
+      'colored',
+      'colored',
+      meshes,
+      (v) => (v ? 1 : 0)
+    )
+
+    this.colorAttribute = new ColorAttribute(meshes, undefined, vim)
   }
 
   private get meshBuilder () {
@@ -43,6 +68,51 @@ export class Object {
 
   get hasMesh () {
     return this._meshes?.length!!
+  }
+
+  /**
+   * Toggles selection outline for this object.
+   * @param value true to show object, false to hide object.
+   */
+  get selected () {
+    return this.selectedAttribute.value
+  }
+
+  set selected (value: boolean) {
+    this.selectedAttribute.apply(value)
+  }
+
+  /**
+   * Toggles visibility of this object.
+   * @param value true to show object, false to hide object.
+   */
+  get visible () {
+    return this.visibleAttribute.value
+  }
+
+  set visible (value: boolean) {
+    this.visibleAttribute.apply(value)
+  }
+
+  /**
+   * Changes the display color of this object.
+   * @param color Color to apply, undefined to revert to default color.
+   */
+  get color () {
+    return this.colorAttribute.value
+  }
+
+  set color (color: THREE.Color | undefined) {
+    if (
+      !this._color || !color
+        ? !this._color && !color
+        : this._color.equals(color)
+    ) {
+      return
+    }
+    this._color = color
+    this.coloredAttribute.apply(color !== undefined)
+    this.colorAttribute.apply(color)
   }
 
   /**
@@ -144,250 +214,5 @@ export class Object {
     )
     geometry?.applyMatrix4(this.vim.getMatrix())
     return geometry
-  }
-
-  /**
-   * Changes the display color of this object.
-   * @param color Color to apply, undefined to revert to default color.
-   */
-  get color () {
-    return this._color
-  }
-
-  set color (color: THREE.Color | undefined) {
-    if (
-      !this._color || !color
-        ? !this._color && !color
-        : this._color.equals(color)
-    ) {
-      return
-    }
-    this._color = color
-    this.applyColor(color)
-  }
-
-  private applyColor (color: THREE.Color | undefined) {
-    if (!this._meshes) return
-
-    for (let m = 0; m < this._meshes.length; m++) {
-      const [mesh, index] = this._meshes[m]
-      if (mesh.userData.merged) {
-        this.applyMergedColor(mesh, index, color)
-      } else {
-        this.applyInstancedColor(mesh as THREE.InstancedMesh, index, color)
-      }
-    }
-  }
-
-  /**
-   * Toggles visibility of this object.
-   * @param value true to show object, false to hide object.
-   */
-  get visible () {
-    return this._visible
-  }
-
-  set visible (value: boolean) {
-    if (this._visible === value) return
-    this._visible = value
-    this.applyVisible(value)
-    this.vim.scene.visibilityChanged = true
-  }
-
-  private applyVisible (value: boolean) {
-    if (!this._meshes) return
-
-    for (let m = 0; m < this._meshes.length; m++) {
-      const [mesh, index] = this._meshes[m]
-      if (mesh.userData.merged) {
-        this.applyMergedVisible(mesh, index, value)
-      } else {
-        this.applyInstancedVisible(mesh as THREE.InstancedMesh, index, value)
-      }
-    }
-  }
-
-  /**
-   * @param index index of the merged mesh instance
-   * @returns inclusive first index of the index buffer related to given merged mesh index
-   */
-  private getMergedMeshStart (mesh: THREE.Mesh, index: number) {
-    return mesh.userData.submeshes[index]
-  }
-
-  /**
-   * @param index index of the merged mesh instance
-   * @returns return the last+1 index of the index buffer related to given merged mesh index
-   */
-  private getMergedMeshEnd (mesh: THREE.Mesh, index: number) {
-    return index + 1 < mesh.userData.submeshes.length
-      ? mesh.userData.submeshes[index + 1]
-      : mesh.geometry.index!.count
-  }
-
-  /**
-   * Writes new color to the appropriate section of merged mesh color buffer.
-   * @param index index of the merged mesh instance
-   * @param color rgb representation of the color to apply
-   */
-  private applyMergedVisible (mesh: THREE.Mesh, index: number, show: boolean) {
-    const positions = mesh.geometry.getAttribute('position')
-    const attribute =
-      mesh.geometry.getAttribute('ignoreVertex') ??
-      new Float32BufferAttribute(new Float32Array(positions.count), 1)
-    mesh.geometry.setAttribute('ignoreVertex', attribute)
-
-    const start = this.getMergedMeshStart(mesh, index)
-    const end = this.getMergedMeshEnd(mesh, index)
-    const indices = mesh.geometry.index!
-
-    for (let i = start; i < end; i++) {
-      const v = indices.getX(i)
-      attribute.setX(v, show ? 0 : 1)
-    }
-    attribute.needsUpdate = true
-  }
-
-  /**
-   * Adds an ignoreInstance buffer to the instanced mesh and sets values to 1 to hide instances
-   * @param index index of the instanced instance
-   */
-  private applyInstancedVisible (
-    mesh: THREE.InstancedMesh,
-    index: number,
-    visible: boolean
-  ) {
-    let attribute = mesh.geometry.getAttribute('ignoreInstance')
-    if (!attribute) {
-      attribute = new InstancedBufferAttribute(new Float32Array(mesh.count), 1)
-      mesh.geometry.setAttribute('ignoreInstance', attribute)
-    }
-
-    attribute.setX(index, visible ? 0 : 1)
-    attribute.needsUpdate = true
-  }
-
-  /**
-   * Writes new color to the appropriate section of merged mesh color buffer.
-   * @param index index of the merged mesh instance
-   * @param color rgb representation of the color to apply
-   */
-  private applyMergedColor (
-    mesh: THREE.Mesh,
-    index: number,
-    color: THREE.Color | undefined
-  ) {
-    if (!color) {
-      this.resetMergedColor(mesh, index)
-      return
-    }
-
-    const start = this.getMergedMeshStart(mesh, index)
-    const end = this.getMergedMeshEnd(mesh, index)
-
-    const colors = mesh.geometry.getAttribute('color')
-    const colored = this.getOrAddColoredAttribute(mesh)
-    const indices = mesh.geometry.index!
-
-    for (let i = start; i < end; i++) {
-      const v = indices.getX(i)
-      // alpha is left to its current value
-      colors.setXYZ(v, color.r, color.g, color.b)
-      colored.setX(v, 1)
-    }
-    colors.needsUpdate = true
-    colored.needsUpdate = true
-  }
-
-  /**
-   * Repopulates the color buffer of the merged mesh from original g3d data.
-   * @param index index of the merged mesh instance
-   */
-  private resetMergedColor (mesh: THREE.Mesh, index: number) {
-    if (!this.vim.document.g3d) return
-    const colors = mesh.geometry.getAttribute('color')
-    const colored = this.getOrAddColoredAttribute(mesh)
-    const indices = mesh.geometry.index!
-    let mergedIndex = this.getMergedMeshStart(mesh, index)
-
-    const instance = this.vim.scene.getInstanceFromMesh(mesh, index)
-    if (!instance) throw new Error('Could not reset original color.')
-    const g3d = this.vim.document.g3d
-    const g3dMesh = g3d.instanceMeshes[instance]
-    const subStart = g3d.getMeshSubmeshStart(g3dMesh)
-    const subEnd = g3d.getMeshSubmeshEnd(g3dMesh)
-
-    for (let sub = subStart; sub < subEnd; sub++) {
-      const start = g3d.getSubmeshIndexStart(sub)
-      const end = g3d.getSubmeshIndexEnd(sub)
-      const color = g3d.getSubmeshColor(sub)
-      for (let i = start; i < end; i++) {
-        const v = indices.getX(mergedIndex)
-        colors.setXYZ(v, color[0], color[1], color[2])
-        colored.setX(v, 0)
-        mergedIndex++
-      }
-    }
-    colors.needsUpdate = true
-    colored.needsUpdate = true
-  }
-
-  /**
-   * Adds an instanceColor buffer to the instanced mesh and sets new color for given instance
-   * @param index index of the instanced instance
-   * @param color rgb representation of the color to apply
-   */
-  private applyInstancedColor (
-    mesh: THREE.InstancedMesh,
-    index: number,
-    color: THREE.Color | undefined
-  ) {
-    const colors = this.getOrAddInstanceColorAttribute(mesh)
-    const colored = this.getOrAddColoredAttribute(mesh)
-    if (color) {
-      // Set instance to use instance color provided
-      colors.setXYZ(index, color.r, color.g, color.b)
-      colored.setX(index, 1)
-    } else {
-      // Revert to vertex color
-      colored.setX(index, 0)
-    }
-
-    // Set attributes dirty
-    colored.needsUpdate = true
-    colors.needsUpdate = true
-  }
-
-  private getOrAddInstanceColorAttribute (mesh: THREE.InstancedMesh) {
-    if (mesh.instanceColor) return mesh.instanceColor
-    const count = mesh.instanceMatrix.count
-    // Add color instance attribute
-    const colors = new Float32Array(count * 3)
-    const attribute = new THREE.InstancedBufferAttribute(colors, 3)
-    mesh.instanceColor = attribute
-    return attribute
-  }
-
-  private getOrAddColoredAttribute (mesh: THREE.Mesh) {
-    const colored = mesh.geometry.getAttribute('colored')
-    if (colored) {
-      return colored
-    }
-
-    const count =
-      mesh instanceof InstancedMesh
-        ? mesh.instanceMatrix.count
-        : mesh.geometry.getAttribute('position').count
-
-    const array = new Float32Array(count)
-    const attribute =
-      mesh instanceof InstancedMesh
-        ? new THREE.InstancedBufferAttribute(array, 1)
-        : new BufferAttribute(array, 1)
-
-    // Add custom colored instance attribute
-    mesh.geometry.setAttribute('colored', attribute)
-
-    return attribute
   }
 }
