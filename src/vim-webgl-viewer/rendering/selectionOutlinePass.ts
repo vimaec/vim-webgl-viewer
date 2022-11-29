@@ -4,42 +4,52 @@ import { Pass, FullScreenQuad } from 'three/examples/jsm/postprocessing/Pass.js'
 // Follows the structure of
 // https://github.com/mrdoob/three.js/blob/master/examples/jsm/postprocessing/OutlinePass.js
 // Based on https://github.com/OmarShehata/webgl-outlines/blob/cf81030d6f2bc20e6113fbf6cfd29170064dce48/threejs/src/CustomOutlinePass.js
+
 export class SelectionOutlinePass extends Pass {
-  renderScene: THREE.Scene
-  renderCamera: THREE.PerspectiveCamera
-  resolution: THREE.Vector2
-  fsQuad: FullScreenQuad
-  uniforms: { [uniform: string]: THREE.IUniform<any> }
+  private _camera: THREE.PerspectiveCamera | THREE.OrthographicCamera
+  private _resolution: THREE.Vector2
+  private _fsQuad: FullScreenQuad
+  private _uniforms: { [uniform: string]: THREE.IUniform<any> }
 
   constructor (
     resolution: THREE.Vector2,
-    scene: THREE.Scene,
-    camera: THREE.PerspectiveCamera
+    camera: THREE.PerspectiveCamera | THREE.OrthographicCamera,
+    sceneTexture: THREE.Texture
   ) {
     super()
 
-    this.renderScene = scene
-    this.renderCamera = camera
-    this.resolution = new THREE.Vector2(resolution.x, resolution.y)
+    this._camera = camera
+    this._resolution = new THREE.Vector2(resolution.x, resolution.y)
 
-    this.fsQuad = new FullScreenQuad(null)
+    this._fsQuad = new FullScreenQuad(null)
     const mat = this.createOutlinePostProcessMaterial()
-    this.fsQuad.material = mat
-    this.uniforms = mat.uniforms
+    this._fsQuad.material = mat
+    this._uniforms = mat.uniforms
+    this._uniforms.sceneColorBuffer.value = sceneTexture
   }
 
   dispose () {
-    this.fsQuad.dispose()
+    this._fsQuad.dispose()
+  }
+
+  get camera () {
+    return this._camera
+  }
+
+  set camera (value: THREE.PerspectiveCamera | THREE.OrthographicCamera) {
+    this._uniforms.cameraNear.value = value.near
+    this._uniforms.cameraFar.value = value.far
+    this._camera = value
   }
 
   setSize (width, height) {
-    this.resolution.set(width, height)
+    this._resolution.set(width, height)
 
-    this.uniforms.screenSize.value.set(
-      this.resolution.x,
-      this.resolution.y,
-      1 / this.resolution.x,
-      1 / this.resolution.y
+    this._uniforms.screenSize.value.set(
+      this._resolution.x,
+      this._resolution.y,
+      1 / this._resolution.x,
+      1 / this._resolution.y
     )
   }
 
@@ -52,7 +62,7 @@ export class SelectionOutlinePass extends Pass {
     // because we need to read from it in the subsequent passes.
     const depthBufferValue = writeBuffer.depthBuffer
     writeBuffer.depthBuffer = false
-    this.uniforms.depthBuffer.value = readBuffer.depthTexture
+    this._uniforms.depthBuffer.value = readBuffer.depthTexture
 
     // 2. Draw the outlines using the depth texture and normal texture
     // and combine it with the scene color
@@ -61,10 +71,10 @@ export class SelectionOutlinePass extends Pass {
       // So we should render to the screen by setting target null
       // Otherwise, just render into the writeBuffer that the next effect will use as its read buffer.
       renderer.setRenderTarget(null)
-      this.fsQuad.render(renderer)
+      this._fsQuad.render(renderer)
     } else {
       renderer.setRenderTarget(writeBuffer)
-      this.fsQuad.render(renderer)
+      this._fsQuad.render(renderer)
     }
 
     // Reset the depthBuffer value so we continue writing to it in the next render.
@@ -170,14 +180,14 @@ export class SelectionOutlinePass extends Pass {
         outlineColor: { value: new THREE.Color(0xffffff) },
         // 4 scalar values packed in one uniform: depth multiplier, depth bias, and same for normals.
         multiplierParameters: { value: new THREE.Vector4(1, 1, 1, 1) },
-        cameraNear: { value: this.renderCamera.near },
-        cameraFar: { value: this.renderCamera.far },
+        cameraNear: { value: this._camera.near },
+        cameraFar: { value: this._camera.far },
         screenSize: {
           value: new THREE.Vector4(
-            this.resolution.x,
-            this.resolution.y,
-            1 / this.resolution.x,
-            1 / this.resolution.y
+            this._resolution.x,
+            this._resolution.y,
+            1 / this._resolution.x,
+            1 / this._resolution.y
           )
         }
       },

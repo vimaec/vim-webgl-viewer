@@ -83,6 +83,9 @@ export class Renderer {
 
     this.fitViewport()
     this.viewport.onResize(() => this.fitViewport())
+    this.camera.onValueChanged.sub(
+      () => (this.selectionRenderer.camera = this.camera.camera)
+    )
   }
 
   /**

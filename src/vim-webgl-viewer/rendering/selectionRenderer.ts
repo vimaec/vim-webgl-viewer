@@ -29,13 +29,15 @@ export class SelectionRenderer {
   private _renderer: THREE.WebGLRenderer
   private _scene: RenderScene
   private _materials: VimMaterials
-  private _camera: THREE.PerspectiveCamera
+  private _camera: THREE.PerspectiveCamera | THREE.OrthographicCamera
 
   private _selectionComposer: EffectComposer
   private _sceneComposer: EffectComposer
+  private _renderPass: RenderPass
+  private _selectionRenderPass: RenderPass
 
   // Disposables
-  private _outlinePass: any
+  private _outlinePass: SelectionOutlinePass
   private _selectionTarget: THREE.WebGLRenderTarget
   private _sceneTarget: THREE.WebGLRenderTarget
   private _depthTexture: THREE.DepthTexture
@@ -50,7 +52,7 @@ export class SelectionRenderer {
     this._renderer = renderer
     this._scene = scene
     this._materials = materials
-    this._camera = camera.cameraPerspective
+    this._camera = camera.camera
 
     const size = viewport.getSize()
     this.setup(size.x, size.y)
@@ -64,7 +66,9 @@ export class SelectionRenderer {
 
     this._sceneComposer = new EffectComposer(this._renderer, this._sceneTarget)
     this._sceneComposer.renderToScreen = false
-    this._sceneComposer.addPass(new RenderPass(this._scene.scene, this._camera))
+
+    this._renderPass = new RenderPass(this._scene.scene, this._camera)
+    this._sceneComposer.addPass(this._renderPass)
 
     // Composer for selection effect
     this._depthTexture = new THREE.DepthTexture(width, height)
@@ -78,28 +82,30 @@ export class SelectionRenderer {
     )
 
     // Render only selected objects
-    this._selectionComposer.addPass(
-      new RenderPass(this._scene.scene, this._camera, this._materials.outline)
+    this._selectionRenderPass = new RenderPass(
+      this._scene.scene,
+      this._camera,
+      this._materials.outline
     )
+    this._selectionComposer.addPass(this._selectionRenderPass)
 
     // Render higlight from selected object on top of regular scene
     this._outlinePass = new SelectionOutlinePass(
       new THREE.Vector2(width, height),
-      this._scene.scene,
-      this._camera
+      this._camera,
+      this._sceneComposer.readBuffer.texture
     )
     this._selectionComposer.addPass(this._outlinePass)
-
-    // Insert the result of scene composer into the outline composer
-    const uniforms = this._outlinePass.fsQuad.material.uniforms
-    uniforms.sceneColorBuffer.value = this._sceneComposer.readBuffer.texture
   }
 
   get camera () {
     return this._camera
   }
 
-  set camera (value: THREE.PerspectiveCamera) {
+  set camera (value: THREE.PerspectiveCamera | THREE.OrthographicCamera) {
+    this._renderPass.camera = value
+    this._selectionRenderPass.camera = value
+    this._outlinePass.camera = value
     this._camera = value
   }
 

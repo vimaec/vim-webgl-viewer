@@ -4,7 +4,7 @@
 
 import * as THREE from 'three'
 import { InputHandler } from './inputHandler'
-import { InputAction } from './raycaster'
+import { InputAction } from '../raycaster'
 
 /**
  * Manages user touch inputs.

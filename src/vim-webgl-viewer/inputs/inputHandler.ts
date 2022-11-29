@@ -2,7 +2,7 @@
  * @module viw-webgl-viewer
  */
 
-import { Viewer } from './viewer'
+import { Viewer } from '../viewer'
 
 export class InputHandler {
   protected _viewer: Viewer
