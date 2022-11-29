@@ -63,6 +63,35 @@ export class VimMaterials implements IMaterialLibrary {
     this.wireframe.opacity = opacity
   }
 
+  applySectionSettings (
+    strokeWidth: number,
+    strokeFalloff: number,
+    strokeColor: THREE.Color
+  ) {
+    // Update user data for compilation
+    this.opaque.userData.strokeWidth = strokeWidth
+    this.opaque.userData.strokeFalloff = strokeFalloff
+    this.opaque.userData.strokeColor = strokeColor
+
+    this.transparent.userData.strokeWidth = strokeWidth
+    this.transparent.userData.strokeFalloff = strokeFalloff
+    this.transparent.userData.strokeColor = strokeColor
+
+    // Update uniforms
+    applySectionUniforms(
+      this.opaque.userData.shader,
+      strokeWidth,
+      strokeFalloff,
+      strokeColor
+    )
+    applySectionUniforms(
+      this.transparent.userData.shader,
+      strokeWidth,
+      strokeFalloff,
+      strokeColor
+    )
+  }
+
   /** dispose all materials. */
   dispose () {
     this.opaque.dispose()
@@ -136,6 +165,29 @@ export function createFocus () {
   })
   return material
 }
+
+function applySectionUniforms (
+  shader: THREE.Shader,
+  strokeWidth: number,
+  strokeFalloff: number,
+  strokeColor: THREE.Color
+) {
+  if (!shader) return
+  if (
+    shader.uniforms.sectionWidth &&
+    shader.uniforms.sectionFalloff &&
+    shader.uniforms.sectionColor
+  ) {
+    shader.uniforms.sectionWidth.value = strokeWidth
+    shader.uniforms.sectionFalloff.value = strokeFalloff
+    shader.uniforms.sectionColor.value = strokeColor
+  } else {
+    shader.uniforms.sectionWidth = { value: strokeWidth }
+    shader.uniforms.sectionFalloff = { value: strokeFalloff }
+    shader.uniforms.sectionColor = { value: strokeColor }
+  }
+}
+
 /**
  * Patches phong shader to be able to control when lighting should be applied to resulting color.
  * Instanced meshes ignore light when InstanceColor is defined
@@ -144,6 +196,12 @@ export function createFocus () {
  */
 export function patchBaseMaterial (material: THREE.Material) {
   material.onBeforeCompile = (shader) => {
+    applySectionUniforms(
+      shader,
+      material.userData.strokeWidth,
+      material.userData.strokeFalloff,
+      material.userData.strokeColor
+    )
     material.userData.shader = shader
     shader.vertexShader = shader.vertexShader
       // VERTEX DECLARATIONS
@@ -217,6 +275,9 @@ export function patchBaseMaterial (material: THREE.Material) {
         #include <clipping_planes_pars_fragment>
         varying float vIgnore;
         varying float vColored;
+        uniform float sectionWidth;
+        uniform float sectionFalloff;
+        uniform vec3 sectionColor;
         `
       )
       // FRAGMENT IMPLEMENTATION
@@ -232,6 +293,33 @@ export function patchBaseMaterial (material: THREE.Material) {
           // vColored == 0 -> Phong Color 
           float d = length(outgoingLight);
           gl_FragColor = vec4(vColored * vColor.xyz * d + (1.0f - vColored) * outgoingLight.xyz, diffuseColor.a);
+
+
+          // STROKES WHERE GEOMETRY INTERSECTS CLIPPING PLANE
+          #if NUM_CLIPPING_PLANES > 0
+            vec4 strokePlane;
+            float strokeDot;
+            float thick = pow(vFragDepth,sectionFalloff) * sectionWidth;
+            #pragma unroll_loop_start
+            for ( int i = 0; i < UNION_CLIPPING_PLANES; i ++ ) {
+              strokePlane = clippingPlanes[ i ];
+              strokeDot = dot(vClipPosition, strokePlane.xyz);
+              if (strokeDot > strokePlane.w) discard;
+              if ((strokePlane.w - strokeDot) < thick) {
+                float strength = (strokePlane.w - strokeDot) / thick;
+
+                gl_FragColor = vec4(
+                  sectionColor.x + (gl_FragColor.x - sectionColor.x) * strength,
+                  sectionColor.y + (gl_FragColor.y - sectionColor.y) * strength,
+                  sectionColor.z + (gl_FragColor.z - sectionColor.z) * strength,
+                  1.0f);
+
+                return;
+              }
+            }
+            #pragma unroll_loop_end
+          #endif  
+
         `
       )
   }

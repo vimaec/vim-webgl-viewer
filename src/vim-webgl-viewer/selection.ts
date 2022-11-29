@@ -37,7 +37,7 @@ export class Selection {
 
   constructor (renderer: Renderer) {
     this._renderer = renderer
-    this._focusMaterial = renderer.materials.focus.clone()
+    this._focusMaterial = renderer.materials.focus
   }
 
   /**

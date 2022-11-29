@@ -73,7 +73,9 @@ export class DefaultInputScheme implements InputScheme {
   }
 
   onIdleAction (hit: InputAction): void {
-    this._viewer.selection.focus(hit?.object)
+    if (!this._viewer.sectionBox.interactive) {
+      this._viewer.selection.focus(hit?.object)
+    }
   }
 
   onKeyAction (key: number): boolean {
