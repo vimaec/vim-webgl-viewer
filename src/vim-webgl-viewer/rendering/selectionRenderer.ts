@@ -61,7 +61,9 @@ export class SelectionRenderer {
 
   setup (width: number, height: number) {
     // Composer for regular scene rendering
+    // 4 samples provides default browser antialiasing
     this._sceneTarget = new THREE.WebGLRenderTarget(width, height)
+    this._sceneTarget.samples = 4
 
     this._sceneComposer = new EffectComposer(this._renderer, this._sceneTarget)
     this._sceneComposer.renderToScreen = false
@@ -98,7 +100,7 @@ export class SelectionRenderer {
     // Lastly a antialiasing pass to replace browser AA.
     this._aaPass = new ShaderPass(FXAAShader)
     this._aaPass.uniforms.resolution.value.set(1 / width, 1 / height)
-    this._selectionComposer.addPass(this._aaPass)
+    // this._selectionComposer.addPass(this._aaPass)
   }
 
   get camera () {
