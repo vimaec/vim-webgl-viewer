@@ -31,7 +31,7 @@
     "declarations": "tsc --declaration --emitDeclarationOnly --outdir ./dist/types"
   },
   "devDependencies": {
-    "@types/three": "^0.133.0",
+    "@types/three": "^0.146.0",
     "@typescript-eslint/eslint-plugin": "^4.33.0",
     "@typescript-eslint/parser": "^4.33.0",
     "eslint": "^7.32.0",
