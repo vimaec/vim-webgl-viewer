@@ -3,11 +3,11 @@
  */
 
 import * as THREE from 'three'
-import { Viewer } from './viewer'
+import { Viewer } from '../viewer'
 import { KeyboardHandler, KEYS } from './keyboard'
 import { TouchHandler } from './touch'
 import { MouseHandler } from './mouse'
-import { InputAction } from './raycaster'
+import { InputAction } from '../raycaster'
 import { SignalDispatcher } from 'ste-signals'
 import { SimpleEventDispatcher } from 'ste-simple-events'
 export { KEYS } from './keyboard'

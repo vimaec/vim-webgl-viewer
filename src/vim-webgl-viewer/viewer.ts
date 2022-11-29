@@ -7,7 +7,7 @@ import * as THREE from 'three'
 // internal
 import { ViewerSettings, ViewerOptions } from './viewerSettings'
 import { Camera, ICamera } from './camera'
-import { Input } from './input'
+import { Input } from './inputs/input'
 import { Selection } from './selection'
 import { Environment, IEnvironment } from './environment'
 import { Raycaster } from './raycaster'

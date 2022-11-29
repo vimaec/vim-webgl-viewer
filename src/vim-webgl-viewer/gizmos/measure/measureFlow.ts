@@ -2,7 +2,7 @@
  @module viw-webgl-viewer
 */
 
-import { InputScheme } from '../../input'
+import { InputScheme } from '../../inputs/input'
 import { InputAction } from '../../raycaster'
 import { Measure } from './measure'
 
