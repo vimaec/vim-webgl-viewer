@@ -5,7 +5,7 @@
 import * as THREE from 'three'
 import { Scene } from '../../vim-loader/scene'
 import { Viewport } from '../viewport'
-import { RenderScene } from '../renderScene'
+import { RenderScene } from './renderScene'
 import { VimMaterials } from '../../vim-loader/materials'
 import { ViewerSettings } from '../viewerSettings'
 import { CSS2DRenderer } from 'three/examples/jsm/renderers/CSS2DRenderer'

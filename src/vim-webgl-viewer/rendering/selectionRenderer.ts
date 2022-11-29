@@ -6,7 +6,7 @@ import { EffectComposer } from 'three/examples/jsm/postprocessing/EffectComposer
 import { RenderPass } from 'three/examples/jsm/postprocessing/RenderPass.js'
 import * as THREE from 'three'
 import { Viewport } from '../viewport'
-import { RenderScene } from '../renderScene'
+import { RenderScene } from './renderScene'
 import { VimMaterials } from '../../vim-loader/materials'
 import { SelectionOutlinePass } from './selectionOutlinePass'
 

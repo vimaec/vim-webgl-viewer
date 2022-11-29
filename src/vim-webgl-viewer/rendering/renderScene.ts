@@ -3,7 +3,7 @@
  */
 
 import * as THREE from 'three'
-import { Scene } from '../vim-loader/scene'
+import { Scene } from '../../vim-loader/scene'
 
 export class RenderScene {
   scene: THREE.Scene

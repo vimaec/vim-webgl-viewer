@@ -5,7 +5,7 @@
 import * as THREE from 'three'
 import { Object } from '../vim-loader/object'
 import { Vim } from '../vim-loader/vim'
-import { RenderScene } from './renderScene'
+import { RenderScene } from './rendering/renderScene'
 import { Viewport } from './viewport'
 import { Camera } from './camera'
 import { Renderer } from './rendering/renderer'
