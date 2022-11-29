@@ -147,8 +147,8 @@ type Lerp = 'None' | 'Position' | 'Rotation' | 'Both'
 export class Camera implements ICamera {
   camera: THREE.PerspectiveCamera | THREE.OrthographicCamera
   gizmo: CameraGizmo | undefined
-  private cameraPerspective: THREE.PerspectiveCamera
-  private cameraOrthographic: THREE.OrthographicCamera | undefined
+  cameraPerspective: THREE.PerspectiveCamera
+  cameraOrthographic: THREE.OrthographicCamera | undefined
 
   private _viewport: Viewport
   private _scene: RenderScene

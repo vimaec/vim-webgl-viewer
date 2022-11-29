@@ -4,8 +4,18 @@ import { Pass, FullScreenQuad } from 'three/examples/jsm/postprocessing/Pass.js'
 // Follows the structure of
 // https://github.com/mrdoob/three.js/blob/master/examples/jsm/postprocessing/OutlinePass.js
 // Based on https://github.com/OmarShehata/webgl-outlines/blob/cf81030d6f2bc20e6113fbf6cfd29170064dce48/threejs/src/CustomOutlinePass.js
-export class CustomOutlinePass extends Pass {
-  constructor (resolution, scene, camera) {
+export class SelectionOutlinePass extends Pass {
+  renderScene: THREE.Scene
+  renderCamera: THREE.PerspectiveCamera
+  resolution: THREE.Vector2
+  fsQuad: FullScreenQuad
+  uniforms: { [uniform: string]: THREE.IUniform<any> }
+
+  constructor (
+    resolution: THREE.Vector2,
+    scene: THREE.Scene,
+    camera: THREE.PerspectiveCamera
+  ) {
     super()
 
     this.renderScene = scene
@@ -13,7 +23,9 @@ export class CustomOutlinePass extends Pass {
     this.resolution = new THREE.Vector2(resolution.x, resolution.y)
 
     this.fsQuad = new FullScreenQuad(null)
-    this.fsQuad.material = this.createOutlinePostProcessMaterial()
+    const mat = this.createOutlinePostProcessMaterial()
+    this.fsQuad.material = mat
+    this.uniforms = mat.uniforms
   }
 
   dispose () {
@@ -23,7 +35,7 @@ export class CustomOutlinePass extends Pass {
   setSize (width, height) {
     this.resolution.set(width, height)
 
-    this.fsQuad.material.uniforms.screenSize.value.set(
+    this.uniforms.screenSize.value.set(
       this.resolution.x,
       this.resolution.y,
       1 / this.resolution.x,
@@ -31,14 +43,16 @@ export class CustomOutlinePass extends Pass {
     )
   }
 
-  render (renderer, writeBuffer, readBuffer) {
+  render (
+    renderer: THREE.WebGLRenderer,
+    writeBuffer: THREE.WebGLRenderTarget,
+    readBuffer: THREE.WebGLRenderTarget
+  ) {
     // Turn off writing to the depth buffer
     // because we need to read from it in the subsequent passes.
     const depthBufferValue = writeBuffer.depthBuffer
     writeBuffer.depthBuffer = false
-
-    this.fsQuad.material.uniforms.depthBuffer.value = readBuffer.depthTexture
-    // this.fsQuad.material.uniforms.sceneColorBuffer.value = readBuffer.texture
+    this.uniforms.depthBuffer.value = readBuffer.depthTexture
 
     // 2. Draw the outlines using the depth texture and normal texture
     // and combine it with the scene color
@@ -151,8 +165,8 @@ export class CustomOutlinePass extends Pass {
     return new THREE.ShaderMaterial({
       uniforms: {
         debugVisualize: { value: 0 },
-        sceneColorBuffer: {},
-        depthBuffer: {},
+        sceneColorBuffer: { value: null },
+        depthBuffer: { value: null },
         outlineColor: { value: new THREE.Color(0xffffff) },
         // 4 scalar values packed in one uniform: depth multiplier, depth bias, and same for normals.
         multiplierParameters: { value: new THREE.Vector4(1, 1, 1, 1) },

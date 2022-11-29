@@ -4,13 +4,11 @@
 
 import { EffectComposer } from 'three/examples/jsm/postprocessing/EffectComposer.js'
 import { RenderPass } from 'three/examples/jsm/postprocessing/RenderPass.js'
-import { ShaderPass } from 'three/examples/jsm/postprocessing/ShaderPass.js'
-import { FXAAShader } from 'three/examples/jsm/shaders/FXAAShader.js'
 import * as THREE from 'three'
 import { Viewport } from '../viewport'
 import { RenderScene } from '../renderScene'
 import { VimMaterials } from '../../vim-loader/materials'
-import { CustomOutlinePass } from '../selectionOutlinePass'
+import { SelectionOutlinePass } from './selectionOutlinePass'
 
 import { Camera } from '../camera'
 
@@ -19,9 +17,9 @@ import { Camera } from '../camera'
   | Regular Scene | -----------
   *---------------*            |
                                |
-  *-----------------*     *----------*     *--------------*     *--------*
-  |Selected Objects | --- | Outlines | --- | Antialiasing | --- | Screen |
-  *-----------------*     *----------*     *--------------*     *--------*
+  *-----------------*     *----------*      *--------*
+  |Selected Objects | --- | Outlines | ---  | Screen |
+  *-----------------*     *----------*      *--------*
 */
 
 /**
@@ -31,11 +29,10 @@ export class SelectionRenderer {
   private _renderer: THREE.WebGLRenderer
   private _scene: RenderScene
   private _materials: VimMaterials
-  private _camera: THREE.Camera
+  private _camera: THREE.PerspectiveCamera
 
   private _selectionComposer: EffectComposer
   private _sceneComposer: EffectComposer
-  private _aaPass: ShaderPass
 
   // Disposables
   private _outlinePass: any
@@ -53,7 +50,7 @@ export class SelectionRenderer {
     this._renderer = renderer
     this._scene = scene
     this._materials = materials
-    this._camera = camera.camera
+    this._camera = camera.cameraPerspective
 
     const size = viewport.getSize()
     this.setup(size.x, size.y)
@@ -86,7 +83,7 @@ export class SelectionRenderer {
     )
 
     // Render higlight from selected object on top of regular scene
-    this._outlinePass = new CustomOutlinePass(
+    this._outlinePass = new SelectionOutlinePass(
       new THREE.Vector2(width, height),
       this._scene.scene,
       this._camera
@@ -96,25 +93,19 @@ export class SelectionRenderer {
     // Insert the result of scene composer into the outline composer
     const uniforms = this._outlinePass.fsQuad.material.uniforms
     uniforms.sceneColorBuffer.value = this._sceneComposer.readBuffer.texture
-
-    // Lastly a antialiasing pass to replace browser AA.
-    this._aaPass = new ShaderPass(FXAAShader)
-    this._aaPass.uniforms.resolution.value.set(1 / width, 1 / height)
-    // this._selectionComposer.addPass(this._aaPass)
   }
 
   get camera () {
     return this._camera
   }
 
-  set camera (value: THREE.Camera) {
+  set camera (value: THREE.PerspectiveCamera) {
     this._camera = value
   }
 
   setSize (width: number, height: number) {
     this._sceneComposer.setSize(width, height)
     this._selectionComposer.setSize(width, height)
-    this._aaPass.uniforms.resolution.value.set(1 / width, 1 / height)
   }
 
   render () {

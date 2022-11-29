@@ -15,7 +15,6 @@ import { Vim } from '../../vim'
 import { Camera } from '../camera'
 import { RenderingSection } from './renderingSection'
 import { SelectionRenderer } from './selectionRenderer'
-import { StandardRenderer } from './standardRenderer'
 
 /**
  * Manages how vim objects are added and removed from the THREE.Scene to be rendered
@@ -30,7 +29,6 @@ export class Renderer {
 
   section: RenderingSection
   selectionRenderer: SelectionRenderer
-  standardRenderer: StandardRenderer
 
   private _onVisibilityChanged = new SimpleEventDispatcher<Vim>()
   get onVisibilityChanged () {
@@ -81,13 +79,6 @@ export class Renderer {
       camera
     )
 
-    this.standardRenderer = new StandardRenderer(
-      this.renderer,
-      scene,
-      viewport,
-      camera
-    )
-
     this.section = new RenderingSection(this.renderer, this.materials)
 
     this.fitViewport()
@@ -103,7 +94,6 @@ export class Renderer {
     this.renderer.clear()
     this.renderer.forceContextLoss()
     this.renderer.dispose()
-    this.standardRenderer.dispose()
     this.selectionRenderer.dispose()
   }
 
@@ -119,8 +109,11 @@ export class Renderer {
    * Render what is in camera.
    */
   render (camera: THREE.Camera, hasSelection: boolean) {
-    const r = hasSelection ? this.selectionRenderer : this.standardRenderer
-    r.render()
+    if (hasSelection) {
+      this.selectionRenderer.render()
+    } else {
+      this.renderer.render(this.scene.scene, camera)
+    }
 
     if (this.renderText) {
       this.textRenderer.render(this.scene.scene, camera)
@@ -170,7 +163,6 @@ export class Renderer {
     const size = this.viewport.getParentSize()
     this.renderer.setPixelRatio(window.devicePixelRatio)
     this.renderer.setSize(size.x, size.y)
-    this.standardRenderer.setSize(size.x, size.y)
     this.selectionRenderer.setSize(size.x, size.y)
     this.textRenderer.setSize(size.x, size.y)
   }
