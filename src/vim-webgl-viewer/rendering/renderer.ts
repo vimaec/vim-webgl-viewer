@@ -62,7 +62,7 @@ export class Renderer {
 
     this.renderer = new THREE.WebGLRenderer({
       canvas: viewport.canvas,
-      antialias: false,
+      antialias: true,
       precision: 'highp', // 'lowp', 'mediump', 'highp'
       alpha: true,
       stencil: false,

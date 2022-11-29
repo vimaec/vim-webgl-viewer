@@ -130,11 +130,8 @@ export class CustomOutlinePass extends Pass {
       float outline = depthDiff;
 
       // Combine outline with scene color.
-      vec4 outlineColor = vec4(outlineColor, 1.0);
-      vec4 black = vec4(0.0f,0.0f,0.0f,0.0f);
-      //gl_FragColor = vec4(outline,outline,outline, 1.0f);
+      vec4 outlineColor = vec4(outlineColor, 1.0f);
       gl_FragColor = vec4(mix(sceneColor, outlineColor, outline));
-      //gl_FragColor = sceneColor;
 
       // For debug visualization of the different inputs to this shader.
       if (debugVisualize == 1) {
