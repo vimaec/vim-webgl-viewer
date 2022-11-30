@@ -64,7 +64,7 @@ You can also [try it out in a JsFiddle](https://jsfiddle.net/mavimaec/ou174Lz9/)
 
 # Folder Structure
 
-- `docs` - this is the root folder for the GitHub page at `https://vimaec.github.io/vim-webgl-viewer`. The `docs\index.html` file is meant demo the latest stable patch release, while the `docs\index-dev.html` Is meant to test the latest dev release.
+- `docs` - this is the root folder for the GitHub page at `https://vimaec.github.io/vim-webgl-viewer`. The `docs\index.html` file is meant to demo the latest stable patch release, while the `docs\index-dev.html` Is meant to test the latest dev release.
 - `src` - contains the TypeScript source code for the viewer and loader.
 - `dist` - created by running the build script for creating a
   distributable package. It contains five items after running the `build` script:
@@ -135,15 +135,16 @@ The distributable files do not contain the underlying source for [Three.JS](http
 **+:** Increase camera speed  
 **-:** Decrease camera speed
 
-**F8:** Toggle orbit mode  
-**Home:** Look at model  
+**Space bar** Toggle orbit mode  
+**Home:** Frame model  
 **Escape:** Clear selection  
-**Z:** Look at selection
+**F:** Frame selection
 
 ### Mouse
 
-**Hold left click + Move mouse:** Tilt/Pan camera  
-**Hold right click + Move mouse:** Truck/Pedestal camera  
+**Hold left click + Move mouse:** Rotate camera in current mode  
+**Hold right click + Move mouse:** Pan/Tilt camera
+**Hold middle click + Move mouse:** Truck/Pedastal camera
 **Mouse wheel:** Dolly Camera  
 **Left click:** Select object  
 **Ctrl + Mouse wheel:** Increase/Decrease camera speed
@@ -185,10 +186,10 @@ viewer.camera.frame(object)
 const vim = viewer.vims[0] // or keep vim reference from load
 const object = vim.getObjectsFromElementId(ELEMENT_ID)[0]
 const wireframe = object.createWireframe()
-this.viewer.renderer.add(wireframe)
+viewer.renderer.add(wireframe)
 
 // To remove hightlight
-// this.viewer.renderer.removeObject(wireframe)
+// viewer.renderer.removeObject(wireframe)
 // wireframe.geometry.dispose()
 ```
 
