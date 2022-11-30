@@ -2,8 +2,14 @@
  @module viw-webgl-viewer
 */
 
+/**
+ * Different styles of measure display.
+ */
 export type MeasureStyle = 'all' | 'Dist' | 'X' | 'Y' | 'Z'
 
+/**
+ * Structure of the html element used for measure.
+ */
 export type MeasureElement = {
   div: HTMLElement
   value: HTMLTableCellElement | undefined

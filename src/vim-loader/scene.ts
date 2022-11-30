@@ -161,6 +161,9 @@ export class Scene {
     }
   }
 
+  /**
+   * Disposes of all resources.
+   */
   dispose () {
     for (let i = 0; i < this.meshes.length; i++) {
       this.meshes[i].geometry.dispose()

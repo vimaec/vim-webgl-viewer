@@ -23,6 +23,7 @@ export interface IMaterialLibrary {
   get wireframe(): THREE.Material
   /**
    * Material used for isolation mode to show objects in context.
+   * Hidden objects will appear as transparent instead.
    */
   get isolation(): THREE.Material
 
@@ -30,6 +31,10 @@ export interface IMaterialLibrary {
    * Material used for focus highlight.
    */
   get focus(): THREE.Material
+
+  /**
+   * Dispose of all materials.
+   */
   dispose(): void
 }
 
@@ -57,12 +62,17 @@ export class VimMaterials implements IMaterialLibrary {
     this.focus = focus ?? createFocus()
   }
 
-  /** Apply settings to wireframe material */
+  /**
+   * Apply settings to wireframe material
+   */
   applyWireframeSettings (color: THREE.Color, opacity: number) {
     this.wireframe.color = color
     this.wireframe.opacity = opacity
   }
 
+  /**
+   * Apply settings to section effect
+   */
   applySectionSettings (
     strokeWidth: number,
     strokeFalloff: number,

@@ -4,6 +4,10 @@
 
 import { Viewer } from './viewer'
 
+/**
+ * Base class for various input handlers.
+ * It provides convenience to register to and unregister from events.
+ */
 export class InputHandler {
   protected _viewer: Viewer
   protected _unregisters: Function[] = []

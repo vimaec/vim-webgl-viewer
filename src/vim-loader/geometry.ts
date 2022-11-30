@@ -370,6 +370,9 @@ export namespace Geometry {
     }
   }
 
+  /**
+   * Holds data of all merged meshes.
+   */
   class MergeResult {
     geometry: THREE.BufferGeometry
     instances: number[]

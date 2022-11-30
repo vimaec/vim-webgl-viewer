@@ -5,6 +5,9 @@
 import * as THREE from 'three'
 import { InputHandler } from './inputHandler'
 
+/**
+ * Key values for viewer
+ */
 export const KEYS = {
   KEY_0: 48,
   KEY_1: 49,

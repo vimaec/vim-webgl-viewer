@@ -12,6 +12,9 @@ import { CSS2DRenderer } from 'three/examples/jsm/renderers/CSS2DRenderer'
 import { SimpleEventDispatcher } from 'ste-simple-events'
 import { Vim } from '../vim'
 
+/**
+ * Handles Section feature for all materials of the renderer
+ */
 class Section {
   private _renderer: THREE.WebGLRenderer
 
@@ -43,6 +46,9 @@ class Section {
     this._materials = materials
   }
 
+  /**
+   * Updates the section parameters to the given box.
+   */
   fitBox (box: THREE.Box3) {
     this.maxX.constant = box.max.x
     this.minX.constant = -box.min.x
@@ -53,6 +59,9 @@ class Section {
     this.box.copy(box)
   }
 
+  /**
+   * When true, all materials will be rendered with plane clipping
+   */
   set active (value: boolean) {
     // Has to be null and not undefined because some three code depends on it.
     const p = value ? this.planes : null
@@ -82,6 +91,9 @@ export class Renderer {
   materials: VimMaterials
 
   private _onVisibilityChanged = new SimpleEventDispatcher<Vim>()
+  /**
+   * Event called at the end of frame for each vim if the visibility of some object changed.
+   */
   get onVisibilityChanged () {
     return this._onVisibilityChanged.asEvent()
   }
@@ -92,6 +104,9 @@ export class Renderer {
     return this._renderText ?? false
   }
 
+  /**
+   * Enables/Disables text rendering.
+   */
   set renderText (value: boolean) {
     if (value === this._renderText) return
     this._renderText = value

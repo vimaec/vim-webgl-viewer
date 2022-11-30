@@ -102,7 +102,7 @@ export class Selection {
     }
   }
 
-  focusTransition () {
+  private focusTransition () {
     const t = (new Date().getTime() - this._focusStart) / 90
     this._focusMaterial.opacity = t * 0.15
     if (t < 1) {

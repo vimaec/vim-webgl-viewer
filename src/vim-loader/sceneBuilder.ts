@@ -7,6 +7,9 @@ import { Transparency } from './geometry'
 import { MeshBuilder } from './mesh'
 import { Scene } from './scene'
 
+/**
+ * Creates meshes and returns them as a scene from a g3d.
+ */
 export class SceneBuilder {
   readonly meshBuilder: MeshBuilder
 

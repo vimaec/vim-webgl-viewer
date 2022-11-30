@@ -167,6 +167,9 @@ export class Viewer {
     this.animate()
   }
 
+  /**
+   * Disposes all resources.
+   */
   dispose () {
     if (this._disposed) return
     this._environment.dispose()

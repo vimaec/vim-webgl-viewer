@@ -24,6 +24,9 @@ export class Loader {
     this.sceneBuilder = new SceneBuilder(this.meshBuilder)
   }
 
+  /**
+   * Loads and displays a vim file from its bfast representation.
+   */
   async load (bfast: BFast, settings: VimSettings) {
     let document: IDocument | undefined
 

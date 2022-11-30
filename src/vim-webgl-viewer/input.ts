@@ -12,6 +12,7 @@ import { SignalDispatcher } from 'ste-signals'
 import { SimpleEventDispatcher } from 'ste-simple-events'
 export { KEYS } from './keyboard'
 
+/** Pointers mode supported by the viewer */
 export type PointerMode = 'orbit' | 'look' | 'pan' | 'zoom' | 'rect'
 
 /**

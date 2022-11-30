@@ -41,6 +41,9 @@ export class Object {
     return this.vim.scene.builder.meshBuilder
   }
 
+  /**
+   * Returns true if this object has geometry
+   */
   get hasMesh () {
     return this._meshes?.length!!
   }
@@ -82,6 +85,9 @@ export class Object {
     return await this.vim.document.getElementParameters(this.element)
   }
 
+  /**
+   * Returns the element id of the element associated with this object
+   */
   get elementId () {
     return this.vim.document.getElementId(this.element)
   }

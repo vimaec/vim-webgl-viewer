@@ -114,7 +114,7 @@ export interface ICamera {
   reset(): void
 
   /**
-   * Returns the world height of a plane perpendicular to camera intersecting given point.
+   * Returns the world height of the camera frustrum at given point
    */
   heightAt(point: THREE.Vector3): number
 
@@ -207,6 +207,9 @@ export class Camera implements ICamera {
     this.reset()
   }
 
+  /**
+   * Returns the world height of the camera frustrum at given point
+   */
   heightAt (point: THREE.Vector3) {
     if (this.orthographic && this.cameraOrthographic) {
       return this.cameraOrthographic.top - this.cameraOrthographic.bottom

@@ -185,6 +185,9 @@ export class Raycaster {
 }
 type ActionModifier = 'none' | 'shift' | 'ctrl'
 
+/**
+ * Represents an input action with its position and modifiers.
+ */
 export class InputAction {
   readonly position: THREE.Vector2
   readonly modifier: ActionModifier
@@ -204,12 +207,19 @@ export class InputAction {
   }
 
   private _raycast: RaycastResult | undefined
+
+  /**
+   * Raycast at current point. Can be computationally expensive. Lazy evaluation for performance.
+   */
   get raycast () {
     return (
       this._raycast ?? (this._raycast = this._raycaster.raycast2(this.position))
     )
   }
 
+  /**
+   * Returns the object at current point. This can cause a computationally expensive raycast evaluation.
+   */
   get object () {
     return this.raycast.object
   }
