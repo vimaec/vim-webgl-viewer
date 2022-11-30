@@ -5,7 +5,6 @@
 import * as THREE from 'three'
 import { Vim } from '../vim'
 import { Object } from '../vim-loader/object'
-import { Renderer } from './rendering/renderer'
 import { SignalDispatcher } from 'ste-signals'
 
 /**
@@ -13,18 +12,12 @@ import { SignalDispatcher } from 'ste-signals'
  * Supports multi-selection as long as all objects are from the same vim.
  */
 export class Selection {
-  // Dependencies
-  private _renderer: Renderer
-
   // State
   private _objects = new Set<Object>()
+  private _focusedObject: Object | undefined
   private _vim: Vim | undefined
 
   // Disposable State
-  private _focusMesh: THREE.Mesh | undefined
-  private _focusMaterial: THREE.Material
-  private _focusStart: number = 0
-
   private _onValueChanged = new SignalDispatcher()
 
   /**
@@ -32,11 +25,6 @@ export class Selection {
    */
   get onValueChanged () {
     return this._onValueChanged.asEvent()
-  }
-
-  constructor (renderer: Renderer) {
-    this._renderer = renderer
-    this._focusMaterial = renderer.materials.focus
   }
 
   /**
@@ -84,29 +72,11 @@ export class Selection {
    * Pass undefined to remove highlight
    */
   focus (object: Object | undefined) {
-    if (this._focusMesh) {
-      this._focusMesh.geometry.dispose()
-      this._renderer.remove(this._focusMesh)
-    }
+    if (this._focusedObject === object) return
 
-    this._focusMaterial.opacity = 0
-    this._focusStart = new Date().getTime()
-
-    if (!object) return
-    const geometry = object.createGeometry()
-    if (geometry) {
-      this._focusMesh = new THREE.Mesh(geometry, this._focusMaterial)
-      this._renderer.add(this._focusMesh)
-      this.focusTransition()
-    }
-  }
-
-  focusTransition () {
-    const t = (new Date().getTime() - this._focusStart) / 90
-    this._focusMaterial.opacity = t * 0.15
-    if (t < 1) {
-      requestAnimationFrame(() => this.focusTransition())
-    }
+    if (this._focusedObject) this._focusedObject.focused = false
+    if (object) object.focused = true
+    this._focusedObject = object
   }
 
   /**

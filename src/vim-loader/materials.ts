@@ -258,6 +258,13 @@ export function patchBaseMaterial (material: THREE.Material) {
         // Passed to fragment to discard them
         varying float vIgnore;
 
+        // FOCUS
+
+        // Instance or vertex attribute to higlight objects
+        // Used as instance attribute for instanced mesh and as vertex attribute for merged meshes. 
+        attribute float focused; 
+
+        varying float vHighlight;
         `
       )
       // VERTEX IMPLEMENTATION
@@ -276,6 +283,9 @@ export function patchBaseMaterial (material: THREE.Material) {
 
           // VISIBILITY
           vIgnore = ignore;
+          
+          // FOCUS
+          vHighlight = focused;
         `
       )
     // FRAGMENT DECLARATIONS
@@ -287,6 +297,8 @@ export function patchBaseMaterial (material: THREE.Material) {
         #include <clipping_planes_pars_fragment>
         varying float vIgnore;
         varying float vColored;
+        varying float vHighlight;
+
         uniform float sectionWidth;
         uniform float sectionFalloff;
         uniform vec3 sectionColor;
@@ -306,7 +318,9 @@ export function patchBaseMaterial (material: THREE.Material) {
           float d = length(outgoingLight);
           gl_FragColor = vec4(vColored * vColor.xyz * d + (1.0f - vColored) * outgoingLight.xyz, diffuseColor.a);
 
-
+          // FOCUS
+          gl_FragColor = mix(gl_FragColor, vec4(1,1,1,1), vHighlight * 0.5f);
+          
           // STROKES WHERE GEOMETRY INTERSECTS CLIPPING PLANE
           #if NUM_CLIPPING_PLANES > 0
             vec4 strokePlane;

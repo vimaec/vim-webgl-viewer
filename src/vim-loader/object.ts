@@ -22,6 +22,7 @@ export class Object {
   private selectedAttribute: ObjectAttribute<boolean>
   private visibleAttribute: ObjectAttribute<boolean>
   private coloredAttribute: ObjectAttribute<boolean>
+  private focusedAttribute: ObjectAttribute<boolean>
   private colorAttribute: ColorAttribute
 
   constructor (
@@ -49,6 +50,14 @@ export class Object {
       'ignore',
       meshes,
       (v) => (v ? 0 : 1)
+    )
+
+    this.focusedAttribute = new ObjectAttribute(
+      false,
+      'focused',
+      'focused',
+      meshes,
+      (v) => (v ? 1 : 0)
     )
 
     this.coloredAttribute = new ObjectAttribute(
@@ -80,6 +89,18 @@ export class Object {
 
   set selected (value: boolean) {
     this.selectedAttribute.apply(value)
+  }
+
+  /**
+   * Toggles focused highlight for this object.
+   * @param value true to highlight object.
+   */
+  get focused () {
+    return this.focusedAttribute.value
+  }
+
+  set focused (value: boolean) {
+    this.focusedAttribute.apply(value)
   }
 
   /**
