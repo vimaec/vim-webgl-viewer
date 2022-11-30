@@ -58,7 +58,7 @@ export class SelectionRenderer {
     this.setup(size.x, size.y)
   }
 
-  setup (width: number, height: number) {
+  private setup (width: number, height: number) {
     // Composer for regular scene rendering
     // 4 samples provides default browser antialiasing
     this._sceneTarget = new THREE.WebGLRenderTarget(width, height)
@@ -112,6 +112,30 @@ export class SelectionRenderer {
   setSize (width: number, height: number) {
     this._sceneComposer.setSize(width, height)
     this._selectionComposer.setSize(width, height)
+  }
+
+  get strokeBias () {
+    return this._outlinePass.strokeBias
+  }
+
+  set strokeBias (value: number) {
+    this._outlinePass.strokeBias = value
+  }
+
+  get strokeMultiplier () {
+    return this._outlinePass.strokeMultiplier
+  }
+
+  set strokeMultiplier (value: number) {
+    this._outlinePass.strokeMultiplier = value
+  }
+
+  get strokeColor () {
+    return this._outlinePass.color
+  }
+
+  set strokeColor (value: THREE.Color) {
+    this._outlinePass.color = value
   }
 
   render () {

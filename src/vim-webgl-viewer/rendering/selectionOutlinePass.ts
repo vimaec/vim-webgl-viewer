@@ -53,6 +53,30 @@ export class SelectionOutlinePass extends Pass {
     )
   }
 
+  get strokeBias () {
+    return this._uniforms.strokeBias.value
+  }
+
+  set strokeBias (value: number) {
+    this._uniforms.strokeBias.value = value
+  }
+
+  get strokeMultiplier () {
+    return this._uniforms.strokeMultiplier.value
+  }
+
+  set strokeMultiplier (value: number) {
+    this._uniforms.strokeMultiplier.value = value
+  }
+
+  get color () {
+    return this._uniforms.outlineColor.value
+  }
+
+  set color (value: THREE.Color) {
+    this._uniforms.outlineColor.value.set(value)
+  }
+
   render (
     renderer: THREE.WebGLRenderer,
     writeBuffer: THREE.WebGLRenderTarget,
@@ -102,7 +126,8 @@ export class SelectionOutlinePass extends Pass {
     uniform float cameraFar;
     uniform vec4 screenSize;
     uniform vec3 outlineColor;
-    uniform vec4 multiplierParameters;
+    uniform float strokeMultiplier;
+    uniform float strokeBias;
     uniform int debugVisualize;
 
     varying vec2 vUv;
@@ -143,19 +168,28 @@ export class SelectionOutlinePass extends Pass {
       depthDiff += abs(depth - getPixelDepth(0, 1));
       depthDiff += abs(depth - getPixelDepth(0, -1));
 
-      // Apply multiplier & bias to each 
-      float depthBias = multiplierParameters.x;
-      float depthMultiplier = multiplierParameters.y;
+      depthDiff += abs(depth - getPixelDepth(1, 1));
+      depthDiff += abs(depth - getPixelDepth(1, -1));
+      depthDiff += abs(depth - getPixelDepth(-1, 1));
+      depthDiff += abs(depth - getPixelDepth(-1, -1));
 
-      depthDiff = depthDiff * depthMultiplier;
+      depthDiff += abs(depth - getPixelDepth(2, 0));
+      depthDiff += abs(depth - getPixelDepth(-2, 0));
+      depthDiff += abs(depth - getPixelDepth(0, 2));
+      depthDiff += abs(depth - getPixelDepth(0, -2));
+
+      depthDiff = depthDiff  / 12.0f; 
+      
+      depthDiff = depthDiff * strokeMultiplier;
       depthDiff = saturate(depthDiff);
-      depthDiff = pow(depthDiff, depthBias);
+      depthDiff = pow(depthDiff, strokeBias);
 
       float outline = depthDiff;
 
       // Combine outline with scene color.
       vec4 outlineColor = vec4(outlineColor, 1.0f);
       gl_FragColor = vec4(mix(sceneColor, outlineColor, outline));
+      //gl_FragColor = vec4( outline,outline,outline,outline);
 
       // For debug visualization of the different inputs to this shader.
       if (debugVisualize == 1) {
@@ -179,7 +213,8 @@ export class SelectionOutlinePass extends Pass {
         depthBuffer: { value: null },
         outlineColor: { value: new THREE.Color(0xffffff) },
         // 4 scalar values packed in one uniform: depth multiplier, depth bias, and same for normals.
-        multiplierParameters: { value: new THREE.Vector4(1, 1, 1, 1) },
+        strokeMultiplier: { value: 3 },
+        strokeBias: { value: 2 },
         cameraNear: { value: this._camera.near },
         cameraFar: { value: this._camera.far },
         screenSize: {
