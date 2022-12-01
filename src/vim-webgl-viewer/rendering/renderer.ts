@@ -14,8 +14,7 @@ import { Vim } from '../../vim'
 
 import { Camera } from '../camera'
 import { RenderingSection } from './renderingSection'
-import { SelectionRenderer } from './selectionRenderer'
-import { StandardRenderer } from './standardRenderer'
+import { RenderingComposer } from './renderingComposer'
 
 /**
  * Manages how vim objects are added and removed from the THREE.Scene to be rendered
@@ -29,8 +28,7 @@ export class Renderer {
   camera: Camera
 
   section: RenderingSection
-  standardRenderer: StandardRenderer
-  selectionRenderer: SelectionRenderer
+  composer: RenderingComposer
 
   private _onVisibilityChanged = new SimpleEventDispatcher<Vim>()
   get onVisibilityChanged () {
@@ -73,7 +71,7 @@ export class Renderer {
     this.textRenderer = this.viewport.createTextRenderer()
     this.renderText = false
 
-    this.selectionRenderer = new SelectionRenderer(
+    this.composer = new RenderingComposer(
       this.renderer,
       scene,
       viewport,
@@ -86,7 +84,7 @@ export class Renderer {
     this.fitViewport()
     this.viewport.onResize(() => this.fitViewport())
     this.camera.onValueChanged.sub(
-      () => (this.selectionRenderer.camera = this.camera.camera)
+      () => (this.composer.camera = this.camera.camera)
     )
   }
 
@@ -99,7 +97,7 @@ export class Renderer {
     this.renderer.clear()
     this.renderer.forceContextLoss()
     this.renderer.dispose()
-    this.selectionRenderer.dispose()
+    this.composer.dispose()
   }
 
   /**
@@ -114,14 +112,9 @@ export class Renderer {
    * Render what is in camera.
    */
   render (camera: THREE.Camera, hasSelection: boolean) {
-    this.selectionRenderer.render()
-    /*
-    if (hasSelection) {
-      this.selectionRenderer.render()
-    } else {
-      this.renderer.render(this.scene.scene, camera)
-    }
-    */
+    this.composer.outlines = hasSelection
+    this.composer.render()
+
     if (this.renderText) {
       this.textRenderer.render(this.scene.scene, camera)
     }
@@ -170,7 +163,7 @@ export class Renderer {
     const size = this.viewport.getParentSize()
     this.renderer.setPixelRatio(window.devicePixelRatio)
     this.renderer.setSize(size.x, size.y)
-    this.selectionRenderer.setSize(size.x, size.y)
+    this.composer.setSize(size.x, size.y)
     this.textRenderer.setSize(size.x, size.y)
   }
 }

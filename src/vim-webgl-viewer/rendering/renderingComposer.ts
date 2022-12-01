@@ -8,7 +8,7 @@ import * as THREE from 'three'
 import { Viewport } from '../viewport'
 import { RenderScene } from './renderScene'
 import { VimMaterials } from '../../vim-loader/materials'
-import { SelectionOutlinePass } from './selectionOutlinePass'
+import { CopyPass, SelectionOutlinePass } from './selectionOutlinePass'
 
 import { Camera } from '../camera'
 
@@ -25,7 +25,7 @@ import { Camera } from '../camera'
 /**
  * Rendering for selection outline.
  */
-export class SelectionRenderer {
+export class RenderingComposer {
   private _renderer: THREE.WebGLRenderer
   private _scene: RenderScene
   private _materials: VimMaterials
@@ -37,6 +37,8 @@ export class SelectionRenderer {
   private _sceneComposer: EffectComposer
   private _renderPass: RenderPass
   private _selectionRenderPass: RenderPass
+  private _copyPass: CopyPass
+  private _outlines: boolean
 
   // Disposables
   private _outlinePass: SelectionOutlinePass
@@ -51,6 +53,9 @@ export class SelectionRenderer {
     materials: VimMaterials,
     camera: Camera
   ) {
+    this._samples = renderer.capabilities.isWebGL2
+      ? renderer.capabilities.maxSamples
+      : 0
     this._renderer = renderer
     this._scene = scene
     this._materials = materials
@@ -62,8 +67,11 @@ export class SelectionRenderer {
   private setup () {
     // Composer for regular scene rendering
     // 4 samples provides default browser antialiasing
-    this._sceneTarget = new THREE.WebGLRenderTarget(this._size.x, this._size.y)
-    this._sceneTarget.samples = this._samples
+    this._sceneTarget = new THREE.WebGLRenderTarget(
+      this._size.x,
+      this._size.y,
+      { samples: this._samples }
+    )
 
     this._sceneComposer = new EffectComposer(this._renderer, this._sceneTarget)
     this._sceneComposer.renderToScreen = false
@@ -81,7 +89,6 @@ export class SelectionRenderer {
         depthBuffer: true
       }
     )
-    this._sceneTarget.samples = this._samples
 
     this._selectionComposer = new EffectComposer(
       this._renderer,
@@ -94,6 +101,7 @@ export class SelectionRenderer {
       this._camera,
       this._materials.outline
     )
+
     this._selectionComposer.addPass(this._selectionRenderPass)
 
     // Render higlight from selected object on top of regular scene
@@ -103,6 +111,21 @@ export class SelectionRenderer {
       this._sceneComposer.readBuffer.texture
     )
     this._selectionComposer.addPass(this._outlinePass)
+
+    // When no outlines, just copy the scene to screen.
+    this._copyPass = new CopyPass(this._sceneComposer.readBuffer.texture)
+    this._selectionComposer.addPass(this._copyPass)
+  }
+
+  get outlines () {
+    return this._outlines
+  }
+
+  set outlines (value: boolean) {
+    this._outlines = value
+    this._selectionRenderPass.enabled = this.outlines
+    this._outlinePass.enabled = this.outlines
+    this._copyPass.enabled = !this.outlines
   }
 
   get camera () {

@@ -231,3 +231,72 @@ export class SelectionOutlinePass extends Pass {
     })
   }
 }
+
+export class CopyPass extends Pass {
+  private _fsQuad: FullScreenQuad
+  private _uniforms: { [uniform: string]: THREE.IUniform<any> }
+
+  constructor (sceneTexture: THREE.Texture) {
+    super()
+
+    this._fsQuad = new FullScreenQuad(null)
+    const mat = this.createMaterial()
+    this._fsQuad.material = mat
+    this._uniforms = mat.uniforms
+    this._uniforms.source.value = sceneTexture
+  }
+
+  dispose () {
+    this._fsQuad.dispose()
+  }
+
+  render (
+    renderer: THREE.WebGLRenderer,
+    writeBuffer: THREE.WebGLRenderTarget,
+    readBuffer: THREE.WebGLRenderTarget
+  ) {
+    // 2. Draw the outlines using the depth texture and normal texture
+    // and combine it with the scene color
+    if (this.renderToScreen) {
+      // If this is the last effect, then renderToScreen is true.
+      // So we should render to the screen by setting target null
+      // Otherwise, just render into the writeBuffer that the next effect will use as its read buffer.
+      renderer.setRenderTarget(null)
+      this._fsQuad.render(renderer)
+    } else {
+      renderer.setRenderTarget(writeBuffer)
+      this._fsQuad.render(renderer)
+    }
+  }
+
+  get vertexShader () {
+    return `
+      varying vec2 vUv;
+      void main() {
+        vUv = uv;
+        gl_Position = projectionMatrix * modelViewMatrix * vec4(position, 1.0);
+      }
+      `
+  }
+
+  get fragmentShader () {
+    return `
+    uniform sampler2D source;
+    varying vec2 vUv;
+    
+    void main() {
+      gl_FragColor = texture2D(source, vUv);
+    }
+    `
+  }
+
+  createMaterial () {
+    return new THREE.ShaderMaterial({
+      uniforms: {
+        source: { value: null }
+      },
+      vertexShader: this.vertexShader,
+      fragmentShader: this.fragmentShader
+    })
+  }
+}
