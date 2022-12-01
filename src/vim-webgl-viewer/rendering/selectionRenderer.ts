@@ -30,6 +30,7 @@ export class SelectionRenderer {
   private _scene: RenderScene
   private _materials: VimMaterials
   private _camera: THREE.PerspectiveCamera | THREE.OrthographicCamera
+  private _samples: number = 4
 
   private _selectionComposer: EffectComposer
   private _sceneComposer: EffectComposer
@@ -62,7 +63,7 @@ export class SelectionRenderer {
     // Composer for regular scene rendering
     // 4 samples provides default browser antialiasing
     this._sceneTarget = new THREE.WebGLRenderTarget(width, height)
-    this._sceneTarget.samples = 4
+    this._sceneTarget.samples = this._samples
 
     this._sceneComposer = new EffectComposer(this._renderer, this._sceneTarget)
     this._sceneComposer.renderToScreen = false
@@ -76,6 +77,8 @@ export class SelectionRenderer {
       depthTexture: this._depthTexture,
       depthBuffer: true
     })
+    this._sceneTarget.samples = this._samples
+
     this._selectionComposer = new EffectComposer(
       this._renderer,
       this._selectionTarget
@@ -136,6 +139,16 @@ export class SelectionRenderer {
 
   set strokeColor (value: THREE.Color) {
     this._outlinePass.color = value
+  }
+
+  get samples () {
+    return this._samples
+  }
+
+  set samples (value: number) {
+    this._samples = value
+    this._sceneTarget.samples = value
+    this._selectionTarget.samples = value
   }
 
   render () {

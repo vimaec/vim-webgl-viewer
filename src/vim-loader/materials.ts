@@ -67,7 +67,6 @@ export class VimMaterials implements IMaterialLibrary {
     this.isolation = isolation ?? createIsolationMaterial()
     this.focus = focus ?? createFocus()
     this.outline = createOutlineMaterial()
-    this.outline.onBeforeCompile = (s) => console.log(s.fragmentShader)
   }
 
   /** Apply settings to wireframe material */

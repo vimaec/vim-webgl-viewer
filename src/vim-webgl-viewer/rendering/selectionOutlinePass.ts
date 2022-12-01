@@ -213,7 +213,7 @@ export class SelectionOutlinePass extends Pass {
         depthBuffer: { value: null },
         outlineColor: { value: new THREE.Color(0xffffff) },
         // 4 scalar values packed in one uniform: depth multiplier, depth bias, and same for normals.
-        strokeMultiplier: { value: 3 },
+        strokeMultiplier: { value: 2 },
         strokeBias: { value: 2 },
         cameraNear: { value: this._camera.near },
         cameraFar: { value: this._camera.far },
