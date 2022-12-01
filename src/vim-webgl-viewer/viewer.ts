@@ -153,7 +153,7 @@ export class Viewer {
     this._environment.getObjects().forEach((o) => this.renderer.add(o))
 
     // Input and Selection
-    this.selection = new Selection()
+    this.selection = new Selection(materials)
     this.raycaster = new Raycaster(
       this.viewport,
       this._camera,
@@ -193,6 +193,7 @@ export class Viewer {
     if (this._vims.length) {
       this.renderer.render(this.camera.camera, this.selection.count > 0)
     }
+    this.selection.onAnimate()
   }
 
   /**

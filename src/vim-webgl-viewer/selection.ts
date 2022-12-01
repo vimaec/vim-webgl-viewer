@@ -3,7 +3,7 @@
  */
 
 import * as THREE from 'three'
-import { Vim } from '../vim'
+import { Vim, VimMaterials } from '../vim'
 import { Object } from '../vim-loader/object'
 import { SignalDispatcher } from 'ste-signals'
 
@@ -13,9 +13,15 @@ import { SignalDispatcher } from 'ste-signals'
  */
 export class Selection {
   // State
+  private _materials: VimMaterials
   private _objects = new Set<Object>()
   private _focusedObject: Object | undefined
   private _vim: Vim | undefined
+  private _lastFocusTime: number = new Date().getTime()
+
+  constructor (materials: VimMaterials) {
+    this._materials = materials
+  }
 
   // Disposable State
   private _onValueChanged = new SignalDispatcher()
@@ -77,6 +83,8 @@ export class Selection {
     if (this._focusedObject) this._focusedObject.focused = false
     if (object) object.focused = true
     this._focusedObject = object
+    this._lastFocusTime = new Date().getTime()
+    this._materials.applyFocusSettings(new THREE.Color(1, 1, 1), 0)
   }
 
   /**
@@ -203,5 +211,12 @@ export class Selection {
     } else {
       this._vim = vim
     }
+  }
+
+  onAnimate () {
+    const time = new Date().getTime()
+    const timeElapsed = time - this._lastFocusTime
+    const focus = Math.min(timeElapsed / 100, 1)
+    this._materials.applyFocusSettings(new THREE.Color(1, 1, 1), focus / 2)
   }
 }

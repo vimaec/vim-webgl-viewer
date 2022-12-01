@@ -75,6 +75,17 @@ export class VimMaterials implements IMaterialLibrary {
     this.wireframe.opacity = opacity
   }
 
+  applyFocusSettings (color: THREE.Color, intensity: number) {
+    this.opaque.userData.focusColor = color
+    this.opaque.userData.focusIntensity = intensity
+
+    const opaqueShader = this.opaque.userData.shader as THREE.Shader
+    if (!opaqueShader) return
+
+    opaqueShader.uniforms.focusColor.value = color
+    opaqueShader.uniforms.focusIntensity.value = intensity
+  }
+
   applySectionSettings (
     strokeWidth: number,
     strokeFalloff: number,
@@ -217,6 +228,12 @@ function applySectionUniforms (
  */
 export function patchBaseMaterial (material: THREE.Material) {
   material.onBeforeCompile = (shader) => {
+    shader.uniforms.focusIntensity = {
+      value: material.userData?.focusIntensity ?? 0.5
+    }
+    shader.uniforms.focusColor = {
+      value: material.userData?.focusColor ?? new THREE.Color(1, 1, 1)
+    }
     applySectionUniforms(
       shader,
       material.userData.strokeWidth,
@@ -262,6 +279,7 @@ export function patchBaseMaterial (material: THREE.Material) {
         // Instance or vertex attribute to higlight objects
         // Used as instance attribute for instanced mesh and as vertex attribute for merged meshes. 
         attribute float focused; 
+        
 
         varying float vHighlight;
         `
@@ -294,13 +312,21 @@ export function patchBaseMaterial (material: THREE.Material) {
         '#include <clipping_planes_pars_fragment>',
         `
         #include <clipping_planes_pars_fragment>
+        // VISIBILITY
         varying float vIgnore;
-        varying float vColored;
-        varying float vHighlight;
 
+        // COLORING
+        varying float vColored;
+
+        // SECTION
         uniform float sectionWidth;
         uniform float sectionFalloff;
         uniform vec3 sectionColor;
+
+        // FOCUS
+        varying float vHighlight;
+        uniform float focusIntensity;
+        uniform vec3 focusColor; 
         `
       )
       // FRAGMENT IMPLEMENTATION
@@ -318,7 +344,7 @@ export function patchBaseMaterial (material: THREE.Material) {
           gl_FragColor = vec4(vColored * vColor.xyz * d + (1.0f - vColored) * outgoingLight.xyz, diffuseColor.a);
 
           // FOCUS
-          gl_FragColor = mix(gl_FragColor, vec4(1,1,1,1), vHighlight * 0.5f);
+          gl_FragColor = mix(gl_FragColor, vec4(focusColor,1.0f), vHighlight * focusIntensity);
           
           // STROKES WHERE GEOMETRY INTERSECTS CLIPPING PLANE
           #if NUM_CLIPPING_PLANES > 0
