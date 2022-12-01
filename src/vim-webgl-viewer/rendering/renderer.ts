@@ -15,6 +15,7 @@ import { Vim } from '../../vim'
 import { Camera } from '../camera'
 import { RenderingSection } from './renderingSection'
 import { SelectionRenderer } from './selectionRenderer'
+import { StandardRenderer } from './standardRenderer'
 
 /**
  * Manages how vim objects are added and removed from the THREE.Scene to be rendered
@@ -28,6 +29,7 @@ export class Renderer {
   camera: Camera
 
   section: RenderingSection
+  standardRenderer: StandardRenderer
   selectionRenderer: SelectionRenderer
 
   private _onVisibilityChanged = new SimpleEventDispatcher<Vim>()
@@ -79,6 +81,13 @@ export class Renderer {
       camera
     )
 
+    this.standardRenderer = new StandardRenderer(
+      this.renderer,
+      scene,
+      viewport,
+      camera
+    )
+
     this.section = new RenderingSection(this.renderer, this.materials)
 
     this.fitViewport()
@@ -115,7 +124,8 @@ export class Renderer {
     if (hasSelection) {
       this.selectionRenderer.render()
     } else {
-      this.renderer.render(this.scene.scene, camera)
+      this.standardRenderer.render()
+      // this.renderer.render(this.scene.scene, camera)
     }
 
     if (this.renderText) {
