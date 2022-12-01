@@ -4,13 +4,12 @@
 
 import { EffectComposer } from 'three/examples/jsm/postprocessing/EffectComposer.js'
 import { RenderPass } from 'three/examples/jsm/postprocessing/RenderPass.js'
-// import { CopyShader } from 'three/examples/jsm/shaders/CopyShader.js'
+
 import * as THREE from 'three'
 import { Viewport } from '../viewport'
 import { RenderScene } from './renderScene'
 
 import { Camera } from '../camera'
-// import { ShaderPass } from 'three/examples/jsm/postprocessing/ShaderPass'
 
 export class StandardRenderer {
   private _scene: RenderScene
@@ -26,6 +25,7 @@ export class StandardRenderer {
 
   // Disposables
   private _sceneTarget: THREE.WebGLRenderTarget
+  private _depthTexture: THREE.DepthTexture
 
   constructor (
     renderer: THREE.WebGLRenderer,
@@ -42,16 +42,9 @@ export class StandardRenderer {
   }
 
   private setup () {
-    // Composer for regular scene rendering
-    // 4 samples provides default browser antialiasing
-    this._sceneTarget = new THREE.WebGLRenderTarget(this._size.x, this._size.y)
-    this._sceneTarget.samples = this._samples
-
-    this._sceneComposer = new EffectComposer(this._renderer, this._sceneTarget)
+    this._sceneComposer = new EffectComposer(this._renderer)
 
     this._renderPass = new RenderPass(this._scene.scene, this._camera)
-    this._renderPass.renderToScreen = false
-
     this._sceneComposer.addPass(this._renderPass)
   }
 
