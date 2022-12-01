@@ -4,17 +4,22 @@
 
 import { EffectComposer } from 'three/examples/jsm/postprocessing/EffectComposer.js'
 import { RenderPass } from 'three/examples/jsm/postprocessing/RenderPass.js'
+// import { CopyShader } from 'three/examples/jsm/shaders/CopyShader.js'
 import * as THREE from 'three'
 import { Viewport } from '../viewport'
 import { RenderScene } from './renderScene'
 
 import { Camera } from '../camera'
+// import { ShaderPass } from 'three/examples/jsm/postprocessing/ShaderPass'
 
 export class StandardRenderer {
   private _scene: RenderScene
   private _camera: THREE.PerspectiveCamera | THREE.OrthographicCamera
-  private _samples: number = 4
+
   private _renderer: THREE.WebGLRenderer
+
+  private _samples: number = 1
+  private _size: THREE.Vector2
 
   private _sceneComposer: EffectComposer
   private _renderPass: RenderPass
@@ -32,19 +37,21 @@ export class StandardRenderer {
     this._scene = scene
     this._camera = camera.camera
 
-    const size = viewport.getSize()
-    this.setup(size.x, size.y)
+    this._size = viewport.getSize()
+    this.setup()
   }
 
-  private setup (width: number, height: number) {
+  private setup () {
     // Composer for regular scene rendering
     // 4 samples provides default browser antialiasing
-    this._sceneTarget = new THREE.WebGLRenderTarget(width, height)
+    this._sceneTarget = new THREE.WebGLRenderTarget(this._size.x, this._size.y)
     this._sceneTarget.samples = this._samples
 
     this._sceneComposer = new EffectComposer(this._renderer, this._sceneTarget)
 
     this._renderPass = new RenderPass(this._scene.scene, this._camera)
+    this._renderPass.renderToScreen = false
+
     this._sceneComposer.addPass(this._renderPass)
   }
 
@@ -57,6 +64,7 @@ export class StandardRenderer {
   }
 
   setSize (width: number, height: number) {
+    this._size = new THREE.Vector2(width, height)
     this._sceneComposer.setSize(width, height)
   }
 
@@ -65,8 +73,9 @@ export class StandardRenderer {
   }
 
   set samples (value: number) {
+    this.dispose()
     this._samples = value
-    this._sceneTarget.samples = value
+    this.setup()
   }
 
   render () {

@@ -31,6 +31,7 @@ export class SelectionRenderer {
   private _materials: VimMaterials
   private _camera: THREE.PerspectiveCamera | THREE.OrthographicCamera
   private _samples: number = 4
+  private _size: THREE.Vector2
 
   private _selectionComposer: EffectComposer
   private _sceneComposer: EffectComposer
@@ -54,15 +55,14 @@ export class SelectionRenderer {
     this._scene = scene
     this._materials = materials
     this._camera = camera.camera
-
-    const size = viewport.getSize()
-    this.setup(size.x, size.y)
+    this._size = viewport.getSize()
+    this.setup()
   }
 
-  private setup (width: number, height: number) {
+  private setup () {
     // Composer for regular scene rendering
     // 4 samples provides default browser antialiasing
-    this._sceneTarget = new THREE.WebGLRenderTarget(width, height)
+    this._sceneTarget = new THREE.WebGLRenderTarget(this._size.x, this._size.y)
     this._sceneTarget.samples = this._samples
 
     this._sceneComposer = new EffectComposer(this._renderer, this._sceneTarget)
@@ -72,11 +72,15 @@ export class SelectionRenderer {
     this._sceneComposer.addPass(this._renderPass)
 
     // Composer for selection effect
-    this._depthTexture = new THREE.DepthTexture(width, height)
-    this._selectionTarget = new THREE.WebGLRenderTarget(width, height, {
-      depthTexture: this._depthTexture,
-      depthBuffer: true
-    })
+    this._depthTexture = new THREE.DepthTexture(this._size.x, this._size.y)
+    this._selectionTarget = new THREE.WebGLRenderTarget(
+      this._size.x,
+      this._size.y,
+      {
+        depthTexture: this._depthTexture,
+        depthBuffer: true
+      }
+    )
     this._sceneTarget.samples = this._samples
 
     this._selectionComposer = new EffectComposer(
@@ -94,7 +98,7 @@ export class SelectionRenderer {
 
     // Render higlight from selected object on top of regular scene
     this._outlinePass = new SelectionOutlinePass(
-      new THREE.Vector2(width, height),
+      new THREE.Vector2(this._size.x, this._size.y),
       this._camera,
       this._sceneComposer.readBuffer.texture
     )
@@ -113,6 +117,7 @@ export class SelectionRenderer {
   }
 
   setSize (width: number, height: number) {
+    this._size = new THREE.Vector2(width, height)
     this._sceneComposer.setSize(width, height)
     this._selectionComposer.setSize(width, height)
   }
@@ -146,9 +151,9 @@ export class SelectionRenderer {
   }
 
   set samples (value: number) {
+    this.dispose()
     this._samples = value
-    this._sceneTarget.samples = value
-    this._selectionTarget.samples = value
+    this.setup()
   }
 
   render () {

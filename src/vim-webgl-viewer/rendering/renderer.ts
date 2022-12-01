@@ -177,6 +177,7 @@ export class Renderer {
     this.renderer.setPixelRatio(window.devicePixelRatio)
     this.renderer.setSize(size.x, size.y)
     this.selectionRenderer.setSize(size.x, size.y)
+    this.standardRenderer.setSize(size.x, size.y)
     this.textRenderer.setSize(size.x, size.y)
   }
 }
