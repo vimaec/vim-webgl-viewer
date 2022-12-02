@@ -53,6 +53,14 @@ export class SelectionOutlinePass extends Pass {
     )
   }
 
+  get strokeBlur () {
+    return this._uniforms.strokeBlur.value
+  }
+
+  set strokeBlur (value: number) {
+    this._uniforms.strokeBlur.value = value
+  }
+
   get strokeBias () {
     return this._uniforms.strokeBias.value
   }
@@ -128,7 +136,7 @@ export class SelectionOutlinePass extends Pass {
     uniform vec3 outlineColor;
     uniform float strokeMultiplier;
     uniform float strokeBias;
-    uniform int debugVisualize;
+    uniform int strokeBlur;
 
     varying vec2 vUv;
 
@@ -163,22 +171,14 @@ export class SelectionOutlinePass extends Pass {
 
       // Get the difference between depth of neighboring pixels and current.
       float depthDiff = 0.0;
-      depthDiff += abs(depth - getPixelDepth(1, 0));
-      depthDiff += abs(depth - getPixelDepth(-1, 0));
-      depthDiff += abs(depth - getPixelDepth(0, 1));
-      depthDiff += abs(depth - getPixelDepth(0, -1));
+      int start = -strokeBlur / 2;
+      for(int i=0; i < strokeBlur; i ++){
+        for(int j=0; j < strokeBlur; j ++){
+          depthDiff += abs(depth - getPixelDepth(start +i, start + j));
+        }
+      }
 
-      depthDiff += abs(depth - getPixelDepth(1, 1));
-      depthDiff += abs(depth - getPixelDepth(1, -1));
-      depthDiff += abs(depth - getPixelDepth(-1, 1));
-      depthDiff += abs(depth - getPixelDepth(-1, -1));
-
-      depthDiff += abs(depth - getPixelDepth(2, 0));
-      depthDiff += abs(depth - getPixelDepth(-2, 0));
-      depthDiff += abs(depth - getPixelDepth(0, 2));
-      depthDiff += abs(depth - getPixelDepth(0, -2));
-
-      depthDiff = depthDiff  / 12.0f; 
+      depthDiff = depthDiff / (float(strokeBlur*strokeBlur) -1.0); 
       
       depthDiff = depthDiff * strokeMultiplier;
       depthDiff = saturate(depthDiff);
@@ -189,18 +189,6 @@ export class SelectionOutlinePass extends Pass {
       // Combine outline with scene color.
       vec4 outlineColor = vec4(outlineColor, 1.0f);
       gl_FragColor = vec4(mix(sceneColor, outlineColor, outline));
-      //gl_FragColor = vec4( outline,outline,outline,outline);
-
-      // For debug visualization of the different inputs to this shader.
-      if (debugVisualize == 1) {
-        gl_FragColor = sceneColor;
-      }
-      if (debugVisualize == 2) {
-        gl_FragColor = vec4(vec3(depth), 1.0);
-      }
-      if (debugVisualize == 4) {
-        gl_FragColor = vec4(vec3(outline * outlineColor), 1.0);
-      }
     }
     `
   }
@@ -208,13 +196,13 @@ export class SelectionOutlinePass extends Pass {
   createOutlinePostProcessMaterial () {
     return new THREE.ShaderMaterial({
       uniforms: {
-        debugVisualize: { value: 0 },
         sceneColorBuffer: { value: null },
         depthBuffer: { value: null },
         outlineColor: { value: new THREE.Color(0xffffff) },
         // 4 scalar values packed in one uniform: depth multiplier, depth bias, and same for normals.
         strokeMultiplier: { value: 2 },
         strokeBias: { value: 2 },
+        strokeBlur: { value: 5 },
         cameraNear: { value: this._camera.near },
         cameraFar: { value: this._camera.far },
         screenSize: {
