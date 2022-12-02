@@ -86,7 +86,8 @@ export class RenderingComposer {
       this._size.y,
       {
         depthTexture: this._depthTexture,
-        depthBuffer: true
+        depthBuffer: true,
+        samples: this._samples
       }
     )
 
