@@ -84,7 +84,7 @@ export class Selection {
     if (object) object.focused = true
     this._focusedObject = object
     this._lastFocusTime = new Date().getTime()
-    this._materials.applyFocusSettings(new THREE.Color(1, 1, 1), 0)
+    this._materials.focusIntensity = 0
   }
 
   /**
@@ -217,6 +217,6 @@ export class Selection {
     const time = new Date().getTime()
     const timeElapsed = time - this._lastFocusTime
     const focus = Math.min(timeElapsed / 100, 1)
-    this._materials.applyFocusSettings(new THREE.Color(1, 1, 1), focus / 2)
+    this._materials.focusIntensity = focus / 2
   }
 }

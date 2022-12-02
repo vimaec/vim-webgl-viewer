@@ -7,7 +7,7 @@ import { RenderPass } from 'three/examples/jsm/postprocessing/RenderPass.js'
 import * as THREE from 'three'
 import { Viewport } from '../viewport'
 import { RenderScene } from './renderScene'
-import { VimMaterials } from '../../vim-loader/materials'
+import { VimMaterials } from '../../vim-loader/materials/materials'
 import { CopyPass, SelectionOutlinePass } from './selectionOutlinePass'
 
 import { Camera } from '../camera'
@@ -143,6 +143,14 @@ export class RenderingComposer {
     this._size = new THREE.Vector2(width, height)
     this._sceneComposer.setSize(width, height)
     this._selectionComposer.setSize(width, height)
+  }
+
+  get strokeBlur () {
+    return this._outlinePass.strokeBlur
+  }
+
+  set strokeBlur (value: number) {
+    this._outlinePass.strokeBlur = value
   }
 
   get strokeBias () {

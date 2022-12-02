@@ -7,7 +7,7 @@ import { SceneBuilder } from './sceneBuilder'
 import { BFast } from './bfast'
 import { Vim } from './vim'
 import { VimSettings } from './vimSettings'
-import { IMaterialLibrary } from './materials'
+import { VimMaterials } from './materials/materials'
 import { MeshBuilder } from './mesh'
 import { Scene } from './scene'
 
@@ -19,7 +19,7 @@ export class Loader {
   readonly sceneBuilder: SceneBuilder
   readonly meshBuilder: MeshBuilder
 
-  constructor (materials: IMaterialLibrary) {
+  constructor (materials: VimMaterials) {
     this.meshBuilder = new MeshBuilder(materials)
     this.sceneBuilder = new SceneBuilder(this.meshBuilder)
   }

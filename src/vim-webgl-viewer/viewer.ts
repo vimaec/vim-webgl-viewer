@@ -27,7 +27,7 @@ import { BFast } from '../vim-loader/bfast'
 import { Vim } from '../vim-loader/vim'
 import { IProgressLogs, RemoteBuffer } from '../vim-loader/remoteBuffer'
 import { Renderer } from './rendering/renderer'
-import { IMaterialLibrary, VimMaterials } from '../vim'
+import { VimMaterials } from '../vim'
 import { SignalDispatcher } from 'ste-signals'
 
 /**
@@ -105,7 +105,7 @@ export class Viewer {
   private _loader: Loader
   private _clock = new THREE.Clock()
   private _gizmoAxes: GizmoAxes
-  private _materials: IMaterialLibrary
+  private _materials: VimMaterials
 
   // State
   private _vims: (Vim | undefined)[] = []

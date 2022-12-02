@@ -5,16 +5,16 @@
 import * as THREE from 'three'
 import { G3d, MeshSection } from './g3d'
 import { Geometry, Transparency } from './geometry'
-import { IMaterialLibrary, VimMaterials } from './materials'
+import { VimMaterials } from './materials/materials'
 
 /**
  * Builds meshes from the g3d and BufferGeometry
  * Allows to reuse the same material for all new built meshes
  */
 export class MeshBuilder {
-  readonly materials: IMaterialLibrary
+  readonly materials: VimMaterials
 
-  constructor (materials?: IMaterialLibrary) {
+  constructor (materials?: VimMaterials) {
     this.materials = materials ?? new VimMaterials()
   }
 
@@ -101,7 +101,11 @@ export class MeshBuilder {
       ? this.materials.transparent
       : this.materials.opaque
 
-    const result = new THREE.InstancedMesh(geometry, material, instances.length)
+    const result = new THREE.InstancedMesh(
+      geometry,
+      material.material,
+      instances.length
+    )
     geometry.computeBoundingBox()
 
     const boxes: THREE.Box3[] = []
@@ -136,7 +140,7 @@ export class MeshBuilder {
       ? this.materials.transparent
       : this.materials.opaque
 
-    const mesh = new THREE.Mesh(merge.geometry, material)
+    const mesh = new THREE.Mesh(merge.geometry, material.material)
     mesh.userData.merged = true
     mesh.userData.instances = merge.instances
     mesh.userData.submeshes = merge.submeshes

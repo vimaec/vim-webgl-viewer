@@ -6,7 +6,7 @@ import * as THREE from 'three'
 import { Scene } from '../../vim-loader/scene'
 import { Viewport } from '../viewport'
 import { RenderScene } from './renderScene'
-import { VimMaterials } from '../../vim-loader/materials'
+import { VimMaterials } from '../../vim-loader/materials/materials'
 import { ViewerSettings } from '../viewerSettings'
 import { CSS2DRenderer } from 'three/examples/jsm/renderers/CSS2DRenderer'
 import { SimpleEventDispatcher } from 'ste-simple-events'
@@ -148,15 +148,11 @@ export class Renderer {
 
   /** Update material settings from config */
   applyMaterialSettings (settings: ViewerSettings) {
-    this.materials.applyWireframeSettings(
-      settings.getHighlightColor(),
-      settings.getHighlightOpacity()
-    )
-    this.materials.applySectionSettings(
-      settings.getSectionStrokeWidth(),
-      settings.getSectionStrokeFalloff(),
-      settings.getSectionStrokeColor()
-    )
+    this.materials.wireframeColor = settings.getHighlightColor()
+    this.materials.wireframeOpacity = settings.getHighlightOpacity()
+    this.materials.sectionStrokeWitdh = settings.getSectionStrokeWidth()
+    this.materials.sectionStrokeFallof = settings.getSectionStrokeFalloff()
+    this.materials.sectionStrokeColor = settings.getSectionStrokeColor()
   }
 
   private fitViewport = () => {

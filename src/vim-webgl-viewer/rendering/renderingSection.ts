@@ -3,12 +3,12 @@
  */
 
 import * as THREE from 'three'
-import { IMaterialLibrary } from '../../vim-loader/materials'
+import { VimMaterials } from '../../vim-loader/materials/materials'
 
 export class RenderingSection {
   private _renderer: THREE.WebGLRenderer
 
-  private _materials: IMaterialLibrary
+  private _materials: VimMaterials
   private _active: boolean = true
 
   readonly box: THREE.Box3 = new THREE.Box3(
@@ -31,7 +31,7 @@ export class RenderingSection {
     this.minZ
   ]
 
-  constructor (renderer: THREE.WebGLRenderer, materials: IMaterialLibrary) {
+  constructor (renderer: THREE.WebGLRenderer, materials: VimMaterials) {
     this._renderer = renderer
     this._materials = materials
   }
@@ -47,7 +47,7 @@ export class RenderingSection {
   }
 
   set active (value: boolean) {
-    this._materials.applyClippingPlanes(value ? this.planes : null)
+    this._materials.clippingPlanes = value ? this.planes : null
     this._renderer.localClippingEnabled = value
     this._active = value
   }
