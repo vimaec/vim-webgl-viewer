@@ -4,7 +4,7 @@
 
 import * as THREE from 'three'
 import { CSS2DRenderer } from 'three/examples/jsm/renderers/CSS2DRenderer'
-import { ViewerSettings } from './viewerSettings'
+import { ViewerConfig } from './viewerSettings'
 
 export class Viewport {
   /** HTML Canvas on which the model is rendered */
@@ -15,11 +15,11 @@ export class Viewport {
   private _ownedCanvas: boolean
   private _resizeCallbacks: (() => void)[] = []
 
-  constructor (settings: ViewerSettings) {
-    const [canvas, owned] = Viewport.getOrCreateCanvas(settings.getCanvasId())
+  constructor (settings: ViewerConfig) {
+    const [canvas, owned] = Viewport.getOrCreateCanvas(settings.canvas.id)
     this.canvas = canvas
     this._ownedCanvas = owned
-    this.registerResize(settings.getCanvasResizeDelay())
+    this.registerResize(settings.canvas.resizeDelay)
   }
 
   /**

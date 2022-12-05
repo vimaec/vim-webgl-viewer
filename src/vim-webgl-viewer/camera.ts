@@ -5,7 +5,7 @@
 import * as THREE from 'three'
 import { CameraGizmo } from './gizmos/gizmoOrbit'
 import { Viewport } from './viewport'
-import { ViewerSettings } from './viewerSettings'
+import { ViewerConfig } from './viewerSettings'
 import { Object } from '../vim'
 import { RenderScene } from './rendering/renderScene'
 import { Quaternion } from 'three'
@@ -191,11 +191,7 @@ export class Camera implements ICamera {
   private _minModelScrenSize = 0.05
   private _minOrthoSize = 1
 
-  constructor (
-    scene: RenderScene,
-    viewport: Viewport,
-    settings: ViewerSettings
-  ) {
+  constructor (scene: RenderScene, viewport: Viewport, settings: ViewerConfig) {
     this.cameraPerspective = new THREE.PerspectiveCamera()
     this.camera = this.cameraPerspective
     this._scene = scene
@@ -334,26 +330,26 @@ export class Camera implements ICamera {
     }
   }
 
-  applySettings (settings: ViewerSettings) {
+  applySettings (settings: ViewerConfig) {
     // Mode
-    this.orbitMode = settings.getCameraIsOrbit()
+    this.orbitMode = settings.camera.controls.orbit
 
     // Camera
     if (this.camera instanceof THREE.PerspectiveCamera) {
-      this.camera.fov = settings.getCameraFov()
-      this.camera.zoom = settings.getCameraZoom()
-      this.camera.near = settings.getCameraNear()
-      this.camera.far = settings.getCameraFar()
+      this.camera.fov = settings.camera.fov
+      this.camera.zoom = settings.camera.zoom
+      this.camera.near = settings.camera.near
+      this.camera.far = settings.camera.far
       this.camera.updateProjectionMatrix()
     }
 
     // Controls
-    this._moveSpeed = settings.getCameraMoveSpeed()
-    this._rotateSpeed = settings.getCameraRotateSpeed()
-    this._orbitSpeed = settings.getCameraOrbitSpeed()
+    this._moveSpeed = settings.camera.controls.moveSpeed
+    this._rotateSpeed = settings.camera.controls.rotateSpeed
+    this._orbitSpeed = settings.camera.controls.orbitSpeed
 
     // Values
-    this._vimReferenceSize = settings.getCameraReferenceVimSize()
+    this._vimReferenceSize = settings.camera.controls.modelReferenceSize
     this._onValueChanged.dispatch()
   }
 

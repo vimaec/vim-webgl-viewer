@@ -5,7 +5,7 @@
 import * as THREE from 'three'
 
 // internal
-import { ViewerSettings, ViewerOptions } from './viewerSettings'
+import { ViewerConfig, getConfig, ViewerOptions } from './viewerSettings'
 import { Camera, ICamera } from './camera'
 import { Input } from './inputs/input'
 import { Selection } from './selection'
@@ -37,7 +37,7 @@ export class Viewer {
   /**
    * Current viewer settings.
    */
-  settings: ViewerSettings
+  settings: ViewerConfig
 
   /**
    * Interface to manage objects to be rendered.
@@ -124,8 +124,8 @@ export class Viewer {
     return this._gizmoAxes.canvas
   }
 
-  constructor (options?: Partial<ViewerOptions.Root>) {
-    this.settings = new ViewerSettings(options)
+  constructor (options?: ViewerOptions) {
+    this.settings = getConfig(options)
 
     const materials = new VimMaterials()
 
@@ -136,7 +136,7 @@ export class Viewer {
     this.viewport = new Viewport(this.settings)
     this._camera = new Camera(scene, this.viewport, this.settings)
     this.renderer = new Renderer(scene, this.viewport, materials, this._camera)
-    if (this.settings.getCameraGizmoEnable()) {
+    if (this.settings.camera.gizmo.enable) {
       this._camera.gizmo = new CameraGizmo(
         this.renderer,
         this._camera,
@@ -147,7 +147,7 @@ export class Viewer {
 
     // TODO add options
     this.measure = new Measure(this)
-    this._gizmoAxes = new GizmoAxes(this.camera, this.settings.getAxesConfig())
+    this._gizmoAxes = new GizmoAxes(this.camera, this.settings.axes)
     this.viewport.canvas.parentElement?.prepend(this._gizmoAxes.canvas)
 
     this.sectionBox = new SectionBox(this)

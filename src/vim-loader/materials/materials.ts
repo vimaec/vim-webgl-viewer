@@ -7,7 +7,7 @@ import { StandardMaterial } from './standardMaterial'
 import { createMaskMaterial } from './maskMaterial'
 import { createIsolationMaterial } from './isolationMaterial'
 import { OutlineMaterial } from './outlineMaterial'
-import { ViewerSettings } from '../../vim-webgl-viewer/viewerSettings'
+import { ViewerConfig } from '../../vim-webgl-viewer/viewerSettings'
 
 /**
  * Defines the materials to be used by the vim loader and allows for material injection.
@@ -44,17 +44,18 @@ export class VimMaterials {
   }
 
   /** Update material settings from config */
-  applySettings (settings: ViewerSettings) {
-    this.wireframeColor = settings.getHighlightColor()
-    this.wireframeOpacity = settings.getHighlightOpacity()
-    this.sectionStrokeWitdh = settings.getSectionStrokeWidth()
-    this.sectionStrokeFallof = settings.getSectionStrokeFalloff()
-    this.sectionStrokeColor = settings.getSectionStrokeColor()
+  applySettings (settings: ViewerConfig) {
+    this.wireframeColor = settings.materials.highlight.color
+    this.wireframeOpacity = settings.materials.highlight.opacity
 
-    this.outlineIntensity = settings.getOutlineIntensity()
-    this.outlineFalloff = settings.getOutlineFalloff()
-    this.outlineBlur = settings.getOutlineBlur()
-    this.outlineColor = settings.getOutlineColor()
+    this.sectionStrokeWitdh = settings.materials.section.strokeWidth
+    this.sectionStrokeFallof = settings.materials.section.strokeFalloff
+    this.sectionStrokeColor = settings.materials.section.strokeColor
+
+    this.outlineIntensity = settings.materials.outline.intensity
+    this.outlineFalloff = settings.materials.outline.falloff
+    this.outlineBlur = settings.materials.outline.blur
+    this.outlineColor = settings.materials.outline.color
   }
 
   get focusIntensity () {
