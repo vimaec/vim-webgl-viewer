@@ -20,7 +20,7 @@ import { Measure, IMeasure } from './gizmos/measure/measure'
 import { GizmoRectangle } from './gizmos/gizmoRectangle'
 
 // loader
-import { VimSettings, VimOptions } from '../vim-loader/vimSettings'
+import { getVimConfig, VimOptions } from '../vim-loader/vimSettings'
 import { Loader } from '../vim-loader/loader'
 import { Object } from '../vim-loader/object'
 import { BFast } from '../vim-loader/bfast'
@@ -242,7 +242,7 @@ export class Viewer {
    */
   async loadVim (
     source: string | ArrayBuffer,
-    options: VimOptions.Root,
+    options?: VimOptions,
     onProgress?: (logger: IProgressLogs) => void
   ) {
     let buffer: RemoteBuffer | ArrayBuffer
@@ -255,7 +255,7 @@ export class Viewer {
       buffer.logger.onUpdate = (log) => onProgress?.(log)
     } else buffer = source
 
-    const settings = new VimSettings(options)
+    const settings = getVimConfig(options)
     const bfast = new BFast(buffer, 0, 'vim')
     const vim = await this._loader.load(bfast, settings)
     vim.source = url

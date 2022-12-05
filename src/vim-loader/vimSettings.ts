@@ -3,104 +3,80 @@
  */
 
 import deepmerge from 'deepmerge'
-import { cloneDeep } from 'lodash-es'
 import { Transparency } from './geometry'
 import * as THREE from 'three'
 
-export namespace VimOptions {
-  export type Vector3 = {
-    x: number
-    y: number
-    z: number
-  }
+export type LoadingMode = 'stream' | 'download' | 'geometry'
 
-  export type LoadingMode = 'stream' | 'download' | 'geometry'
+/**
+ * Config object for loading a vim
+ */
+export type VimConfig = {
+  /**
+   * Position offset for the vim
+   */
+  position: THREE.Vector3
+  /**
+   * Rotation for the vim
+   */
+  rotation: THREE.Vector3
+  /**
+   * Scale factor for the vim
+   */
+  scale: number
 
   /**
-   * Config object for loading a vim
+   * Matrix representation of position, rotation scale
    */
-  export type Root = {
-    /**
-     * Position offset for the vim
-     */
-    position?: Vector3
-    /**
-     * Rotation for the vim
-     */
-    rotation?: Vector3
-    /**
-     * Scale factor for the vim
-     */
-    scale?: number
+  matrix: THREE.Matrix4
 
-    /**
-     * Defines how to draw or not to draw objects according to their transparency
-     */
-    transparency?: Transparency.Mode
+  /**
+   * Defines how to draw or not to draw objects according to their transparency
+   */
+  transparency: Transparency.Mode
 
-    /**
-     * Forces the viewer to download the whole data at once.
-     * Otherwise bim data will be requested on per need basis.
-     */
-    download?: LoadingMode
-  }
+  /**
+   * Forces the viewer to download the whole data at once.
+   * Otherwise bim data will be requested on per need basis.
+   */
+  download: LoadingMode
 }
 
+export const defaultConfig: VimConfig = {
+  position: new THREE.Vector3(),
+  rotation: new THREE.Vector3(),
+  scale: 1,
+  matrix: new THREE.Matrix4(),
+  transparency: 'all',
+  download: 'stream'
+}
+
+export type VimOptions = Partial<VimConfig>
 /**
  * <p>Wrapper around Vim Options.</p>
  * <p>Casts options values into related THREE.js type</p>
  * <p>Provides default values for options</p>
  */
-export class VimSettings {
-  private options: VimOptions.Root
+export function getVimConfig (options?: VimOptions) {
+  const merge = options
+    ? deepmerge(defaultConfig, options, undefined)
+    : defaultConfig
 
-  constructor (options?: Partial<VimOptions.Root>) {
-    const fallback: VimOptions.Root = {
-      position: { x: 0, y: 0, z: 0 },
-      rotation: { x: 0, y: 0, z: 0 },
-      scale: 1,
-      transparency: 'all',
-      download: 'stream'
-    }
+  merge.transparency = Transparency.isValid(merge.transparency!)
+    ? merge.transparency
+    : 'all'
 
-    this.options = options ? deepmerge(fallback, options, undefined) : fallback
-    this.options.transparency = Transparency.isValid(this.options.transparency!)
-      ? this.options.transparency
-      : 'all'
-  }
-
-  getOptions = () => cloneDeep(this.options) as VimOptions.Root
-
-  getPosition = () => toVec(this.options.position!)
-  getRotation = () => toQuaternion(this.options.rotation!)
-  getScale = () => scalarToVec(this.options.scale!)
-  getMatrix = () =>
-    new THREE.Matrix4().compose(
-      this.getPosition(),
-      this.getRotation(),
-      this.getScale()
-    )
-
-  getTransparency = () => this.options.transparency!
-  getDownloadMode = () => this.options.download
-}
-
-function toVec (obj: VimOptions.Vector3): THREE.Vector3 {
-  return new THREE.Vector3(obj.x, obj.y, obj.z)
-}
-
-function toQuaternion (rot: VimOptions.Vector3): THREE.Quaternion {
-  return new THREE.Quaternion().setFromEuler(toEuler(toVec(rot)))
-}
-
-function scalarToVec (x: number): THREE.Vector3 {
-  return new THREE.Vector3(x, x, x)
-}
-
-function toEuler (rot: THREE.Vector3): THREE.Euler {
-  return new THREE.Euler(
-    (rot.x * Math.PI) / 180,
-    (rot.y * Math.PI) / 180,
-    (rot.z * Math.PI) / 180
+  merge.matrix = new THREE.Matrix4().compose(
+    merge.position,
+    new THREE.Quaternion().setFromEuler(
+      new THREE.Euler(
+        (merge.rotation.x * Math.PI) / 180,
+        (merge.rotation.y * Math.PI) / 180,
+        (merge.rotation.z * Math.PI) / 180
+      )
+    ),
+    new THREE.Vector3(merge.scale, merge.scale, merge.scale)
   )
+
+  return merge
 }

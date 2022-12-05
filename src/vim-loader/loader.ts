@@ -6,7 +6,7 @@ import { Document, IDocument } from './document'
 import { SceneBuilder } from './sceneBuilder'
 import { BFast } from './bfast'
 import { Vim } from './vim'
-import { VimSettings } from './vimSettings'
+import { VimConfig } from './vimSettings'
 import { VimMaterials } from './materials/materials'
 import { MeshBuilder } from './mesh'
 import { Scene } from './scene'
@@ -24,10 +24,10 @@ export class Loader {
     this.sceneBuilder = new SceneBuilder(this.meshBuilder)
   }
 
-  async load (bfast: BFast, settings: VimSettings) {
+  async load (bfast: BFast, settings: VimConfig) {
     let document: IDocument | undefined
 
-    const mode = settings.getDownloadMode()
+    const mode = settings.download
     if (mode === 'download') await bfast.forceDownload()
 
     await Document.createFromBfast(bfast, mode === 'stream').then(
@@ -38,10 +38,7 @@ export class Loader {
     }
 
     const scene = document.g3d
-      ? this.sceneBuilder.createFromG3d(
-          document!.g3d,
-          settings.getTransparency()
-      )
+      ? this.sceneBuilder.createFromG3d(document!.g3d, settings.transparency)
       : new Scene(this.sceneBuilder)
 
     const vim = new Vim(document!, scene, settings)

@@ -5,7 +5,7 @@
 import * as THREE from 'three'
 import { IDocument } from './document'
 import { Scene } from './scene'
-import { VimSettings } from './vimSettings'
+import { VimConfig } from './vimSettings'
 import { Object } from './object'
 
 /**
@@ -16,17 +16,17 @@ export class Vim {
   source: string | undefined
   readonly document: IDocument
   index: number = -1
-  settings: VimSettings
+  settings: VimConfig
 
   scene: Scene
   private _elementToObject: Map<number, Object> = new Map<number, Object>()
 
-  constructor (vim: IDocument, scene: Scene, settings: VimSettings) {
+  constructor (vim: IDocument, scene: Scene, settings: VimConfig) {
     this.document = vim
     this.scene = scene
     this.scene?.setVim(this)
     this.settings = settings
-    this.scene.applyMatrix4(this.settings.getMatrix())
+    this.scene.applyMatrix4(this.settings.matrix)
   }
 
   dispose () {
@@ -41,12 +41,12 @@ export class Vim {
     if (!this.document.g3d) return
     const next = this.scene.builder.createFromG3d(
       this.document.g3d,
-      this.settings.getTransparency(),
+      this.settings.transparency,
       instances
     )
     this.scene.dispose()
 
-    next.applyMatrix4(this.settings.getMatrix())
+    next.applyMatrix4(this.settings.matrix)
     next.setVim(this)
     this.scene = next
     for (const [element, object] of this._elementToObject.entries()) {
@@ -56,23 +56,23 @@ export class Vim {
 
   loadMore (flagTest: (flag: number) => boolean) {
     const scene = this.scene.builder.createFromFlag(this.document.g3d, flagTest)
-    scene.applyMatrix4(this.settings.getMatrix())
+    scene.applyMatrix4(this.settings.matrix)
     return scene
   }
 
   /**
    * Applies new settings to the vim
    */
-  applySettings (settings: VimSettings) {
+  applySettings (settings: VimConfig) {
     this.settings = settings
-    this.scene.applyMatrix4(this.settings.getMatrix())
+    this.scene.applyMatrix4(this.settings.matrix)
   }
 
   /**
    * Returns vim matrix
    */
   getMatrix () {
-    return this.settings.getMatrix()
+    return this.settings.matrix
   }
 
   /**

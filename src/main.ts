@@ -1,12 +1,12 @@
 import * as VIM from './vim'
 import * as THREE from 'three'
-import { VimOptions } from './vim'
+import { LoadingMode } from './vim'
 
 // Parse URL
 const params = new URLSearchParams(window.location.search)
 const url = params.has('vim')
   ? params.get('vim')
-  : 'https://vim.azureedge.net/samples/residence.vim'
+  : 'https://vimdevelopment01storage.blob.core.windows.net/samples/residence_nozip.vim'
 
 let transparency: VIM.Transparency.Mode = 'all'
 if (params.has('transparency')) {
@@ -14,7 +14,7 @@ if (params.has('transparency')) {
   transparency = VIM.Transparency.isValid(t) ? t : 'all'
 }
 
-let download: VimOptions.LoadingMode = 'download'
+let download: LoadingMode = 'download'
 if (params.has('download')) {
   const t = params.get('download')
   const valid = t === 'download' || t === 'stream' || t === 'geometry'
@@ -55,10 +55,10 @@ function load2 (vim: string | ArrayBuffer) {
         .loadVim(
           vim,
           {
-            rotation: { x: 270, y: 0, z: 0 },
-            position: { x: i * 100, y: 0, z: j * 100 },
+            rotation: new THREE.Vector3(270, 0, 0),
+            position: new THREE.Vector3(i * 100, 0, j * 100),
             transparency: transparency,
-            download: download
+            download: 'stream'
           },
           (progress) => {
             console.log(`Loading : ${progress.loaded} / ${progress.total}`)
