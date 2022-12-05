@@ -117,6 +117,12 @@ export namespace ViewerOptions {
       strokeFalloff: number
       strokeColor: ColorRGB
     }>
+    outline: Partial<{
+      intensity: number
+      falloff: number
+      blur: number
+      color: ColorRGB
+    }>
   }
 
   /** Viewer related options independant from vims */
@@ -227,6 +233,12 @@ export class ViewerSettings {
           strokeWidth: 0.01,
           strokeFalloff: 0.75,
           strokeColor: { r: 0xf6, g: 0xf6, b: 0xf6 }
+        },
+        outline: {
+          intensity: 2,
+          falloff: 2,
+          blur: 5,
+          color: { r: 0xff, g: 0xff, b: 0xff }
         }
       },
       axes: new GizmoOptions()
@@ -294,6 +306,15 @@ export class ViewerSettings {
   getSectionStrokeWidth = () => this.section!.strokeWidth!
   getSectionStrokeFalloff = () => this.section!.strokeFalloff!
   getSectionStrokeColor = () => toRGBColor(this.section!.strokeColor!)
+
+  private get outlines () {
+    return this.options.materials.outline
+  }
+
+  getOutlineIntensity = () => this.outlines!.intensity!
+  getOutlineFalloff = () => this.outlines!.falloff!
+  getOutlineBlur = () => this.outlines!.blur!
+  getOutlineColor = () => toRGBColor(this.outlines!.color!)
 
   // Camera
   private get camera () {

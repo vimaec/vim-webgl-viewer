@@ -80,6 +80,11 @@ export class Viewer {
   gizmoRectangle: GizmoRectangle
 
   /**
+   * Interface to interact with viewer materials
+   */
+  materials: VimMaterials
+
+  /**
    * Interface to manipulate the viewer camera.
    */
   get camera () {
@@ -105,7 +110,6 @@ export class Viewer {
   private _loader: Loader
   private _clock = new THREE.Clock()
   private _gizmoAxes: GizmoAxes
-  private _materials: VimMaterials
 
   // State
   private _vims: (Vim | undefined)[] = []
@@ -126,7 +130,7 @@ export class Viewer {
     const materials = new VimMaterials()
 
     this._loader = new Loader(materials)
-    this._materials = materials
+    this.materials = materials
 
     const scene = new RenderScene()
     this.viewport = new Viewport(this.settings)
@@ -139,7 +143,7 @@ export class Viewer {
         this.settings
       )
     }
-    this.renderer.applyMaterialSettings(this.settings)
+    this.materials.applySettings(this.settings)
 
     // TODO add options
     this.measure = new Measure(this)
@@ -176,7 +180,7 @@ export class Viewer {
     this.renderer.dispose()
     this.inputs.unregisterAll()
     this._vims.forEach((v) => v?.dispose())
-    this._materials.dispose()
+    this.materials.dispose()
     this.gizmoRectangle.dispose()
     this._disposed = true
   }

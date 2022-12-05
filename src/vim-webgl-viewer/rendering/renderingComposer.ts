@@ -8,7 +8,8 @@ import * as THREE from 'three'
 import { Viewport } from '../viewport'
 import { RenderScene } from './renderScene'
 import { VimMaterials } from '../../vim-loader/materials/materials'
-import { CopyPass, SelectionOutlinePass } from './selectionOutlinePass'
+import { OutlinePass } from './outlinePass'
+import { TransferPass } from './transferPass'
 
 import { Camera } from '../camera'
 
@@ -37,11 +38,11 @@ export class RenderingComposer {
   private _sceneComposer: EffectComposer
   private _renderPass: RenderPass
   private _selectionRenderPass: RenderPass
-  private _copyPass: CopyPass
+  private _transferPass: TransferPass
   private _outlines: boolean
 
   // Disposables
-  private _outlinePass: SelectionOutlinePass
+  private _outlinePass: OutlinePass
   private _selectionTarget: THREE.WebGLRenderTarget
   private _sceneTarget: THREE.WebGLRenderTarget
   private _depthTexture: THREE.DepthTexture
@@ -100,22 +101,23 @@ export class RenderingComposer {
     this._selectionRenderPass = new RenderPass(
       this._scene.scene,
       this._camera,
-      this._materials.outline
+      this._materials.mask
     )
 
     this._selectionComposer.addPass(this._selectionRenderPass)
 
     // Render higlight from selected object on top of regular scene
-    this._outlinePass = new SelectionOutlinePass(
-      new THREE.Vector2(this._size.x, this._size.y),
-      this._camera,
-      this._sceneComposer.readBuffer.texture
+    this._outlinePass = new OutlinePass(
+      this._sceneComposer.readBuffer.texture,
+      this._materials.outline
     )
     this._selectionComposer.addPass(this._outlinePass)
 
     // When no outlines, just copy the scene to screen.
-    this._copyPass = new CopyPass(this._sceneComposer.readBuffer.texture)
-    this._selectionComposer.addPass(this._copyPass)
+    this._transferPass = new TransferPass(
+      this._sceneComposer.readBuffer.texture
+    )
+    this._selectionComposer.addPass(this._transferPass)
   }
 
   get outlines () {
@@ -126,7 +128,7 @@ export class RenderingComposer {
     this._outlines = value
     this._selectionRenderPass.enabled = this.outlines
     this._outlinePass.enabled = this.outlines
-    this._copyPass.enabled = !this.outlines
+    this._transferPass.enabled = !this.outlines
   }
 
   get camera () {
@@ -136,7 +138,7 @@ export class RenderingComposer {
   set camera (value: THREE.PerspectiveCamera | THREE.OrthographicCamera) {
     this._renderPass.camera = value
     this._selectionRenderPass.camera = value
-    this._outlinePass.camera = value
+    this._outlinePass.material.camera = value
     this._camera = value
   }
 
@@ -144,38 +146,6 @@ export class RenderingComposer {
     this._size = new THREE.Vector2(width, height)
     this._sceneComposer.setSize(width, height)
     this._selectionComposer.setSize(width, height)
-  }
-
-  get strokeBlur () {
-    return this._outlinePass.strokeBlur
-  }
-
-  set strokeBlur (value: number) {
-    this._outlinePass.strokeBlur = value
-  }
-
-  get strokeBias () {
-    return this._outlinePass.strokeBias
-  }
-
-  set strokeBias (value: number) {
-    this._outlinePass.strokeBias = value
-  }
-
-  get strokeMultiplier () {
-    return this._outlinePass.strokeMultiplier
-  }
-
-  set strokeMultiplier (value: number) {
-    this._outlinePass.strokeMultiplier = value
-  }
-
-  get strokeColor () {
-    return this._outlinePass.color
-  }
-
-  set strokeColor (value: THREE.Color) {
-    this._outlinePass.color = value
   }
 
   get samples () {

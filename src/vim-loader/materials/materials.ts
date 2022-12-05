@@ -3,19 +3,22 @@
  */
 
 import * as THREE from 'three'
-import { VimStandardMaterial } from './standardMaterial'
-import { createOutlineMaterial } from './outlineMaterial'
+import { StandardMaterial } from './standardMaterial'
+import { createMaskMaterial } from './maskMaterial'
 import { createIsolationMaterial } from './isolationMaterial'
+import { OutlineMaterial } from './outlineMaterial'
+import { ViewerSettings } from '../../vim-webgl-viewer/viewerSettings'
 
 /**
  * Defines the materials to be used by the vim loader and allows for material injection.
  */
 export class VimMaterials {
-  opaque: VimStandardMaterial
-  transparent: VimStandardMaterial
+  opaque: StandardMaterial
+  transparent: StandardMaterial
   wireframe: THREE.LineBasicMaterial
   isolation: THREE.Material
-  outline: THREE.Material
+  mask: THREE.ShaderMaterial
+  outline: OutlineMaterial
 
   private _clippingPlanes: THREE.Plane[] | null
   private _sectionStrokeWitdh: number = 0.01
@@ -25,17 +28,33 @@ export class VimMaterials {
   private _focusColor: THREE.Color = new THREE.Color(1, 1, 1)
 
   constructor (
-    opaque?: VimStandardMaterial,
-    transparent?: VimStandardMaterial,
+    opaque?: StandardMaterial,
+    transparent?: StandardMaterial,
     wireframe?: THREE.LineBasicMaterial,
-    isolation?: THREE.Material
+    isolation?: THREE.Material,
+    mask?: THREE.ShaderMaterial,
+    outline?: OutlineMaterial
   ) {
-    this.opaque = opaque ?? new VimStandardMaterial(createOpaque())
-    this.transparent =
-      transparent ?? new VimStandardMaterial(createTransparent())
+    this.opaque = opaque ?? new StandardMaterial(createOpaque())
+    this.transparent = transparent ?? new StandardMaterial(createTransparent())
     this.wireframe = wireframe ?? createWireframe()
     this.isolation = isolation ?? createIsolationMaterial()
-    this.outline = createOutlineMaterial()
+    this.mask = mask ?? createMaskMaterial()
+    this.outline = outline ?? new OutlineMaterial()
+  }
+
+  /** Update material settings from config */
+  applySettings (settings: ViewerSettings) {
+    this.wireframeColor = settings.getHighlightColor()
+    this.wireframeOpacity = settings.getHighlightOpacity()
+    this.sectionStrokeWitdh = settings.getSectionStrokeWidth()
+    this.sectionStrokeFallof = settings.getSectionStrokeFalloff()
+    this.sectionStrokeColor = settings.getSectionStrokeColor()
+
+    this.outlineIntensity = settings.getOutlineIntensity()
+    this.outlineFalloff = settings.getOutlineFalloff()
+    this.outlineBlur = settings.getOutlineBlur()
+    this.outlineColor = settings.getOutlineColor()
   }
 
   get focusIntensity () {
@@ -84,7 +103,7 @@ export class VimMaterials {
     this.transparent.clippingPlanes = value
     this.wireframe.clippingPlanes = value
     this.isolation.clippingPlanes = value
-    this.outline.clippingPlanes = value
+    this.mask.clippingPlanes = value
   }
 
   get sectionStrokeWitdh () {
@@ -115,6 +134,38 @@ export class VimMaterials {
     this._sectionStrokeColor = value
     this.opaque.sectionStrokeColor = value
     this.transparent.sectionStrokeColor = value
+  }
+
+  get outlineBlur () {
+    return this.outline.strokeBlur
+  }
+
+  set outlineBlur (value: number) {
+    this.outline.strokeBlur = value
+  }
+
+  get outlineFalloff () {
+    return this.outline.strokeBias
+  }
+
+  set outlineFalloff (value: number) {
+    this.outline.strokeBias = value
+  }
+
+  get outlineIntensity () {
+    return this.outline.strokeMultiplier
+  }
+
+  set outlineIntensity (value: number) {
+    this.outline.strokeMultiplier = value
+  }
+
+  get outlineColor () {
+    return this.outline.color
+  }
+
+  set outlineColor (value: THREE.Color) {
+    this.outline.color = value
   }
 
   /** dispose all materials. */

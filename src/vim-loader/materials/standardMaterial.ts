@@ -2,7 +2,7 @@ import * as THREE from 'three'
 
 type ShaderUniforms = { [uniform: string]: THREE.IUniform<any> }
 
-export class VimStandardMaterial {
+export class StandardMaterial {
   material: THREE.Material
   uniforms: ShaderUniforms
 

@@ -7,7 +7,6 @@ import { Scene } from '../../vim-loader/scene'
 import { Viewport } from '../viewport'
 import { RenderScene } from './renderScene'
 import { VimMaterials } from '../../vim-loader/materials/materials'
-import { ViewerSettings } from '../viewerSettings'
 import { CSS2DRenderer } from 'three/examples/jsm/renderers/CSS2DRenderer'
 import { SimpleEventDispatcher } from 'ste-simple-events'
 import { Vim } from '../../vim'
@@ -24,11 +23,13 @@ export class Renderer {
   textRenderer: CSS2DRenderer
   viewport: Viewport
   scene: RenderScene
-  materials: VimMaterials
+
   camera: Camera
 
   section: RenderingSection
   composer: RenderingComposer
+
+  private _materials: VimMaterials
 
   private _onVisibilityChanged = new SimpleEventDispatcher<Vim>()
   get onVisibilityChanged () {
@@ -55,7 +56,7 @@ export class Renderer {
   ) {
     this.viewport = viewport
     this.scene = scene
-    this.materials = materials
+    this._materials = materials
     this.camera = camera
 
     this.renderer = new THREE.WebGLRenderer({
@@ -79,7 +80,7 @@ export class Renderer {
       camera
     )
 
-    this.section = new RenderingSection(this.renderer, this.materials)
+    this.section = new RenderingSection(this.renderer, this._materials)
 
     this.fitViewport()
     this.viewport.onResize(() => this.fitViewport())
@@ -144,15 +145,6 @@ export class Renderer {
    */
   clear () {
     this.scene.clear()
-  }
-
-  /** Update material settings from config */
-  applyMaterialSettings (settings: ViewerSettings) {
-    this.materials.wireframeColor = settings.getHighlightColor()
-    this.materials.wireframeOpacity = settings.getHighlightOpacity()
-    this.materials.sectionStrokeWitdh = settings.getSectionStrokeWidth()
-    this.materials.sectionStrokeFallof = settings.getSectionStrokeFalloff()
-    this.materials.sectionStrokeColor = settings.getSectionStrokeColor()
   }
 
   private fitViewport = () => {
