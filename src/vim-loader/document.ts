@@ -748,7 +748,7 @@ export class Document implements IDocument {
           name: getParameterName(d),
           value: getParameterDisplayValue(i),
           group: getParameterGroup(d),
-          isInstance: isInstance
+          isInstance
         })
       }
     })

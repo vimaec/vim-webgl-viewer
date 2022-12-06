@@ -35,7 +35,7 @@ class MeasureLine {
       sizeAttenuation: 0,
       lineWidth: 5,
       resolution: canvasSize,
-      color: color
+      color
     })
 
     this._materialAlways = new MeshLineMaterial({
@@ -45,7 +45,7 @@ class MeasureLine {
       transparent: true,
       opacity: 0.5,
       resolution: canvasSize,
-      color: color
+      color
     })
 
     this._meshLine = new MeshLine()
@@ -97,7 +97,7 @@ class MeasureMarker {
 
   constructor (color: THREE.Color, camera: ICamera, viewer: Viewer) {
     this._material = new THREE.MeshBasicMaterial({
-      color: color
+      color
     })
 
     this._materialAlways = new THREE.MeshBasicMaterial({
