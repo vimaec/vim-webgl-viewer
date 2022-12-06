@@ -114,9 +114,9 @@ export interface ICamera {
   reset(): void
 
   /**
-   * Returns the world height of a plane perpendicular to camera intersecting given point.
+   * Returns the world size of the camera frustrum at given point.
    */
-  heightAt(point: THREE.Vector3): number
+  frustrumSizeAt(point: THREE.Vector3): THREE.Vector2
 
   /**
    * Returns world forward of the camera.
@@ -203,12 +203,17 @@ export class Camera implements ICamera {
     this.reset()
   }
 
-  heightAt (point: THREE.Vector3) {
+  frustrumSizeAt (point: THREE.Vector3) {
     if (this.orthographic && this.cameraOrthographic) {
-      return this.cameraOrthographic.top - this.cameraOrthographic.bottom
+      return new THREE.Vector2(
+        Math.abs(this.cameraOrthographic.right - this.cameraOrthographic.left),
+        Math.abs(this.cameraOrthographic.top - this.cameraOrthographic.bottom)
+      )
     } else {
       const dist = this.camera.position.distanceTo(point)
-      return dist * Math.tan((this.cameraPerspective.fov / 2) * (Math.PI / 180))
+      const size =
+        dist * Math.tan((this.cameraPerspective.fov / 2) * (Math.PI / 180))
+      return new THREE.Vector2(size, size)
     }
   }
 
