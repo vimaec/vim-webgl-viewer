@@ -2,6 +2,7 @@
  @module viw-webgl-viewer
 */
 
+import { SignalDispatcher } from 'ste-signals'
 import * as THREE from 'three'
 import { CSS2DRenderer } from 'three/examples/jsm/renderers/CSS2DRenderer'
 import { ViewerConfig } from './viewerSettings'
@@ -11,15 +12,20 @@ export class Viewport {
   canvas: HTMLCanvasElement
   /** HTML Element in which text is rendered */
   text: HTMLElement | undefined
+
   private _unregisterResize: Function | undefined
   private _ownedCanvas: boolean
-  private _resizeCallbacks: (() => void)[] = []
+  private _onResize: SignalDispatcher = new SignalDispatcher()
+
+  get onResize () {
+    return this._onResize.asEvent()
+  }
 
   constructor (settings: ViewerConfig) {
     const [canvas, owned] = Viewport.getOrCreateCanvas(settings.canvas.id)
     this.canvas = canvas
     this._ownedCanvas = owned
-    this.registerResize(settings.canvas.resizeDelay)
+    this.watchResize(settings.canvas.resizeDelay)
   }
 
   /**
@@ -91,15 +97,11 @@ export class Viewport {
     return size.x / size.y
   }
 
-  onResize (callback: () => void) {
-    this._resizeCallbacks.push(callback)
-  }
-
   /**
    * Resizes canvas and update camera to match new parent dimensions.
    */
   ResizeToParent () {
-    this._resizeCallbacks.forEach((cb) => cb())
+    this._onResize.dispatch()
   }
 
   /**
@@ -108,7 +110,7 @@ export class Viewport {
    * @param callback code to be called
    * @param timeout time after the last resize before code will be called
    */
-  private registerResize (timeout: number) {
+  private watchResize (timeout: number) {
     let timerId: ReturnType<typeof setTimeout> | undefined
     const onResize = () => {
       if (timerId !== undefined) {
@@ -117,10 +119,11 @@ export class Viewport {
       }
       timerId = setTimeout(() => {
         timerId = undefined
-        this._resizeCallbacks.forEach((cb) => cb())
+        this._onResize.dispatch()
       }, timeout)
     }
     window.addEventListener('resize', onResize)
+
     this._unregisterResize = () =>
       window.removeEventListener('resize', onResize)
   }

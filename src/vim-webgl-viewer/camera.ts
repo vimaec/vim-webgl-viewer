@@ -196,7 +196,7 @@ export class Camera implements ICamera {
     this.camera = this.cameraPerspective
     this._scene = scene
     this._viewport = viewport
-    this._viewport.onResize(() => {
+    this._viewport.onResize.subscribe(() => {
       this.updateProjection(this._scene.getBoundingBox())
     })
     this.applySettings(settings)

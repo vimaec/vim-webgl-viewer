@@ -83,7 +83,7 @@ export class Renderer {
     this.section = new RenderingSection(this.renderer, this._materials)
 
     this.fitViewport()
-    this.viewport.onResize(() => this.fitViewport())
+    this.viewport.onResize.subscribe(() => this.fitViewport())
     this.camera.onValueChanged.sub(
       () => (this.composer.camera = this.camera.camera)
     )
