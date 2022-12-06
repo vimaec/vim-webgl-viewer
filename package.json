@@ -7,7 +7,7 @@
   ],
   "main": "./dist/vim-webgl-viewer.iife.js",
   "types": "./dist/types/vim.d.ts",
-  "module": "/dist/vim-webgl-viewer.es.js",
+  "module": "/dist/vim-webgl-viewer.mjs",
   "homepage": "https://github.com/vimaec/vim-webgl-viewer.git",
   "bugs": {
     "url": "https://github.com/vimaec/vim-webgl-viewer/issues"
