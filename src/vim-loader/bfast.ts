@@ -193,6 +193,7 @@ export class BFast {
     const header = await this._header.get()
     const range = new Range(0, header.dataEnd)
     const buffer = await this.request(range, this.name)
+    if (!buffer) return
     const result = new BFast(buffer, 0, this.name)
     return result
   }

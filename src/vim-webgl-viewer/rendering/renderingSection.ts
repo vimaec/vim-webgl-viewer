@@ -56,7 +56,7 @@ export class RenderingSection {
    * Objects outside the section box will be culled when this is true.
    */
   set active (value: boolean) {
-    this._materials.clippingPlanes = value ? this.planes : null
+    this._materials.clippingPlanes = this.planes
     this._renderer.localClippingEnabled = value
     this._active = value
   }

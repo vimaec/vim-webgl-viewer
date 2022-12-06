@@ -119,7 +119,7 @@ export class SceneBuilder {
     const result = []
     const count = g3d.getInstanceCount()
     for (let i = 0; i < count; i++) {
-      if (flagTest(g3d.instanceFlags[i])) result.push(i)
+      if (flagTest?.(g3d.instanceFlags[i])) result.push(i)
     }
     return this.createFromG3d(g3d, 'all', result)
   }

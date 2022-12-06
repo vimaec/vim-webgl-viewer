@@ -54,6 +54,7 @@ export class Vim {
   }
 
   loadMore (flagTest: (flag: number) => boolean) {
+    if (!this.document.g3d) return
     const scene = this.scene.builder.createFromFlag(this.document.g3d, flagTest)
     scene.applyMatrix4(this.settings.matrix)
     return scene

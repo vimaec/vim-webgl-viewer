@@ -25,7 +25,7 @@ export type ViewerConfig = {
    */
   canvas: {
     /** Canvas dom model id. If none provided a new canvas will be created */
-    id: string
+    id: string | undefined
     /** Limits how often canvas will be resized if window is resized. */
     resizeDelay: number
   }

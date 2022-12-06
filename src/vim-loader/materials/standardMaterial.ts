@@ -4,7 +4,7 @@ type ShaderUniforms = { [uniform: string]: THREE.IUniform<any> }
 
 export class StandardMaterial {
   material: THREE.Material
-  uniforms: ShaderUniforms
+  uniforms: ShaderUniforms | undefined
 
   // Parameters
   _focusIntensity: number = 0.5
@@ -78,7 +78,7 @@ export class StandardMaterial {
     return this.material.clippingPlanes
   }
 
-  set clippingPlanes (value: THREE.Plane[]) {
+  set clippingPlanes (value: THREE.Plane[] | null) {
     this.material.clippingPlanes = value
   }
 

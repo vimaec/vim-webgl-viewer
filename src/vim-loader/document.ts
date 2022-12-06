@@ -856,7 +856,7 @@ export class Document implements IDocument {
       summary.push({
         title: titles?.[i],
         pathName: pathName?.[i],
-        isLinked: isLinkedArray?.[i] > 0,
+        isLinked: isLinkedArray ? isLinkedArray?.[i] > 0 : false,
         product: product?.[i],
         version: version?.[i],
         user: user?.[i],

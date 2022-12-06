@@ -82,11 +82,11 @@ export class ObjectAttribute<T> {
 
 export class ColorAttribute {
   _meshes: [THREE.Mesh, number][] | undefined
-  value: THREE.Color
+  value: THREE.Color | undefined
   vim: Vim
   constructor (
     meshes: [THREE.Mesh, number][] | undefined,
-    value: THREE.Color,
+    value: THREE.Color | undefined,
     vim: Vim
   ) {
     this._meshes = meshes

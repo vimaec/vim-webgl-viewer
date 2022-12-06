@@ -38,7 +38,7 @@ export class VimMaterials {
    */
   outline: OutlineMaterial
 
-  private _clippingPlanes: THREE.Plane[] | null
+  private _clippingPlanes: THREE.Plane[] | undefined
   private _sectionStrokeWitdh: number = 0.01
   private _sectionStrokeFallof: number = 0.75
   private _sectionStrokeColor: THREE.Color = new THREE.Color(0xf6, 0xf6, 0xf6)
@@ -131,13 +131,14 @@ export class VimMaterials {
     return this._clippingPlanes
   }
 
-  set clippingPlanes (value: THREE.Plane[] | null) {
+  set clippingPlanes (value: THREE.Plane[] | undefined) {
+    // THREE Materials will break if assigned undefined
     this._clippingPlanes = value
-    this.opaque.clippingPlanes = value
-    this.transparent.clippingPlanes = value
-    this.wireframe.clippingPlanes = value
-    this.isolation.clippingPlanes = value
-    this.mask.clippingPlanes = value
+    this.opaque.clippingPlanes = value ?? null
+    this.transparent.clippingPlanes = value ?? null
+    this.wireframe.clippingPlanes = value ?? null
+    this.isolation.clippingPlanes = value ?? null
+    this.mask.clippingPlanes = value ?? null
   }
 
   /**

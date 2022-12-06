@@ -2,7 +2,11 @@ import * as THREE from 'three'
 
 export class OutlineMaterial {
   material: THREE.ShaderMaterial
-  private _camera: THREE.PerspectiveCamera | THREE.OrthographicCamera
+  private _camera:
+    | THREE.PerspectiveCamera
+    | THREE.OrthographicCamera
+    | undefined
+
   private _resolution: THREE.Vector2
 
   constructor (
@@ -13,9 +17,12 @@ export class OutlineMaterial {
     }>
   ) {
     this.material = createOutlineMaterial()
-    this.resolution = options?.resolution
-    this.sceneBuffer = options?.sceneBuffer
-    this.resolution = options?.resolution
+    this._resolution = options?.resolution ?? new THREE.Vector2(1, 1)
+    this.resolution = this._resolution
+    if (options?.sceneBuffer) {
+      this.sceneBuffer = options.sceneBuffer
+    }
+    this.camera = options?.camera
   }
 
   get resolution () {
@@ -37,9 +44,11 @@ export class OutlineMaterial {
     return this._camera
   }
 
-  set camera (value: THREE.PerspectiveCamera | THREE.OrthographicCamera) {
-    this.material.uniforms.cameraNear.value = value.near
-    this.material.uniforms.cameraFar.value = value.far
+  set camera (
+    value: THREE.PerspectiveCamera | THREE.OrthographicCamera | undefined
+  ) {
+    this.material.uniforms.cameraNear.value = value?.near ?? 1
+    this.material.uniforms.cameraFar.value = value?.far ?? 1000
     this._camera = value
   }
 

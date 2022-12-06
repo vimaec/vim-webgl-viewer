@@ -18,7 +18,7 @@ export class Selection {
   private _focusedObject: Object | undefined
   private _vim: Vim | undefined
   private _lastFocusTime: number = new Date().getTime()
-  private _animationId: number
+  private _animationId: number = -1
 
   constructor (materials: VimMaterials) {
     this._materials = materials
