@@ -26,7 +26,7 @@ export class VimMaterials {
   private _sectionStrokeColor: THREE.Color = new THREE.Color(0xf6, 0xf6, 0xf6)
   private _focusIntensity: number = 0.75
   private _focusColor: THREE.Color = new THREE.Color(1, 1, 1)
-
+  private
   constructor (
     opaque?: StandardMaterial,
     transparent?: StandardMaterial,
@@ -175,6 +175,8 @@ export class VimMaterials {
     this.transparent.dispose()
     this.wireframe.dispose()
     this.isolation.dispose()
+    this.mask.dispose()
+    this.outline.dispose()
   }
 }
 
