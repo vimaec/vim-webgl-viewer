@@ -75,7 +75,7 @@ export class Viewer {
   measure: IMeasure
 
   /**
-   * Interface to interact with the rectanglwe gizmo.
+   * Interface to interact with the rectangle gizmo.
    */
   gizmoRectangle: GizmoRectangle
 

@@ -11,6 +11,9 @@ export class RenderingSection {
   private _materials: VimMaterials
   private _active: boolean = true
 
+  /**
+   * Current section box. To update the box use fitbox.
+   */
   readonly box: THREE.Box3 = new THREE.Box3(
     new THREE.Vector3(-100, -100, -100),
     new THREE.Vector3(100, 100, 100)
@@ -36,6 +39,9 @@ export class RenderingSection {
     this._materials = materials
   }
 
+  /**
+   * Resize section box to match provided box.
+   */
   fitBox (box: THREE.Box3) {
     this.maxX.constant = box.max.x
     this.minX.constant = -box.min.x
@@ -46,6 +52,9 @@ export class RenderingSection {
     this.box.copy(box)
   }
 
+  /**
+   * Objects outside the section box will be culled when this is true.
+   */
   set active (value: boolean) {
     this._materials.clippingPlanes = value ? this.planes : null
     this._renderer.localClippingEnabled = value

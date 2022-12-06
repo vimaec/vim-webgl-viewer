@@ -60,7 +60,7 @@ export class GizmoRectangle {
     return this.line.visible
   }
 
-  /** Gizmo gets renderer if true */
+  /** Gizmo gets rendered if true */
   set visible (value: boolean) {
     this.line.visible = value
   }
@@ -68,7 +68,7 @@ export class GizmoRectangle {
   /**
    * Sets the 2 corner points defining the rectangle.
    */
-  update (posA: THREE.Vector2, posB: THREE.Vector2) {
+  setCorners (posA: THREE.Vector2, posB: THREE.Vector2) {
     // Plane perpedicular to camera
     const plane = new THREE.Plane().setFromNormalAndCoplanarPoint(
       this.viewer.camera.forward,
@@ -143,7 +143,7 @@ export class GizmoRectangle {
   }
 
   /**
-   * Raycast from camera to all points, return closest hit position.
+   * Raycast from camera through the five interest points, return closest hit position.
    */
   getClosestHit () {
     if (!this.points) return
@@ -170,7 +170,7 @@ export class GizmoRectangle {
   /**
    * Projects all points on a plane the coplanar to position.
    */
-  projectPoints (position: THREE.Vector3) {
+  private projectPoints (position: THREE.Vector3) {
     const plane = new THREE.Plane().setFromNormalAndCoplanarPoint(
       this.viewer.camera.forward,
       position

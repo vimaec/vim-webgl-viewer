@@ -310,7 +310,7 @@ export class MouseHandler extends InputHandler {
 
   private updateRectangle () {
     if (this._downPosition && this._lastPosition) {
-      this.gizmoRect.update(this._downPosition, this._lastPosition)
+      this.gizmoRect.setCorners(this._downPosition, this._lastPosition)
     }
   }
 }

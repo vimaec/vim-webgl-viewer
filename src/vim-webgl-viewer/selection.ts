@@ -44,7 +44,7 @@ export class Selection {
   }
 
   /**
-   * Returns first selected object.
+   * Returns selected object as an iterator.
    */
   get objects () {
     return this._objects.values()
@@ -203,6 +203,9 @@ export class Selection {
     this._onValueChanged.dispatch()
   }
 
+  /**
+   * Disposes all resources and stops animations.
+   */
   dispose () {
     cancelAnimationFrame(this._animationId)
   }

@@ -187,6 +187,17 @@ export class BFast {
   }
 
   /**
+   * Returns a new local bfast equivalent to this bfast.
+   */
+  async getSelf () {
+    const header = await this._header.get()
+    const range = new Range(0, header.dataEnd)
+    const buffer = await this.request(range, this.name)
+    const result = new BFast(buffer, 0, this.name)
+    return result
+  }
+
+  /**
    * Returns the raw buffer associated with a name
    * This value is not cached.
    * @param name buffer name

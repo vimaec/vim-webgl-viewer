@@ -13,11 +13,29 @@ import { ViewerConfig } from '../../vim-webgl-viewer/viewerSettings'
  * Defines the materials to be used by the vim loader and allows for material injection.
  */
 export class VimMaterials {
+  /**
+   * Material used for opaque model geometry
+   */
   opaque: StandardMaterial
+  /**
+   * Material used for transparent model geometry
+   */
   transparent: StandardMaterial
+  /**
+   * Material used when creating wireframe geometry of the model
+   */
   wireframe: THREE.LineBasicMaterial
+  /**
+   * Material used to show traces of hidden objects
+   */
   isolation: THREE.Material
+  /**
+   * Material used to filter out what is not selected for selection outline effect.
+   */
   mask: THREE.ShaderMaterial
+  /**
+   * Material used for selection outline effect.
+   */
   outline: OutlineMaterial
 
   private _clippingPlanes: THREE.Plane[] | null
@@ -26,7 +44,7 @@ export class VimMaterials {
   private _sectionStrokeColor: THREE.Color = new THREE.Color(0xf6, 0xf6, 0xf6)
   private _focusIntensity: number = 0.75
   private _focusColor: THREE.Color = new THREE.Color(1, 1, 1)
-  private
+
   constructor (
     opaque?: StandardMaterial,
     transparent?: StandardMaterial,
@@ -58,6 +76,9 @@ export class VimMaterials {
     this.outlineColor = settings.materials.outline.color
   }
 
+  /**
+   * Color intensity of focus effect on hover.
+   */
   get focusIntensity () {
     return this._focusIntensity
   }
@@ -68,6 +89,9 @@ export class VimMaterials {
     this.transparent.focusIntensity = value
   }
 
+  /**
+   * Color of focus effect on hover.
+   */
   get focusColor () {
     return this._focusColor
   }
@@ -78,6 +102,9 @@ export class VimMaterials {
     this.transparent.focusColor = value
   }
 
+  /**
+   * Default color for wireframe meshes.
+   */
   get wireframeColor () {
     return this.wireframe.color
   }
@@ -86,6 +113,9 @@ export class VimMaterials {
     this.wireframe.color = value
   }
 
+  /**
+   * Default opacity for wireframe meshes.
+   */
   get wireframeOpacity () {
     return this.wireframe.opacity
   }
@@ -94,6 +124,9 @@ export class VimMaterials {
     this.wireframe.opacity = value
   }
 
+  /**
+   * Applies clipping planes to all relevent materials
+   */
   get clippingPlanes () {
     return this._clippingPlanes
   }
@@ -107,6 +140,9 @@ export class VimMaterials {
     this.mask.clippingPlanes = value
   }
 
+  /**
+   * Width of the stroke effect where the section box intersects the model.
+   */
   get sectionStrokeWitdh () {
     return this._sectionStrokeWitdh
   }
@@ -117,6 +153,9 @@ export class VimMaterials {
     this.transparent.sectionStrokeWitdh = value
   }
 
+  /**
+   * Gradient of the stroke effect where the section box intersects the model.
+   */
   get sectionStrokeFallof () {
     return this._sectionStrokeFallof
   }
@@ -127,6 +166,9 @@ export class VimMaterials {
     this.transparent.sectionStrokeFallof = value
   }
 
+  /**
+   * Color of the stroke effect where the section box intersects the model.
+   */
   get sectionStrokeColor () {
     return this._sectionStrokeColor
   }
@@ -137,6 +179,9 @@ export class VimMaterials {
     this.transparent.sectionStrokeColor = value
   }
 
+  /**
+   * Size of the blur convolution on on the selection outline effect
+   */
   get outlineBlur () {
     return this.outline.strokeBlur
   }
@@ -145,6 +190,9 @@ export class VimMaterials {
     this.outline.strokeBlur = value
   }
 
+  /**
+   * Gradient of the the selection outline effect
+   */
   get outlineFalloff () {
     return this.outline.strokeBias
   }
@@ -153,6 +201,9 @@ export class VimMaterials {
     this.outline.strokeBias = value
   }
 
+  /**
+   * Intensity of the the selection outline effect
+   */
   get outlineIntensity () {
     return this.outline.strokeMultiplier
   }
@@ -161,6 +212,9 @@ export class VimMaterials {
     this.outline.strokeMultiplier = value
   }
 
+  /**
+   * Color of the the selection outline effect
+   */
   get outlineColor () {
     return this.outline.color
   }

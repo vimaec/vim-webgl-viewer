@@ -30,7 +30,7 @@ type FrameAngle = 'none' | 'center' | number
 
 export interface ICamera {
   /**
-   * Wrapped Three.js camera
+   * Three.js camera
    */
   camera: THREE.Camera
   /**
@@ -56,7 +56,7 @@ export interface ICamera {
   localVelocity: THREE.Vector3
 
   /**
-   * defines a common lerp duration
+   * Defines a common lerp duration
    */
   defaultLerpDuration: number
 
@@ -100,7 +100,9 @@ export interface ICamera {
 
   /**
    * Moves and rotates the camera so that target is well framed.
-   * if center is true -> camera.y = target.y
+   * @param target Vim or Three object to frame, all to frame the whole scene, undefined has no effect.
+   * @param angle None will not force any angle, Center will force camera.y = object.y, providing an angle will move the camera so it is looking down at object by the provided angle.
+   * @param duration Duration of the lerp effect.
    */
   frame(
     target: Object | THREE.Sphere | THREE.Box3 | 'all' | undefined,
@@ -119,7 +121,7 @@ export interface ICamera {
   frustrumSizeAt(point: THREE.Vector3): THREE.Vector2
 
   /**
-   * Returns world forward of the camera.
+   * World forward of the camera.
    */
   get forward(): THREE.Vector3
 
@@ -318,7 +320,7 @@ export class Camera implements ICamera {
 
   frame (
     target: Object | THREE.Sphere | THREE.Box3 | 'all' | undefined,
-    center: FrameAngle = 'none',
+    angle: FrameAngle = 'none',
     duration: number = 0
   ) {
     if (target instanceof Object) {
@@ -331,7 +333,7 @@ export class Camera implements ICamera {
       target = target.getBoundingSphere(new THREE.Sphere())
     }
     if (target instanceof THREE.Sphere) {
-      this.frameSphere(target, center, duration)
+      this.frameSphere(target, angle, duration)
     }
   }
 

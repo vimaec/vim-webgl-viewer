@@ -188,26 +188,26 @@ export class Input {
     this._onPointerModeChanged.dispatch()
   }
 
+  private _onPointerModeChanged = new SignalDispatcher()
   /**
    * Event called when pointer interaction mode changes.
    */
-  private _onPointerModeChanged = new SignalDispatcher()
   get onPointerModeChanged () {
     return this._onPointerModeChanged.asEvent()
   }
 
+  private _onPointerOverrideChanged = new SignalDispatcher()
   /**
    * Event called when the pointer is temporarily overriden.
    */
-  private _onPointerOverrideChanged = new SignalDispatcher()
   get onPointerOverrideChanged () {
     return this._onPointerOverrideChanged.asEvent()
   }
 
+  private _onContextMenu = new SimpleEventDispatcher<THREE.Vector2>()
   /**
    * Event called when when context menu could be displayed
    */
-  private _onContextMenu = new SimpleEventDispatcher<THREE.Vector2>()
   get onContextMenu () {
     return this._onContextMenu.asEvent()
   }

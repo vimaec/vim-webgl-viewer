@@ -188,7 +188,18 @@ export class Environment {
 }
 
 export interface IEnvironment {
+  /**
+   * Scene skylight
+   */
   skyLight: THREE.HemisphereLight
+
+  /**
+   * Scene sunlights array
+   */
   sunLights: THREE.DirectionalLight[]
+
+  /**
+   * Scene groundplane under the model
+   */
   groundPlane: THREE.Mesh
 }
