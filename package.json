@@ -50,6 +50,7 @@
     "vite": "^3.2.5"
   },
   "dependencies": {
+    "@types/node": "^18.11.11",
     "deepmerge": "^4.2.2",
     "ste-events": "^3.0.7",
     "ste-simple-events": "^3.0.7",
