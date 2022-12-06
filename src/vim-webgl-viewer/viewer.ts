@@ -173,6 +173,7 @@ export class Viewer {
 
   dispose () {
     if (this._disposed) return
+    this.selection.dispose()
     this._environment.dispose()
     this.selection.clear()
     this._camera.dispose()
@@ -197,7 +198,6 @@ export class Viewer {
     if (this._vims.length) {
       this.renderer.render(this.camera.camera, this.selection.count > 0)
     }
-    this.selection.onAnimate()
   }
 
   /**

@@ -18,9 +18,11 @@ export class Selection {
   private _focusedObject: Object | undefined
   private _vim: Vim | undefined
   private _lastFocusTime: number = new Date().getTime()
+  private _animationId: number
 
   constructor (materials: VimMaterials) {
     this._materials = materials
+    this.animate()
   }
 
   // Disposable State
@@ -201,6 +203,10 @@ export class Selection {
     this._onValueChanged.dispatch()
   }
 
+  dispose () {
+    cancelAnimationFrame(this._animationId)
+  }
+
   private clearOnNewVim (vim: Vim) {
     if (this._vim) {
       if (this._vim !== vim) {
@@ -213,10 +219,11 @@ export class Selection {
     }
   }
 
-  onAnimate () {
+  private animate () {
     const time = new Date().getTime()
     const timeElapsed = time - this._lastFocusTime
     const focus = Math.min(timeElapsed / 100, 1)
     this._materials.focusIntensity = focus / 2
+    this._animationId = requestAnimationFrame(() => this.animate())
   }
 }
