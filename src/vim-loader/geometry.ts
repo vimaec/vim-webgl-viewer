@@ -14,7 +14,7 @@ export namespace Transparency {
   /**
    * Returns true if the transparency mode is one of the valid values
    */
-  export function isValid (value: string): value is Mode {
+  export function isValid (value: string | undefined | null): value is Mode {
     return ['all', 'opaqueOnly', 'transparentOnly', 'allAsOpaque'].includes(
       value
     )

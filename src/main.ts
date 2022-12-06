@@ -24,7 +24,7 @@ if (params.has('download')) {
 // Create Viewer
 const viewer = new VIM.Viewer()
 
-load2(url)
+if (url) load2(url)
 
 const input = document.createElement('input')
 input.type = 'file'
@@ -41,8 +41,8 @@ input.onchange = (e: any) => {
 
   // here we tell the reader what to do when it's done reading...
   reader.onload = (readerEvent) => {
-    const content = readerEvent.target.result // this is the content!
-    load2(content)
+    const content = readerEvent?.target?.result // this is the content!
+    if (content) load2(content)
   }
 }
 
@@ -57,8 +57,8 @@ function load2 (vim: string | ArrayBuffer) {
           {
             rotation: new THREE.Vector3(270, 0, 0),
             position: new THREE.Vector3(i * 100, 0, j * 100),
-            transparency: transparency,
-            download: 'stream'
+            transparency,
+            download
           },
           (progress) => {
             console.log(`Loading : ${progress.loaded} / ${progress.total}`)
