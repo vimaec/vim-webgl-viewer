@@ -31,7 +31,7 @@ input.type = 'file'
 document.body.prepend(input)
 
 input.onchange = (e: any) => {
-  viewer.clear()
+  viewer.clearVims()
   // getting a hold of the file reference
   const file = e.target.files[0]
 
@@ -72,6 +72,8 @@ function load2 (vim: string | ArrayBuffer) {
     }
   }
 }
+
+viewer.
 
 globalThis.viewer = viewer
 globalThis.VIM = VIM
