@@ -41,6 +41,7 @@ export class RequestLogger {
   /**
    * callback on update, called at most every delay time.
    */
+  // eslint-disable-next-line no-use-before-define
   onUpdate: ((self: RequestLogger) => void) | undefined = undefined
 
   constructor (source: string) {

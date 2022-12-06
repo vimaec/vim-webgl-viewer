@@ -136,6 +136,7 @@ export class BFast {
   name: string
   private _header: RemoteValue<BFastHeader>
   private _ranges: RemoteValue<Map<string, Range>>
+  // eslint-disable-next-line no-use-before-define
   private _children: Map<string, RemoteValue<BFast | undefined>>
 
   constructor (
