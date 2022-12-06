@@ -221,7 +221,6 @@ export class Viewer {
     for (let i = 0; i <= this._vims.length; i++) {
       if (this._vims[i] === undefined) {
         this._vims[i] = vim
-        vim.index = i
         return
       }
     }
@@ -231,8 +230,8 @@ export class Viewer {
    * Remove given vim from the vims array and leaves an undefined spot.
    */
   private removeVim (vim: Vim) {
-    this._vims[vim.index] = undefined
-    vim.index = -1
+    const i = this._vims.indexOf(vim)
+    this._vims[i] = undefined
   }
 
   /**
@@ -297,7 +296,7 @@ export class Viewer {
   /**
    * Unloads all vim from viewer.
    */
-  clear () {
+  clearVims () {
     this.vims.forEach((v) => this.unloadVim(v))
   }
 

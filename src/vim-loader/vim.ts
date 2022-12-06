@@ -15,7 +15,6 @@ import { Object } from './object'
 export class Vim {
   source: string | undefined
   readonly document: IDocument
-  index: number = -1
   settings: VimConfig
 
   scene: Scene
