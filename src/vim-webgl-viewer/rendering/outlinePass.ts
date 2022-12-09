@@ -1,3 +1,7 @@
+/**
+ * @module viw-webgl-viewer
+ */
+
 import * as THREE from 'three'
 import { Pass, FullScreenQuad } from 'three/examples/jsm/postprocessing/Pass.js'
 import { OutlineMaterial } from '../../vim-loader/materials/outlineMaterial'

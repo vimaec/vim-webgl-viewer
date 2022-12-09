@@ -10,9 +10,15 @@ import { Viewport } from './viewport'
 import { Camera } from './camera'
 import { Renderer } from './rendering/renderer'
 
-type ThreeIntersectionList = THREE.Intersection<THREE.Object3D<THREE.Event>>[]
+/**
+ * Type alias for THREE intersection array
+ */
+export type ThreeIntersectionList = THREE.Intersection<
+  THREE.Object3D<THREE.Event>
+>[]
 
-type ActionType = 'main' | 'double' | 'idle'
+export type ActionType = 'main' | 'double' | 'idle'
+export type ActionModifier = 'none' | 'shift' | 'ctrl'
 
 /**
  * Highlevel aggregate of information about a raycast result
@@ -183,7 +189,6 @@ export class Raycaster {
     return target
   }
 }
-type ActionModifier = 'none' | 'shift' | 'ctrl'
 
 export class InputAction {
   readonly position: THREE.Vector2

@@ -1,3 +1,7 @@
+/**
+ * @module vim-loader
+ */
+
 import * as THREE from 'three'
 
 /**

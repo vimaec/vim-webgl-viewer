@@ -1,6 +1,13 @@
+/**
+ * @module vim-loader
+ */
+
 import * as THREE from 'three'
 
-type ShaderUniforms = { [uniform: string]: THREE.IUniform<any> }
+/**
+ * Type alias for THREE uniforms
+ */
+export type ShaderUniforms = { [uniform: string]: THREE.IUniform<any> }
 
 export class StandardMaterial {
   material: THREE.Material

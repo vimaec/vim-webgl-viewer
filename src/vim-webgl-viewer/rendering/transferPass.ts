@@ -1,3 +1,7 @@
+/**
+ * @module viw-webgl-viewer
+ */
+
 import THREE from 'three'
 import { FullScreenQuad, Pass } from 'three/examples/jsm/postprocessing/Pass'
 import { createTransferMaterial } from '../../vim-loader/materials/transferMaterial'

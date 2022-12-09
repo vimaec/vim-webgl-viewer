@@ -318,7 +318,7 @@ export namespace Geometry {
   /**
    * Holds the info that needs to be precomputed for a merge.
    */
-  class MergeInfo {
+  export class MergeInfo {
     section: MeshSection
     instances: number[]
     indexCount: number
@@ -340,7 +340,7 @@ export namespace Geometry {
   /**
    * Allocates and holds all arrays needed to merge meshes.
    */
-  class MergeBuffer {
+  export class MergeBuffer {
     // output
     indices: Uint32Array
     vertices: Float32Array
@@ -371,7 +371,10 @@ export namespace Geometry {
     }
   }
 
-  class MergeResult {
+  /**
+   * Holds the result from a merge operation.
+   */
+  export class MergeResult {
     geometry: THREE.BufferGeometry
     instances: number[]
     submeshes: number[]

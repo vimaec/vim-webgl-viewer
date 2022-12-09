@@ -1,3 +1,7 @@
+/**
+ * @module vim-loader
+ */
+
 // external
 import * as THREE from 'three'
 import { Float32BufferAttribute, InstancedBufferAttribute } from 'three'

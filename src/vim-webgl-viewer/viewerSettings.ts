@@ -10,7 +10,11 @@ import { GizmoOptions } from './gizmos/gizmoAxes'
 export type TextureEncoding = 'url' | 'base64' | undefined
 export { GizmoOptions } from './gizmos/gizmoAxes'
 
-type RecursivePartial<T> = {
+/**
+ * Makes all field optional recursively
+ * https://stackoverflow.com/questions/41980195/recursive-partialt-in-typescript
+ */
+export type RecursivePartial<T> = {
   [P in keyof T]?: T[P] extends (infer U)[]
     ? RecursivePartial<U>[]
     : T[P] extends object

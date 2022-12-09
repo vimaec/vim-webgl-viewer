@@ -26,7 +26,7 @@ export const DIRECTIONS = {
  * Center : Cam.y = Object.y
  * number: Angle between the xz plane and the camera
  */
-type FrameAngle = 'none' | 'center' | number
+export type FrameAngle = 'none' | 'center' | number
 
 export interface ICamera {
   /**

@@ -145,7 +145,7 @@ class G3dAttribute {
  * The G3D format is designed to be used either as a serialization format or as an in-memory data structure.
  * See https://github.com/vimaec/g3d
  */
-class AbstractG3d {
+export class AbstractG3d {
   meta: string
   attributes: G3dAttribute[]
 

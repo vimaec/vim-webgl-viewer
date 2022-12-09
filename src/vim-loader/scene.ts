@@ -83,11 +83,9 @@ export class Scene {
 
   /**
    * Add an instanced mesh to the Scene and recomputes fields as needed.
-   * @param mesh Is expected to have
-   *  {
-   *    userData.instances = number[] (indices of the g3d instances that went into creating the mesh)
-   *    userData.boxes = THREE.Box3[] (bounding box of each instance)
-   *  }
+   * @param mesh Is expected to have:
+   * userData.instances = number[] (indices of the g3d instances that went into creating the mesh)
+   * userData.boxes = THREE.Box3[] (bounding box of each instance)
    */
   addMesh (mesh: THREE.Mesh) {
     const instances = mesh.userData.instances as number[]
