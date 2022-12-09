@@ -190,7 +190,7 @@ export class BFast {
   /**
    * Returns a new local bfast equivalent to this bfast.
    */
-  async getSelf () {
+  async getLocal () {
     const header = await this._header.get()
     const range = new Range(0, header.dataEnd)
     const buffer = await this.request(range, this.name)
