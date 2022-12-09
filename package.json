@@ -31,7 +31,7 @@
     "declarations": "tsc --declaration --emitDeclarationOnly --outdir ./dist/types"
   },
   "devDependencies": {
-    "@types/three": "^0.146.0",
+    "@types/three": "^0.143.0",
     "@typescript-eslint/eslint-plugin": "^5.45.1",
     "@typescript-eslint/parser": "^5.45.1",
     "eslint": "^8.29.0",
@@ -54,7 +54,7 @@
     "deepmerge": "^4.2.2",
     "ste-events": "^3.0.7",
     "ste-simple-events": "^3.0.7",
-    "three": "^0.147.0"
+    "three": "0.143.0"
   },
   "keywords": [
     "3d",

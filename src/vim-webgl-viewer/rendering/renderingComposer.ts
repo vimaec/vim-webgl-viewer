@@ -4,6 +4,8 @@
 
 import { EffectComposer } from 'three/examples/jsm/postprocessing/EffectComposer.js'
 import { RenderPass } from 'three/examples/jsm/postprocessing/RenderPass.js'
+import { ShaderPass } from 'three/examples/jsm/postprocessing/ShaderPass.js'
+import { FXAAShader } from 'three/examples/jsm/shaders/FXAAShader.js'
 import * as THREE from 'three'
 import { Viewport } from '../viewport'
 import { RenderScene } from './renderScene'
@@ -34,12 +36,14 @@ export class RenderingComposer {
   private _samples: number = 4
   private _size: THREE.Vector2
 
-  private _selectionComposer: EffectComposer
+  private _finalComposer: EffectComposer
   private _sceneComposer: EffectComposer
   private _renderPass: RenderPass
   private _selectionRenderPass: RenderPass
   private _transferPass: TransferPass
   private _outlines: boolean
+
+  private _fxaaPass: ShaderPass
 
   // Disposables
   private _outlinePass: OutlinePass
@@ -92,7 +96,7 @@ export class RenderingComposer {
       }
     )
 
-    this._selectionComposer = new EffectComposer(
+    this._finalComposer = new EffectComposer(
       this._renderer,
       this._selectionTarget
     )
@@ -104,20 +108,27 @@ export class RenderingComposer {
       this._materials.mask
     )
 
-    this._selectionComposer.addPass(this._selectionRenderPass)
+    this._finalComposer.addPass(this._selectionRenderPass)
 
     // Render higlight from selected object on top of regular scene
     this._outlinePass = new OutlinePass(
       this._sceneComposer.readBuffer.texture,
       this._materials.outline
     )
-    this._selectionComposer.addPass(this._outlinePass)
+    this._finalComposer.addPass(this._outlinePass)
 
     // When no outlines, just copy the scene to screen.
     this._transferPass = new TransferPass(
       this._sceneComposer.readBuffer.texture
     )
-    this._selectionComposer.addPass(this._transferPass)
+    this._finalComposer.addPass(this._transferPass)
+
+    this._fxaaPass = new ShaderPass(FXAAShader)
+    this._fxaaPass.material.uniforms.resolution.value.x = 1 / this._size.x
+    this._fxaaPass.material.uniforms.resolution.value.y = 1 / this._size.y
+    this._fxaaPass.enabled = true
+
+    this._finalComposer.addPass(this._fxaaPass)
   }
 
   get outlines () {
@@ -145,7 +156,9 @@ export class RenderingComposer {
   setSize (width: number, height: number) {
     this._size = new THREE.Vector2(width, height)
     this._sceneComposer.setSize(width, height)
-    this._selectionComposer.setSize(width, height)
+    this._finalComposer.setSize(width, height)
+    this._fxaaPass.material.uniforms.resolution.value.x = 1 / width
+    this._fxaaPass.material.uniforms.resolution.value.y = 1 / height
   }
 
   get samples () {
@@ -160,7 +173,7 @@ export class RenderingComposer {
 
   render () {
     this._sceneComposer.render()
-    this._selectionComposer.render()
+    this._finalComposer.render()
   }
 
   dispose () {
