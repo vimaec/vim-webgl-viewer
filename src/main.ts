@@ -73,8 +73,6 @@ function load2 (vim: string | ArrayBuffer) {
   }
 }
 
-viewer.
-
 globalThis.viewer = viewer
 globalThis.VIM = VIM
 globalThis.THREE = THREE
