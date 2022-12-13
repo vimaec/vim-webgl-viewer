@@ -2,17 +2,16 @@
  * @module viw-webgl-viewer
  */
 
+import * as THREE from 'three'
 import { EffectComposer } from 'three/examples/jsm/postprocessing/EffectComposer.js'
 import { RenderPass } from 'three/examples/jsm/postprocessing/RenderPass.js'
-import { ShaderPass } from 'three/examples/jsm/postprocessing/ShaderPass.js'
-import { FXAAShader } from 'three/examples/jsm/shaders/FXAAShader.js'
-import * as THREE from 'three'
+import { SSAARenderPass } from 'three/examples/jsm/postprocessing/SSAARenderPass.js'
+
 import { Viewport } from '../viewport'
 import { RenderScene } from './renderScene'
 import { VimMaterials } from '../../vim-loader/materials/materials'
 import { OutlinePass } from './outlinePass'
 import { TransferPass } from './transferPass'
-
 import { Camera } from '../camera'
 
 /*
@@ -29,6 +28,7 @@ import { Camera } from '../camera'
  * Rendering for selection outline.
  */
 export class RenderingComposer {
+  private _cam: Camera
   private _renderer: THREE.WebGLRenderer
   private _scene: RenderScene
   private _materials: VimMaterials
@@ -36,14 +36,15 @@ export class RenderingComposer {
   private _samples: number = 4
   private _size: THREE.Vector2
 
-  private _finalComposer: EffectComposer
-  private _sceneComposer: EffectComposer
+  private _composer: EffectComposer
   private _renderPass: RenderPass
+  private _ssaaRenderPass: SSAARenderPass
   private _selectionRenderPass: RenderPass
   private _transferPass: TransferPass
   private _outlines: boolean
+  private _clock: THREE.Clock = new THREE.Clock()
 
-  private _fxaaPass: ShaderPass
+  private _aaResumeTime
 
   // Disposables
   private _outlinePass: OutlinePass
@@ -58,6 +59,7 @@ export class RenderingComposer {
     materials: VimMaterials,
     camera: Camera
   ) {
+    this._cam = camera
     this._samples = renderer.capabilities.isWebGL2
       ? renderer.capabilities.maxSamples
       : 0
@@ -67,39 +69,48 @@ export class RenderingComposer {
     this._camera = camera.camera
     this._size = viewport.getSize()
     this.setup()
+
+    this._clock = new THREE.Clock()
   }
 
   private setup () {
     // Composer for regular scene rendering
-    // 4 samples provides default browser antialiasing
     this._sceneTarget = new THREE.WebGLRenderTarget(
       this._size.x,
       this._size.y,
-      { samples: this._samples }
+      {
+        samples: this._samples,
+        type: THREE.HalfFloatType
+      }
     )
 
-    this._sceneComposer = new EffectComposer(this._renderer, this._sceneTarget)
-    this._sceneComposer.renderToScreen = false
-
+    // Render pass for movement
     this._renderPass = new RenderPass(this._scene.scene, this._camera)
-    this._sceneComposer.addPass(this._renderPass)
+    this._renderPass.clearColor = new THREE.Color(0, 0, 0)
+    this._renderPass.clearAlpha = 0
+
+    // SSAA Render pass for idle
+    this._ssaaRenderPass = new SSAARenderPass(
+      this._scene.scene,
+      this._camera,
+      new THREE.Color(0, 0, 0),
+      0
+    )
+    this._ssaaRenderPass.sampleRenderTarget = this._sceneTarget.clone()
+    this._ssaaRenderPass.sampleLevel = 2
+    this._ssaaRenderPass.unbiased = true
 
     // Composer for selection effect
-    this._depthTexture = new THREE.DepthTexture(this._size.x, this._size.y)
     this._selectionTarget = new THREE.WebGLRenderTarget(
       this._size.x,
       this._size.y,
       {
-        depthTexture: this._depthTexture,
-        depthBuffer: true,
+        depthTexture: new THREE.DepthTexture(this._size.x, this._size.y),
         samples: this._samples
       }
     )
 
-    this._finalComposer = new EffectComposer(
-      this._renderer,
-      this._selectionTarget
-    )
+    this._composer = new EffectComposer(this._renderer, this._selectionTarget)
 
     // Render only selected objects
     this._selectionRenderPass = new RenderPass(
@@ -108,27 +119,19 @@ export class RenderingComposer {
       this._materials.mask
     )
 
-    this._finalComposer.addPass(this._selectionRenderPass)
+    this._composer.addPass(this._selectionRenderPass)
 
     // Render higlight from selected object on top of regular scene
     this._outlinePass = new OutlinePass(
-      this._sceneComposer.readBuffer.texture,
+      this._sceneTarget.texture,
       this._materials.outline
     )
-    this._finalComposer.addPass(this._outlinePass)
+    this._composer.addPass(this._outlinePass)
 
     // When no outlines, just copy the scene to screen.
-    this._transferPass = new TransferPass(
-      this._sceneComposer.readBuffer.texture
-    )
-    this._finalComposer.addPass(this._transferPass)
-
-    this._fxaaPass = new ShaderPass(FXAAShader)
-    this._fxaaPass.material.uniforms.resolution.value.x = 1 / this._size.x
-    this._fxaaPass.material.uniforms.resolution.value.y = 1 / this._size.y
-    this._fxaaPass.enabled = true
-
-    this._finalComposer.addPass(this._fxaaPass)
+    this._transferPass = new TransferPass(this._sceneTarget.texture)
+    this._transferPass.enabled = true
+    this._composer.addPass(this._transferPass)
   }
 
   get outlines () {
@@ -155,10 +158,10 @@ export class RenderingComposer {
 
   setSize (width: number, height: number) {
     this._size = new THREE.Vector2(width, height)
-    this._sceneComposer.setSize(width, height)
-    this._finalComposer.setSize(width, height)
-    this._fxaaPass.material.uniforms.resolution.value.x = 1 / width
-    this._fxaaPass.material.uniforms.resolution.value.y = 1 / height
+    this._sceneTarget.setSize(width, height)
+    this._renderPass.setSize(width, height)
+    this._ssaaRenderPass.setSize(width, height)
+    this._composer.setSize(width, height)
   }
 
   get samples () {
@@ -172,14 +175,37 @@ export class RenderingComposer {
   }
 
   render () {
-    this._sceneComposer.render()
-    this._finalComposer.render()
+    const time = new Date().getTime()
+    if (this._cam.hasMoved) {
+      this._aaResumeTime = time + 20
+
+      this._renderPass.renderToScreen = false
+      this._renderPass.render(
+        this._renderer,
+        undefined,
+        this._sceneTarget,
+        this._clock.getDelta(),
+        false
+      )
+    } else if (time > this._aaResumeTime) {
+      this._ssaaRenderPass.renderToScreen = false
+      this._ssaaRenderPass.render(
+        this._renderer,
+        this._sceneTarget,
+        this._ssaaRenderPass.sampleRenderTarget,
+        this._clock.getDelta(),
+        false
+      )
+    }
+
+    this._composer.render()
   }
 
   dispose () {
     this._sceneTarget.dispose()
     this._selectionTarget.dispose()
-    this._depthTexture.dispose()
     this._outlinePass.dispose()
+    this._renderPass.dispose()
+    this._ssaaRenderPass.dispose()
   }
 }

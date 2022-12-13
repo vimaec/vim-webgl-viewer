@@ -170,9 +170,17 @@ export class Camera implements ICamera {
   private _lerpPosition: boolean = false
   private _lerpRotation: boolean = false
 
+  private _lastPosition = new THREE.Vector3()
+  private _lastQuaternion = new THREE.Quaternion()
+
   private _onValueChanged = new SignalDispatcher()
   get onValueChanged () {
     return this._onValueChanged.asEvent()
+  }
+
+  private _hasMoved: boolean
+  get hasMoved () {
+    return this._hasMoved
   }
 
   private _onMoved = new SignalDispatcher()
@@ -295,12 +303,6 @@ export class Camera implements ICamera {
       this.gizmo.show(value)
     }
     this._onValueChanged.dispatch()
-  }
-
-  private setPosition (position: THREE.Vector3) {
-    const changed = this.isSignificant(this.camera.position.sub(position))
-    this.camera.position.copy(position)
-    if (changed) this._onMoved.dispatch()
   }
 
   /**
@@ -520,7 +522,6 @@ export class Camera implements ICamera {
         // apply rotation directly to camera
         this.camera.quaternion.copy(rotation)
         offset.applyQuaternion(this.camera.quaternion)
-        this._onMoved.dispatch()
       } else {
         // apply rotation to target and lerp
         offset.applyQuaternion(rotation)
@@ -709,6 +710,18 @@ export class Camera implements ICamera {
     }
 
     this.gizmo?.setPosition(this._orbitTarget)
+
+    this._hasMoved = false
+    if (
+      !this._lastPosition.equals(this.camera.position) ||
+      !this.camera.quaternion.equals(this._lastQuaternion)
+    ) {
+      this._hasMoved = true
+      this._onMoved.dispatch()
+    }
+
+    this._lastPosition.copy(this.camera.position)
+    this._lastQuaternion.copy(this.camera.quaternion)
   }
 
   private isNearTarget () {
@@ -751,7 +764,7 @@ export class Camera implements ICamera {
 
   private endLerp () {
     this.cancelLerp()
-    this.setPosition(this._targetPosition)
+    this.camera.position.copy(this._targetPosition)
     this.lookAt(this._orbitTarget)
   }
 
@@ -765,10 +778,13 @@ export class Camera implements ICamera {
       .clone()
       .multiplyScalar(blendFactor)
     this._velocity.add(deltaVelocity)
+    if (this._velocity.lengthSq() < 0.01) {
+      this._velocity.set(0, 0, 0)
+    }
 
     const deltaPosition = this._velocity.clone().multiplyScalar(deltaTime)
     const endPosition = this.camera.position.clone().add(deltaPosition)
-    this.setPosition(endPosition)
+    this.camera.position.copy(endPosition)
     this._orbitTarget.add(deltaPosition)
 
     if (this.orthographic && this.cameraOrthographic) {
@@ -814,8 +830,7 @@ export class Camera implements ICamera {
       this._targetPosition,
       alpha
     )
-
-    this.setPosition(pos)
+    this.camera.position.copy(pos)
   }
 
   private applyRotationLerp () {
