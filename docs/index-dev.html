@@ -27,7 +27,7 @@
   </head>
   <body>
     <script src="https://unpkg.com/three@0.143"></script>
-    <script src="https://unpkg.com/vim-webgl-viewer@1.4.12-dev.15"></script>
+    <script src="https://unpkg.com/vim-webgl-viewer@1.4.12-dev.16"></script>
     <script>
       // Parse URL
       const params = new URLSearchParams(window.location.search)
@@ -50,7 +50,7 @@
 
 
       // Create Viewer
-      const viewer = new VIM.Viewer()
+      const viewer = new VIM.Viewer(groundPlane: { visible: false } })
 
       // Load function string | arrayBuffer
       function load(vim) {
