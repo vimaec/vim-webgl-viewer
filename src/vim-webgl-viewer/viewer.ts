@@ -195,9 +195,7 @@ export class Viewer {
     // Camera
     this._camera.update(this._clock.getDelta())
     // Rendering
-    if (this._vims.length) {
-      this.renderer.render(this.camera.camera, this.selection.count > 0)
-    }
+    this.renderer.render(this.camera.camera, this.selection.count > 0)
 
     if (this.selection.count > 0) {
       const target = this.selection
