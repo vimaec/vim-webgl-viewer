@@ -28,8 +28,6 @@ export class GroundPlane {
       depthWrite: false
     })
     this.mesh = new THREE.Mesh(this._geometry, this._material)
-    // Draw mesh first so it's always behind stuff.
-    // this.mesh.renderOrder = 1
   }
 
   applyViewerSettings (settings: ViewerConfig) {
@@ -132,7 +130,6 @@ export class Environment {
   }
 
   loadGroundTexture (encoding: TextureEncoding, url: string) {
-    
     this._groundPlane.applyTexture(encoding, url)
   }
 
