@@ -198,6 +198,17 @@ export class Viewer {
     if (this._vims.length) {
       this.renderer.render(this.camera.camera, this.selection.count > 0)
     }
+
+    if (this.selection.count > 0) {
+      const target = this.selection
+        .getBoundingBox()
+        .getCenter(new THREE.Vector3())
+      this.materials.outlineBlur = Math.max(
+        7 - Math.floor(this.camera.camera.position.distanceTo(target) / 100),
+        2
+      )
+    }
+    console.log('Current Blur : ' + this.materials.outlineBlur)
   }
 
   /**
