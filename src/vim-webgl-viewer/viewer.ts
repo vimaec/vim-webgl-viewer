@@ -37,7 +37,7 @@ export class Viewer {
   /**
    * Current viewer settings.
    */
-  settings: ViewerConfig
+  config: ViewerConfig
 
   /**
    * Interface to manage objects to be rendered.
@@ -125,7 +125,7 @@ export class Viewer {
   }
 
   constructor (options?: ViewerOptions) {
-    this.settings = getConfig(options)
+    this.config = getConfig(options)
 
     const materials = new VimMaterials()
 
@@ -133,31 +133,31 @@ export class Viewer {
     this.materials = materials
 
     const scene = new RenderScene()
-    this.viewport = new Viewport(this.settings)
-    this._camera = new Camera(scene, this.viewport, this.settings)
+    this.viewport = new Viewport(this.config)
+    this._camera = new Camera(scene, this.viewport, this.config)
     this.renderer = new Renderer(scene, this.viewport, materials, this._camera)
-    if (this.settings.camera.gizmo.enable) {
+    if (this.config.camera.gizmo.enable) {
       this._camera.gizmo = new CameraGizmo(
         this.renderer,
         this._camera,
-        this.settings
+        this.config
       )
     }
-    this.materials.applySettings(this.settings)
+    this.materials.applySettings(this.config)
 
     // TODO add options
     this.measure = new Measure(this)
-    this._gizmoAxes = new GizmoAxes(this.camera, this.settings.axes)
+    this._gizmoAxes = new GizmoAxes(this.camera, this.config.axes)
     this.viewport.canvas.parentElement?.prepend(this._gizmoAxes.canvas)
 
     this.sectionBox = new SectionBox(this)
     this.gizmoRectangle = new GizmoRectangle(this)
 
-    this._environment = new Environment(this.settings)
+    this._environment = new Environment(this.config)
     this._environment.getObjects().forEach((o) => this.renderer.add(o))
 
     // Input and Selection
-    this.selection = new Selection(materials)
+    this.selection = new Selection(materials, this._camera, this.config)
     this.raycaster = new Raycaster(
       this.viewport,
       this._camera,
@@ -196,17 +196,6 @@ export class Viewer {
     this._camera.update(this._clock.getDelta())
     // Rendering
     this.renderer.render(this.camera.camera, this.selection.count > 0)
-
-    if (this.selection.count > 0) {
-      const target = this.selection
-        .getBoundingBox()
-        .getCenter(new THREE.Vector3())
-      this.materials.outlineBlur = Math.max(
-        7 - Math.floor(this.camera.camera.position.distanceTo(target) / 100),
-        2
-      )
-    }
-    console.log('Current Blur : ' + this.materials.outlineBlur)
   }
 
   /**

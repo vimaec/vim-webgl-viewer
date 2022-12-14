@@ -206,7 +206,7 @@ const defaultConfig: ViewerConfig = {
     outline: {
       intensity: 0.3,
       falloff: 3,
-      blur: 4,
+      blur: 7,
       color: new THREE.Color(0xff, 0xff, 0xff)
     }
   },

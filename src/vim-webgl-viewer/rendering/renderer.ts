@@ -80,8 +80,11 @@ export class Renderer {
     this._camera.onValueChanged.sub(
       () => (this._composer.camera = this._camera.camera)
     )
+
   }
 
+
+  
   /**
    * Removes all objects from rendering and dispose the WEBGL Context
    */
@@ -166,3 +169,4 @@ export class Renderer {
     this.textRenderer.setSize(size.x, size.y)
   }
 }
+

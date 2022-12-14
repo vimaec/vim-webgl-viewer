@@ -3,30 +3,40 @@
  */
 
 import * as THREE from 'three'
-import { Vim, VimMaterials } from '../vim'
+import { Vim, VimMaterials, ViewerConfig } from '../vim'
 import { Object } from '../vim-loader/object'
 import { SignalDispatcher } from 'ste-signals'
+import { Camera } from './camera'
 
 /**
  * Provides selection behaviour for the viewer
  * Supports multi-selection as long as all objects are from the same vim.
  */
 export class Selection {
-  // State
+  // dependencies
   private _materials: VimMaterials
+  private _camera: Camera
+  private maxOutlineBlur = 7
+
+  // State
   private _objects = new Set<Object>()
   private _focusedObject: Object | undefined
   private _vim: Vim | undefined
   private _lastFocusTime: number = new Date().getTime()
   private _animationId: number = -1
 
-  constructor (materials: VimMaterials) {
-    this._materials = materials
-    this.animate()
-  }
-
   // Disposable State
   private _onValueChanged = new SignalDispatcher()
+  private _unsub: (() => void)[] = []
+
+  constructor (materials: VimMaterials, camera: Camera, config: ViewerConfig) {
+    this._materials = materials
+    this._camera = camera
+    this.maxOutlineBlur = config.materials.outline.blur
+    this._unsub.push(camera.onMoved.sub(() => this.updateOutline()))
+    this._unsub.push(this.onValueChanged.sub(() => this.updateOutline()))
+    this.animate()
+  }
 
   /**
    * Event called when selection changes or is cleared
@@ -208,6 +218,8 @@ export class Selection {
    */
   dispose () {
     cancelAnimationFrame(this._animationId)
+    this._unsub.forEach((u) => u())
+    this._unsub.length = 0
   }
 
   private clearOnNewVim (vim: Vim) {
@@ -228,5 +240,17 @@ export class Selection {
     const focus = Math.min(timeElapsed / 100, 1)
     this._materials.focusIntensity = focus / 2
     this._animationId = requestAnimationFrame(() => this.animate())
+  }
+
+  private updateOutline (): void {
+    if (!this.count) return
+
+    const target = this.getBoundingBox().getCenter(new THREE.Vector3())
+    this._materials.outlineBlur = Math.max(
+      this.maxOutlineBlur -
+        Math.floor(this._camera.camera.position.distanceTo(target) / 100),
+      2
+    )
+    console.log('updateOutline: ' + this._materials.outlineBlur)
   }
 }
