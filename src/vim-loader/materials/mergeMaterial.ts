@@ -4,6 +4,41 @@
 
 import * as THREE from 'three'
 
+export class MergeMaterial {
+  material: THREE.ShaderMaterial
+
+  constructor () {
+    this.material = createMergeMaterial()
+  }
+
+  get color () {
+    return this.material.uniforms.color.value
+  }
+
+  set color (value: THREE.Color) {
+    this.material.uniforms.color.value.copy(value)
+    this.material.uniformsNeedUpdate = true
+  }
+
+  get sourceA () {
+    return this.material.uniforms.sourceA.value
+  }
+
+  set sourceA (value: THREE.Texture) {
+    this.material.uniforms.sourceA.value = value
+    this.material.uniformsNeedUpdate = true
+  }
+
+  get sourceB () {
+    return this.material.uniforms.sourceB.value
+  }
+
+  set sourceB (value: THREE.Texture) {
+    this.material.uniforms.sourceB.value = value
+    this.material.uniformsNeedUpdate = true
+  }
+}
+
 /**
  * Material that Merges current fragment with a source texture.
  */
@@ -12,7 +47,7 @@ export function createMergeMaterial () {
     uniforms: {
       sourceA: { value: null },
       sourceB: { value: null },
-      outlineColor: { value: new THREE.Color(1, 1, 1) }
+      color: { value: new THREE.Color(1, 1, 1) }
     },
     vertexShader: `
        varying vec2 vUv;
@@ -22,7 +57,7 @@ export function createMergeMaterial () {
        }
        `,
     fragmentShader: `
-       uniform vec3 outlineColor;
+       uniform vec3 color;
        uniform sampler2D sourceA;
        uniform sampler2D sourceB;
        varying vec2 vUv;
@@ -31,7 +66,7 @@ export function createMergeMaterial () {
         vec4 A = texture2D(sourceA, vUv);
         vec4 B = texture2D(sourceB, vUv);
 
-        gl_FragColor = vec4(mix(A.xyz, outlineColor, B.x),1.0f);
+        gl_FragColor = vec4(mix(A.xyz, color, B.x),1.0f);
        }
        `
   })

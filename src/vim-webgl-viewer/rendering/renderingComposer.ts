@@ -146,7 +146,7 @@ export class RenderingComposer {
     this._composer.addPass(this._fxaaPass)
 
     // Merge Outline with scene
-    this._mergePass = new MergePass(this._sceneTarget.texture)
+    this._mergePass = new MergePass(this._sceneTarget.texture, this._materials)
     this._mergePass.needsSwap = false
     this._composer.addPass(this._mergePass)
 

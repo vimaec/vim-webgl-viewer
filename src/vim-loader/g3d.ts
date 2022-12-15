@@ -72,7 +72,7 @@ type TypedArray =
   | Uint32Array
   | Float64Array
 
-class G3dAttribute {
+export class G3dAttribute {
   descriptor: G3dAttributeDescriptor
   bytes: Uint8Array
   data: TypedArray | undefined

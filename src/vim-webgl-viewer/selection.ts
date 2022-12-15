@@ -35,8 +35,6 @@ export class Selection {
     this._camera = camera
     this.maxOutlineBlur = config.materials.outline.blur
     this.minOutlineBlur = 2 + (this.maxOutlineBlur % 2)
-    this._unsub.push(camera.onMoved.sub(() => this.updateOutline()))
-    this._unsub.push(this.onValueChanged.sub(() => this.updateOutline()))
     this.animate()
   }
 
@@ -242,22 +240,5 @@ export class Selection {
     const focus = Math.min(timeElapsed / 100, 1)
     this._materials.focusIntensity = focus / 2
     this._animationId = requestAnimationFrame(() => this.animate())
-  }
-
-  private updateOutline (): void {
-    if (!this.count) return
-
-    const target = this.getBoundingBox().getCenter(new THREE.Vector3())
-    let modifier = Math.floor(
-      this._camera.camera.position.distanceTo(target) / 100
-    )
-    modifier = modifier - (modifier % 2)
-    /*
-    this._materials.outlineBlur = Math.max(
-      this.maxOutlineBlur - modifier,
-      this.minOutlineBlur
-    )
-    */
-    console.log('updateOutline: ' + this._materials.outlineBlur)
   }
 }

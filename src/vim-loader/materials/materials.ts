@@ -8,6 +8,7 @@ import { createMaskMaterial } from './maskMaterial'
 import { createIsolationMaterial } from './isolationMaterial'
 import { OutlineMaterial } from './outlineMaterial'
 import { ViewerConfig } from '../../vim-webgl-viewer/viewerSettings'
+import { createMergeMaterial, MergeMaterial } from './mergeMaterial'
 
 /**
  * Defines the materials to be used by the vim loader and allows for material injection.
@@ -38,6 +39,11 @@ export class VimMaterials {
    */
   outline: OutlineMaterial
 
+  /**
+   * Material used to merge outline effect with scene render.
+   */
+  merge: MergeMaterial
+
   private _clippingPlanes: THREE.Plane[] | undefined
   private _sectionStrokeWitdh: number = 0.01
   private _sectionStrokeFallof: number = 0.75
@@ -51,7 +57,8 @@ export class VimMaterials {
     wireframe?: THREE.LineBasicMaterial,
     isolation?: THREE.Material,
     mask?: THREE.ShaderMaterial,
-    outline?: OutlineMaterial
+    outline?: OutlineMaterial,
+    merge?: MergeMaterial
   ) {
     this.opaque = opaque ?? new StandardMaterial(createOpaque())
     this.transparent = transparent ?? new StandardMaterial(createTransparent())
@@ -59,6 +66,7 @@ export class VimMaterials {
     this.isolation = isolation ?? createIsolationMaterial()
     this.mask = mask ?? createMaskMaterial()
     this.outline = outline ?? new OutlineMaterial()
+    this.merge = merge ?? new MergeMaterial()
   }
 
   /** Update material settings from config */
@@ -181,6 +189,17 @@ export class VimMaterials {
   }
 
   /**
+   * Color of the the selection outline effect
+   */
+  get outlineColor () {
+    return this.merge.color
+  }
+
+  set outlineColor (value: THREE.Color) {
+    this.merge.color = value
+  }
+
+  /**
    * Size of the blur convolution on on the selection outline effect
    */
   get outlineBlur () {
@@ -211,17 +230,6 @@ export class VimMaterials {
 
   set outlineIntensity (value: number) {
     this.outline.strokeMultiplier = value
-  }
-
-  /**
-   * Color of the the selection outline effect
-   */
-  get outlineColor () {
-    return this.outline.color
-  }
-
-  set outlineColor (value: THREE.Color) {
-    this.outline.color = value
   }
 
   /** dispose all materials. */

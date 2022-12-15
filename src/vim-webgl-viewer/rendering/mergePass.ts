@@ -4,23 +4,23 @@
 
 import THREE from 'three'
 import { FullScreenQuad, Pass } from 'three/examples/jsm/postprocessing/Pass'
-import { createMergeMaterial } from '../../vim-loader/materials/mergeMaterial'
+import { VimMaterials } from '../../vim'
+import { MergeMaterial } from '../../vim-loader/materials/mergeMaterial'
 
 /**
  * Merges a source buffer into the the current write buffer.
  */
 export class MergePass extends Pass {
   private _fsQuad: FullScreenQuad
-  private _uniforms: { [uniform: string]: THREE.IUniform<any> }
+  private _material: MergeMaterial
 
-  constructor (texture: THREE.Texture) {
+  constructor (source: THREE.Texture, materials?: VimMaterials) {
     super()
 
     this._fsQuad = new FullScreenQuad()
-    const mat = createMergeMaterial()
-    this._fsQuad.material = mat
-    this._uniforms = mat.uniforms
-    this._uniforms.sourceA.value = texture
+    this._material = materials?.merge ?? new MergeMaterial()
+    this._fsQuad.material = this._material.material
+    this._material.sourceA = source
   }
 
   dispose () {
@@ -32,7 +32,7 @@ export class MergePass extends Pass {
     writeBuffer: THREE.WebGLRenderTarget,
     readBuffer: THREE.WebGLRenderTarget
   ) {
-    this._uniforms.sourceB.value = readBuffer.texture
+    this._material.sourceB = readBuffer.texture
     // 2. Draw the outlines using the depth texture and normal texture
     // and combine it with the scene color
     if (this.renderToScreen) {

@@ -207,7 +207,7 @@ const defaultConfig: ViewerConfig = {
       intensity: 3,
       falloff: 3,
       blur: 2,
-      color: new THREE.Color(0xff, 0xff, 0xff)
+      color: new THREE.Color(0, 1, 1)
     }
   },
   axes: new GizmoOptions()
