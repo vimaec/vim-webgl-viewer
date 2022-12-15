@@ -9,6 +9,9 @@ import * as THREE from 'three'
  */
 export type ShaderUniforms = { [uniform: string]: THREE.IUniform<any> }
 
+/**
+ * Material used for both opaque and tranparent surfaces of a VIM model.
+ */
 export class StandardMaterial {
   material: THREE.Material
   uniforms: ShaderUniforms | undefined

@@ -4,6 +4,7 @@
 
 import * as THREE from 'three'
 
+/** Outline Material based on edge detection. */
 export class OutlineMaterial {
   material: THREE.ShaderMaterial
   private _camera:

@@ -5,7 +5,7 @@
 import * as THREE from 'three'
 
 /**
- * Simple material used for selection outline it only renders selection in white and discards the rests.
+ * Material used for selection outline it only renders selection in white and discards the rests.
  */
 export function createMaskMaterial () {
   return new THREE.ShaderMaterial({

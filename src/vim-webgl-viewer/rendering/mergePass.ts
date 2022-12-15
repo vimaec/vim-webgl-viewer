@@ -6,6 +6,9 @@ import THREE from 'three'
 import { FullScreenQuad, Pass } from 'three/examples/jsm/postprocessing/Pass'
 import { createMergeMaterial } from '../../vim-loader/materials/mergeMaterial'
 
+/**
+ * Merges a source buffer into the the current write buffer.
+ */
 export class MergePass extends Pass {
   private _fsQuad: FullScreenQuad
   private _uniforms: { [uniform: string]: THREE.IUniform<any> }

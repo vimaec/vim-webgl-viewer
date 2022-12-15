@@ -6,6 +6,9 @@ import THREE from 'three'
 import { FullScreenQuad, Pass } from 'three/examples/jsm/postprocessing/Pass'
 import { createTransferMaterial } from '../../vim-loader/materials/transferMaterial'
 
+/**
+ * Copies a source buffer to the current write buffer.
+ */
 export class TransferPass extends Pass {
   private _fsQuad: FullScreenQuad
   private _uniforms: { [uniform: string]: THREE.IUniform<any> }

@@ -5,6 +5,9 @@
 import * as THREE from 'three'
 import { Scene } from '../../vim-loader/scene'
 
+/**
+ * Wrapper around the THREE scene that tracks bounding box and other information.
+ */
 export class RenderScene {
   scene: THREE.Scene
 

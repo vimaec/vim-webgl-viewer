@@ -9,7 +9,9 @@ import { OutlineMaterial } from '../../vim-loader/materials/outlineMaterial'
 // Follows the structure of
 // https://github.com/mrdoob/three.js/blob/master/examples/jsm/postprocessing/OutlinePass.js
 // Based on https://github.com/OmarShehata/webgl-outlines/blob/cf81030d6f2bc20e6113fbf6cfd29170064dce48/threejs/src/CustomOutlinePass.js
-
+/**
+ * Edge detection pass on the current readbuffer depth texture.
+ */
 export class OutlinePass extends Pass {
   private _fsQuad: FullScreenQuad
   material: OutlineMaterial

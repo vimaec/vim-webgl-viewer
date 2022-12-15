@@ -5,6 +5,9 @@
 import * as THREE from 'three'
 import { VimMaterials } from '../../vim-loader/materials/materials'
 
+/**
+ * Manages a section box from renderer clipping planes
+ */
 export class RenderingSection {
   private _renderer: THREE.WebGLRenderer
 

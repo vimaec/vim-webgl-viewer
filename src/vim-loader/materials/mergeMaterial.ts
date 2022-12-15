@@ -5,7 +5,7 @@
 import * as THREE from 'three'
 
 /**
- * This material simply sample and returns the value at each texel position of the texture.
+ * Material that Merges current fragment with a source texture.
  */
 export function createMergeMaterial () {
   return new THREE.ShaderMaterial({

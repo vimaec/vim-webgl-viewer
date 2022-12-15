@@ -28,7 +28,7 @@ import { Camera } from '../camera'
 */
 
 /**
- * Rendering for selection outline.
+ * Composer for AA and Outline effects.
  */
 export class RenderingComposer {
   private _cam: Camera
