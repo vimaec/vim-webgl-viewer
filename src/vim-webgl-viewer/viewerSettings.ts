@@ -204,9 +204,9 @@ const defaultConfig: ViewerConfig = {
       strokeColor: new THREE.Color(0xf6, 0xf6, 0xf6)
     },
     outline: {
-      intensity: 0.3,
+      intensity: 3,
       falloff: 3,
-      blur: 7,
+      blur: 2,
       color: new THREE.Color(0xff, 0xff, 0xff)
     }
   },

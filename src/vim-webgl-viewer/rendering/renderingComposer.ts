@@ -6,11 +6,14 @@ import * as THREE from 'three'
 import { EffectComposer } from 'three/examples/jsm/postprocessing/EffectComposer.js'
 import { RenderPass } from 'three/examples/jsm/postprocessing/RenderPass.js'
 import { SSAARenderPass } from 'three/examples/jsm/postprocessing/SSAARenderPass.js'
+import { FXAAShader } from 'three/examples/jsm/shaders/FXAAShader.js'
+import { ShaderPass } from 'three/examples/jsm/postprocessing/ShaderPass.js'
 
 import { Viewport } from '../viewport'
 import { RenderScene } from './renderScene'
 import { VimMaterials } from '../../vim-loader/materials/materials'
 import { OutlinePass } from './outlinePass'
+import { MergePass } from './mergePass'
 import { TransferPass } from './transferPass'
 import { Camera } from '../camera'
 
@@ -48,9 +51,10 @@ export class RenderingComposer {
 
   // Disposables
   private _outlinePass: OutlinePass
+  private _fxaaPass: ShaderPass
+  private _mergePass: MergePass
   private _selectionTarget: THREE.WebGLRenderTarget
   private _sceneTarget: THREE.WebGLRenderTarget
-  private _depthTexture: THREE.DepthTexture
 
   constructor (
     renderer: THREE.WebGLRenderer,
@@ -84,9 +88,11 @@ export class RenderingComposer {
         // type: THREE.HalfFloatType
       }
     )
+    this._sceneTarget.texture.name = 'sceneTarget'
 
     // Render pass for movement
     this._renderPass = new RenderPass(this._scene.scene, this._camera)
+    this._renderPass.renderToScreen = false
     this._renderPass.clearColor = new THREE.Color(0, 0, 0)
     this._renderPass.clearAlpha = 0
 
@@ -97,6 +103,7 @@ export class RenderingComposer {
       new THREE.Color(0, 0, 0),
       0
     )
+    this._ssaaRenderPass.renderToScreen = false
     this._ssaaRenderPass.sampleRenderTarget = this._sceneTarget.clone()
     this._ssaaRenderPass.sampleLevel = 2
     this._ssaaRenderPass.unbiased = true
@@ -110,6 +117,7 @@ export class RenderingComposer {
         samples: this._samples
       }
     )
+    this._selectionTarget.texture.name = 'selectionTarget'
 
     this._composer = new EffectComposer(this._renderer, this._selectionTarget)
 
@@ -129,8 +137,16 @@ export class RenderingComposer {
     )
     this._composer.addPass(this._outlinePass)
 
+    this._fxaaPass = new ShaderPass(FXAAShader)
+    this._composer.addPass(this._fxaaPass)
+
+    this._mergePass = new MergePass(this._sceneTarget.texture)
+    this._mergePass.needsSwap = false
+    this._composer.addPass(this._mergePass)
+
     // When no outlines, just copy the scene to screen.
     this._transferPass = new TransferPass(this._sceneTarget.texture)
+    this._transferPass.needsSwap = false
     this._transferPass.enabled = true
     this._composer.addPass(this._transferPass)
   }
@@ -143,6 +159,8 @@ export class RenderingComposer {
     this._outlines = value
     this._selectionRenderPass.enabled = this.outlines
     this._outlinePass.enabled = this.outlines
+    this._fxaaPass.enabled = this.outlines
+    this._mergePass.enabled = this.outlines
     this._transferPass.enabled = !this.outlines
   }
 
@@ -163,8 +181,10 @@ export class RenderingComposer {
     this._renderPass.setSize(width, height)
     this._ssaaRenderPass.setSize(width, height)
     this._composer.setSize(width, height)
+    this._fxaaPass.uniforms.resolution.value.set(1 / width, 1 / height)
   }
 
+  //
   get samples () {
     return this._samples
   }
@@ -177,10 +197,12 @@ export class RenderingComposer {
 
   render () {
     const time = new Date().getTime()
+
+    // Render pass is invoked directly to avoid effect composer buffer swap
+    // since we only have on pass and we always want it to write to _sceneTarget
     if (this._cam.hasMoved) {
       this._aaResumeTime = time + 20
 
-      this._renderPass.renderToScreen = false
       this._renderPass.render(
         this._renderer,
         undefined,
@@ -189,7 +211,6 @@ export class RenderingComposer {
         false
       )
     } else if (time > this._aaResumeTime) {
-      this._ssaaRenderPass.renderToScreen = false
       this._ssaaRenderPass.render(
         this._renderer,
         this._sceneTarget,
@@ -199,6 +220,8 @@ export class RenderingComposer {
       )
     }
 
+    // Adds the outline to the rendered scene if needed.
+    // this._fxaaPass.enabled = this._materials.outlineBlur === 2
     this._composer.render()
   }
 
@@ -206,7 +229,6 @@ export class RenderingComposer {
     this._sceneTarget.dispose()
     this._selectionTarget.dispose()
     this._outlinePass.dispose()
-    this._renderPass.dispose()
     this._ssaaRenderPass.dispose()
   }
 }

@@ -17,6 +17,7 @@ export class Selection {
   private _materials: VimMaterials
   private _camera: Camera
   private maxOutlineBlur = 7
+  private minOutlineBlur = 3
 
   // State
   private _objects = new Set<Object>()
@@ -33,6 +34,7 @@ export class Selection {
     this._materials = materials
     this._camera = camera
     this.maxOutlineBlur = config.materials.outline.blur
+    this.minOutlineBlur = 2 + (this.maxOutlineBlur % 2)
     this._unsub.push(camera.onMoved.sub(() => this.updateOutline()))
     this._unsub.push(this.onValueChanged.sub(() => this.updateOutline()))
     this.animate()
@@ -246,11 +248,16 @@ export class Selection {
     if (!this.count) return
 
     const target = this.getBoundingBox().getCenter(new THREE.Vector3())
-    this._materials.outlineBlur = Math.max(
-      this.maxOutlineBlur -
-        Math.floor(this._camera.camera.position.distanceTo(target) / 100),
-      2
+    let modifier = Math.floor(
+      this._camera.camera.position.distanceTo(target) / 100
     )
+    modifier = modifier - (modifier % 2)
+    /*
+    this._materials.outlineBlur = Math.max(
+      this.maxOutlineBlur - modifier,
+      this.minOutlineBlur
+    )
+    */
     console.log('updateOutline: ' + this._materials.outlineBlur)
   }
 }

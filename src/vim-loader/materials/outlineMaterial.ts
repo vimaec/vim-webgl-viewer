@@ -143,7 +143,6 @@ export function createOutlineMaterial () {
       #include <packing>
       // The above include imports "perspectiveDepthToViewZ"
       // and other GLSL functions from ThreeJS we need for reading depth.
-      uniform sampler2D sceneBuffer;
       uniform sampler2D depthBuffer;
       uniform float cameraNear;
       uniform float cameraFar;
@@ -181,7 +180,6 @@ export function createOutlineMaterial () {
       }
   
       void main() {
-        vec4 sceneColor = texture2D(sceneBuffer, vUv);
         float depth = getPixelDepth(0, 0);
   
         // Get the difference between depth of neighboring pixels and current.
@@ -203,8 +201,7 @@ export function createOutlineMaterial () {
   
         // Combine outline with scene color.
         vec4 outlineColor = vec4(outlineColor, 1.0f);
-        gl_FragColor = vec4(mix(sceneColor, outlineColor, outline));
-        //gl_FragColor = sceneColor;
+        gl_FragColor = vec4(mix(vec4(0.0,0.0,0.0,0.0), outlineColor, outline));
       }
       `
   })

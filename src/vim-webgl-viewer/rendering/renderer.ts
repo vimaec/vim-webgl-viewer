@@ -80,11 +80,8 @@ export class Renderer {
     this._camera.onValueChanged.sub(
       () => (this._composer.camera = this._camera.camera)
     )
-
   }
 
-
-  
   /**
    * Removes all objects from rendering and dispose the WEBGL Context
    */
@@ -161,6 +158,15 @@ export class Renderer {
     this._scene.clear()
   }
 
+  /** Set the target sample count on the rendering target. Higher number will increase quality. */
+  get samples () {
+    return this._composer.samples
+  }
+
+  set samples (value: number) {
+    this._composer.samples = value
+  }
+
   private fitViewport = () => {
     const size = this._viewport.getParentSize()
     this.renderer.setPixelRatio(window.devicePixelRatio)
@@ -169,4 +175,3 @@ export class Renderer {
     this.textRenderer.setSize(size.x, size.y)
   }
 }
-
