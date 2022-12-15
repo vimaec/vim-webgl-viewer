@@ -28,6 +28,8 @@ export class GroundPlane {
       depthWrite: false
     })
     this.mesh = new THREE.Mesh(this._geometry, this._material)
+    // Makes ground plane be drawn first so that isolation material is drawn on top.
+    this.mesh.renderOrder = -1
   }
 
   applyViewerSettings (settings: ViewerConfig) {
