@@ -4,7 +4,10 @@
 
 import { BFast } from './bfast'
 
-class G3dAttributeDescriptor {
+/**
+ * Data attribute description as per G3d spec.
+ */
+export class G3dAttributeDescriptor {
   // original descriptor string
   description: string
   // Indicates the part of the geometry that this attribute is associated with
@@ -62,7 +65,10 @@ class G3dAttributeDescriptor {
 
 export type MeshSection = 'opaque' | 'transparent' | 'all'
 
-type TypedArray =
+/**
+ * Type enum for arrays
+ */
+export type TypedArray =
   | Uint8Array
   | Int16Array
   | Uint16Array
