@@ -51,6 +51,11 @@ export interface ICamera {
   orthographic: boolean
 
   /**
+   * Camera will ignore move commands when this is true.
+   */
+  freeze: boolean
+
+  /**
    * Current local velocity
    */
   localVelocity: THREE.Vector3
@@ -187,6 +192,8 @@ export class Camera implements ICamera {
   get onMoved (): ISignal {
     return this._onMoved.asEvent()
   }
+
+  freeze: boolean
 
   // Settings
   defaultLerpDuration: number = 2
@@ -689,6 +696,7 @@ export class Camera implements ICamera {
    * Apply the camera frame update
    */
   update (deltaTime: number) {
+    if (this.freeze) return
     if (this.shouldLerp()) {
       if (this._lerpPosition && !this.isNearTarget()) {
         this.applyPositionLerp()
