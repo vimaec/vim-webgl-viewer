@@ -163,7 +163,7 @@ export class Viewer {
     this._environment.getObjects().forEach((o) => this.renderer.add(o))
 
     // Input and Selection
-    this.selection = new Selection(materials, this.renderer)
+    this.selection = new Selection(materials)
     this.raycaster = new Raycaster(
       this.viewport,
       this._camera,

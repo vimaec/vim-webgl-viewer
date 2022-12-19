@@ -94,6 +94,7 @@ export class Renderer {
       this._composer.camera = this._camera.camera
       this.needsUpdate = true
     })
+    this._materials.onUpdate.sub(() => (this.needsUpdate = true))
   }
 
   /**

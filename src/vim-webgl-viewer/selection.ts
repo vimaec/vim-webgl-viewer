@@ -6,7 +6,6 @@ import * as THREE from 'three'
 import { Vim, VimMaterials, ViewerConfig } from '../vim'
 import { Object } from '../vim-loader/object'
 import { SignalDispatcher } from 'ste-signals'
-import { Camera } from './camera'
 import { Renderer } from './rendering/renderer'
 
 /**
@@ -16,7 +15,6 @@ import { Renderer } from './rendering/renderer'
 export class Selection {
   // dependencies
   private _materials: VimMaterials
-  private _renderer: Renderer
 
   // State
   private _objects = new Set<Object>()
@@ -29,10 +27,8 @@ export class Selection {
   private _onValueChanged = new SignalDispatcher()
   private _unsub: (() => void)[] = []
 
-  constructor (materials: VimMaterials, renderer: Renderer) {
+  constructor (materials: VimMaterials) {
     this._materials = materials
-    this._renderer = renderer
-    this.onValueChanged.sub(() => (this._renderer.needsUpdate = true))
     this.animate()
   }
 

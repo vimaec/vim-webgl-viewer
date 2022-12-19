@@ -9,6 +9,7 @@ import { createIsolationMaterial } from './isolationMaterial'
 import { OutlineMaterial } from './outlineMaterial'
 import { ViewerConfig } from '../../vim-webgl-viewer/viewerSettings'
 import { createMergeMaterial, MergeMaterial } from './mergeMaterial'
+import { SignalDispatcher } from 'ste-signals'
 
 /**
  * Defines the materials to be used by the vim loader and allows for material injection.
@@ -50,6 +51,7 @@ export class VimMaterials {
   private _sectionStrokeColor: THREE.Color = new THREE.Color(0xf6, 0xf6, 0xf6)
   private _focusIntensity: number = 0.75
   private _focusColor: THREE.Color = new THREE.Color(1, 1, 1)
+  private _onUpdate = new SignalDispatcher()
 
   constructor (
     opaque?: StandardMaterial,
@@ -84,6 +86,10 @@ export class VimMaterials {
     this.outlineColor = settings.materials.outline.color
   }
 
+  get onUpdate () {
+    return this._onUpdate.asEvent()
+  }
+
   /**
    * Color intensity of focus effect on hover.
    */
@@ -95,6 +101,7 @@ export class VimMaterials {
     this._focusIntensity = value
     this.opaque.focusIntensity = value
     this.transparent.focusIntensity = value
+    this._onUpdate.dispatch()
   }
 
   /**
@@ -108,6 +115,7 @@ export class VimMaterials {
     this._focusColor = value
     this.opaque.focusColor = value
     this.transparent.focusColor = value
+    this._onUpdate.dispatch()
   }
 
   /**
@@ -119,6 +127,7 @@ export class VimMaterials {
 
   set wireframeColor (value: THREE.Color) {
     this.wireframe.color = value
+    this._onUpdate.dispatch()
   }
 
   /**
@@ -130,6 +139,7 @@ export class VimMaterials {
 
   set wireframeOpacity (value: number) {
     this.wireframe.opacity = value
+    this._onUpdate.dispatch()
   }
 
   /**
@@ -147,6 +157,7 @@ export class VimMaterials {
     this.wireframe.clippingPlanes = value ?? null
     this.isolation.clippingPlanes = value ?? null
     this.mask.clippingPlanes = value ?? null
+    this._onUpdate.dispatch()
   }
 
   /**
@@ -160,6 +171,7 @@ export class VimMaterials {
     this._sectionStrokeWitdh = value
     this.opaque.sectionStrokeWitdh = value
     this.transparent.sectionStrokeWitdh = value
+    this._onUpdate.dispatch()
   }
 
   /**
@@ -173,6 +185,7 @@ export class VimMaterials {
     this._sectionStrokeFallof = value
     this.opaque.sectionStrokeFallof = value
     this.transparent.sectionStrokeFallof = value
+    this._onUpdate.dispatch()
   }
 
   /**
@@ -186,6 +199,7 @@ export class VimMaterials {
     this._sectionStrokeColor = value
     this.opaque.sectionStrokeColor = value
     this.transparent.sectionStrokeColor = value
+    this._onUpdate.dispatch()
   }
 
   /**
@@ -197,6 +211,7 @@ export class VimMaterials {
 
   set outlineColor (value: THREE.Color) {
     this.merge.color = value
+    this._onUpdate.dispatch()
   }
 
   /**
@@ -208,6 +223,7 @@ export class VimMaterials {
 
   set outlineBlur (value: number) {
     this.outline.strokeBlur = value
+    this._onUpdate.dispatch()
   }
 
   /**
@@ -219,6 +235,7 @@ export class VimMaterials {
 
   set outlineFalloff (value: number) {
     this.outline.strokeBias = value
+    this._onUpdate.dispatch()
   }
 
   /**
@@ -230,6 +247,7 @@ export class VimMaterials {
 
   set outlineIntensity (value: number) {
     this.outline.strokeMultiplier = value
+    this._onUpdate.dispatch()
   }
 
   /** dispose all materials. */
