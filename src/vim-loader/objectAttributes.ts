@@ -29,9 +29,9 @@ export class ObjectAttribute<T> {
   }
 
   apply (value: T) {
-    if (this.value === value) return
+    if (this.value === value) return false
     this.value = value
-    if (!this._meshes) return
+    if (!this._meshes) return false
     const number = this.toNumber(value)
 
     for (let m = 0; m < this._meshes.length; m++) {
@@ -42,6 +42,7 @@ export class ObjectAttribute<T> {
         this.applyInstanced(mesh as THREE.InstancedMesh, index, number)
       }
     }
+    return true
   }
 
   private applyInstanced (

@@ -18,8 +18,20 @@ export class Scene {
   // State
   meshes: THREE.Mesh[] = []
   vim: Vim | undefined
-  /** Marks the scene as changed */
-  visibilityChanged: boolean = false
+  private _updated: boolean = false
+
+  get updated () {
+    return this._updated
+  }
+
+  set updated (value: boolean) {
+    this._updated = this._updated || value
+  }
+
+  clearUpdateFlag () {
+    this._updated = false
+  }
+
   private _boundingBox: THREE.Box3 = new THREE.Box3()
   private _instanceToThreeMeshes: Map<number, [THREE.Mesh, number][]> =
     new Map()
@@ -108,6 +120,7 @@ export class Scene {
 
     this._threeMeshIdToInstances.set(mesh.id, instances)
     this.meshes.push(mesh)
+    this.updated = true
     return this
   }
 
@@ -127,6 +140,7 @@ export class Scene {
     })
     this._boundingBox =
       this._boundingBox?.union(other._boundingBox) ?? other._boundingBox.clone()
+    this.updated = true
     return this
   }
 
@@ -141,6 +155,8 @@ export class Scene {
    * Sets and apply a material override to the scene, set to undefined to remove override.
    */
   set material (value: THREE.Material | undefined) {
+    if (this._material === value) return
+    this.updated = true
     this._material = value
     if (value) {
       this.meshes.forEach((m) => {

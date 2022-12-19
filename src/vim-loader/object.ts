@@ -83,12 +83,12 @@ export class Object {
    * Toggles selection outline for this object.
    * @param value true to show object, false to hide object.
    */
-  get selected () {
+  get outline () {
     return this.selectedAttribute.value
   }
 
-  set selected (value: boolean) {
-    this.selectedAttribute.apply(value)
+  set outline (value: boolean) {
+    this.vim.scene.updated = this.selectedAttribute.apply(value)
   }
 
   /**
@@ -100,7 +100,7 @@ export class Object {
   }
 
   set focused (value: boolean) {
-    this.focusedAttribute.apply(value)
+    this.vim.scene.updated = this.focusedAttribute.apply(value)
   }
 
   /**
@@ -112,8 +112,7 @@ export class Object {
   }
 
   set visible (value: boolean) {
-    this.vim.scene.visibilityChanged = true
-    this.visibleAttribute.apply(value)
+    this.vim.scene.updated = this.visibleAttribute.apply(value)
   }
 
   /**
@@ -132,6 +131,7 @@ export class Object {
     ) {
       return
     }
+    this.vim.scene.updated = true
     this._color = color
     this.coloredAttribute.apply(color !== undefined)
     this.colorAttribute.apply(color)
@@ -143,7 +143,7 @@ export class Object {
   updateMeshes (meshes: [THREE.Mesh, number][] | undefined) {
     this._meshes = meshes
     if (!meshes) return
-
+    this.vim.scene.updated = true
     // if there was a color override reapply to new meshes.
     if (this.color) {
       this.color = this._color

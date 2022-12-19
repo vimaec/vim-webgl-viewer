@@ -730,6 +730,7 @@ export class Camera implements ICamera {
 
     this._lastPosition.copy(this.camera.position)
     this._lastQuaternion.copy(this.camera.quaternion)
+    return this._hasMoved
   }
 
   private isNearTarget () {

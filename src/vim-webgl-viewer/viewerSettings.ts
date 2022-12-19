@@ -135,6 +135,10 @@ export type ViewerConfig = {
     color: THREE.Color
     intensity: number
   }[]
+
+  rendering: {
+    onDemand: boolean
+  }
 }
 
 export type ViewerOptions = RecursivePartial<ViewerConfig>
@@ -210,7 +214,10 @@ const defaultConfig: ViewerConfig = {
       color: new THREE.Color(0, 1, 1)
     }
   },
-  axes: new GizmoOptions()
+  axes: new GizmoOptions(),
+  rendering: {
+    onDemand: true
+  }
 }
 
 export function getConfig (options?: ViewerOptions) {

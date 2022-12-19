@@ -4,12 +4,13 @@
 
 import * as THREE from 'three'
 import { VimMaterials } from '../../vim-loader/materials/materials'
+import { Renderer } from './renderer'
 
 /**
  * Manages a section box from renderer clipping planes
  */
 export class RenderingSection {
-  private _renderer: THREE.WebGLRenderer
+  private _renderer: Renderer
 
   private _materials: VimMaterials
   private _active: boolean = true
@@ -37,7 +38,7 @@ export class RenderingSection {
     this.minZ
   ]
 
-  constructor (renderer: THREE.WebGLRenderer, materials: VimMaterials) {
+  constructor (renderer: Renderer, materials: VimMaterials) {
     this._renderer = renderer
     this._materials = materials
   }
@@ -53,6 +54,7 @@ export class RenderingSection {
     this.maxZ.constant = box.max.z
     this.minZ.constant = -box.min.z
     this.box.copy(box)
+    this._renderer.needsUpdate = true
   }
 
   /**
@@ -60,8 +62,9 @@ export class RenderingSection {
    */
   set active (value: boolean) {
     this._materials.clippingPlanes = this.planes
-    this._renderer.localClippingEnabled = value
+    this._renderer.renderer.localClippingEnabled = value
     this._active = value
+    this._renderer.needsUpdate = true
   }
 
   get active () {

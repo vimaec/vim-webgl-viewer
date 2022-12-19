@@ -135,7 +135,13 @@ export class Viewer {
     const scene = new RenderScene()
     this.viewport = new Viewport(this.config)
     this._camera = new Camera(scene, this.viewport, this.config)
-    this.renderer = new Renderer(scene, this.viewport, materials, this._camera)
+    this.renderer = new Renderer(
+      scene,
+      this.viewport,
+      materials,
+      this._camera,
+      this.config
+    )
     if (this.config.camera.gizmo.enable) {
       this._camera.gizmo = new CameraGizmo(
         this.renderer,
@@ -157,7 +163,7 @@ export class Viewer {
     this._environment.getObjects().forEach((o) => this.renderer.add(o))
 
     // Input and Selection
-    this.selection = new Selection(materials, this._camera, this.config)
+    this.selection = new Selection(materials, this.renderer)
     this.raycaster = new Raycaster(
       this.viewport,
       this._camera,
@@ -193,7 +199,7 @@ export class Viewer {
 
     requestAnimationFrame(() => this.animate())
     // Camera
-    this._camera.update(this._clock.getDelta())
+    this.renderer.needsUpdate = this._camera.update(this._clock.getDelta())
     // Rendering
     this.renderer.render(this.camera.camera, this.selection.count > 0)
   }

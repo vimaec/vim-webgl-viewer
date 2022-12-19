@@ -14,6 +14,7 @@ import { Vim } from '../../vim'
 import { Camera } from '../camera'
 import { RenderingSection } from './renderingSection'
 import { RenderingComposer } from './renderingComposer'
+import { ViewerConfig } from '../viewerSettings'
 
 /**
  * Manages how vim objects are added and removed from the THREE.Scene to be rendered
@@ -38,19 +39,31 @@ export class Renderer {
   private _camera: Camera
   private _composer: RenderingComposer
   private _materials: VimMaterials
-  private _onVisibilityChanged = new SimpleEventDispatcher<Vim>()
+  private _onSceneUpdate = new SimpleEventDispatcher<Vim>()
   private _renderText: boolean | undefined
+  private _needsUpdate: boolean
+  private _renderOnDemand: boolean
+
+  get needsUpdate () {
+    return this._needsUpdate
+  }
+
+  set needsUpdate (value: boolean) {
+    this._needsUpdate = this._needsUpdate || value
+  }
 
   constructor (
     scene: RenderScene,
     viewport: Viewport,
     materials: VimMaterials,
-    camera: Camera
+    camera: Camera,
+    config: ViewerConfig
   ) {
     this._viewport = viewport
     this._scene = scene
     this._materials = materials
     this._camera = camera
+    this._renderOnDemand = config.rendering.onDemand
 
     this.renderer = new THREE.WebGLRenderer({
       canvas: viewport.canvas,
@@ -73,13 +86,14 @@ export class Renderer {
       camera
     )
 
-    this.section = new RenderingSection(this.renderer, this._materials)
+    this.section = new RenderingSection(this, this._materials)
 
     this.fitViewport()
     this._viewport.onResize.subscribe(() => this.fitViewport())
-    this._camera.onValueChanged.sub(
-      () => (this._composer.camera = this._camera.camera)
-    )
+    this._camera.onValueChanged.sub(() => {
+      this._composer.camera = this._camera.camera
+      this.needsUpdate = true
+    })
   }
 
   /**
@@ -97,8 +111,8 @@ export class Renderer {
   /**
    * Event called at the end of frame for each vim in which an object changed visibility.
    */
-  get onVisibilityChanged () {
-    return this._onVisibilityChanged.asEvent()
+  get onSceneUpdated () {
+    return this._onSceneUpdate.asEvent()
   }
 
   /** 2D renderer will render to screen when this is true. */
@@ -108,6 +122,7 @@ export class Renderer {
 
   set textEnabled (value: boolean) {
     if (value === this._renderText) return
+    this.needsUpdate = true
     this._renderText = value
     this.textRenderer.domElement.style.display = value ? 'block' : 'none'
   }
@@ -124,6 +139,14 @@ export class Renderer {
    * Render what is in camera.
    */
   render (camera: THREE.Camera, hasSelection: boolean) {
+    this._scene.getUpdatedScenes().forEach((s) => {
+      this.needsUpdate = true
+      if (s.vim) this._onSceneUpdate.dispatch(s.vim)
+    })
+
+    if (this._renderOnDemand && !this.needsUpdate) return
+    this._needsUpdate = false
+
     this._composer.outlines = hasSelection
     this._composer.render()
 
@@ -131,9 +154,6 @@ export class Renderer {
       this.textRenderer.render(this._scene.scene, camera)
     }
 
-    this._scene.getUpdatedScenes().forEach((s) => {
-      if (s.vim) this._onVisibilityChanged.dispatch(s.vim)
-    })
     this._scene.clearUpdateFlags()
   }
 

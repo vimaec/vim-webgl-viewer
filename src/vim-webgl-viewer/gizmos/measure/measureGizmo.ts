@@ -218,9 +218,10 @@ export class MeasureGizmo {
     this._lineX.label.visible = !collapse
     this._lineY.label.visible = !collapse
     this._lineZ.label.visible = !collapse
+    this._viewer.renderer.needsUpdate = true
   }
 
-  screenDist (
+  private screenDist (
     first: THREE.Vector3 | undefined,
     second: THREE.Vector3 | undefined
   ) {
@@ -234,6 +235,7 @@ export class MeasureGizmo {
     // Set start marker
     this._startMarker.setPosition(start)
     this._startMarker.mesh.visible = true
+    this._viewer.renderer.needsUpdate = true
   }
 
   hide () {
@@ -241,6 +243,7 @@ export class MeasureGizmo {
       this._line.mesh.visible = false
       this._line.label.visible = false
     }
+    this._viewer.renderer.needsUpdate = true
   }
 
   update (start: THREE.Vector3, pos: THREE.Vector3) {
@@ -248,6 +251,7 @@ export class MeasureGizmo {
       this._line.setPoints(start, pos)
       this._line.mesh.visible = true
     }
+    this._viewer.renderer.needsUpdate = true
   }
 
   finish (start: THREE.Vector3, end: THREE.Vector3) {

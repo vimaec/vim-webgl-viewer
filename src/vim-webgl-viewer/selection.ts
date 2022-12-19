@@ -7,6 +7,7 @@ import { Vim, VimMaterials, ViewerConfig } from '../vim'
 import { Object } from '../vim-loader/object'
 import { SignalDispatcher } from 'ste-signals'
 import { Camera } from './camera'
+import { Renderer } from './rendering/renderer'
 
 /**
  * Provides selection behaviour for the viewer
@@ -15,9 +16,7 @@ import { Camera } from './camera'
 export class Selection {
   // dependencies
   private _materials: VimMaterials
-  private _camera: Camera
-  private maxOutlineBlur = 7
-  private minOutlineBlur = 3
+  private _renderer: Renderer
 
   // State
   private _objects = new Set<Object>()
@@ -30,11 +29,10 @@ export class Selection {
   private _onValueChanged = new SignalDispatcher()
   private _unsub: (() => void)[] = []
 
-  constructor (materials: VimMaterials, camera: Camera, config: ViewerConfig) {
+  constructor (materials: VimMaterials, renderer: Renderer) {
     this._materials = materials
-    this._camera = camera
-    this.maxOutlineBlur = config.materials.outline.blur
-    this.minOutlineBlur = 2 + (this.maxOutlineBlur % 2)
+    this._renderer = renderer
+    this.onValueChanged.sub(() => (this._renderer.needsUpdate = true))
     this.animate()
   }
 
@@ -116,14 +114,14 @@ export class Selection {
       return
     }
 
-    this._objects.forEach((o) => (o.selected = false))
+    this._objects.forEach((o) => (o.outline = false))
     this._objects.clear()
     this._vim = undefined
 
     object?.forEach((o) => {
       this.clearOnNewVim(o.vim)
       this._objects.add(o)
-      o.selected = true
+      o.outline = true
     })
     this._onValueChanged.dispatch()
   }
@@ -153,7 +151,7 @@ export class Selection {
     objects.forEach((o) => {
       this.clearOnNewVim(o.vim)
       this._objects.add(o)
-      o.selected = true
+      o.outline = true
     })
     if (oldVim === this._vim && this._objects.size === count) return
 
@@ -168,7 +166,7 @@ export class Selection {
     if (objects.length === 0) return
     const count = this._objects.size
     objects.forEach((o) => {
-      o.selected = false
+      o.outline = false
       this._objects.delete(o)
     })
     if (this._objects.size === count) return
@@ -191,11 +189,11 @@ export class Selection {
     objects.forEach((o) => {
       if (this._objects.has(o)) {
         this._objects.delete(o)
-        o.selected = false
+        o.outline = false
       } else {
         this.clearOnNewVim(o.vim)
         this._objects.add(o)
-        o.selected = true
+        o.outline = true
       }
     })
     if (oldVim === this._vim && this._objects.size === count) return
@@ -208,7 +206,7 @@ export class Selection {
   clear () {
     this._vim = undefined
     if (this._objects.size === 0) return
-    this._objects.forEach((o) => (o.selected = false))
+    this._objects.forEach((o) => (o.outline = false))
     this._objects.clear()
     this._onValueChanged.dispatch()
   }
