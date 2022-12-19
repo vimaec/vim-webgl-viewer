@@ -113,6 +113,7 @@ export class KeyboardHandler extends InputHandler {
   isQPressed: boolean = false
   isShiftPressed: boolean = false
   isCtrlPressed: boolean = false
+  arrowsEnabled: boolean = true
 
   protected override addListeners (): void {
     this.reg(document, 'keydown', (e) => this.onKeyDown(e))
@@ -209,6 +210,8 @@ export class KeyboardHandler extends InputHandler {
     )
     const speed = this.isShiftPressed ? this.SHIFT_MULTIPLIER : 1
     move.multiplyScalar(speed)
-    this.camera.localVelocity = move
+    if (this.arrowsEnabled) {
+      this.camera.localVelocity = move
+    }
   }
 }
