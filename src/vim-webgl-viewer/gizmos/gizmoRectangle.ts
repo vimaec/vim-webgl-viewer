@@ -62,6 +62,7 @@ export class GizmoRectangle {
 
   /** Gizmo gets rendered if true */
   set visible (value: boolean) {
+    this.viewer.renderer.needsUpdate = true
     this.line.visible = value
   }
 
@@ -105,6 +106,7 @@ export class GizmoRectangle {
     this.line.position.copy(position)
     this.line.scale.set(dx, dy, 1)
     this.line.updateMatrix()
+    this.viewer.renderer.needsUpdate = true
   }
 
   private getBoxSize (A: THREE.Vector3, B: THREE.Vector3) {
