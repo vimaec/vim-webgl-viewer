@@ -98,6 +98,7 @@ export class VimMaterials {
   }
 
   set focusIntensity (value: number) {
+    if (this._focusIntensity === value) return
     this._focusIntensity = value
     this.opaque.focusIntensity = value
     this.transparent.focusIntensity = value
@@ -112,6 +113,7 @@ export class VimMaterials {
   }
 
   set focusColor (value: THREE.Color) {
+    if (this._focusColor === value) return
     this._focusColor = value
     this.opaque.focusColor = value
     this.transparent.focusColor = value
@@ -126,6 +128,7 @@ export class VimMaterials {
   }
 
   set wireframeColor (value: THREE.Color) {
+    if (this.wireframe.color === value) return
     this.wireframe.color = value
     this._onUpdate.dispatch()
   }
@@ -138,6 +141,8 @@ export class VimMaterials {
   }
 
   set wireframeOpacity (value: number) {
+    if (this.wireframe.opacity === value) return
+
     this.wireframe.opacity = value
     this._onUpdate.dispatch()
   }
@@ -168,6 +173,7 @@ export class VimMaterials {
   }
 
   set sectionStrokeWitdh (value: number) {
+    if (this._sectionStrokeWitdh === value) return
     this._sectionStrokeWitdh = value
     this.opaque.sectionStrokeWitdh = value
     this.transparent.sectionStrokeWitdh = value
@@ -182,6 +188,7 @@ export class VimMaterials {
   }
 
   set sectionStrokeFallof (value: number) {
+    if (this._sectionStrokeFallof === value) return
     this._sectionStrokeFallof = value
     this.opaque.sectionStrokeFallof = value
     this.transparent.sectionStrokeFallof = value
@@ -196,6 +203,7 @@ export class VimMaterials {
   }
 
   set sectionStrokeColor (value: THREE.Color) {
+    if (this._sectionStrokeColor === value) return
     this._sectionStrokeColor = value
     this.opaque.sectionStrokeColor = value
     this.transparent.sectionStrokeColor = value
@@ -210,6 +218,7 @@ export class VimMaterials {
   }
 
   set outlineColor (value: THREE.Color) {
+    if (this.merge.color === value) return
     this.merge.color = value
     this._onUpdate.dispatch()
   }
@@ -222,6 +231,7 @@ export class VimMaterials {
   }
 
   set outlineBlur (value: number) {
+    if (this.outline.strokeBlur === value) return
     this.outline.strokeBlur = value
     this._onUpdate.dispatch()
   }
@@ -234,6 +244,7 @@ export class VimMaterials {
   }
 
   set outlineFalloff (value: number) {
+    if (this.outline.strokeBias === value) return
     this.outline.strokeBias = value
     this._onUpdate.dispatch()
   }
@@ -246,6 +257,7 @@ export class VimMaterials {
   }
 
   set outlineIntensity (value: number) {
+    if (this.outline.strokeMultiplier === value) return
     this.outline.strokeMultiplier = value
     this._onUpdate.dispatch()
   }
