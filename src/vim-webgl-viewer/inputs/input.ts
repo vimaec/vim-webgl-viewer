@@ -109,11 +109,11 @@ export class DefaultInputScheme implements InputScheme {
         if (selection.count > 0) {
           camera.frame(
             selection.getBoundingBox(),
-            'center',
+            'none',
             camera.defaultLerpDuration
           )
         } else {
-          camera.frame('all', 'center', camera.defaultLerpDuration)
+          camera.frame('all', 45, camera.defaultLerpDuration)
         }
         return true
       default:
