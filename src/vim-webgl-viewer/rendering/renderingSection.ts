@@ -55,6 +55,7 @@ export class RenderingSection {
     this.minZ.constant = -box.min.z
     this.box.copy(box)
     this._renderer.needsUpdate = true
+    this._renderer.skipAntialias = true
   }
 
   /**

@@ -34,6 +34,11 @@ export class Renderer {
    */
   section: RenderingSection
 
+  /**
+   * Set to false to disable antialiasing. Default is true.
+   */
+  antialias: boolean = true
+
   private _scene: RenderScene
   private _viewport: Viewport
   private _camera: Camera
@@ -42,13 +47,31 @@ export class Renderer {
   private _onSceneUpdate = new SimpleEventDispatcher<Vim>()
   private _renderText: boolean | undefined
   private _needsUpdate: boolean
+  private _skipAntialias: boolean
 
+  /**
+   * Set this to true to cause a re-render of the scene.
+   * Can only be set to true, Cleared on each render.
+   */
   get needsUpdate () {
     return this._needsUpdate
   }
 
   set needsUpdate (value: boolean) {
     this._needsUpdate = this._needsUpdate || value
+  }
+
+  /**
+   * Set this to true to cause the next render to ignore antialiasing
+   * Useful for expensive operations such as section box.
+   * Can only be set to true, Cleared on each render.
+   */
+  get skipAntialias () {
+    return this._skipAntialias
+  }
+
+  set skipAntialias (value: boolean) {
+    this._skipAntialias = this._skipAntialias || value
   }
 
   constructor (
@@ -145,8 +168,12 @@ export class Renderer {
     })
 
     this._composer.outlines = this._scene.hasOutline()
-    this._composer.render(this.needsUpdate, !this._camera.hasMoved)
+    this._composer.render(
+      this.needsUpdate,
+      this.antialias && !this.skipAntialias && !this._camera.hasMoved
+    )
     this._needsUpdate = false
+    this.skipAntialias = false
 
     if (this.textEnabled) {
       this.textRenderer.render(this._scene.scene, this._camera.camera)
