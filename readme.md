@@ -12,6 +12,10 @@ https://vimaec.github.io/vim-webgl-viewer/api/
 - [JsFiddle - General usage](https://jsfiddle.net/mavimaec/ou174Lz9/)
 - [JsFiddle - Coloring](https://jsfiddle.net/simon_vimaec/j5uhyp7k/19/)
 - [JsFiddle - Visibility](https://jsfiddle.net/simon_vimaec/j5uhyp7k/28/)
+- [JsFiddle - Outlines](https://jsfiddle.net/simon_vimaec/nfLsab8k/3/)
+- [JsFiddle - Isolation](https://jsfiddle.net/simon_vimaec/amp65cb8/23/)
+
+
 
 - [Small Model Demo - Residence](https://vimaec.github.io/vim-webgl-viewer)
 - [Medium Model Demo - Medical Tower](https://vimaec.github.io/vim-webgl-viewer?vim=https://vim.azureedge.net/samples/skanska.vim)
