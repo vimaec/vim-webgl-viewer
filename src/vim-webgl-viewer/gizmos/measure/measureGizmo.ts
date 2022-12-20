@@ -218,7 +218,6 @@ export class MeasureGizmo {
     this._lineX.label.visible = !collapse
     this._lineY.label.visible = !collapse
     this._lineZ.label.visible = !collapse
-    this._viewer.renderer.needsUpdate = true
   }
 
   private screenDist (
@@ -292,7 +291,7 @@ export class MeasureGizmo {
 
     // Start update of collapse.
     this._animate()
-
+    this._viewer.renderer.needsUpdate = true
     return true
   }
 
