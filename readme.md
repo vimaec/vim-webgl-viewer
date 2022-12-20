@@ -14,6 +14,9 @@ https://vimaec.github.io/vim-webgl-viewer/api/
 - [JsFiddle - Visibility](https://jsfiddle.net/simon_vimaec/j5uhyp7k/28/)
 - [JsFiddle - Outlines](https://jsfiddle.net/simon_vimaec/nfLsab8k/3/)
 - [JsFiddle - Isolation](https://jsfiddle.net/simon_vimaec/amp65cb8/23/)
+- [JsFiddle - Measure](https://jsfiddle.net/simon_vimaec/anLh63tv/4/)
+
+
 
 
 
