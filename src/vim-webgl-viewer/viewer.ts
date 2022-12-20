@@ -201,7 +201,7 @@ export class Viewer {
     // Camera
     this.renderer.needsUpdate = this._camera.update(this._clock.getDelta())
     // Rendering
-    this.renderer.render(this.camera.camera, this.selection.count > 0)
+    this.renderer.render()
   }
 
   /**

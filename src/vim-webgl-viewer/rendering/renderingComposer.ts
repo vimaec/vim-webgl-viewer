@@ -31,7 +31,6 @@ import { Camera } from '../camera'
  * Composer for AA and Outline effects.
  */
 export class RenderingComposer {
-  private _cam: Camera
   private _renderer: THREE.WebGLRenderer
   private _scene: RenderScene
   private _materials: VimMaterials
@@ -46,7 +45,8 @@ export class RenderingComposer {
   private _transferPass: TransferPass
   private _outlines: boolean
   private _clock: THREE.Clock = new THREE.Clock()
-  private _aaResumeTime
+  private _nextAATime: number
+  onDemand: boolean
 
   // Disposables
   private _outlinePass: OutlinePass
@@ -62,15 +62,15 @@ export class RenderingComposer {
     materials: VimMaterials,
     camera: Camera
   ) {
-    this._cam = camera
     this._samples = renderer.capabilities.isWebGL2
       ? renderer.capabilities.maxSamples
       : 0
     this._renderer = renderer
     this._scene = scene
     this._materials = materials
-    this._camera = camera.camera
     this._size = viewport.getSize()
+
+    this._camera = camera.camera
     this.setup()
 
     this._clock = new THREE.Clock()
@@ -137,6 +137,7 @@ export class RenderingComposer {
     // Draw Outline
     this._outlinePass = new OutlinePass(
       this._sceneTarget.texture,
+      this._camera,
       this._materials.outline
     )
     this._composer.addPass(this._outlinePass)
@@ -176,6 +177,7 @@ export class RenderingComposer {
 
   set camera (value: THREE.PerspectiveCamera | THREE.OrthographicCamera) {
     this._renderPass.camera = value
+    this._ssaaRenderPass.camera = value
     this._selectionRenderPass.camera = value
     this._outlinePass.material.camera = value
     this._camera = value
@@ -201,12 +203,13 @@ export class RenderingComposer {
     this.setup()
   }
 
-  render () {
+  render (updated: boolean, antialias: boolean) {
     const time = new Date().getTime()
+    if (updated) {
+      this._nextAATime = time + 20
+    }
 
-    if (this._cam.hasMoved) {
-      this._aaResumeTime = time + 20
-
+    if (updated && !antialias) {
       this._renderPass.render(
         this._renderer,
         undefined,
@@ -214,7 +217,8 @@ export class RenderingComposer {
         this._clock.getDelta(),
         false
       )
-    } else if (time > this._aaResumeTime) {
+      this._composer.render()
+    } else if (!this.onDemand || time > this._nextAATime) {
       this._ssaaRenderPass.render(
         this._renderer,
         this._sceneTarget,
@@ -222,10 +226,9 @@ export class RenderingComposer {
         this._clock.getDelta(),
         false
       )
+      this._nextAATime = Number.MAX_VALUE
+      this._composer.render()
     }
-
-    // Adds the outline to the rendered scene if needed.
-    this._composer.render()
   }
 
   dispose () {

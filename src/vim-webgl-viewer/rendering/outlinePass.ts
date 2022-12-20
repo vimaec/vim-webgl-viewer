@@ -16,16 +16,29 @@ export class OutlinePass extends Pass {
   private _fsQuad: FullScreenQuad
   material: OutlineMaterial
 
-  constructor (sceneBuffer: THREE.Texture, material?: OutlineMaterial) {
+  constructor (
+    sceneBuffer: THREE.Texture,
+    camera: THREE.PerspectiveCamera | THREE.OrthographicCamera,
+    material?: OutlineMaterial
+  ) {
     super()
 
     this.material = material ?? new OutlineMaterial()
     this.material.sceneBuffer = sceneBuffer
+    this.material.camera = camera
     this._fsQuad = new FullScreenQuad(this.material.material)
   }
 
   setSize (width: number, height: number) {
     this.material.resolution = new THREE.Vector2(width, height)
+  }
+
+  get camera () {
+    return this.material.camera
+  }
+
+  set camera (value: THREE.PerspectiveCamera | THREE.OrthographicCamera) {
+    this.material.camera = value
   }
 
   dispose () {

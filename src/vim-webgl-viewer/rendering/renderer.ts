@@ -42,7 +42,6 @@ export class Renderer {
   private _onSceneUpdate = new SimpleEventDispatcher<Vim>()
   private _renderText: boolean | undefined
   private _needsUpdate: boolean
-  private _renderOnDemand: boolean
 
   get needsUpdate () {
     return this._needsUpdate
@@ -63,7 +62,6 @@ export class Renderer {
     this._scene = scene
     this._materials = materials
     this._camera = camera
-    this._renderOnDemand = config.rendering.onDemand
 
     this.renderer = new THREE.WebGLRenderer({
       canvas: viewport.canvas,
@@ -85,6 +83,7 @@ export class Renderer {
       materials,
       camera
     )
+    this._composer.onDemand = config.rendering.onDemand
 
     this.section = new RenderingSection(this, this._materials)
 
@@ -139,20 +138,18 @@ export class Renderer {
   /**
    * Render what is in camera.
    */
-  render (camera: THREE.Camera, hasSelection: boolean) {
+  render () {
     this._scene.getUpdatedScenes().forEach((s) => {
       this.needsUpdate = true
       if (s.vim) this._onSceneUpdate.dispatch(s.vim)
     })
 
-    if (this._renderOnDemand && !this.needsUpdate) return
+    this._composer.outlines = this._scene.hasOutline()
+    this._composer.render(this.needsUpdate, !this._camera.hasMoved)
     this._needsUpdate = false
 
-    this._composer.outlines = hasSelection
-    this._composer.render()
-
     if (this.textEnabled) {
-      this.textRenderer.render(this._scene.scene, camera)
+      this.textRenderer.render(this._scene.scene, this._camera.camera)
     }
 
     this._scene.clearUpdateFlags()
@@ -194,5 +191,6 @@ export class Renderer {
     this.renderer.setSize(size.x, size.y)
     this._composer.setSize(size.x, size.y)
     this.textRenderer.setSize(size.x, size.y)
+    this.needsUpdate = true
   }
 }

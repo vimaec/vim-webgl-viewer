@@ -28,6 +28,13 @@ export class RenderScene {
     return result
   }
 
+  hasOutline () {
+    for (const s of this._scenes) {
+      if (s.hasOutline) return true
+    }
+    return false
+  }
+
   /** Clears the scene updated flags */
   clearUpdateFlags () {
     this._scenes.forEach((s) => s.clearUpdateFlag())

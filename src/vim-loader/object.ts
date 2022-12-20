@@ -88,7 +88,10 @@ export class Object {
   }
 
   set outline (value: boolean) {
-    this.vim.scene.updated = this.selectedAttribute.apply(value)
+    if (this.selectedAttribute.apply(value)) {
+      if (value) this.vim.scene.addOutline()
+      else this.vim.scene.removeOutline()
+    }
   }
 
   /**

@@ -19,6 +19,7 @@ export class Scene {
   meshes: THREE.Mesh[] = []
   vim: Vim | undefined
   private _updated: boolean = false
+  private _outlineCount: number = 0
 
   get updated () {
     return this._updated
@@ -26,6 +27,20 @@ export class Scene {
 
   set updated (value: boolean) {
     this._updated = this._updated || value
+  }
+
+  hasOutline () {
+    return this._outlineCount > 0
+  }
+
+  addOutline () {
+    this._outlineCount++
+    this.updated = true
+  }
+
+  removeOutline () {
+    this._outlineCount--
+    this.updated = true
   }
 
   clearUpdateFlag () {
