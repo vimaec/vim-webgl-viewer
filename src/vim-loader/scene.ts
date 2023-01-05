@@ -17,7 +17,7 @@ export class Scene {
 
   // State
   meshes: THREE.Mesh[] = []
-  vim: Vim | undefined
+  private _vim: Vim | undefined
   private _updated: boolean = false
   private _outlineCount: number = 0
 
@@ -98,13 +98,17 @@ export class Scene {
     this._boundingBox.applyMatrix4(matrix)
   }
 
+  get vim () {
+    return this._vim
+  }
+
   /**
    * Sets vim index for this scene and all its THREE.Meshes.
    */
-  setVim (vim: Vim) {
-    this.vim = vim
+  set vim (value: Vim) {
+    this._vim = value
     for (let m = 0; m < this.meshes.length; m++) {
-      this.meshes[m].userData.vim = vim
+      this.meshes[m].userData.vim = value
     }
   }
 
