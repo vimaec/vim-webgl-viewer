@@ -23,7 +23,7 @@ export class Vim {
   constructor (vim: IDocument, scene: Scene, settings: VimConfig) {
     this.document = vim
     this.scene = scene
-    this.scene?.setVim(this)
+    this.scene.vim = this
     this.settings = settings
     this.scene.applyMatrix4(this.settings.matrix)
   }
@@ -46,7 +46,7 @@ export class Vim {
     this.scene.dispose()
 
     next.applyMatrix4(this.settings.matrix)
-    next.setVim(this)
+    next.vim = this
     this.scene = next
     for (const [element, object] of this._elementToObject.entries()) {
       object.updateMeshes(this.getMeshesFromElement(element))
@@ -55,9 +55,10 @@ export class Vim {
 
   loadMore (flagTest: (flag: number) => boolean) {
     if (!this.document.g3d) return
-    const scene = this.scene.builder.createFromFlag(this.document.g3d, flagTest)
-    scene.applyMatrix4(this.settings.matrix)
-    return scene
+    const more = this.scene.builder.createFromFlag(this.document.g3d, flagTest)
+    more.vim = this
+    more.applyMatrix4(this.settings.matrix)
+    return more
   }
 
   /**
