@@ -5,6 +5,9 @@
 import { Viewer } from '../../viewer'
 import * as THREE from 'three'
 
+/**
+ * Defines user interactions with the section box.
+ */
 export class BoxInputs {
   // dependencies
   viewer: Viewer

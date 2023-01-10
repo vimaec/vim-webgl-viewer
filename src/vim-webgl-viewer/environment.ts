@@ -16,12 +16,12 @@ export class GroundPlane {
   private _size: number = 1
 
   // disposable
-  private _geometry: THREE.PlaneBufferGeometry
+  private _geometry: THREE.PlaneGeometry
   private _material: THREE.MeshBasicMaterial
   private _texture: THREE.Texture | undefined
 
   constructor () {
-    this._geometry = new THREE.PlaneBufferGeometry()
+    this._geometry = new THREE.PlaneGeometry()
     this._material = new THREE.MeshBasicMaterial({
       transparent: true,
       depthTest: true,

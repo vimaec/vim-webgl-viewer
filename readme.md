@@ -169,12 +169,19 @@ The distributable files do not contain the underlying source for [Three.JS](http
 ![Vim class diagram](docs/vim.jpg)
 
 The `Viewer` provides methods to load and unload `Vim`s.
-`Object` is the highest level api and acts as a bridge between `BIM`, `G3d` and `THREE` objects
+
+`Object` is the highest level api and acts as a bridge between `BIM`, `G3d` and `THREE` objects.
+
 A `Vim` contains a `Document` which contains the raw `BIM` and `g3d` information parsed from the file.
+
 A `Vim` contains the `Settings` used when loading was called.
+
 A `Vim` contains a `Scene` which contains the generated THREE objects to render the `Vim`.
+
 All raw `G3d` and `BIM` data is stored using the `BFast` format.
+
 `mesh.ts` Takes `G3d` data and `THREE.BufferGeometry` and generates `THREE.Mesh`s.
+
 `geometry.ts` Takes `G3d` and generates `THREE.BufferGeometry`
 
 ## How To

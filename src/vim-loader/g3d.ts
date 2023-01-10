@@ -185,6 +185,7 @@ class AbstractG3d {
   }
 }
 /**
+ * Defines all required attributes of a vim g3d
  * See https://github.com/vimaec/vim#vim-geometry-attributes
  */
 class VimAttributes {
@@ -502,21 +503,38 @@ export class G3d {
   }
 
   // ------------- All -----------------
+
+  /**
+   * Returns the total vertex count in the g3d
+   */
   getVertexCount = () => this.positions.length / this.POSITION_SIZE
 
   // ------------- Meshes -----------------
+
+  /**
+   * Returns the total mesh count in the g3d
+   */
   getMeshCount = () => this.meshSubmeshes.length
 
+  /**
+   * Returns the index where the given mesh starts in the index buffer
+   */
   getMeshIndexStart (mesh: number, section: MeshSection = 'all'): number {
     const sub = this.getMeshSubmeshStart(mesh, section)
     return this.getSubmeshIndexStart(sub)
   }
 
+  /**
+   * Returns the index where the given mesh ends in the index buffer
+   */
   getMeshIndexEnd (mesh: number, section: MeshSection = 'all'): number {
     const sub = this.getMeshSubmeshEnd(mesh, section)
     return this.getSubmeshIndexEnd(sub - 1)
   }
 
+  /**
+   * Returns the length of the given mesh in the index buffer
+   */
   getMeshIndexCount (mesh: number, section: MeshSection = 'all'): number {
     return (
       this.getMeshIndexEnd(mesh, section) -
@@ -524,20 +542,33 @@ export class G3d {
     )
   }
 
+  /**
+   * Returns the index where the given mesh starts in the vertex buffer
+   */
   getMeshVertexStart (mesh: number): number {
     return this.meshVertexOffsets[mesh]
   }
 
+  /**
+   * Returns the index where the mesh ends in the vertex buffer
+   */
   getMeshVertexEnd (mesh: number): number {
     return mesh < this.meshVertexOffsets.length - 1
       ? this.meshVertexOffsets[mesh + 1]
       : this.getVertexCount()
   }
 
+  /**
+   * Returns the length of the given mesh in the vertex buffer
+   */
   getMeshVertexCount (mesh: number): number {
     return this.getMeshVertexEnd(mesh) - this.getMeshVertexStart(mesh)
   }
 
+  /**
+   * Returns the index where the given mesh starts in the submesh buffer
+   * @section determines which submesh range to target according to transparency.
+   */
   getMeshSubmeshStart (mesh: number, section: MeshSection = 'all'): number {
     if (section === 'transparent') {
       return this.getMeshSubmeshEnd(mesh, 'opaque')
@@ -546,6 +577,10 @@ export class G3d {
     return this.meshSubmeshes[mesh]
   }
 
+  /**
+   * Returns the index where the given mesh ends in the submesh buffer
+   * @section determines which submesh range to target according to transparency.
+   */
   getMeshSubmeshEnd (mesh: number, section: MeshSection = 'all'): number {
     if (section === 'opaque') {
       return this.meshSubmeshes[mesh] + this.meshOpaqueCount[mesh]
@@ -556,30 +591,46 @@ export class G3d {
       : this.submeshIndexOffset.length
   }
 
+  /**
+   * Returns the length of the given mesh in the submesh buffer
+   * @section determines which submesh range to target according to transparency.
+   */
   getMeshSubmeshCount (mesh: number, section: MeshSection = 'all'): number {
     const end = this.getMeshSubmeshEnd(mesh, section)
     const start = this.getMeshSubmeshStart(mesh, section)
     return end - start
   }
 
+  /**
+   * Returns true if the given mesh has transparent submeshes.
+   */
   getMeshHasTransparency (mesh: number) {
     return this.getMeshSubmeshCount(mesh, 'transparent') > 0
   }
 
   // ------------- Submeshes -----------------
 
+  /**
+   * Returns the index where the given submesh starts in the index buffer.
+   */
   getSubmeshIndexStart (submesh: number): number {
     return submesh < this.submeshIndexOffset.length
       ? this.submeshIndexOffset[submesh]
       : this.indices.length
   }
 
+  /**
+   * Returns the index where the given submesh ends in the index buffer.
+   */
   getSubmeshIndexEnd (submesh: number): number {
     return submesh < this.submeshIndexOffset.length - 1
       ? this.submeshIndexOffset[submesh + 1]
       : this.indices.length
   }
 
+  /**
+   * Returns the length of the given submesh in the index buffer.
+   */
   getSubmeshIndexCount (submesh: number): number {
     return this.getSubmeshIndexEnd(submesh) - this.getSubmeshIndexStart(submesh)
   }
@@ -616,6 +667,9 @@ export class G3d {
   }
 
   // ------------- Instances -----------------
+  /**
+   * Returns the total number of instances in the g3d
+   */
   getInstanceCount = () => this.instanceMeshes.length
 
   /**
@@ -639,6 +693,9 @@ export class G3d {
 
   // ------------- Material -----------------
 
+  /**
+   * Returns the total number of materials in the g3d.
+   */
   getMaterialCount = () => this.materialColors.length / this.COLOR_SIZE
 
   /**
@@ -653,6 +710,9 @@ export class G3d {
     )
   }
 
+  /**
+   * Returns the alpha value for given material
+   */
   getMaterialAlpha (material: number): number {
     if (material < 0) return 1
     const index = material * this.COLOR_SIZE + this.COLOR_SIZE - 1
@@ -660,6 +720,9 @@ export class G3d {
     return result
   }
 
+  /**
+   * Returns a parsed g3d from given bfast.
+   */
   static async createFromBfast (bfast: BFast) {
     return AbstractG3d.createFromBfast(bfast).then((g3d) => new G3d(g3d))
   }

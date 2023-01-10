@@ -12,6 +12,9 @@ type ArrayConstructor =
   | Float64ArrayConstructor
   | Int32ArrayConstructor
 
+/**
+ * Represents a range in a buffer
+ */
 export class Range {
   start: number
   end: number
@@ -24,6 +27,9 @@ export class Range {
     this.end = end
   }
 
+  /**
+   * Returns a new range where start and end are offset
+   */
   offset (offset: number) {
     return new Range(this.start + offset, this.end + offset)
   }
@@ -99,6 +105,9 @@ export class BFastHeader {
     this.numArrays = numArrays
   }
 
+  /**
+   * Returns a bfast header by parsing given array data
+   */
   static createFromArray (array: Uint32Array): BFastHeader {
     // Check validity of data
     // TODO: check endianness
@@ -119,6 +128,9 @@ export class BFastHeader {
     return new this(array[0], array[2], array[4], array[6])
   }
 
+  /**
+   * Returns a bfast header by parsing given buffer data
+   */
   static createFromBuffer (array: ArrayBuffer): BFastHeader {
     return BFastHeader.createFromArray(new Uint32Array(array))
   }
@@ -180,6 +192,10 @@ export class BFast {
     return request.get()
   }
 
+  /**
+   * @param name buffer name
+   * @returns a bfast with a local copy of the requested buffer
+   */
   async getLocalBfast (name: string) {
     const buffer = await this.getBuffer(name)
     if (!buffer) return

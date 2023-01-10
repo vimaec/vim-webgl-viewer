@@ -126,6 +126,9 @@ export class Measure implements IMeasure {
     })
   }
 
+  /**
+   * Should be private.
+   */
   onFirstClick (action: InputAction) {
     this.clear()
     this._meshes = new MeasureGizmo(this._viewer)
@@ -135,10 +138,16 @@ export class Measure implements IMeasure {
     }
   }
 
+  /**
+   * Should be private.
+   */
   onMouseMove () {
     this._meshes?.hide()
   }
 
+  /**
+   * Should be private.
+   */
   onMouseIdle (action: InputAction) {
     // Show markers and line on hit
     if (!action) {
@@ -159,6 +168,9 @@ export class Measure implements IMeasure {
     }
   }
 
+  /**
+   * Should be private.
+   */
   onSecondClick (action: InputAction) {
     if (!action.object || !this._startPos) {
       return false

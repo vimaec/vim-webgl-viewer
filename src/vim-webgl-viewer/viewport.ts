@@ -91,6 +91,9 @@ export class Viewport {
     return size.x / size.y
   }
 
+  /**
+   * Sets a function to be called back when a resize occurs.
+   * */
   onResize (callback: () => void) {
     this._resizeCallbacks.push(callback)
   }

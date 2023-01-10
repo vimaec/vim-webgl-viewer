@@ -4,6 +4,9 @@
 
 import * as THREE from 'three'
 
+/**
+ * Defines the thin outline on the edges of the section box.
+ */
 export class BoxOutline extends THREE.LineSegments {
   constructor () {
     // prettier-ignore
@@ -42,6 +45,9 @@ export class BoxOutline extends THREE.LineSegments {
     super(geo, mat)
   }
 
+  /**
+   * Resize the outline to the given box.
+   */
   fitBox (box: THREE.Box3) {
     this.scale.set(
       box.max.x - box.min.x,
@@ -55,12 +61,18 @@ export class BoxOutline extends THREE.LineSegments {
     )
   }
 
+  /**
+   * Disposes of all resources.
+   */
   dispose () {
     this.geometry.dispose()
     ;(this.material as THREE.Material).dispose()
   }
 }
 
+/**
+ * Defines the box mesh for the section box.
+ */
 export class BoxMesh extends THREE.Mesh {
   constructor () {
     const geo = new THREE.BoxGeometry()
@@ -74,6 +86,9 @@ export class BoxMesh extends THREE.Mesh {
     super(geo, mat)
   }
 
+  /**
+   * Resize the mesh to the given box.
+   */
   fitBox (box: THREE.Box3) {
     this.scale.set(
       box.max.x - box.min.x,
@@ -87,12 +102,18 @@ export class BoxMesh extends THREE.Mesh {
     )
   }
 
+  /**
+   * Disposes of all resources.
+   */
   dispose () {
     this.geometry.dispose()
     ;(this.material as THREE.Material).dispose()
   }
 }
 
+/**
+ * Defines the face highlight on hover for the section box.
+ */
 export class BoxHighlight extends THREE.Mesh {
   constructor () {
     const geo = new THREE.BufferGeometry()
@@ -113,6 +134,10 @@ export class BoxHighlight extends THREE.Mesh {
     this.frustumCulled = false
   }
 
+  /**
+   * Sets the face to highlight
+   * @param normal a direction vector from theses options (X,-X, Y,-Y, Z,-Z)
+   */
   highlight (box: THREE.Box3, normal: THREE.Vector3) {
     this.visible = false
     const positions = this.geometry.getAttribute('position')
@@ -162,6 +187,9 @@ export class BoxHighlight extends THREE.Mesh {
     positions.needsUpdate = true
   }
 
+  /**
+   * Disposes all resources.
+   */
   dispose () {
     this.geometry.dispose()
     ;(this.material as THREE.Material).dispose()

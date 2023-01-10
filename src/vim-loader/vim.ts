@@ -29,6 +29,9 @@ export class Vim {
     this.scene.applyMatrix4(this.settings.getMatrix())
   }
 
+  /**
+   * Disposes of all resources.
+   */
   dispose () {
     this.scene.dispose()
   }
