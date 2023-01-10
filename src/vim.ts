@@ -3,6 +3,7 @@ import './style.css'
 export * as THREE from 'three'
 
 export * from './vim-webgl-viewer/viewer'
+export * from './vim-webgl-viewer/gizmos/gizmoGrid'
 export type { PointerMode, InputScheme } from './vim-webgl-viewer/inputs/input'
 export { DefaultInputScheme, KEYS } from './vim-webgl-viewer/inputs/input'
 export * from './vim-webgl-viewer/viewerSettings'
