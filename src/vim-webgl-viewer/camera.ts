@@ -121,7 +121,7 @@ export interface ICamera {
   reset(): void
 
   /**
-   * Returns the world size of the camera frustrum at given point.
+   * Returns the world height of the camera frustrum at given point
    */
   frustrumSizeAt(point: THREE.Vector3): THREE.Vector2
 

@@ -9,7 +9,14 @@ https://vimaec.github.io/vim-webgl-viewer/api/
 
 # Live Demo
 
-- [JsFiddle](https://jsfiddle.net/mavimaec/ou174Lz9/)
+- [JsFiddle - General usage](https://jsfiddle.net/mavimaec/ou174Lz9/)
+- [JsFiddle - Embedding](https://jsfiddle.net/simon_vimaec/wd4zr6hq/5/)
+- [JsFiddle - Coloring](https://jsfiddle.net/simon_vimaec/j5uhyp7k/19/)
+- [JsFiddle - Visibility](https://jsfiddle.net/simon_vimaec/j5uhyp7k/28/)
+- [JsFiddle - Outlines](https://jsfiddle.net/simon_vimaec/nfLsab8k/3/)
+- [JsFiddle - Isolation](https://jsfiddle.net/simon_vimaec/amp65cb8/23/)
+- [JsFiddle - Measure](https://jsfiddle.net/simon_vimaec/anLh63tv/4/)
+- [JsFiddle - Section Box](https://jsfiddle.net/simon_vimaec/ryeu9L40/18/)
 - [Small Model Demo - Residence](https://vimaec.github.io/vim-webgl-viewer)
 - [Medium Model Demo - Medical Tower](https://vimaec.github.io/vim-webgl-viewer?vim=https://vim.azureedge.net/samples/skanska.vim)
 - [Large Model Demo - Stadium](https://vimaec.github.io/vim-webgl-viewer?vim=https://vim.azureedge.net/samples/stadium.vim) (_Warning_: slow download times)
@@ -64,7 +71,7 @@ You can also [try it out in a JsFiddle](https://jsfiddle.net/mavimaec/ou174Lz9/)
 
 # Folder Structure
 
-- `docs` - this is the root folder for the GitHub page at `https://vimaec.github.io/vim-webgl-viewer`. The `docs\index.html` file is meant demo the latest stable patch release, while the `docs\index-dev.html` Is meant to test the latest dev release.
+- `docs` - this is the root folder for the GitHub page at `https://vimaec.github.io/vim-webgl-viewer`. The `docs\index.html` file is meant to demo the latest stable patch release, while the `docs\index-dev.html` Is meant to test the latest dev release.
 - `src` - contains the TypeScript source code for the viewer and loader.
 - `dist` - created by running the build script for creating a
   distributable package. It contains five items after running the `build` script:
@@ -135,15 +142,16 @@ The distributable files do not contain the underlying source for [Three.JS](http
 **+:** Increase camera speed  
 **-:** Decrease camera speed
 
-**F8:** Toggle orbit mode  
-**Home:** Look at model  
+**Space bar** Toggle orbit mode  
+**Home:** Frame model  
 **Escape:** Clear selection  
-**Z:** Look at selection
+**F:** Frame selection
 
 ### Mouse
 
-**Hold left click + Move mouse:** Tilt/Pan camera  
-**Hold right click + Move mouse:** Truck/Pedestal camera  
+**Hold left click + Move mouse:** Rotate camera in current mode  
+**Hold right click + Move mouse:** Pan/Tilt camera
+**Hold middle click + Move mouse:** Truck/Pedastal camera
 **Mouse wheel:** Dolly Camera  
 **Left click:** Select object  
 **Ctrl + Mouse wheel:** Increase/Decrease camera speed
@@ -161,12 +169,19 @@ The distributable files do not contain the underlying source for [Three.JS](http
 ![Vim class diagram](docs/vim.jpg)
 
 The `Viewer` provides methods to load and unload `Vim`s.
-`Object` is the highest level api and acts as a bridge between `BIM`, `G3d` and `THREE` objects
+
+`Object` is the highest level api and acts as a bridge between `BIM`, `G3d` and `THREE` objects.
+
 A `Vim` contains a `Document` which contains the raw `BIM` and `g3d` information parsed from the file.
+
 A `Vim` contains the `Settings` used when loading was called.
+
 A `Vim` contains a `Scene` which contains the generated THREE objects to render the `Vim`.
+
 All raw `G3d` and `BIM` data is stored using the `BFast` format.
+
 `mesh.ts` Takes `G3d` data and `THREE.BufferGeometry` and generates `THREE.Mesh`s.
+
 `geometry.ts` Takes `G3d` and generates `THREE.BufferGeometry`
 
 ## How To
@@ -185,10 +200,10 @@ viewer.camera.frame(object)
 const vim = viewer.vims[0] // or keep vim reference from load
 const object = vim.getObjectsFromElementId(ELEMENT_ID)[0]
 const wireframe = object.createWireframe()
-this.viewer.renderer.add(wireframe)
+viewer.renderer.add(wireframe)
 
 // To remove hightlight
-// this.viewer.renderer.removeObject(wireframe)
+// viewer.renderer.removeObject(wireframe)
 // wireframe.geometry.dispose()
 ```
 

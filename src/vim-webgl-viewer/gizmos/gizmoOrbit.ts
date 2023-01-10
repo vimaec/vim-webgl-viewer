@@ -44,6 +44,9 @@ export class CameraGizmo {
     this.applySettings(settings)
   }
 
+  /**
+   * Disposes all resources.
+   */
   dispose () {
     cancelAnimationFrame(this._animation)
     clearTimeout(this._timeout)
@@ -63,6 +66,9 @@ export class CameraGizmo {
     }
   }
 
+  /**
+   * Orbit gizmo will only show when enabled is true.
+   */
   get enabled () {
     return this._active
   }
@@ -71,6 +77,9 @@ export class CameraGizmo {
     this._active = value
   }
 
+  /**
+   * Show/Hide the gizmo for a brief delay if the gizmo is actives.
+   */
   show (show: boolean = true) {
     if (!this._active) return
 
@@ -107,15 +116,26 @@ export class CameraGizmo {
     }
   }
 
+  /**
+   * Updates the position of the orbit gizmo
+   */
   setPosition (position: THREE.Vector3) {
     this._gizmos?.position.copy(position)
     this.updateScale()
   }
 
+  /**
+   * Updates the size of the orbit gizmo
+   */
   setSize (size: number) {
     this._size = size
   }
 
+  /**
+   * Updates opacity of the orbit gizmo
+   * @opacity opacity of the non occluded part.
+   * @opacityAlways opacity of the occluded part.
+   */
   setOpacity (opacity: number, opacityAlways: number) {
     this._opacity = opacity
     this._opacityAlways = opacityAlways
@@ -124,6 +144,9 @@ export class CameraGizmo {
     this._materialAlways!.opacity = opacityAlways
   }
 
+  /**
+   * Updates color of the orbit gizmo
+   */
   setColor (color: THREE.Color) {
     this._color = color
     if (!this._gizmos) return
@@ -136,6 +159,7 @@ export class CameraGizmo {
     this._fov = settings.camera.fov
     this.setColor(settings.camera.gizmo.color)
     this.setSize(settings.camera.gizmo.size)
+
     this.setOpacity(
       settings.camera.gizmo.opacity,
       settings.camera.gizmo.opacityAlways

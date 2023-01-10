@@ -5,6 +5,9 @@
 import * as THREE from 'three'
 import { Viewer } from '../viewer'
 
+/**
+ * Rectangle Gizmo used for rectangle selection.
+ */
 export class GizmoRectangle {
   private line: THREE.LineSegments
   private viewer: Viewer

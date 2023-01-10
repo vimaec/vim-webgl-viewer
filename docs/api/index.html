@@ -28,7 +28,14 @@
   <h1>Live Demo</h1>
 </a>
 <ul>
-<li><a href="https://jsfiddle.net/mavimaec/ou174Lz9/">JsFiddle</a></li>
+<li><a href="https://jsfiddle.net/mavimaec/ou174Lz9/">JsFiddle - General usage</a></li>
+<li><a href="https://jsfiddle.net/simon_vimaec/wd4zr6hq/5/">JsFiddle - Embedding</a></li>
+<li><a href="https://jsfiddle.net/simon_vimaec/j5uhyp7k/19/">JsFiddle - Coloring</a></li>
+<li><a href="https://jsfiddle.net/simon_vimaec/j5uhyp7k/28/">JsFiddle - Visibility</a></li>
+<li><a href="https://jsfiddle.net/simon_vimaec/nfLsab8k/3/">JsFiddle - Outlines</a></li>
+<li><a href="https://jsfiddle.net/simon_vimaec/amp65cb8/23/">JsFiddle - Isolation</a></li>
+<li><a href="https://jsfiddle.net/simon_vimaec/anLh63tv/4/">JsFiddle - Measure</a></li>
+<li><a href="https://jsfiddle.net/simon_vimaec/ryeu9L40/18/">JsFiddle - Section Box</a></li>
 <li><a href="https://vimaec.github.io/vim-webgl-viewer">Small Model Demo - Residence</a></li>
 <li><a href="https://vimaec.github.io/vim-webgl-viewer?vim=https://vim.azureedge.net/samples/skanska.vim">Medium Model Demo - Medical Tower</a></li>
 <li><a href="https://vimaec.github.io/vim-webgl-viewer?vim=https://vim.azureedge.net/samples/stadium.vim">Large Model Demo - Stadium</a> (<em>Warning</em>: slow download times)</li>
@@ -69,7 +76,7 @@ other relational or non-relation data sets.</p>
   <h1>Folder Structure</h1>
 </a>
 <ul>
-<li><code>docs</code> - this is the root folder for the GitHub page at <code>https://vimaec.github.io/vim-webgl-viewer</code>. The <code>docs\index.html</code> file is meant demo the latest stable patch release, while the <code>docs\index-dev.html</code> Is meant to test the latest dev release.</li>
+<li><code>docs</code> - this is the root folder for the GitHub page at <code>https://vimaec.github.io/vim-webgl-viewer</code>. The <code>docs\index.html</code> file is meant to demo the latest stable patch release, while the <code>docs\index-dev.html</code> Is meant to test the latest dev release.</li>
 <li><code>src</code> - contains the TypeScript source code for the viewer and loader.</li>
 <li><code>dist</code> - created by running the build script for creating a
 distributable package. It contains five items after running the <code>build</code> script:<ul>
@@ -151,12 +158,14 @@ command line by writing <code>npm run &lt;script-name&gt;</code> where <code>&lt
   <h3>Keyboard</h3>
 </a>
 <p><strong>W/Up:</strong> Move camera forward<br><strong>A/Left:</strong> Move camera to the left<br><strong>S/Down:</strong> Move camera backward<br><strong>D/Right:</strong> Move camera to the right<br><strong>E:</strong> Move camera up<br><strong>Q:</strong> Move camera down<br><strong>Shift + direction:</strong> faster camera movement<br><strong>+:</strong> Increase camera speed<br><strong>-:</strong> Decrease camera speed</p>
-<p><strong>F8:</strong> Toggle orbit mode<br><strong>Home:</strong> Look at model<br><strong>Escape:</strong> Clear selection<br><strong>Z:</strong> Look at selection</p>
+<p><strong>Space bar</strong> Toggle orbit mode<br><strong>Home:</strong> Frame model<br><strong>Escape:</strong> Clear selection<br><strong>F:</strong> Frame selection</p>
 
 <a href="#mouse" id="mouse" style="color: inherit; text-decoration: none;">
   <h3>Mouse</h3>
 </a>
-<p><strong>Hold left click + Move mouse:</strong> Tilt/Pan camera<br><strong>Hold right click + Move mouse:</strong> Truck/Pedestal camera<br><strong>Mouse wheel:</strong> Dolly Camera<br><strong>Left click:</strong> Select object<br><strong>Ctrl + Mouse wheel:</strong> Increase/Decrease camera speed</p>
+<p><strong>Hold left click + Move mouse:</strong> Rotate camera in current mode<br><strong>Hold right click + Move mouse:</strong> Pan/Tilt camera
+<strong>Hold middle click + Move mouse:</strong> Truck/Pedastal camera
+<strong>Mouse wheel:</strong> Dolly Camera<br><strong>Left click:</strong> Select object<br><strong>Ctrl + Mouse wheel:</strong> Increase/Decrease camera speed</p>
 
 <a href="#touch" id="touch" style="color: inherit; text-decoration: none;">
   <h3>Touch</h3>
@@ -168,14 +177,14 @@ command line by writing <code>npm run &lt;script-name&gt;</code> where <code>&lt
   <h2>Vim</h2>
 </a>
 <p><img src="docs/vim.jpg" alt="Vim class diagram"></p>
-<p>The <code>Viewer</code> provides methods to load and unload <code>Vim</code>s.
-<code>Object</code> is the highest level api and acts as a bridge between <code>BIM</code>, <code>G3d</code> and <code>THREE</code> objects
-A <code>Vim</code> contains a <code>Document</code> which contains the raw <code>BIM</code> and <code>g3d</code> information parsed from the file.
-A <code>Vim</code> contains the <code>Settings</code> used when loading was called.
-A <code>Vim</code> contains a <code>Scene</code> which contains the generated THREE objects to render the <code>Vim</code>.
-All raw <code>G3d</code> and <code>BIM</code> data is stored using the <code>BFast</code> format.
-<code>mesh.ts</code> Takes <code>G3d</code> data and <code>THREE.BufferGeometry</code> and generates <code>THREE.Mesh</code>s.
-<code>geometry.ts</code> Takes <code>G3d</code> and generates <code>THREE.BufferGeometry</code></p>
+<p>The <code>Viewer</code> provides methods to load and unload <code>Vim</code>s.</p>
+<p><code>Object</code> is the highest level api and acts as a bridge between <code>BIM</code>, <code>G3d</code> and <code>THREE</code> objects.</p>
+<p>A <code>Vim</code> contains a <code>Document</code> which contains the raw <code>BIM</code> and <code>g3d</code> information parsed from the file.</p>
+<p>A <code>Vim</code> contains the <code>Settings</code> used when loading was called.</p>
+<p>A <code>Vim</code> contains a <code>Scene</code> which contains the generated THREE objects to render the <code>Vim</code>.</p>
+<p>All raw <code>G3d</code> and <code>BIM</code> data is stored using the <code>BFast</code> format.</p>
+<p><code>mesh.ts</code> Takes <code>G3d</code> data and <code>THREE.BufferGeometry</code> and generates <code>THREE.Mesh</code>s.</p>
+<p><code>geometry.ts</code> Takes <code>G3d</code> and generates <code>THREE.BufferGeometry</code></p>
 
 <a href="#how-to" id="how-to" style="color: inherit; text-decoration: none;">
   <h2>How To</h2>
@@ -184,7 +193,7 @@ All raw <code>G3d</code> and <code>BIM</code> data is stored using the <code>BFa
 <pre><code class="language-javascript"><span class="hl-6">const</span><span class="hl-2"> </span><span class="hl-7">vim</span><span class="hl-2"> = </span><span class="hl-9">viewer</span><span class="hl-2">.</span><span class="hl-9">vims</span><span class="hl-2">[</span><span class="hl-11">0</span><span class="hl-2">] </span><span class="hl-12">// or keep vim reference from load</span><br/><span class="hl-6">const</span><span class="hl-2"> </span><span class="hl-7">object</span><span class="hl-2"> = </span><span class="hl-9">vim</span><span class="hl-2">.</span><span class="hl-8">getObjectsFromElementId</span><span class="hl-2">(</span><span class="hl-7">ELEMENT_ID</span><span class="hl-2">)[</span><span class="hl-11">0</span><span class="hl-2">]</span><br/><span class="hl-9">viewer</span><span class="hl-2">.</span><span class="hl-9">camera</span><span class="hl-2">.</span><span class="hl-8">frame</span><span class="hl-2">(</span><span class="hl-9">object</span><span class="hl-2">)</span>
 </code></pre>
 <p><strong>Highlight an element</strong></p>
-<pre><code class="language-javascript"><span class="hl-6">const</span><span class="hl-2"> </span><span class="hl-7">vim</span><span class="hl-2"> = </span><span class="hl-9">viewer</span><span class="hl-2">.</span><span class="hl-9">vims</span><span class="hl-2">[</span><span class="hl-11">0</span><span class="hl-2">] </span><span class="hl-12">// or keep vim reference from load</span><br/><span class="hl-6">const</span><span class="hl-2"> </span><span class="hl-7">object</span><span class="hl-2"> = </span><span class="hl-9">vim</span><span class="hl-2">.</span><span class="hl-8">getObjectsFromElementId</span><span class="hl-2">(</span><span class="hl-7">ELEMENT_ID</span><span class="hl-2">)[</span><span class="hl-11">0</span><span class="hl-2">]</span><br/><span class="hl-6">const</span><span class="hl-2"> </span><span class="hl-7">wireframe</span><span class="hl-2"> = </span><span class="hl-9">object</span><span class="hl-2">.</span><span class="hl-8">createWireframe</span><span class="hl-2">()</span><br/><span class="hl-6">this</span><span class="hl-2">.</span><span class="hl-9">viewer</span><span class="hl-2">.</span><span class="hl-9">renderer</span><span class="hl-2">.</span><span class="hl-8">add</span><span class="hl-2">(</span><span class="hl-9">wireframe</span><span class="hl-2">)</span><br/><br/><span class="hl-12">// To remove hightlight</span><br/><span class="hl-12">// this.viewer.renderer.removeObject(wireframe)</span><br/><span class="hl-12">// wireframe.geometry.dispose()</span>
+<pre><code class="language-javascript"><span class="hl-6">const</span><span class="hl-2"> </span><span class="hl-7">vim</span><span class="hl-2"> = </span><span class="hl-9">viewer</span><span class="hl-2">.</span><span class="hl-9">vims</span><span class="hl-2">[</span><span class="hl-11">0</span><span class="hl-2">] </span><span class="hl-12">// or keep vim reference from load</span><br/><span class="hl-6">const</span><span class="hl-2"> </span><span class="hl-7">object</span><span class="hl-2"> = </span><span class="hl-9">vim</span><span class="hl-2">.</span><span class="hl-8">getObjectsFromElementId</span><span class="hl-2">(</span><span class="hl-7">ELEMENT_ID</span><span class="hl-2">)[</span><span class="hl-11">0</span><span class="hl-2">]</span><br/><span class="hl-6">const</span><span class="hl-2"> </span><span class="hl-7">wireframe</span><span class="hl-2"> = </span><span class="hl-9">object</span><span class="hl-2">.</span><span class="hl-8">createWireframe</span><span class="hl-2">()</span><br/><span class="hl-9">viewer</span><span class="hl-2">.</span><span class="hl-9">renderer</span><span class="hl-2">.</span><span class="hl-8">add</span><span class="hl-2">(</span><span class="hl-9">wireframe</span><span class="hl-2">)</span><br/><br/><span class="hl-12">// To remove hightlight</span><br/><span class="hl-12">// viewer.renderer.removeObject(wireframe)</span><br/><span class="hl-12">// wireframe.geometry.dispose()</span>
 </code></pre>
 <p><strong>Change Color of an element</strong></p>
 <pre><code class="language-javascript"><span class="hl-6">const</span><span class="hl-2"> </span><span class="hl-7">vim</span><span class="hl-2"> = </span><span class="hl-9">viewer</span><span class="hl-2">.</span><span class="hl-9">vims</span><span class="hl-2">[</span><span class="hl-11">0</span><span class="hl-2">] </span><span class="hl-12">// or keep vim reference from load</span><br/><span class="hl-6">const</span><span class="hl-2"> </span><span class="hl-7">objects</span><span class="hl-2"> = </span><span class="hl-9">vim</span><span class="hl-2">.</span><span class="hl-8">getObjectsFromElementId</span><span class="hl-2">(</span><span class="hl-7">ELEMENT_ID</span><span class="hl-2">) </span><span class="hl-12">// Many element can share the same id</span><br/><span class="hl-9">objects</span><span class="hl-2">?.</span><span class="hl-8">forEach</span><span class="hl-2">((</span><span class="hl-9">o</span><span class="hl-2">) </span><span class="hl-6">=&gt;</span><span class="hl-2"> (</span><span class="hl-9">o</span><span class="hl-2">.</span><span class="hl-9">color</span><span class="hl-2"> = </span><span class="hl-6">new</span><span class="hl-2"> </span><span class="hl-7">THREE</span><span class="hl-2">.</span><span class="hl-8">Color</span><span class="hl-2">(</span><span class="hl-11">1</span><span class="hl-2">, </span><span class="hl-11">0</span><span class="hl-2">, </span><span class="hl-11">0</span><span class="hl-2">)))</span><br/><br/><span class="hl-12">// Revert to original color</span><br/><span class="hl-12">// object.color = undefined</span>

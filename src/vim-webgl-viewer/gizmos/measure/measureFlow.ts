@@ -33,6 +33,9 @@ export class MeasureFlow implements InputScheme {
     this.removeMouseListener = undefined
   }
 
+  /**
+   * Cancels current measuring flow.
+   */
   abort () {
     if (this.stage === 'active' || this.stage === 'ready') {
       this._stage = undefined
@@ -41,6 +44,9 @@ export class MeasureFlow implements InputScheme {
     }
   }
 
+  /**
+   * Implementation for InputScheme onMainAction
+   */
   onMainAction (action: InputAction) {
     switch (this._stage) {
       case 'ready':
@@ -60,10 +66,16 @@ export class MeasureFlow implements InputScheme {
     }
   }
 
+  /**
+   * Implementation for InputScheme onIdleAction
+   */
   onIdleAction (action: InputAction) {
     if (this._stage === 'active') this._gizmoMeasure.onMouseIdle(action)
   }
 
+  /**
+   * Implementation for InputScheme onKeyAction
+   */
   onKeyAction (key: number) {
     return false
   }

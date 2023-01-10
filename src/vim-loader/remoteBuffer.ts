@@ -31,6 +31,9 @@ export interface IProgressLogs {
   get all(): Map<string, RequestStatus>
 }
 
+/**
+ * Manages events for a collection of requests
+ */
 export class RequestLogger {
   source: string
   all: Map<string, RequestStatus> = new Map<string, RequestStatus>()
@@ -122,6 +125,9 @@ export class RequestLogger {
   }
 }
 
+/**
+ * Wrapper around request to allow sending it again.
+ */
 export class RetryRequest {
   url: string
   range: string | undefined
@@ -219,6 +225,12 @@ export class RemoteBuffer {
     return encoded
   }
 
+  /**
+   * Sends the webrequest to get bytes defined by range
+   * @param range bytes to obtain
+   * @param label for loggin purpose
+   * @returns Array buffer promise
+   */
   async http (range: Range | undefined, label: string) {
     const useRange = range && !(await this.encoded.get())
     const rangeStr = useRange

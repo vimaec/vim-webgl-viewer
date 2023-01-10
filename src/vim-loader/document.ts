@@ -5,6 +5,10 @@
 import { BFast } from './bfast'
 import { G3d } from './g3d'
 
+/**
+ * Representation of Element entity from the entity model
+ * See https://github.com/vimaec/vim/blob/master/ObjectModel/object-model-schema.json
+ */
 export type ElementInfo = {
   element: number
   id: number | undefined
@@ -17,6 +21,10 @@ export type ElementInfo = {
   level: string | undefined
 }
 
+/**
+ * Representation of BimDocument entity from the entity model
+ * See https://github.com/vimaec/vim/blob/master/ObjectModel/object-model-schema.json
+ */
 export type BimDocumentInfo = {
   title: string | undefined
   pathName: string | undefined
@@ -28,6 +36,10 @@ export type BimDocumentInfo = {
   date: string | undefined
 }
 
+/**
+ * Representation of ElementParamter entity from the entity model
+ * See https://github.com/vimaec/vim/blob/master/ObjectModel/object-model-schema.json
+ */
 export type ElementParameter = {
   name: string | undefined
   value: string | undefined
@@ -35,6 +47,10 @@ export type ElementParameter = {
   isInstance: boolean
 }
 
+/**
+ * Representation of VimHeader from the Vim format
+ * See https://github.com/vimaec/vim#header-buffer
+ */
 export type VimHeader = {
   vim: string | undefined
   id: string | undefined
@@ -44,6 +60,10 @@ export type VimHeader = {
   schema: string | undefined
 }
 
+/**
+ * Partial definition of the Vim object model.
+ * See https://github.com/vimaec/vim/blob/master/ObjectModel/object-model-schema.json
+ */
 const objectModel = {
   header: 'header',
   entities: 'entities',
@@ -131,6 +151,9 @@ const objectModel = {
   }
 }
 
+/**
+ * Common interface to interact with the Vim File format.
+ */
 export interface IDocument {
   header: VimHeader | undefined
   g3d: G3d | undefined
@@ -212,6 +235,9 @@ export interface IDocument {
   getBimDocumentSummary(): Promise<BimDocumentInfo[] | undefined>
 }
 
+/**
+ * Represents a file where no bim data is present.
+ */
 export class DocumentNoBim implements IDocument {
   header: VimHeader | undefined
   g3d: G3d
@@ -274,6 +300,9 @@ export class DocumentNoBim implements IDocument {
   }
 }
 
+/**
+ * Represents a regular VIM file
+ */
 export class Document implements IDocument {
   readonly header: VimHeader | undefined
   readonly g3d: G3d
@@ -306,7 +335,7 @@ export class Document implements IDocument {
   }
 
   /**
-   * Creates document by fetching all required data from bfast.
+   * Creates document by fetching all required data from a bfast.
    */
   static async createFromBfast (
     bfast: BFast,
@@ -355,6 +384,9 @@ export class Document implements IDocument {
     )
   }
 
+  /**
+   * Returns a Vim Header from given bfast
+   */
   private static async requestHeader (bfast: BFast): Promise<VimHeader> {
     const header = await bfast.getBuffer(objectModel.header)
     const pairs = new TextDecoder('utf-8').decode(header).split('\n')
@@ -525,10 +557,16 @@ export class Document implements IDocument {
     return row
   }
 
+  /**
+   * Returns string at given index
+   */
   getString (index: number) {
     return this._strings?.[index]
   }
 
+  /**
+   * Returns an array of ElementInfo, on for each element of the vim.
+   */
   async getElementsSummary (elements?: number[]) {
     const set = elements ? new Set(elements) : undefined
     const elementTable = await this.entities.getBfast(objectModel.element.table)
@@ -830,6 +868,9 @@ export class Document implements IDocument {
     return result
   }
 
+  /**
+   * Returns an array of BimDocumentInfo, one for each BimDocument in the vim.
+   */
   async getBimDocumentSummary () {
     this.entities.getLocalBfast('Vim.BimDocument')
 

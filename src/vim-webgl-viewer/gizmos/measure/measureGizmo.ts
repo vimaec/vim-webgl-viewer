@@ -137,6 +137,9 @@ class MeasureMarker {
   }
 }
 
+/**
+ * Reprents all graphical elements associated with a measure.
+ */
 export class MeasureGizmo {
   private _viewer: Viewer
   private _startMarker: MeasureMarker
@@ -230,6 +233,9 @@ export class MeasureGizmo {
     return ratio
   }
 
+  /**
+   * Sets up a new measure
+   */
   start (start: THREE.Vector3) {
     // Set start marker
     this._startMarker.setPosition(start)
@@ -237,6 +243,9 @@ export class MeasureGizmo {
     this._viewer.renderer.needsUpdate = true
   }
 
+  /**
+   * Hides existing measure.
+   */
   hide () {
     if (this._line) {
       this._line.mesh.visible = false
@@ -245,6 +254,9 @@ export class MeasureGizmo {
     this._viewer.renderer.needsUpdate = true
   }
 
+  /**
+   * Updates current measure
+   */
   update (start: THREE.Vector3, pos: THREE.Vector3) {
     if (this._line) {
       this._line.setPoints(start, pos)
@@ -253,6 +265,9 @@ export class MeasureGizmo {
     this._viewer.renderer.needsUpdate = true
   }
 
+  /**
+   * Finishes current measure.
+   */
   finish (start: THREE.Vector3, end: THREE.Vector3) {
     this._line.mesh.visible = true
 
@@ -295,6 +310,9 @@ export class MeasureGizmo {
     return true
   }
 
+  /**
+   * Disposes all resources.
+   */
   dispose () {
     if (this._animId !== undefined) cancelAnimationFrame(this._animId)
     // A quirk of css2d object is they need to be removed individually.

@@ -6,6 +6,9 @@
 
 import * as THREE from 'three'
 
+/**
+ * Mesh object to render lines
+ */
 export class MeshLine extends THREE.BufferGeometry {
   constructor () {
     super()

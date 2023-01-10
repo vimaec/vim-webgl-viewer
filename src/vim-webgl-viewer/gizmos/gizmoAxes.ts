@@ -72,6 +72,10 @@ export class GizmoOptions {
   }
 }
 
+/**
+ * Axes gizmo with user interaction.
+ * It draws on its own canvas.
+ */
 export class GizmoAxes {
   // settings
   options: GizmoOptions
