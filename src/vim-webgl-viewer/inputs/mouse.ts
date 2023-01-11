@@ -124,6 +124,7 @@ export class MouseHandler extends InputHandler {
     event.stopImmediatePropagation()
     event.preventDefault()
     if (this._buttonDown) return
+    this.inputs.ContextMenu(undefined)
     this._hasCameraMoved = false
     this._downPosition = new THREE.Vector2(event.offsetX, event.offsetY)
     this._hasMouseMoved = false
@@ -254,7 +255,6 @@ export class MouseHandler extends InputHandler {
         false,
         this.getModifier(event)
       )
-      this.inputs.ContextMenu(undefined)
     } else if (event.button === 2 && !this._hasMouseMoved) {
       this.inputs.ContextMenu(new THREE.Vector2(event.clientX, event.clientY))
     }
