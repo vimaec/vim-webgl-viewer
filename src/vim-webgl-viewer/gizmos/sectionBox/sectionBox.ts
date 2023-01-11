@@ -83,6 +83,7 @@ export class SectionBox {
       this._normal = normal
       if (this.visible) this._highlight.highlight(this.section.box, normal)
       this._onHover.dispatch(normal.x !== 0 || normal.y !== 0 || normal.z !== 0)
+      this.renderer.needsUpdate = true
     }
 
     this._inputs.onBoxStretch = (box) => {
@@ -149,6 +150,7 @@ export class SectionBox {
     this._highlight.visible = value
     if (value) this.update()
     this._onStateChanged.dispatch()
+    this.renderer.needsUpdate = true
   }
 
   /**
@@ -160,6 +162,7 @@ export class SectionBox {
     this._outline.fitBox(b)
     this.renderer.section.fitBox(b)
     this._onBoxConfirm.dispatch(this.box)
+    this.renderer.needsUpdate = true
   }
 
   /**
@@ -168,6 +171,7 @@ export class SectionBox {
   update () {
     this.fitBox(this.section.box, 0)
     this._highlight.highlight(this.section.box, this._normal)
+    this.renderer.needsUpdate = true
   }
 
   /** Removes gizmo from rendering and inputs and dispose all resources. */

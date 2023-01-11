@@ -1,11 +1,12 @@
 import { defineConfig } from 'vite'
+import { resolve } from 'path'
 
 export default defineConfig({
   build: {
     sourcemap: true,
     lib: {
       formats: ['iife', 'es'],
-      entry: './src/vim.ts',
+      entry: resolve(__dirname, './src/vim.ts'),
       name: 'VIM'
     },
     // Minify set to true will break the IIFE output

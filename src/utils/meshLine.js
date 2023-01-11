@@ -177,7 +177,7 @@ function MeshLineRaycast (raycaster, intersects) {
       if (distance < raycaster.near || distance > raycaster.far) continue
 
       intersects.push({
-        distance: distance,
+        distance,
         // What do we want? intersection point on the ray or on the segment??
         // point: raycaster.ray.at( distance ),
         point: interSegment.clone().applyMatrix4(this.matrixWorld),

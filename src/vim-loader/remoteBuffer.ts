@@ -8,7 +8,7 @@ import { RemoteValue } from './remoteValue'
 /**
  * Represents the state of a single web request
  */
-class Request {
+export class RequestStatus {
   status: 'active' | 'completed' | 'failed' = 'active'
   field: string
   loaded: number = 0
@@ -28,7 +28,7 @@ class Request {
 export interface IProgressLogs {
   get loaded(): number
   get total(): number
-  get all(): Map<string, Request>
+  get all(): Map<string, RequestStatus>
 }
 
 /**
@@ -36,7 +36,7 @@ export interface IProgressLogs {
  */
 export class RequestLogger {
   source: string
-  all: Map<string, Request> = new Map<string, Request>()
+  all: Map<string, RequestStatus> = new Map<string, RequestStatus>()
   lastUpdate: number = 0
   delay: number = 500
   sleeping: boolean = false
@@ -44,6 +44,7 @@ export class RequestLogger {
   /**
    * callback on update, called at most every delay time.
    */
+  // eslint-disable-next-line no-use-before-define
   onUpdate: ((self: RequestLogger) => void) | undefined = undefined
 
   constructor (source: string) {
@@ -76,7 +77,7 @@ export class RequestLogger {
    * Starts tracking a new web request
    */
   start (field: string) {
-    this.all.set(field, new Request(field))
+    this.all.set(field, new RequestStatus(field))
     this.signal()
   }
 
@@ -127,7 +128,7 @@ export class RequestLogger {
 /**
  * Wrapper around request to allow sending it again.
  */
-class RetryRequest {
+export class RetryRequest {
   url: string
   range: string | undefined
   // eslint-disable-next-line no-undef

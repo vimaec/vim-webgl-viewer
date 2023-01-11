@@ -148,6 +148,7 @@ export class BFast {
   name: string
   private _header: RemoteValue<BFastHeader>
   private _ranges: RemoteValue<Map<string, Range>>
+  // eslint-disable-next-line no-use-before-define
   private _children: Map<string, RemoteValue<BFast | undefined>>
 
   constructor (
@@ -200,6 +201,18 @@ export class BFast {
     const buffer = await this.getBuffer(name)
     if (!buffer) return
     return new BFast(buffer, 0, name)
+  }
+
+  /**
+   * Returns a new local bfast equivalent to this bfast.
+   */
+  async getLocal () {
+    const header = await this._header.get()
+    const range = new Range(0, header.dataEnd)
+    const buffer = await this.request(range, this.name)
+    if (!buffer) return
+    const result = new BFast(buffer, 0, this.name)
+    return result
   }
 
   /**

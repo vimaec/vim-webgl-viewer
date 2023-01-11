@@ -3,41 +3,40 @@
  */
 
 import * as THREE from 'three'
-import { Vim } from '../vim'
+import { Vim, VimMaterials, ViewerConfig } from '../vim'
 import { Object } from '../vim-loader/object'
-import { Renderer } from './renderer'
 import { SignalDispatcher } from 'ste-signals'
+import { Renderer } from './rendering/renderer'
 
 /**
  * Provides selection behaviour for the viewer
  * Supports multi-selection as long as all objects are from the same vim.
  */
 export class Selection {
-  // Dependencies
-  private _renderer: Renderer
+  // dependencies
+  private _materials: VimMaterials
 
   // State
   private _objects = new Set<Object>()
+  private _focusedObject: Object | undefined
   private _vim: Vim | undefined
+  private _lastFocusTime: number = new Date().getTime()
+  private _animationId: number = -1
 
   // Disposable State
-  private _selectionMesh: THREE.LineSegments | undefined
-  private _focusMesh: THREE.Mesh | undefined
-  private _focusMaterial: THREE.Material
-  private _focusStart: number = 0
-
   private _onValueChanged = new SignalDispatcher()
+  private _unsub: (() => void)[] = []
+
+  constructor (materials: VimMaterials) {
+    this._materials = materials
+    this.animate()
+  }
 
   /**
    * Event called when selection changes or is cleared
    */
   get onValueChanged () {
     return this._onValueChanged.asEvent()
-  }
-
-  constructor (renderer: Renderer) {
-    this._renderer = renderer
-    this._focusMaterial = renderer.materials.focus
   }
 
   /**
@@ -49,7 +48,7 @@ export class Selection {
   }
 
   /**
-   * Returns first selected object.
+   * Returns selected object as an iterator.
    */
   get objects () {
     return this._objects.values()
@@ -85,29 +84,13 @@ export class Selection {
    * Pass undefined to remove highlight
    */
   focus (object: Object | undefined) {
-    if (this._focusMesh) {
-      this._focusMesh.geometry.dispose()
-      this._renderer.remove(this._focusMesh)
-    }
+    if (this._focusedObject === object) return
 
-    this._focusMaterial.opacity = 0
-    this._focusStart = new Date().getTime()
-
-    if (!object) return
-    const geometry = object.createGeometry()
-    if (geometry) {
-      this._focusMesh = new THREE.Mesh(geometry, this._focusMaterial)
-      this._renderer.add(this._focusMesh)
-      this.focusTransition()
-    }
-  }
-
-  private focusTransition () {
-    const t = (new Date().getTime() - this._focusStart) / 90
-    this._focusMaterial.opacity = t * 0.15
-    if (t < 1) {
-      requestAnimationFrame(() => this.focusTransition())
-    }
+    if (this._focusedObject) this._focusedObject.focused = false
+    if (object) object.focused = true
+    this._focusedObject = object
+    this._lastFocusTime = new Date().getTime()
+    this._materials.focusIntensity = 0
   }
 
   /**
@@ -127,14 +110,16 @@ export class Selection {
       return
     }
 
+    this._objects.forEach((o) => (o.outline = false))
     this._objects.clear()
     this._vim = undefined
 
     object?.forEach((o) => {
       this.clearOnNewVim(o.vim)
       this._objects.add(o)
+      o.outline = true
     })
-    this.updateHighlight()
+    this._onValueChanged.dispatch()
   }
 
   /**
@@ -162,10 +147,11 @@ export class Selection {
     objects.forEach((o) => {
       this.clearOnNewVim(o.vim)
       this._objects.add(o)
+      o.outline = true
     })
     if (oldVim === this._vim && this._objects.size === count) return
 
-    this.updateHighlight()
+    this._onValueChanged.dispatch()
   }
 
   /**
@@ -176,6 +162,7 @@ export class Selection {
     if (objects.length === 0) return
     const count = this._objects.size
     objects.forEach((o) => {
+      o.outline = false
       this._objects.delete(o)
     })
     if (this._objects.size === count) return
@@ -183,7 +170,7 @@ export class Selection {
       this._vim = undefined
     }
 
-    this.updateHighlight()
+    this._onValueChanged.dispatch()
   }
 
   /**
@@ -198,13 +185,15 @@ export class Selection {
     objects.forEach((o) => {
       if (this._objects.has(o)) {
         this._objects.delete(o)
+        o.outline = false
       } else {
         this.clearOnNewVim(o.vim)
         this._objects.add(o)
+        o.outline = true
       }
     })
     if (oldVim === this._vim && this._objects.size === count) return
-    this.updateHighlight()
+    this._onValueChanged.dispatch()
   }
 
   /**
@@ -213,8 +202,18 @@ export class Selection {
   clear () {
     this._vim = undefined
     if (this._objects.size === 0) return
+    this._objects.forEach((o) => (o.outline = false))
     this._objects.clear()
-    this.updateHighlight()
+    this._onValueChanged.dispatch()
+  }
+
+  /**
+   * Disposes all resources and stops animations.
+   */
+  dispose () {
+    cancelAnimationFrame(this._animationId)
+    this._unsub.forEach((u) => u())
+    this._unsub.length = 0
   }
 
   private clearOnNewVim (vim: Vim) {
@@ -229,45 +228,11 @@ export class Selection {
     }
   }
 
-  private updateHighlight () {
-    this.removeHighlight()
-    this.createHighlights(this._objects)
-    this._onValueChanged.dispatch()
-  }
-
-  private createHighlights (objects: Set<Object>) {
-    if (objects.size === 0) return
-
-    let vim: Vim | undefined
-    const instances: number[] = []
-    for (const o of objects.values()) {
-      vim = vim ?? o.vim // capture first vim
-      if (o.vim !== vim) {
-        console.error('Cannot multiselect across vim files')
-        return
-      }
-      if (o.instances) {
-        instances.push(...o.instances)
-      }
-    }
-    if (!vim?.document.g3d) return
-
-    const meshBuilder = vim!.scene.builder.meshBuilder
-    this._selectionMesh = meshBuilder.createWireframe(
-      vim.document.g3d,
-      instances
-    )
-    if (this._selectionMesh) {
-      this._selectionMesh.applyMatrix4(vim!.getMatrix())
-      if (this._selectionMesh) this._renderer.add(this._selectionMesh)
-    }
-  }
-
-  private removeHighlight () {
-    if (this._selectionMesh) {
-      this._selectionMesh.geometry.dispose()
-      this._renderer.remove(this._selectionMesh)
-      this._selectionMesh = undefined
-    }
+  private animate () {
+    const time = new Date().getTime()
+    const timeElapsed = time - this._lastFocusTime
+    const focus = Math.min(timeElapsed / 100, 1)
+    this._materials.focusIntensity = focus / 2
+    this._animationId = requestAnimationFrame(() => this.animate())
   }
 }

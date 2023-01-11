@@ -63,15 +63,16 @@ export class GizmoRectangle {
     return this.line.visible
   }
 
-  /** Gizmo gets renderer if true */
+  /** Gizmo gets rendered if true */
   set visible (value: boolean) {
+    this.viewer.renderer.needsUpdate = true
     this.line.visible = value
   }
 
   /**
    * Sets the 2 corner points defining the rectangle.
    */
-  update (posA: THREE.Vector2, posB: THREE.Vector2) {
+  setCorners (posA: THREE.Vector2, posB: THREE.Vector2) {
     // Plane perpedicular to camera
     const plane = new THREE.Plane().setFromNormalAndCoplanarPoint(
       this.viewer.camera.forward,
@@ -108,6 +109,7 @@ export class GizmoRectangle {
     this.line.position.copy(position)
     this.line.scale.set(dx, dy, 1)
     this.line.updateMatrix()
+    this.viewer.renderer.needsUpdate = true
   }
 
   private getBoxSize (A: THREE.Vector3, B: THREE.Vector3) {
@@ -146,7 +148,7 @@ export class GizmoRectangle {
   }
 
   /**
-   * Raycast from camera to all points, return closest hit position.
+   * Raycast from camera through the five interest points, return closest hit position.
    */
   getClosestHit () {
     if (!this.points) return
@@ -173,7 +175,7 @@ export class GizmoRectangle {
   /**
    * Projects all points on a plane the coplanar to position.
    */
-  projectPoints (position: THREE.Vector3) {
+  private projectPoints (position: THREE.Vector3) {
     const plane = new THREE.Plane().setFromNormalAndCoplanarPoint(
       this.viewer.camera.forward,
       position

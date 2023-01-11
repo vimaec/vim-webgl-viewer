@@ -3,7 +3,7 @@
  */
 
 import * as THREE from 'three'
-import { TextureEncoding, ViewerSettings } from './viewerSettings'
+import { TextureEncoding, ViewerConfig } from './viewerSettings'
 import { Box3 } from 'three'
 
 /**
@@ -28,22 +28,22 @@ export class GroundPlane {
       depthWrite: false
     })
     this.mesh = new THREE.Mesh(this._geometry, this._material)
-    // Draw mesh first so it's always behind stuff.
+    // Makes ground plane be drawn first so that isolation material is drawn on top.
     this.mesh.renderOrder = -1
   }
 
-  applyViewerSettings (settings: ViewerSettings) {
-    this._size = settings.getGroundPlaneSize()
+  applyViewerSettings (settings: ViewerConfig) {
+    this._size = settings.groundPlane.size
     // Visibily
-    this.mesh.visible = settings.getGroundPlaneVisible()
+    this.mesh.visible = settings.groundPlane.visible
 
     // Looks
     this.applyTexture(
-      settings.getGroundPlaneEncoding(),
-      settings.getGroundPlaneTexture()
+      settings.groundPlane.encoding,
+      settings.groundPlane.texture
     )
-    this._material.color.copy(settings.getGroundPlaneColor())
-    this._material.opacity = settings.getGroundPlaneOpacity()
+    this._material.color.copy(settings.groundPlane.color)
+    this._material.opacity = settings.groundPlane.opacity
   }
 
   adaptToContent (box: THREE.Box3) {
@@ -124,7 +124,7 @@ export class Environment {
     return this._groundPlane.mesh
   }
 
-  constructor (settings: ViewerSettings) {
+  constructor (settings: ViewerConfig) {
     this._groundPlane = new GroundPlane()
     this.skyLight = new THREE.HemisphereLight()
     this.sunLights = []
@@ -142,24 +142,24 @@ export class Environment {
     return [this._groundPlane.mesh, this.skyLight, ...this.sunLights]
   }
 
-  applySettings (settings: ViewerSettings) {
+  applySettings (settings: ViewerConfig) {
     // Plane
     this._groundPlane.applyViewerSettings(settings)
 
     // Skylight
-    this.skyLight.color.copy(settings.getSkylightColor())
-    this.skyLight.groundColor.copy(settings.getSkylightGroundColor())
-    this.skyLight.intensity = settings.getSkylightIntensity()
+    this.skyLight.color.copy(settings.skylight.skyColor)
+    this.skyLight.groundColor.copy(settings.skylight.groundColor)
+    this.skyLight.intensity = settings.skylight.intensity
 
     // Sunlights
-    const count = settings.getSunlightCount()
+    const count = settings.sunLights.length
     for (let i = 0; i < count; i++) {
       if (!this.sunLights[i]) {
         this.sunLights[i] = new THREE.DirectionalLight()
       }
-      const color = settings.getSunlightColor(i)
-      const pos = settings.getSunlightPosition(i)
-      const intensity = settings.getSunlightIntensity(i)
+      const color = settings.sunLights[i].color
+      const pos = settings.sunLights[i].position
+      const intensity = settings.sunLights[i].intensity
       if (color) {
         this.sunLights[i].color.copy(color)
       }
@@ -188,7 +188,18 @@ export class Environment {
 }
 
 export interface IEnvironment {
+  /**
+   * Scene skylight
+   */
   skyLight: THREE.HemisphereLight
+
+  /**
+   * Scene sunlights array
+   */
   sunLights: THREE.DirectionalLight[]
+
+  /**
+   * Scene groundplane under the model
+   */
   groundPlane: THREE.Mesh
 }

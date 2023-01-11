@@ -5,14 +5,14 @@
 import * as THREE from 'three'
 
 // internal
-import { ViewerSettings, ViewerOptions } from './viewerSettings'
+import { ViewerConfig, getConfig, ViewerOptions } from './viewerSettings'
 import { Camera, ICamera } from './camera'
-import { Input } from './input'
+import { Input } from './inputs/input'
 import { Selection } from './selection'
 import { Environment, IEnvironment } from './environment'
 import { Raycaster } from './raycaster'
 import { CameraGizmo } from './gizmos/gizmoOrbit'
-import { RenderScene } from './renderScene'
+import { RenderScene } from './rendering/renderScene'
 import { Viewport } from './viewport'
 import { GizmoAxes } from './gizmos/gizmoAxes'
 import { SectionBox } from './gizmos/sectionBox/sectionBox'
@@ -20,14 +20,14 @@ import { Measure, IMeasure } from './gizmos/measure/measure'
 import { GizmoRectangle } from './gizmos/gizmoRectangle'
 
 // loader
-import { VimSettings, VimOptions } from '../vim-loader/vimSettings'
+import { getVimConfig, VimOptions } from '../vim-loader/vimSettings'
 import { Loader } from '../vim-loader/loader'
 import { Object } from '../vim-loader/object'
 import { BFast } from '../vim-loader/bfast'
 import { Vim } from '../vim-loader/vim'
 import { IProgressLogs, RemoteBuffer } from '../vim-loader/remoteBuffer'
-import { Renderer } from './renderer'
-import { IMaterialLibrary, VimMaterials } from '../vim'
+import { Renderer } from './rendering/renderer'
+import { VimMaterials } from '../vim'
 import { SignalDispatcher } from 'ste-signals'
 
 /**
@@ -37,7 +37,7 @@ export class Viewer {
   /**
    * Current viewer settings.
    */
-  settings: ViewerSettings
+  config: ViewerConfig
 
   /**
    * Interface to manage objects to be rendered.
@@ -75,9 +75,14 @@ export class Viewer {
   measure: IMeasure
 
   /**
-   * Interface to interact with the rectanglwe gizmo.
+   * Interface to interact with the rectangle gizmo.
    */
   gizmoRectangle: GizmoRectangle
+
+  /**
+   * Interface to interact with viewer materials
+   */
+  materials: VimMaterials
 
   /**
    * Interface to manipulate the viewer camera.
@@ -105,7 +110,6 @@ export class Viewer {
   private _loader: Loader
   private _clock = new THREE.Clock()
   private _gizmoAxes: GizmoAxes
-  private _materials: IMaterialLibrary
 
   // State
   private _vims: (Vim | undefined)[] = []
@@ -120,40 +124,46 @@ export class Viewer {
     return this._gizmoAxes.canvas
   }
 
-  constructor (options?: Partial<ViewerOptions.Root>) {
-    this.settings = new ViewerSettings(options)
+  constructor (options?: ViewerOptions) {
+    this.config = getConfig(options)
 
     const materials = new VimMaterials()
 
     this._loader = new Loader(materials)
-    this._materials = materials
+    this.materials = materials
 
     const scene = new RenderScene()
-    this.viewport = new Viewport(this.settings)
-    this._camera = new Camera(scene, this.viewport, this.settings)
-    this.renderer = new Renderer(scene, this.viewport, materials)
-    if (this.settings.getCameraGizmoEnable()) {
+    this.viewport = new Viewport(this.config)
+    this._camera = new Camera(scene, this.viewport, this.config)
+    this.renderer = new Renderer(
+      scene,
+      this.viewport,
+      materials,
+      this._camera,
+      this.config
+    )
+    if (this.config.camera.gizmo.enable) {
       this._camera.gizmo = new CameraGizmo(
         this.renderer,
         this._camera,
-        this.settings
+        this.config
       )
     }
-    this.renderer.applyMaterialSettings(this.settings)
+    this.materials.applySettings(this.config)
 
     // TODO add options
     this.measure = new Measure(this)
-    this._gizmoAxes = new GizmoAxes(this.camera, this.settings.getAxesConfig())
+    this._gizmoAxes = new GizmoAxes(this.camera, this.config.axes)
     this.viewport.canvas.parentElement?.prepend(this._gizmoAxes.canvas)
 
     this.sectionBox = new SectionBox(this)
     this.gizmoRectangle = new GizmoRectangle(this)
 
-    this._environment = new Environment(this.settings)
+    this._environment = new Environment(this.config)
     this._environment.getObjects().forEach((o) => this.renderer.add(o))
 
     // Input and Selection
-    this.selection = new Selection(this.renderer)
+    this.selection = new Selection(materials)
     this.raycaster = new Raycaster(
       this.viewport,
       this._camera,
@@ -172,6 +182,7 @@ export class Viewer {
    */
   dispose () {
     if (this._disposed) return
+    this.selection.dispose()
     this._environment.dispose()
     this.selection.clear()
     this._camera.dispose()
@@ -179,7 +190,7 @@ export class Viewer {
     this.renderer.dispose()
     this.inputs.unregisterAll()
     this._vims.forEach((v) => v?.dispose())
-    this._materials.dispose()
+    this.materials.dispose()
     this.gizmoRectangle.dispose()
     this._disposed = true
   }
@@ -191,9 +202,9 @@ export class Viewer {
 
     requestAnimationFrame(() => this.animate())
     // Camera
-    this._camera.update(this._clock.getDelta())
+    this.renderer.needsUpdate = this._camera.update(this._clock.getDelta())
     // Rendering
-    if (this._vims.length) this.renderer.render(this.camera.camera)
+    this.renderer.render()
   }
 
   /**
@@ -217,7 +228,6 @@ export class Viewer {
     for (let i = 0; i <= this._vims.length; i++) {
       if (this._vims[i] === undefined) {
         this._vims[i] = vim
-        vim.index = i
         return
       }
     }
@@ -227,8 +237,8 @@ export class Viewer {
    * Remove given vim from the vims array and leaves an undefined spot.
    */
   private removeVim (vim: Vim) {
-    this._vims[vim.index] = undefined
-    vim.index = -1
+    const i = this._vims.indexOf(vim)
+    this._vims[i] = undefined
   }
 
   /**
@@ -238,7 +248,7 @@ export class Viewer {
    */
   async loadVim (
     source: string | ArrayBuffer,
-    options: VimOptions.Root,
+    options?: VimOptions,
     onProgress?: (logger: IProgressLogs) => void
   ) {
     let buffer: RemoteBuffer | ArrayBuffer
@@ -251,7 +261,7 @@ export class Viewer {
       buffer.logger.onUpdate = (log) => onProgress?.(log)
     } else buffer = source
 
-    const settings = new VimSettings(options)
+    const settings = getVimConfig(options)
     const bfast = new BFast(buffer, 0, 'vim')
     const vim = await this._loader.load(bfast, settings)
     vim.source = url
@@ -293,7 +303,7 @@ export class Viewer {
   /**
    * Unloads all vim from viewer.
    */
-  clear () {
+  clearVims () {
     this.vims.forEach((v) => this.unloadVim(v))
   }
 
@@ -309,5 +319,15 @@ export class Viewer {
     this.renderer.remove(vim.scene)
     vim.filter(instances)
     this.renderer.add(vim.scene)
+  }
+
+  loadMore (vim: Vim, flagTest: (flag: number) => boolean) {
+    const more = vim.loadMore(flagTest)
+    if (!more) return
+
+    this.renderer.remove(vim.scene)
+    vim.scene.merge(more)
+    this.renderer.add(vim.scene)
+    return more
   }
 }

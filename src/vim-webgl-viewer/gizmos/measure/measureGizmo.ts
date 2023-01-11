@@ -35,7 +35,7 @@ class MeasureLine {
       sizeAttenuation: 0,
       lineWidth: 5,
       resolution: canvasSize,
-      color: color
+      color
     })
 
     this._materialAlways = new MeshLineMaterial({
@@ -45,7 +45,7 @@ class MeasureLine {
       transparent: true,
       opacity: 0.5,
       resolution: canvasSize,
-      color: color
+      color
     })
 
     this._meshLine = new MeshLine()
@@ -97,7 +97,7 @@ class MeasureMarker {
 
   constructor (color: THREE.Color, camera: ICamera, viewer: Viewer) {
     this._material = new THREE.MeshBasicMaterial({
-      color: color
+      color
     })
 
     this._materialAlways = new THREE.MeshBasicMaterial({
@@ -119,7 +119,8 @@ class MeasureMarker {
   }
 
   updateScale () {
-    const scale = this._camera.heightAt(this.mesh.position) * this.MARKER_SIZE
+    const scale =
+      this._camera.frustrumSizeAt(this.mesh.position).y * this.MARKER_SIZE
     this.mesh.scale.set(scale, scale, scale)
     this.mesh.updateMatrix()
   }
@@ -193,7 +194,7 @@ export class MeasureGizmo {
     )
 
     this._viewer.renderer.add(this._group)
-    this._viewer.renderer.renderText = true
+    this._viewer.renderer.textEnabled = true
   }
 
   private _animate () {
@@ -228,7 +229,7 @@ export class MeasureGizmo {
   ) {
     if (!first || !second) return
     const length = first.distanceTo(second)
-    const ratio = length / this._viewer.camera.heightAt(first)
+    const ratio = length / this._viewer.camera.frustrumSizeAt(first).y
     return ratio
   }
 
@@ -239,6 +240,7 @@ export class MeasureGizmo {
     // Set start marker
     this._startMarker.setPosition(start)
     this._startMarker.mesh.visible = true
+    this._viewer.renderer.needsUpdate = true
   }
 
   /**
@@ -249,6 +251,7 @@ export class MeasureGizmo {
       this._line.mesh.visible = false
       this._line.label.visible = false
     }
+    this._viewer.renderer.needsUpdate = true
   }
 
   /**
@@ -259,6 +262,7 @@ export class MeasureGizmo {
       this._line.setPoints(start, pos)
       this._line.mesh.visible = true
     }
+    this._viewer.renderer.needsUpdate = true
   }
 
   /**
@@ -302,7 +306,7 @@ export class MeasureGizmo {
 
     // Start update of collapse.
     this._animate()
-
+    this._viewer.renderer.needsUpdate = true
     return true
   }
 
@@ -326,6 +330,6 @@ export class MeasureGizmo {
     this._lineX.dispose()
     this._lineY.dispose()
     this._lineZ.dispose()
-    this._viewer.renderer.renderText = false
+    this._viewer.renderer.textEnabled = false
   }
 }

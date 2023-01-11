@@ -18,6 +18,7 @@ export type ElementInfo = {
   familyTypeName: string | undefined
   workset: string | undefined
   documentTitle: string | undefined
+  level: string | undefined
 }
 
 /**
@@ -143,6 +144,10 @@ const objectModel = {
     columns: {
       name: 'string:Name'
     }
+  },
+  level: {
+    table: 'Vim.Level',
+    index: 'index:Vim.Level:Level'
   }
 }
 
@@ -661,6 +666,19 @@ export class Document implements IDocument {
       return this.getString(documentTitleArray[elementDocumentArray[element]])
     }
 
+    // Level
+    const elementLevelArray = await elementTable?.getArray(
+      objectModel.level.index
+    )
+    const levelTable = await this.entities.getBfast(objectModel.level.table)
+    const levelElementArrays = await levelTable?.getArray(
+      objectModel.element.index
+    )
+    const getLevel = (element: number) =>
+      this.getString(
+        elementNameArray[levelElementArrays[elementLevelArray[element]]]
+      )
+
     // Compilation
 
     const familyInstanceElement = await familyInstanceTable?.getArray(
@@ -679,7 +697,8 @@ export class Document implements IDocument {
           familyName: getFamilyName(e),
           familyTypeName: getFamilyTypeName(f),
           workset: getWorkset(e),
-          documentTitle: getDocument(e)
+          documentTitle: getDocument(e),
+          level: getLevel(e)
         })
       }
     })
@@ -786,7 +805,7 @@ export class Document implements IDocument {
           name: getParameterName(d),
           value: getParameterDisplayValue(i),
           group: getParameterGroup(d),
-          isInstance: isInstance
+          isInstance
         })
       }
     })
@@ -897,7 +916,7 @@ export class Document implements IDocument {
       summary.push({
         title: titles?.[i],
         pathName: pathName?.[i],
-        isLinked: isLinkedArray?.[i] > 0,
+        isLinked: isLinkedArray ? isLinkedArray?.[i] > 0 : false,
         product: product?.[i],
         version: version?.[i],
         user: user?.[i],

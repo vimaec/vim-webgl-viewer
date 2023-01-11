@@ -17,9 +17,36 @@ export class Scene {
 
   // State
   meshes: THREE.Mesh[] = []
-  vim: Vim | undefined
-  /** Marks the scene as changed */
-  visibilityChanged: boolean = false
+  private _vim: Vim | undefined
+  private _updated: boolean = false
+  private _outlineCount: number = 0
+
+  get updated () {
+    return this._updated
+  }
+
+  set updated (value: boolean) {
+    this._updated = this._updated || value
+  }
+
+  hasOutline () {
+    return this._outlineCount > 0
+  }
+
+  addOutline () {
+    this._outlineCount++
+    this.updated = true
+  }
+
+  removeOutline () {
+    this._outlineCount--
+    this.updated = true
+  }
+
+  clearUpdateFlag () {
+    this._updated = false
+  }
+
   private _boundingBox: THREE.Box3 = new THREE.Box3()
   private _instanceToThreeMeshes: Map<number, [THREE.Mesh, number][]> =
     new Map()
@@ -71,23 +98,25 @@ export class Scene {
     this._boundingBox.applyMatrix4(matrix)
   }
 
+  get vim () {
+    return this._vim
+  }
+
   /**
    * Sets vim index for this scene and all its THREE.Meshes.
    */
-  setVim (vim: Vim) {
-    this.vim = vim
+  set vim (value: Vim) {
+    this._vim = value
     for (let m = 0; m < this.meshes.length; m++) {
-      this.meshes[m].userData.vim = vim
+      this.meshes[m].userData.vim = value
     }
   }
 
   /**
    * Add an instanced mesh to the Scene and recomputes fields as needed.
-   * @param mesh Is expected to have
-   *  {
-   *    userData.instances = number[] (indices of the g3d instances that went into creating the mesh)
-   *    userData.boxes = THREE.Box3[] (bounding box of each instance)
-   *  }
+   * @param mesh Is expected to have:
+   * userData.instances = number[] (indices of the g3d instances that went into creating the mesh)
+   * userData.boxes = THREE.Box3[] (bounding box of each instance)
    */
   addMesh (mesh: THREE.Mesh) {
     const instances = mesh.userData.instances as number[]
@@ -110,6 +139,7 @@ export class Scene {
 
     this._threeMeshIdToInstances.set(mesh.id, instances)
     this.meshes.push(mesh)
+    this.updated = true
     return this
   }
 
@@ -129,6 +159,7 @@ export class Scene {
     })
     this._boundingBox =
       this._boundingBox?.union(other._boundingBox) ?? other._boundingBox.clone()
+    this.updated = true
     return this
   }
 
@@ -143,19 +174,25 @@ export class Scene {
    * Sets and apply a material override to the scene, set to undefined to remove override.
    */
   set material (value: THREE.Material | undefined) {
+    if (this._material === value) return
+    this.updated = true
     this._material = value
     if (value) {
       this.meshes.forEach((m) => {
-        if (!m.userData.mat) {
-          m.userData.mat = m.material
+        if (!m.userData.ignoreSceneMaterial) {
+          if (!m.userData.mat) {
+            m.userData.mat = m.material
+          }
+          m.material = value
         }
-        m.material = value
       })
     } else {
       this.meshes.forEach((m) => {
-        if (m.userData.mat) {
-          m.material = m.userData.mat
-          m.userData.mat = undefined
+        if (!m.userData.ignoreSceneMaterial) {
+          if (m.userData.mat) {
+            m.material = m.userData.mat
+            m.userData.mat = undefined
+          }
         }
       })
     }

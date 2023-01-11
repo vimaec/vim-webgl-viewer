@@ -14,7 +14,8 @@ export namespace Transparency {
   /**
    * Returns true if the transparency mode is one of the valid values
    */
-  export function isValid (value: string): value is Mode {
+  export function isValid (value: string | undefined | null): value is Mode {
+    if (!value) return false
     return ['all', 'opaqueOnly', 'transparentOnly', 'allAsOpaque'].includes(
       value
     )
@@ -317,7 +318,7 @@ export namespace Geometry {
   /**
    * Holds the info that needs to be precomputed for a merge.
    */
-  class MergeInfo {
+  export class MergeInfo {
     section: MeshSection
     instances: number[]
     indexCount: number
@@ -339,7 +340,7 @@ export namespace Geometry {
   /**
    * Allocates and holds all arrays needed to merge meshes.
    */
-  class MergeBuffer {
+  export class MergeBuffer {
     // output
     indices: Uint32Array
     vertices: Float32Array
@@ -371,9 +372,9 @@ export namespace Geometry {
   }
 
   /**
-   * Holds data of all merged meshes.
+   * Holds the result from a merge operation.
    */
-  class MergeResult {
+  export class MergeResult {
     geometry: THREE.BufferGeometry
     instances: number[]
     submeshes: number[]
