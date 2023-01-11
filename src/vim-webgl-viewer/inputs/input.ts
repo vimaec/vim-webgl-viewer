@@ -205,7 +205,10 @@ export class Input {
     return this._onPointerOverrideChanged.asEvent()
   }
 
-  private _onContextMenu = new SimpleEventDispatcher<THREE.Vector2>()
+  private _onContextMenu = new SimpleEventDispatcher<
+    THREE.Vector2 | undefined
+  >()
+
   /**
    * Event called when when context menu could be displayed
    */
@@ -250,7 +253,7 @@ export class Input {
   /**
    * Calls context menu action
    */
-  ContextMenu (position: THREE.Vector2) {
+  ContextMenu (position: THREE.Vector2 | undefined) {
     this._onContextMenu.dispatch(position)
   }
 

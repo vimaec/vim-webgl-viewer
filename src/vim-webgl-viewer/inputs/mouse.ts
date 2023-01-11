@@ -254,6 +254,7 @@ export class MouseHandler extends InputHandler {
         false,
         this.getModifier(event)
       )
+      this.inputs.ContextMenu(undefined)
     } else if (event.button === 2 && !this._hasMouseMoved) {
       this.inputs.ContextMenu(new THREE.Vector2(event.clientX, event.clientY))
     }
