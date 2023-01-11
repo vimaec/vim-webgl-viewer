@@ -154,7 +154,7 @@ export class ColorAttribute {
 
     const instance = this.vim.scene.getInstanceFromMesh(mesh, index)
     if (!instance) throw new Error('Could not reset original color.')
-    const g3d = this.vim.document.g3d!
+    const g3d = this.vim.g3d!
     const g3dMesh = g3d.instanceMeshes[instance]
     const subStart = g3d.getMeshSubmeshStart(g3dMesh)
     const subEnd = g3d.getMeshSubmeshEnd(g3dMesh)

@@ -2,7 +2,7 @@
  * @module vim-loader
  */
 
-import { G3d, MeshSection } from './g3d'
+import { G3d, MeshSection } from './../../node_modules/vim-ts/src/g3d'
 import { Transparency } from './geometry'
 import { MeshBuilder } from './mesh'
 import { Scene } from './scene'

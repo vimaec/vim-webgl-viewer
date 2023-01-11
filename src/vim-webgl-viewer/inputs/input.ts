@@ -68,7 +68,8 @@ export class DefaultInputScheme implements InputScheme {
     }
 
     action.object.getBimElement().then((e) => {
-      e?.set('Index', action.object?.element)
+      if (e)
+       e.index = action.object?.element
       console.log(e)
     })
   }

@@ -3,10 +3,11 @@
  */
 
 import * as THREE from 'three'
-import { IDocument } from './document'
+import { VimDocument } from './../../node_modules/vim-ts/src/objectModel'
 import { Scene } from './scene'
 import { VimConfig } from './vimSettings'
 import { Object } from './object'
+import { G3d } from './../../node_modules/vim-ts/src/g3d'
 
 /**
  * Container for the built three meshes and the vim data from which it was built.
@@ -14,18 +15,37 @@ import { Object } from './object'
  */
 export class Vim {
   source: string | undefined
-  readonly document: IDocument
+  readonly document: VimDocument
+  readonly g3d: G3d | undefined
   settings: VimConfig
 
   scene: Scene
   private _elementToObject: Map<number, Object> = new Map<number, Object>()
 
-  constructor (vim: IDocument, scene: Scene, settings: VimConfig) {
-    this.document = vim
+  private _instanceToElement: number[]
+  private _elementToInstances: Map<number, number[]>
+  private _elementIds: number[]
+  private _elementIdToElements: Map<number, number[]>
+
+  constructor (document: VimDocument,
+    g3d: G3d | undefined,
+    scene: Scene,
+    settings: VimConfig,
+    instanceToElement: number[],
+    elementToInstances: Map<number, number[]>,
+    elementIds: number[],
+    elementIdToElements: Map<number, number[]>) {
+    this.document = document
+    this.g3d = g3d
     this.scene = scene
     this.scene.vim = this
     this.settings = settings
     this.scene.applyMatrix4(this.settings.matrix)
+
+    this._instanceToElement = instanceToElement
+    this._elementToInstances = elementToInstances
+    this._elementIds = elementIds
+    this._elementIdToElements = elementIdToElements
   }
 
   /**
@@ -40,9 +60,9 @@ export class Vim {
    * @param instances g3d instance indices to keep
    */
   filter (instances?: number[]) {
-    if (!this.document.g3d) return
+    if (!this.g3d) return
     const next = this.scene.builder.createFromG3d(
-      this.document.g3d,
+      this.g3d,
       this.settings.transparency,
       instances
     )
@@ -57,8 +77,8 @@ export class Vim {
   }
 
   loadMore (flagTest: (flag: number) => boolean) {
-    if (!this.document.g3d) return
-    const more = this.scene.builder.createFromFlag(this.document.g3d, flagTest)
+    if (!this.g3d) return
+    const more = this.scene.builder.createFromFlag(this.g3d, flagTest)
     more.vim = this
     more.applyMatrix4(this.settings.matrix)
     return more
@@ -95,7 +115,7 @@ export class Vim {
    * @param instance g3d instance index
    */
   getObjectFromInstance (instance: number) {
-    const element = this.document.getElementFromInstance(instance)
+    const element = this._instanceToElement[instance]
     if (!element) return
     return this.getObjectFromElement(element)
   }
@@ -105,7 +125,7 @@ export class Vim {
    * @param id vim element Id
    */
   getObjectsFromElementId (id: number) {
-    const elements = this.document.getElementsFromElementId(id)
+    const elements = this._elementIdToElements.get(id)
     return elements
       ?.map((e) => this.getObjectFromElement(e))
       .filter((o): o is Object => o !== undefined)
@@ -116,13 +136,13 @@ export class Vim {
    * @param element vim element index
    */
   getObjectFromElement (element: number): Object | undefined {
-    if (!this.document.hasElement(element)) return
+    if (!this.hasElement(element)) return
 
     if (this._elementToObject.has(element)) {
       return this._elementToObject.get(element)
     }
 
-    const instances = this.document.getInstancesFromElement(element)
+    const instances = this.getInstancesFromElement(element)
     const meshes = this.getMeshesFromInstances(instances)
 
     const result = new Object(this, element, instances, meshes)
@@ -150,16 +170,56 @@ export class Vim {
    * Enumerates all objects of the vim
    */
   * getAllObjects () {
-    for (const e of this.document.getAllElements()) {
+    for (const e of this.getAllElements()) {
       const obj = this.getObjectFromElement(e)
       if (obj) yield obj
     }
   }
 
   private getMeshesFromElement (element: number) {
-    const instances = this.document.getInstancesFromElement(element)
+    const instances = this.getInstancesFromElement(element)
     if (!instances) return
     return this.getMeshesFromInstances(instances)
+  }
+
+  /**
+   * Returns true if element exists in the vim.
+   */
+  hasElement (element: number) {
+    return element >= 0 && element < this._elementIds.length
+  }
+
+  /**
+   * Returns all element indices of the vim
+   */
+  getAllElements () {
+    return this._elementIds.keys()
+  }
+
+  /**
+   * Returns instance indices associated with vim element index
+   * @param element vim element index
+   */
+  getInstancesFromElement (element: number): number[] | undefined {
+    if (!this.hasElement(element)) return
+    return this._elementToInstances.get(element) ?? []
+  }
+
+  /**
+   * Returns the element index associated with the g3d instance index.
+   * @param instance g3d instance index
+   * @returns element index or undefined if not found
+   */
+  getElementFromInstance (instance: number) {
+    return this._instanceToElement[instance]
+  }
+
+  /**
+   * Returns element id from element index
+   * @param element element index
+   */
+  getElementId (element: number) {
+    return this._elementIds[element]
   }
 
   private getMeshesFromInstances (instances: number[] | undefined) {
@@ -186,6 +246,6 @@ export class Vim {
     if (!mesh || index < 0) return
     const instance = this.scene.getInstanceFromMesh(mesh, index)
     if (!instance) return
-    return this.document.getElementFromInstance(instance)
+    return this.getElementFromInstance(instance)
   }
 }
