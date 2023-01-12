@@ -8,6 +8,7 @@ import { Scene } from './scene'
 import { VimConfig } from './vimSettings'
 import { Object } from './object'
 import { G3d } from './../../node_modules/vim-ts/src/g3d'
+import { BimMap } from './bimMap'
 
 /**
  * Container for the built three meshes and the vim data from which it was built.
@@ -22,19 +23,13 @@ export class Vim {
   scene: Scene
   private _elementToObject: Map<number, Object> = new Map<number, Object>()
 
-  private _instanceToElement: number[]
-  private _elementToInstances: Map<number, number[]>
-  private _elementIds: number[]
-  private _elementIdToElements: Map<number, number[]>
+  private _map: BimMap
 
   constructor (document: VimDocument,
     g3d: G3d | undefined,
     scene: Scene,
     settings: VimConfig,
-    instanceToElement: number[],
-    elementToInstances: Map<number, number[]>,
-    elementIds: number[],
-    elementIdToElements: Map<number, number[]>) {
+    map: BimMap) {
     this.document = document
     this.g3d = g3d
     this.scene = scene
@@ -42,10 +37,7 @@ export class Vim {
     this.settings = settings
     this.scene.applyMatrix4(this.settings.matrix)
 
-    this._instanceToElement = instanceToElement
-    this._elementToInstances = elementToInstances
-    this._elementIds = elementIds
-    this._elementIdToElements = elementIdToElements
+    this._map = map
   }
 
   /**
@@ -115,7 +107,7 @@ export class Vim {
    * @param instance g3d instance index
    */
   getObjectFromInstance (instance: number) {
-    const element = this._instanceToElement[instance]
+    const element = this._map.getElementFromInstance(instance)
     if (!element) return
     return this.getObjectFromElement(element)
   }
@@ -125,7 +117,7 @@ export class Vim {
    * @param id vim element Id
    */
   getObjectsFromElementId (id: number) {
-    const elements = this._elementIdToElements.get(id)
+    const elements = this._map.getElementsFromElementId(id)
     return elements
       ?.map((e) => this.getObjectFromElement(e))
       .filter((o): o is Object => o !== undefined)
@@ -186,14 +178,14 @@ export class Vim {
    * Returns true if element exists in the vim.
    */
   hasElement (element: number) {
-    return element >= 0 && element < this._elementIds.length
+    return this._map.hasElement(element)
   }
 
   /**
    * Returns all element indices of the vim
    */
   getAllElements () {
-    return this._elementIds.keys()
+    return this._map.getAllElements()
   }
 
   /**
@@ -201,8 +193,7 @@ export class Vim {
    * @param element vim element index
    */
   getInstancesFromElement (element: number): number[] | undefined {
-    if (!this.hasElement(element)) return
-    return this._elementToInstances.get(element) ?? []
+    return this._map.getInstancesFromElement(element)
   }
 
   /**
@@ -211,7 +202,7 @@ export class Vim {
    * @returns element index or undefined if not found
    */
   getElementFromInstance (instance: number) {
-    return this._instanceToElement[instance]
+    return this._map.getElementFromInstance(instance)
   }
 
   /**
@@ -219,7 +210,7 @@ export class Vim {
    * @param element element index
    */
   getElementId (element: number) {
-    return this._elementIds[element]
+    return this._map.getElementId(element)
   }
 
   private getMeshesFromInstances (instances: number[] | undefined) {

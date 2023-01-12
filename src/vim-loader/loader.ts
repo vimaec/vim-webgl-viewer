@@ -12,6 +12,7 @@ import { MeshBuilder } from './mesh'
 import { Scene } from './scene'
 import { G3d } from './../../node_modules/vim-ts/src/g3d'
 import { VimDocument } from './../../node_modules/vim-ts/src/objectModel'
+import { BimMap } from './bimMap'
 
 /**
  * Loader for the Vim File format.
@@ -66,10 +67,7 @@ export class Loader {
       g3d,
       scene,
       settings,
-      instanceToElement!,
-      elementToInstance,
-      elementIds!,
-      elementIdToElements)
+      new BimMap(instanceToElement!, elementToInstance, elementIds!, elementIdToElements))
 
     return vim
   }
