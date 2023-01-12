@@ -2,7 +2,7 @@
  * @module vim-loader
  */
 
-export class BimMap {
+export class ElementMapping {
   private _instanceToElement: number[]
   private _elementToInstances: Map<number, number[]>
   private _elementIds: number[]

@@ -8,7 +8,7 @@ import { Scene } from './scene'
 import { VimConfig } from './vimSettings'
 import { Object } from './object'
 import { G3d } from './../../node_modules/vim-ts/src/g3d'
-import { BimMap } from './bimMap'
+import { ElementMapping } from './elementMapping'
 
 /**
  * Container for the built three meshes and the vim data from which it was built.
@@ -23,13 +23,13 @@ export class Vim {
   scene: Scene
   private _elementToObject: Map<number, Object> = new Map<number, Object>()
 
-  private _map: BimMap
+  private _map: ElementMapping
 
   constructor (document: VimDocument,
     g3d: G3d | undefined,
     scene: Scene,
     settings: VimConfig,
-    map: BimMap) {
+    map: ElementMapping) {
     this.document = document
     this.g3d = g3d
     this.scene = scene
