@@ -214,7 +214,14 @@ export class InputAction {
   private _raycast: RaycastResult | undefined
 
   /**
-   * Raycast at current point. Can be computationally expensive. Lazy evaluation for performance.
+   * Returns a raycaster that can be used for custom raycast.
+   */
+  get raycaster () {
+    return this._raycaster.fromPoint2(this.position)
+  }
+
+  /**
+   * Raycast for VIM Ojbjects at current point. Can be computationally expensive. Lazy evaluation for performance.
    */
   get raycast () {
     return (
