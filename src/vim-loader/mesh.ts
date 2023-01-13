@@ -6,6 +6,7 @@ import * as THREE from 'three'
 import { G3d, MeshSection } from './g3d'
 import { Geometry, Transparency } from './geometry'
 import { VimMaterials } from './materials/materials'
+import { MeshInfo, VimMesh } from './object'
 
 /**
  * Builds meshes from the g3d and BufferGeometry
@@ -101,7 +102,7 @@ export class MeshBuilder {
       ? this.materials.transparent
       : this.materials.opaque
 
-    const result = new THREE.InstancedMesh(
+    const mesh = new THREE.InstancedMesh(
       geometry,
       material.material,
       instances.length
@@ -111,12 +112,11 @@ export class MeshBuilder {
     const boxes: THREE.Box3[] = []
     for (let i = 0; i < instances.length; i++) {
       const matrix = Geometry.getInstanceMatrix(g3d, instances[i])
-      result.setMatrixAt(i, matrix)
+      mesh.setMatrixAt(i, matrix)
       boxes[i] = geometry.boundingBox!.clone().applyMatrix4(matrix)
     }
-    result.userData.instances = instances
-    result.userData.boxes = boxes
-    return result
+    const result = VimMesh.createInstanced(mesh, instances, boxes)
+    return result.mesh as THREE.InstancedMesh
   }
 
   /**
@@ -141,12 +141,14 @@ export class MeshBuilder {
       : this.materials.opaque
 
     const mesh = new THREE.Mesh(merge.geometry, material.material)
-    mesh.userData.merged = true
-    mesh.userData.instances = merge.instances
-    mesh.userData.submeshes = merge.submeshes
-    mesh.userData.boxes = merge.boxes
+    const result = VimMesh.createMerged(
+      mesh,
+      merge.instances,
+      merge.boxes,
+      merge.submeshes
+    )
 
-    return mesh
+    return result.mesh
   }
 
   /**

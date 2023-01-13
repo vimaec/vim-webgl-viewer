@@ -3,6 +3,7 @@
  */
 
 import * as THREE from 'three'
+import { MeshInfo, VimMesh } from './object'
 import { SceneBuilder } from './sceneBuilder'
 import { Vim } from './vim'
 
@@ -108,7 +109,8 @@ export class Scene {
   set vim (value: Vim) {
     this._vim = value
     for (let m = 0; m < this.meshes.length; m++) {
-      this.meshes[m].userData.vim = value
+      const info = this.meshes[m].userData.vim as VimMesh
+      info.vim = value
     }
   }
 
@@ -119,7 +121,8 @@ export class Scene {
    * userData.boxes = THREE.Box3[] (bounding box of each instance)
    */
   addMesh (mesh: THREE.Mesh) {
-    const instances = mesh.userData.instances as number[]
+    const info = mesh.userData.vim as VimMesh
+    const instances = info.instances
     if (!instances || instances.length === 0) {
       throw new Error(
         'Expected mesh to have userdata instances : number[] with at least one member'
@@ -131,9 +134,9 @@ export class Scene {
       this._instanceToThreeMeshes.set(instances[i], set)
     }
 
-    const box = mesh.userData.boxes[0].clone() as THREE.Box3
+    const box = info.boxes[0].clone()
     for (let i = 1; i < instances.length; i++) {
-      box.union(mesh.userData.boxes[i])
+      box.union(info.boxes[i])
     }
     this._boundingBox = this._boundingBox?.union(box) ?? box.clone()
 
@@ -179,19 +182,21 @@ export class Scene {
     this._material = value
     if (value) {
       this.meshes.forEach((m) => {
-        if (!m.userData.ignoreSceneMaterial) {
-          if (!m.userData.mat) {
-            m.userData.mat = m.material
+        const info = m.userData.vim as VimMesh
+        if (!info.ignoreSceneMaterial) {
+          if (!info.mat) {
+            info.mat = m.material
           }
           m.material = value
         }
       })
     } else {
       this.meshes.forEach((m) => {
-        if (!m.userData.ignoreSceneMaterial) {
-          if (m.userData.mat) {
-            m.material = m.userData.mat
-            m.userData.mat = undefined
+        const info = m.userData.vim as VimMesh
+        if (!info.ignoreSceneMaterial) {
+          if (info.mat) {
+            m.material = info.mat
+            info.mat = undefined
           }
         }
       })

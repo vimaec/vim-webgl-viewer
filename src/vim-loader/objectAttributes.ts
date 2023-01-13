@@ -4,7 +4,8 @@
 
 // external
 import * as THREE from 'three'
-import { Float32BufferAttribute, InstancedBufferAttribute } from 'three'
+import { Float32BufferAttribute, InstancedBufferAttribute, Mesh } from 'three'
+import { MeshInfo, VimMesh } from './object'
 import { Vim } from './vim'
 
 export class ObjectAttribute<T> {
@@ -36,7 +37,8 @@ export class ObjectAttribute<T> {
 
     for (let m = 0; m < this._meshes.length; m++) {
       const [mesh, index] = this._meshes[m]
-      if (mesh.userData.merged) {
+      const info = mesh.userData.vim as VimMesh
+      if (info.merged) {
         this.applyMerged(mesh, index, number)
       } else {
         this.applyInstanced(mesh as THREE.InstancedMesh, index, number)
@@ -104,7 +106,8 @@ export class ColorAttribute {
 
     for (let m = 0; m < this._meshes.length; m++) {
       const [mesh, index] = this._meshes[m]
-      if (mesh.userData.merged) {
+      const info = mesh.userData.vim as VimMesh
+      if (info.merged) {
         this.applyMergedColor(mesh, index, color)
       } else {
         this.applyInstancedColor(mesh as THREE.InstancedMesh, index, color)
@@ -207,7 +210,8 @@ export class ColorAttribute {
  * @returns inclusive first index of the index buffer related to given merged mesh index
  */
 function getMergedMeshStart (mesh: THREE.Mesh, index: number) {
-  return mesh.userData.submeshes[index]
+  const info = mesh.userData.vim as VimMesh
+  return info.submeshes[index]
 }
 
 /**
@@ -215,7 +219,8 @@ function getMergedMeshStart (mesh: THREE.Mesh, index: number) {
  * @returns return the last+1 index of the index buffer related to given merged mesh index
  */
 function getMergedMeshEnd (mesh: THREE.Mesh, index: number) {
-  return index + 1 < mesh.userData.submeshes.length
-    ? mesh.userData.submeshes[index + 1]
+  const info = mesh.userData.vim as VimMesh
+  return index + 1 < info.submeshes.length
+    ? info.submeshes[index + 1]
     : mesh.geometry.index!.count
 }
