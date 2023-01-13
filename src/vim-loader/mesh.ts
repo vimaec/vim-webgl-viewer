@@ -30,8 +30,8 @@ export class MeshBuilder {
     g3d: G3d,
     transparency: Transparency.Mode,
     instances?: number[]
-  ): THREE.InstancedMesh[] {
-    const result: (THREE.InstancedMesh | undefined)[] = []
+  ) {
+    const result: (VimMesh | undefined)[] = []
     const set = instances ? new Set(instances) : undefined
 
     for (let mesh = 0; mesh < g3d.getMeshCount(); mesh++) {
@@ -81,7 +81,7 @@ export class MeshBuilder {
         }
       }
     }
-    const filter = result.filter((m): m is THREE.InstancedMesh => !!m)
+    const filter = result.filter((m): m is VimMesh => !!m)
     return filter
   }
 
@@ -116,7 +116,7 @@ export class MeshBuilder {
       boxes[i] = geometry.boundingBox!.clone().applyMatrix4(matrix)
     }
     const result = VimMesh.createInstanced(mesh, instances, boxes)
-    return result.mesh as THREE.InstancedMesh
+    return result
   }
 
   /**
@@ -130,7 +130,7 @@ export class MeshBuilder {
     section: MeshSection,
     transparent: boolean,
     instances?: number[]
-  ): THREE.Mesh | undefined {
+  ) {
     const merge = instances
       ? Geometry.mergeInstanceMeshes(g3d, section, transparent, instances)
       : Geometry.mergeUniqueMeshes(g3d, section, transparent)
@@ -148,7 +148,7 @@ export class MeshBuilder {
       merge.submeshes
     )
 
-    return result.mesh
+    return result
   }
 
   /**

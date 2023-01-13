@@ -5,21 +5,21 @@
 // external
 import * as THREE from 'three'
 import { Float32BufferAttribute, InstancedBufferAttribute, Mesh } from 'three'
-import { MeshInfo, VimMesh } from './object'
+import { MeshInfo, VimMesh, VimSubmesh } from './object'
 import { Vim } from './vim'
 
 export class ObjectAttribute<T> {
   value: T
   vertexAttribute: string
   instanceAttribute: string
-  private _meshes: [THREE.Mesh, number][] | undefined
+  private _meshes: VimSubmesh[] | undefined
   toNumber: (value: T) => number
 
   constructor (
     value: T,
     vertexAttribute: string,
     instanceAttribute: string,
-    meshes: [THREE.Mesh, number][] | undefined,
+    meshes: VimSubmesh[] | undefined,
     toNumber: (value: T) => number
   ) {
     this.value = value
@@ -36,12 +36,15 @@ export class ObjectAttribute<T> {
     const number = this.toNumber(value)
 
     for (let m = 0; m < this._meshes.length; m++) {
-      const [mesh, index] = this._meshes[m]
-      const info = mesh.userData.vim as VimMesh
-      if (info.merged) {
-        this.applyMerged(mesh, index, number)
+      const sub = this._meshes[m]
+      if (sub.mesh.merged) {
+        this.applyMerged(sub.mesh.mesh, sub.index, number)
       } else {
-        this.applyInstanced(mesh as THREE.InstancedMesh, index, number)
+        this.applyInstanced(
+          sub.mesh.mesh as THREE.InstancedMesh,
+          sub.index,
+          number
+        )
       }
     }
     return true
@@ -88,11 +91,11 @@ export class ObjectAttribute<T> {
 }
 
 export class ColorAttribute {
-  _meshes: [THREE.Mesh, number][] | undefined
+  _meshes: VimSubmesh[] | undefined
   value: THREE.Color | undefined
   vim: Vim
   constructor (
-    meshes: [THREE.Mesh, number][] | undefined,
+    meshes: VimSubmesh[] | undefined,
     value: THREE.Color | undefined,
     vim: Vim
   ) {
@@ -105,12 +108,15 @@ export class ColorAttribute {
     if (!this._meshes) return
 
     for (let m = 0; m < this._meshes.length; m++) {
-      const [mesh, index] = this._meshes[m]
-      const info = mesh.userData.vim as VimMesh
-      if (info.merged) {
-        this.applyMergedColor(mesh, index, color)
+      const sub = this._meshes[m]
+      if (sub.mesh.merged) {
+        this.applyMergedColor(sub.mesh.mesh, sub.index, color)
       } else {
-        this.applyInstancedColor(mesh as THREE.InstancedMesh, index, color)
+        this.applyInstancedColor(
+          sub.mesh.mesh as THREE.InstancedMesh,
+          sub.index,
+          color
+        )
       }
     }
   }

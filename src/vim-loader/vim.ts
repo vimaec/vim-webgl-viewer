@@ -6,7 +6,7 @@ import * as THREE from 'three'
 import { IDocument } from './document'
 import { Scene } from './scene'
 import { VimConfig } from './vimSettings'
-import { Object } from './object'
+import { Object, VimMesh, VimSubmesh } from './object'
 
 /**
  * Container for the built three meshes and the vim data from which it was built.
@@ -165,7 +165,7 @@ export class Vim {
   private getMeshesFromInstances (instances: number[] | undefined) {
     if (!instances?.length) return
 
-    const meshes: [THREE.Mesh, number][] = []
+    const meshes: VimSubmesh[] = []
     for (let i = 0; i < instances.length; i++) {
       const instance = instances[i]
       if (instance < 0) continue

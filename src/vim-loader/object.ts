@@ -8,6 +8,16 @@ import { Geometry } from './geometry'
 import { Vim } from './vim'
 import { ObjectAttribute, ColorAttribute } from './objectAttributes'
 
+export class VimSubmesh {
+  mesh: VimMesh
+  index: number
+
+  constructor (mesh: VimMesh, index: number) {
+    this.mesh = mesh
+    this.index = index
+  }
+}
+
 export class VimMesh {
   mesh: THREE.Mesh
   ignoreSceneMaterial: boolean
@@ -105,7 +115,7 @@ export class Object {
   instances: number[] | undefined
   private _color: THREE.Color | undefined
   private _boundingBox: THREE.Box3 | undefined
-  private _meshes: [THREE.Mesh, number][] | undefined
+  private _meshes: VimSubmesh[] | undefined
 
   private selectedAttribute: ObjectAttribute<boolean>
   private visibleAttribute: ObjectAttribute<boolean>
@@ -117,7 +127,7 @@ export class Object {
     vim: Vim,
     element: number,
     instances: number[] | undefined,
-    meshes: [THREE.Mesh, number][] | undefined
+    meshes: VimSubmesh[] | undefined
   ) {
     this.vim = vim
     this.element = element
@@ -234,7 +244,7 @@ export class Object {
   /**
    * Internal - Replace this object meshes and apply color as needed.
    */
-  updateMeshes (meshes: [THREE.Mesh, number][] | undefined) {
+  updateMeshes (meshes: VimSubmesh[] | undefined) {
     this._meshes = meshes
     if (!meshes) return
     this.vim.scene.updated = true
@@ -285,9 +295,8 @@ export class Object {
 
     let box: THREE.Box3 | undefined
     this._meshes.forEach((m) => {
-      const [mesh, index] = m
-      const info = mesh.userData as MeshInfo
-      const b = info.boxes[index]
+      const sub = m
+      const b = sub.mesh.boxes[sub.index]
       box = box ? box.union(b) : b.clone()
     })
     if (box) {
