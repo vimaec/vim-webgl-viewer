@@ -2,109 +2,14 @@
  * @module vim-loader
  */
 
-// external
+// External
 import * as THREE from 'three'
+
+// Vim
 import { Geometry } from './geometry'
 import { Vim } from './vim'
 import { ObjectAttribute, ColorAttribute } from './objectAttributes'
-
-export class VimSubmesh {
-  mesh: VimMesh
-  index: number
-
-  constructor (mesh: VimMesh, index: number) {
-    this.mesh = mesh
-    this.index = index
-  }
-}
-
-export class VimMesh {
-  mesh: THREE.Mesh
-  ignoreSceneMaterial: boolean
-  mat: THREE.Material | THREE.Material[]
-  vim: Vim
-  /**
-   * bounding box of each instance
-   */
-  boxes: THREE.Box3[]
-  merged: boolean
-  /**
-   * Indices of the g3d instances that went into creating the mesh
-   */
-  instances: number[]
-  submeshes: number[]
-
-  constructor (mesh: THREE.Mesh) {
-    this.mesh = mesh
-    this.mesh.userData.vim = this
-  }
-
-  static createMerged (
-    mesh: THREE.Mesh,
-    instances: number[],
-    boxes: THREE.Box3[],
-    submeshes: number[]
-  ) {
-    const result = new VimMesh(mesh)
-    result.merged = true
-    result.instances = instances
-    result.boxes = boxes
-    result.submeshes = submeshes
-    return result
-  }
-
-  static createInstanced (
-    mesh: THREE.Mesh,
-    instances: number[],
-    boxes: THREE.Box3[]
-  ) {
-    const result = new VimMesh(mesh)
-    result.merged = false
-    result.instances = instances
-    result.boxes = boxes
-    return result
-  }
-
-  getInstanceFromFace (faceIndex: number) {
-    const index = this.binarySearch(this.submeshes, faceIndex * 3)
-    return this.instances[index]
-  }
-
-  private binarySearch (array: number[], element: number) {
-    let m = 0
-    let n = array.length - 1
-    while (m <= n) {
-      const k = (n + m) >> 1
-      const cmp = element - array[k]
-      if (cmp > 0) {
-        m = k + 1
-      } else if (cmp < 0) {
-        n = k - 1
-      } else {
-        return k
-      }
-    }
-    return m - 1
-  }
-}
-
-export class MeshInfo {
-  ignoreSceneMaterial: boolean
-  mat: THREE.Material | THREE.Material[]
-  vim: Vim
-  /**
-   * bounding box of each instance
-   */
-  boxes: THREE.Box3[]
-  merged: boolean
-  /**
-   * Indices of the g3d instances that went into creating the mesh
-   */
-  instances: number[]
-  submeshes: number[]
-  // userData.instances = number[]
-  // userData.boxes = THREE.Box3[] ()
-}
+import { Submesh } from './mesh'
 
 /**
  * High level api to interact with the loaded vim geometry and data.
@@ -115,7 +20,7 @@ export class Object {
   instances: number[] | undefined
   private _color: THREE.Color | undefined
   private _boundingBox: THREE.Box3 | undefined
-  private _meshes: VimSubmesh[] | undefined
+  private _meshes: Submesh[] | undefined
 
   private selectedAttribute: ObjectAttribute<boolean>
   private visibleAttribute: ObjectAttribute<boolean>
@@ -127,7 +32,7 @@ export class Object {
     vim: Vim,
     element: number,
     instances: number[] | undefined,
-    meshes: VimSubmesh[] | undefined
+    meshes: Submesh[] | undefined
   ) {
     this.vim = vim
     this.element = element
@@ -244,7 +149,7 @@ export class Object {
   /**
    * Internal - Replace this object meshes and apply color as needed.
    */
-  updateMeshes (meshes: VimSubmesh[] | undefined) {
+  updateMeshes (meshes: Submesh[] | undefined) {
     this._meshes = meshes
     if (!meshes) return
     this.vim.scene.updated = true
@@ -296,7 +201,7 @@ export class Object {
     let box: THREE.Box3 | undefined
     this._meshes.forEach((m) => {
       const sub = m
-      const b = sub.mesh.boxes[sub.index]
+      const b = sub.boundingBox
       box = box ? box.union(b) : b.clone()
     })
     if (box) {

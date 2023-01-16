@@ -4,22 +4,21 @@
 
 // external
 import * as THREE from 'three'
-import { Float32BufferAttribute, InstancedBufferAttribute, Mesh } from 'three'
-import { MeshInfo, VimMesh, VimSubmesh } from './object'
+import { Mesh, Submesh } from './mesh'
 import { Vim } from './vim'
 
 export class ObjectAttribute<T> {
   value: T
   vertexAttribute: string
   instanceAttribute: string
-  private _meshes: VimSubmesh[] | undefined
+  private _meshes: Submesh[] | undefined
   toNumber: (value: T) => number
 
   constructor (
     value: T,
     vertexAttribute: string,
     instanceAttribute: string,
-    meshes: VimSubmesh[] | undefined,
+    meshes: Submesh[] | undefined,
     toNumber: (value: T) => number
   ) {
     this.value = value
@@ -37,50 +36,40 @@ export class ObjectAttribute<T> {
 
     for (let m = 0; m < this._meshes.length; m++) {
       const sub = this._meshes[m]
-      if (sub.mesh.merged) {
-        this.applyMerged(sub.mesh.mesh, sub.index, number)
+      if (sub.merged) {
+        this.applyMerged(sub, number)
       } else {
-        this.applyInstanced(
-          sub.mesh.mesh as THREE.InstancedMesh,
-          sub.index,
-          number
-        )
+        this.applyInstanced(sub, number)
       }
     }
     return true
   }
 
-  private applyInstanced (
-    mesh: THREE.InstancedMesh<
-      THREE.BufferGeometry,
-      THREE.Material | THREE.Material[]
-    >,
-    index: number,
-    number: number
-  ) {
-    let attribute = mesh.geometry.getAttribute(this.instanceAttribute)
+  private applyInstanced (sub: Submesh, number: number) {
+    const three = sub.three as THREE.InstancedMesh
+    let attribute = three.geometry.getAttribute(this.instanceAttribute)
     if (!attribute) {
-      attribute = new InstancedBufferAttribute(new Float32Array(mesh.count), 1)
-      mesh.geometry.setAttribute(this.instanceAttribute, attribute)
+      attribute = new THREE.InstancedBufferAttribute(
+        new Float32Array(three.count),
+        1
+      )
+      three.geometry.setAttribute(this.instanceAttribute, attribute)
     }
-    attribute.setX(index, number)
+    attribute.setX(sub.index, number)
     attribute.needsUpdate = true
   }
 
-  private applyMerged (
-    mesh: THREE.Mesh<THREE.BufferGeometry, THREE.Material | THREE.Material[]>,
-    index: number,
-    number: number
-  ) {
-    const positions = mesh.geometry.getAttribute('position')
+  private applyMerged (sub: Submesh, number: number) {
+    const three = sub.three
+    const positions = three.geometry.getAttribute('position')
     const attribute =
-      mesh.geometry.getAttribute(this.vertexAttribute) ??
-      new Float32BufferAttribute(new Float32Array(positions.count), 1)
-    mesh.geometry.setAttribute(this.vertexAttribute, attribute)
+      three.geometry.getAttribute(this.vertexAttribute) ??
+      new THREE.Float32BufferAttribute(new Float32Array(positions.count), 1)
+    three.geometry.setAttribute(this.vertexAttribute, attribute)
 
-    const start = getMergedMeshStart(mesh, index)
-    const end = getMergedMeshEnd(mesh, index)
-    const indices = mesh.geometry.index!
+    const start = sub.meshStart
+    const end = sub.meshEnd
+    const indices = sub.three.geometry.index!
 
     for (let i = start; i < end; i++) {
       const v = indices.getX(i)
@@ -91,11 +80,11 @@ export class ObjectAttribute<T> {
 }
 
 export class ColorAttribute {
-  _meshes: VimSubmesh[] | undefined
+  _meshes: Submesh[] | undefined
   value: THREE.Color | undefined
   vim: Vim
   constructor (
-    meshes: VimSubmesh[] | undefined,
+    meshes: Submesh[] | undefined,
     value: THREE.Color | undefined,
     vim: Vim
   ) {
@@ -109,14 +98,10 @@ export class ColorAttribute {
 
     for (let m = 0; m < this._meshes.length; m++) {
       const sub = this._meshes[m]
-      if (sub.mesh.merged) {
-        this.applyMergedColor(sub.mesh.mesh, sub.index, color)
+      if (sub.merged) {
+        this.applyMergedColor(sub, color)
       } else {
-        this.applyInstancedColor(
-          sub.mesh.mesh as THREE.InstancedMesh,
-          sub.index,
-          color
-        )
+        this.applyInstancedColor(sub, color)
       }
     }
   }
@@ -126,21 +111,17 @@ export class ColorAttribute {
    * @param index index of the merged mesh instance
    * @param color rgb representation of the color to apply
    */
-  private applyMergedColor (
-    mesh: THREE.Mesh,
-    index: number,
-    color: THREE.Color | undefined
-  ) {
+  private applyMergedColor (sub: Submesh, color: THREE.Color | undefined) {
     if (!color) {
-      this.resetMergedColor(mesh, index)
+      this.resetMergedColor(sub)
       return
     }
 
-    const start = getMergedMeshStart(mesh, index)
-    const end = getMergedMeshEnd(mesh, index)
+    const start = sub.meshStart
+    const end = sub.meshEnd
 
-    const colors = mesh.geometry.getAttribute('color')
-    const indices = mesh.geometry.index!
+    const colors = sub.three.geometry.getAttribute('color')
+    const indices = sub.three.geometry.index!
 
     for (let i = start; i < end; i++) {
       const v = indices.getX(i)
@@ -154,17 +135,15 @@ export class ColorAttribute {
    * Repopulates the color buffer of the merged mesh from original g3d data.
    * @param index index of the merged mesh instance
    */
-  private resetMergedColor (mesh: THREE.Mesh, index: number) {
+  private resetMergedColor (sub: Submesh) {
     if (!this.vim) return
-    const colors = mesh.geometry.getAttribute('color')
+    const colors = sub.three.geometry.getAttribute('color')
 
-    const indices = mesh.geometry.index!
-    let mergedIndex = getMergedMeshStart(mesh, index)
+    const indices = sub.three.geometry.index!
+    let mergedIndex = sub.meshStart
 
-    const instance = this.vim.scene.getInstanceFromMesh(mesh, index)
-    if (!instance) throw new Error('Could not reset original color.')
     const g3d = this.vim.document.g3d!
-    const g3dMesh = g3d.instanceMeshes[instance]
+    const g3dMesh = g3d.instanceMeshes[sub.instance]
     const subStart = g3d.getMeshSubmeshStart(g3dMesh)
     const subEnd = g3d.getMeshSubmeshEnd(g3dMesh)
 
@@ -186,15 +165,13 @@ export class ColorAttribute {
    * @param index index of the instanced instance
    * @param color rgb representation of the color to apply
    */
-  private applyInstancedColor (
-    mesh: THREE.InstancedMesh,
-    index: number,
-    color: THREE.Color | undefined
-  ) {
-    const colors = this.getOrAddInstanceColorAttribute(mesh)
+  private applyInstancedColor (sub: Submesh, color: THREE.Color | undefined) {
+    const colors = this.getOrAddInstanceColorAttribute(
+      sub.three as THREE.InstancedMesh
+    )
     if (color) {
       // Set instance to use instance color provided
-      colors.setXYZ(index, color.r, color.g, color.b)
+      colors.setXYZ(sub.index, color.r, color.g, color.b)
       // Set attributes dirty
       colors.needsUpdate = true
     }
@@ -216,7 +193,7 @@ export class ColorAttribute {
  * @returns inclusive first index of the index buffer related to given merged mesh index
  */
 function getMergedMeshStart (mesh: THREE.Mesh, index: number) {
-  const info = mesh.userData.vim as VimMesh
+  const info = mesh.userData.vim as Mesh
   return info.submeshes[index]
 }
 
@@ -225,7 +202,7 @@ function getMergedMeshStart (mesh: THREE.Mesh, index: number) {
  * @returns return the last+1 index of the index buffer related to given merged mesh index
  */
 function getMergedMeshEnd (mesh: THREE.Mesh, index: number) {
-  const info = mesh.userData.vim as VimMesh
+  const info = mesh.userData.vim as Mesh
   return index + 1 < info.submeshes.length
     ? info.submeshes[index + 1]
     : mesh.geometry.index!.count

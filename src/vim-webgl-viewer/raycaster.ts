@@ -3,8 +3,8 @@
  */
 
 import * as THREE from 'three'
-import { MeshInfo, Object, VimMesh } from '../vim-loader/object'
-import { Vim } from '../vim-loader/vim'
+import { Object } from '../vim-loader/object'
+import { Mesh } from '../vim-loader/mesh'
 import { RenderScene } from './rendering/renderScene'
 import { Viewport } from './viewport'
 import { Camera } from './camera'
@@ -46,17 +46,17 @@ export class RaycastResult {
   }
 
   private getVimObjectFromHit (hit: THREE.Intersection) {
-    const info = hit.object.userData.vim as VimMesh
-    if (!info) return
+    const mesh = hit.object.userData.vim as Mesh
+    if (!mesh) return
 
-    if (info.merged) {
+    if (mesh.merged) {
       if (!hit.faceIndex) {
         throw new Error('Raycast hit has no face index.')
       }
-      const instance = info.getInstanceFromFace(hit.faceIndex)
-      return info.vim.getObjectFromInstance(instance)
+      const sub = mesh.getSubmeshFromFace(hit.faceIndex)
+      return mesh.vim.getObjectFromInstance(sub.instance)
     } else if (hit.instanceId !== undefined) {
-      return info.vim.getObjectFromMesh(
+      return mesh.vim.getObjectFromMesh(
         hit.object as THREE.InstancedMesh,
         hit.instanceId
       )

@@ -6,7 +6,8 @@ import * as THREE from 'three'
 import { IDocument } from './document'
 import { Scene } from './scene'
 import { VimConfig } from './vimSettings'
-import { Object, VimMesh, VimSubmesh } from './object'
+import { Object } from './object'
+import { Mesh, Submesh } from './mesh'
 
 /**
  * Container for the built three meshes and the vim data from which it was built.
@@ -165,12 +166,12 @@ export class Vim {
   private getMeshesFromInstances (instances: number[] | undefined) {
     if (!instances?.length) return
 
-    const meshes: VimSubmesh[] = []
+    const meshes: Submesh[] = []
     for (let i = 0; i < instances.length; i++) {
       const instance = instances[i]
       if (instance < 0) continue
-      const pairs = this.scene.getMeshFromInstance(instance)
-      pairs?.forEach((p) => meshes.push(p))
+      const submeshes = this.scene.getMeshFromInstance(instance)
+      submeshes?.forEach((s) => meshes.push(s))
     }
     if (meshes.length === 0) return
     return meshes
@@ -184,7 +185,8 @@ export class Vim {
    */
   private getElementFromMesh (mesh: THREE.Mesh, index: number) {
     if (!mesh || index < 0) return
-    const instance = this.scene.getInstanceFromMesh(mesh, index)
+    const m = mesh.userData.vim as Mesh
+    const instance = m.getSubMesh(index).instance
     if (!instance) return
     return this.document.getElementFromInstance(instance)
   }
