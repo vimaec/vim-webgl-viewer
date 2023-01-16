@@ -3,6 +3,7 @@
  */
 
 import * as THREE from 'three'
+import { InputScheme } from '../../inputs/input'
 import { InputAction } from '../../raycaster'
 import { Viewer } from '../../viewer'
 import { MeasureFlow, MeasureStage } from './measureFlow'
@@ -67,6 +68,7 @@ export class Measure implements IMeasure {
   private _endPos: THREE.Vector3 | undefined
   private _measurement: THREE.Vector3 | undefined
   private _flow: MeasureFlow | undefined
+  private _previousScheme: InputScheme
 
   /**
    * Start point of the current measure or undefined if no active measure.
@@ -110,13 +112,17 @@ export class Measure implements IMeasure {
     this.abort()
 
     this._flow = new MeasureFlow(this)
+    this._previousScheme = this._viewer.inputs.scheme
     this._viewer.inputs.scheme = this._flow
     this._flow.onProgress = () => onProgress?.()
 
     return new Promise<void>((resolve, reject) => {
       if (this._flow) {
         this._flow.onComplete = (success: boolean) => {
-          this._viewer.inputs.scheme = undefined
+          if (this._previousScheme) {
+            this._viewer.inputs.scheme = this._previousScheme
+            this._previousScheme = undefined
+          }
           if (success) resolve()
           else {
             reject(new Error('Measurement Aborted'))
