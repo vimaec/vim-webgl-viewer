@@ -49,18 +49,11 @@ export class RaycastResult {
     const mesh = hit.object.userData.vim as Mesh
     if (!mesh) return
 
-    if (mesh.merged) {
-      if (!hit.faceIndex) {
-        throw new Error('Raycast hit has no face index.')
-      }
-      const sub = mesh.getSubmeshFromFace(hit.faceIndex)
-      return mesh.vim.getObjectFromInstance(sub.instance)
-    } else if (hit.instanceId !== undefined) {
-      return mesh.vim.getObjectFromMesh(
-        hit.object as THREE.InstancedMesh,
-        hit.instanceId
-      )
-    }
+    const sub = mesh.merged
+      ? mesh.getSubmeshFromFace(hit.faceIndex)
+      : mesh.getSubMesh(hit.instanceId)
+
+    return sub.object
   }
 
   // Convenience functions and mnemonics

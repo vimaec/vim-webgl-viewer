@@ -7,7 +7,7 @@ import { IDocument } from './document'
 import { Scene } from './scene'
 import { VimConfig } from './vimSettings'
 import { Object } from './object'
-import { Mesh, Submesh } from './mesh'
+import { Submesh } from './mesh'
 
 /**
  * Container for the built three meshes and the vim data from which it was built.
@@ -78,17 +78,6 @@ export class Vim {
    */
   getMatrix () {
     return this.settings.matrix
-  }
-
-  /**
-   * Returns vim object from given mesh and index
-   * @param mesh three mesh
-   * @param index instanced mesh index or merged mesh submesh index
-   */
-  getObjectFromMesh (mesh: THREE.Mesh, index: number) {
-    const element = this.getElementFromMesh(mesh, index)
-    if (!element) return
-    return this.getObjectFromElement(element)
   }
 
   /**
@@ -175,19 +164,5 @@ export class Vim {
     }
     if (meshes.length === 0) return
     return meshes
-  }
-
-  /**
-   * Get the element index related to given mesh
-   * @param mesh instanced mesh
-   * @param index index into the instanced mesh
-   * @returns index of element
-   */
-  private getElementFromMesh (mesh: THREE.Mesh, index: number) {
-    if (!mesh || index < 0) return
-    const m = mesh.userData.vim as Mesh
-    const instance = m.getSubMesh(index).instance
-    if (!instance) return
-    return this.document.getElementFromInstance(instance)
   }
 }

@@ -45,7 +45,11 @@ export class Mesh {
    */
   private _material: THREE.Material | THREE.Material[]
 
-  constructor (mesh: THREE.Mesh, instance: number[], boxes: THREE.Box3[]) {
+  private constructor (
+    mesh: THREE.Mesh,
+    instance: number[],
+    boxes: THREE.Box3[]
+  ) {
     this.three = mesh
     this.three.userData.vim = this
     this.instances = instance
@@ -101,10 +105,16 @@ export class Mesh {
     return result
   }
 
+  /**
+   * Returns submesh for given index.
+   */
   getSubMesh (index: number) {
     return new Submesh(this, index)
   }
 
+  /**
+   * Returns submesh corresponding to given face on a merged mesh.
+   */
   getSubmeshFromFace (faceIndex: number) {
     if (!this.merged) {
       throw new Error('Can only be called when mesh.merged = true')
@@ -113,11 +123,13 @@ export class Mesh {
     return new Submesh(this, index)
   }
 
+  /**
+   *
+   * @returns Returns all submeshes
+   */
   getSubmeshes () {
     return this.instances.map((s, i) => new Submesh(this, i))
   }
-
-  getBoundingBox () {}
 
   private binarySearch (array: number[], element: number) {
     let m = 0
@@ -146,29 +158,54 @@ export class Submesh {
     this.index = index
   }
 
+  /**
+   * Returns parent three mesh.
+   */
   get three () {
     return this.mesh.three
   }
 
+  /**
+   * True if parent mesh is merged.
+   */
   get merged () {
     return this.mesh.merged
   }
 
+  /**
+   * Returns vim instance associated with this submesh.
+   */
   get instance () {
     return this.mesh.instances[this.index]
   }
 
+  /**
+   * Returns bounding box for this submesh.
+   */
   get boundingBox () {
     return this.mesh.boxes[this.index]
   }
 
+  /**
+   * Returns starting position in parent mesh for merged mesh.
+   */
   get meshStart () {
     return this.mesh.submeshes[this.index]
   }
 
+  /**
+   * Returns ending position in parent mesh for merged mesh.
+   */
   get meshEnd () {
     return this.index + 1 < this.mesh.submeshes.length
       ? this.mesh.submeshes[this.index + 1]
       : this.three.geometry.index!.count
+  }
+
+  /**
+   * Returns vim object for this submesh.
+   */
+  get object () {
+    return this.mesh.vim.getObjectFromInstance(this.instance)
   }
 }
