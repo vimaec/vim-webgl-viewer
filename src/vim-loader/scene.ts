@@ -8,9 +8,9 @@ import { SceneBuilder } from './sceneBuilder'
 import { Vim } from './vim'
 
 /**
- * A Scene regroups many THREE.Meshes
+ * A Scene regroups many Meshes
  * It keep tracks of the global bounding box as Meshes are added
- * It keeps a map from g3d instance indices to THREE.Mesh and vice versa
+ * It keeps a map from g3d instance indices to Meshes and vice versa
  */
 export class Scene {
   // Dependencies
@@ -21,6 +21,14 @@ export class Scene {
   private _vim: Vim | undefined
   private _updated: boolean = false
   private _outlineCount: number = 0
+
+  private _boundingBox: THREE.Box3 = new THREE.Box3()
+  private _instanceToMeshes: Map<number, Submesh[]> = new Map()
+  private _material: THREE.Material | undefined
+
+  constructor (builder: SceneBuilder) {
+    this.builder = builder
+  }
 
   get updated () {
     return this._updated
@@ -48,14 +56,6 @@ export class Scene {
     this._updated = false
   }
 
-  private _boundingBox: THREE.Box3 = new THREE.Box3()
-  private _instanceToMeshes: Map<number, Submesh[]> = new Map()
-  private _material: THREE.Material | undefined
-
-  constructor (builder: SceneBuilder) {
-    this.builder = builder
-  }
-
   /**
    * Returns the scene bounding box.
    */
@@ -73,7 +73,7 @@ export class Scene {
   }
 
   /**
-   * Applies given transform matrix to all THREE.Meshes and bounding box.
+   * Applies given transform matrix to all Meshes and bounding box.
    */
   applyMatrix4 (matrix: THREE.Matrix4) {
     for (let m = 0; m < this.meshes.length; m++) {

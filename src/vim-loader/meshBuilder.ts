@@ -123,7 +123,7 @@ export class MeshBuilder {
    * Create a merged mesh from g3d instance indices
    * @param transparency Specify wheter color is RBG or RGBA and whether material is opaque or transparent
    * @param instances g3d instance indices to be included in the merged mesh. All mergeable meshes if undefined.
-   * @returns a THREE.Mesh or undefined if the mesh would be empty
+   * @returns a VIM.Mesh or undefined if the mesh would be empty
    */
   createMergedMesh (
     g3d: G3d,

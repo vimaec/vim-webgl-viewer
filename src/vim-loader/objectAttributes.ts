@@ -187,23 +187,3 @@ export class ColorAttribute {
     return attribute
   }
 }
-
-/**
- * @param index index of the merged mesh instance
- * @returns inclusive first index of the index buffer related to given merged mesh index
- */
-function getMergedMeshStart (mesh: THREE.Mesh, index: number) {
-  const info = mesh.userData.vim as Mesh
-  return info.submeshes[index]
-}
-
-/**
- * @param index index of the merged mesh instance
- * @returns return the last+1 index of the index buffer related to given merged mesh index
- */
-function getMergedMeshEnd (mesh: THREE.Mesh, index: number) {
-  const info = mesh.userData.vim as Mesh
-  return index + 1 < info.submeshes.length
-    ? info.submeshes[index + 1]
-    : mesh.geometry.index!.count
-}
