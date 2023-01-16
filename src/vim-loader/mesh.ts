@@ -1,5 +1,10 @@
 import { Vim } from './vim'
 
+/**
+ * Wrapper around THREE.Mesh
+ * Keeps track of what VIM instances are part of this mesh.
+ * Is either merged on instanced.
+ */
 export class Mesh {
   /**
    * the wrapped THREE mesh
@@ -57,32 +62,6 @@ export class Mesh {
     this.boundingBox = this.unionAllBox(boxes)
   }
 
-  private unionAllBox (boxes: THREE.Box3[]) {
-    const box = boxes[0].clone()
-    for (let i = 1; i < boxes.length; i++) {
-      box.union(boxes[i])
-    }
-    return box
-  }
-
-  setMaterial (value: THREE.Material) {
-    if (this._material === value) return
-    if (this.ignoreSceneMaterial) return
-
-    this._material = value
-    if (value) {
-      if (!this._material) {
-        this._material = this.three.material
-      }
-      this.three.material = value
-    } else {
-      if (this._material) {
-        this.three.material = this._material
-        this._material = undefined
-      }
-    }
-  }
-
   static createMerged (
     mesh: THREE.Mesh,
     instances: number[],
@@ -103,6 +82,27 @@ export class Mesh {
     const result = new Mesh(mesh, instances, boxes)
     result.merged = false
     return result
+  }
+
+  /**
+   * Overrides mesh material, set to undefine to restore initial material.
+   */
+  setMaterial (value: THREE.Material) {
+    if (this._material === value) return
+    if (this.ignoreSceneMaterial) return
+
+    this._material = value
+    if (value) {
+      if (!this._material) {
+        this._material = this.three.material
+      }
+      this.three.material = value
+    } else {
+      if (this._material) {
+        this.three.material = this._material
+        this._material = undefined
+      }
+    }
   }
 
   /**
@@ -147,8 +147,19 @@ export class Mesh {
     }
     return m - 1
   }
+
+  private unionAllBox (boxes: THREE.Box3[]) {
+    const box = boxes[0].clone()
+    for (let i = 1; i < boxes.length; i++) {
+      box.union(boxes[i])
+    }
+    return box
+  }
 }
 
+/**
+ * Represents one specific VIM instance as it is part of a Mesh.
+ */
 export class Submesh {
   mesh: Mesh
   index: number
