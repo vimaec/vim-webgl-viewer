@@ -91,7 +91,6 @@ export class Mesh {
     if (this._material === value) return
     if (this.ignoreSceneMaterial) return
 
-    this._material = value
     if (value) {
       if (!this._material) {
         this._material = this.three.material
