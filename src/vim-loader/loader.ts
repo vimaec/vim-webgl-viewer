@@ -2,7 +2,6 @@
  * @module vim-loader
  */
 
-import { Document, IDocument } from './document'
 import { SceneBuilder } from './sceneBuilder'
 import { BFast } from './../../node_modules/vim-ts/src/bfast'
 import { Vim } from './vim'
@@ -28,19 +27,11 @@ export class Loader {
   }
 
   async load (bfast: BFast, settings: VimConfig) {
-    // let document: IDocument | undefined
-
     const mode = settings.download
     if (mode === 'download') await bfast.forceDownload()
 
-    // await Document.createFromBfast(bfast, mode === 'stream').then(
-    //   (d) => (document = d)
-    // )
-    // if (!document) {
-    //   throw Error('Could not load parse document.')
-    // }
-
     let g3d: G3d | undefined
+    let strings: string[] | undefined
 
     let instanceToElement: number[] | undefined
     let elementIds: number[] | undefined
@@ -49,6 +40,7 @@ export class Loader {
 
     await Promise.all([
       Loader.requestG3d(bfast, mode === 'stream').then((g) => (g3d = g)),
+      Loader.requestStrings(bfast).then((s) => strings = s),
       doc.node.getAllElementIndex().then(
         (array) => (instanceToElement = array)
       ),
@@ -67,6 +59,7 @@ export class Loader {
       g3d,
       scene,
       settings,
+      strings,
       new ElementMapping(instanceToElement!, elementToInstance, elementIds!, elementIdToElements))
 
     return vim
@@ -82,6 +75,18 @@ export class Loader {
     }
     const g3d = await G3d.createFromBfast(geometry)
     return g3d
+  }
+
+  private static async requestStrings (bfast: BFast) {
+    const buffer = await bfast.getBuffer('strings')
+    if (!buffer) {
+      console.error(
+        'Could not get String Data from VIM file. Bim features will be disabled.'
+      )
+      return
+    }
+    const strings = new TextDecoder('utf-8').decode(buffer).split('\0')
+    return strings
   }
 
   /**

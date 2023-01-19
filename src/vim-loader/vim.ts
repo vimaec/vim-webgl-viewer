@@ -22,6 +22,7 @@ export class Vim {
 
   scene: Scene
   private _elementToObject: Map<number, Object> = new Map<number, Object>()
+  private _strings: string[] | undefined
 
   private _map: ElementMapping
 
@@ -29,12 +30,14 @@ export class Vim {
     g3d: G3d | undefined,
     scene: Scene,
     settings: VimConfig,
+    strings: string[] | undefined,
     map: ElementMapping) {
     this.document = document
     this.g3d = g3d
     this.scene = scene
     this.scene.vim = this
     this.settings = settings
+    this._strings = strings
     this.scene.applyMatrix4(this.settings.matrix)
 
     this._map = map
@@ -211,6 +214,13 @@ export class Vim {
    */
   getElementId (element: number) {
     return this._map.getElementId(element)
+  }
+
+  /**
+   * Returns string at given index
+   */
+  getString (index: number) {
+    return this._strings?.[index]
   }
 
   private getMeshesFromInstances (instances: number[] | undefined) {

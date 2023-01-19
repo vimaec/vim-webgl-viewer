@@ -8,6 +8,7 @@ import { Geometry } from './geometry'
 import { Vim } from './vim'
 import { VimDocument, IElement } from './../../node_modules/vim-ts/src/objectModel'
 import { ObjectAttribute, ColorAttribute } from './objectAttributes'
+import { VimHelpers, ElementParameter } from './../../node_modules/vim-ts/src/vimHelpers'
 
 /**
  * High level api to interact with the loaded vim geometry and data.
@@ -169,17 +170,8 @@ export class Object {
   /**
    * Returns Bim data for the element associated with this object.
    */
-  async getBimElementValue (field: string, resolveString: boolean) {
-    const value = await this.vim.oldDocument.getElementValue(this.element, field)
-    if (!value) return
-    return resolveString ? this.vim.oldDocument.getString(value) : value
-  }
-
-  /**
-   * Returns Bim data for the element associated with this object.
-   */
-  async getBimParameters () {
-    return await this.vim.oldDocument.getElementParameters(this.element)
+  getBimParameters(): Promise<ElementParameter[]> {
+    return VimHelpers.getElementParameters(this.vim.document, this.element)
   }
 
   /**
