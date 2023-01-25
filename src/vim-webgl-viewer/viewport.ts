@@ -5,7 +5,7 @@
 import { SignalDispatcher } from 'ste-signals'
 import * as THREE from 'three'
 import { CSS2DRenderer } from 'three/examples/jsm/renderers/CSS2DRenderer'
-import { ViewerConfig } from './viewerSettings'
+import { Settings } from './viewerSettings'
 
 export class Viewport {
   /** HTML Canvas on which the model is rendered */
@@ -21,7 +21,7 @@ export class Viewport {
     return this._onResize.asEvent()
   }
 
-  constructor (settings: ViewerConfig) {
+  constructor (settings: Settings) {
     const [canvas, owned] = Viewport.getOrCreateCanvas(settings.canvas.id)
     this.canvas = canvas
     this._ownedCanvas = owned

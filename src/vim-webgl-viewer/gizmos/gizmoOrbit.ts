@@ -6,7 +6,7 @@ import * as THREE from 'three'
 import { MathUtils } from 'three'
 import { Renderer } from '../rendering/renderer'
 import { Camera } from '../camera'
-import { ViewerConfig } from '../viewerSettings'
+import { Settings } from '../viewerSettings'
 
 /**
  * Manages the camera target gizmo
@@ -38,7 +38,7 @@ export class CameraGizmo {
   private _active: boolean = true
   private _animation: number = 0
 
-  constructor (renderer: Renderer, camera: Camera, settings: ViewerConfig) {
+  constructor (renderer: Renderer, camera: Camera, settings: Settings) {
     this._renderer = renderer
     this._camera = camera
     this.applySettings(settings)
@@ -154,7 +154,7 @@ export class CameraGizmo {
     this._materialAlways!.color = color
   }
 
-  applySettings (settings: ViewerConfig) {
+  applySettings (settings: Settings) {
     this._active = settings.camera.gizmo.enable
     this._fov = settings.camera.fov
     this.setColor(settings.camera.gizmo.color)

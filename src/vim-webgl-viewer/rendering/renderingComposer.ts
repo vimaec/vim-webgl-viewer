@@ -15,7 +15,7 @@ import { VimMaterials } from '../../vim-loader/materials/materials'
 import { OutlinePass } from './outlinePass'
 import { MergePass } from './mergePass'
 import { TransferPass } from './transferPass'
-import { Camera } from '../camera'
+import { Camera } from '../camera/camera'
 
 /*
   *---------------------*
