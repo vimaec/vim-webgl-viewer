@@ -7,7 +7,7 @@ import { Object } from '../vim-loader/object'
 import { Mesh } from '../vim-loader/mesh'
 import { RenderScene } from './rendering/renderScene'
 import { Viewport } from './viewport'
-import { Camera } from './camera'
+import { Camera } from './camera/camera'
 import { Renderer } from './rendering/renderer'
 
 /**

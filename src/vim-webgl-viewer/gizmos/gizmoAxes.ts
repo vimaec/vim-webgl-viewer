@@ -3,7 +3,7 @@
  */
 
 import * as THREE from 'three'
-import { ICamera } from '../camera'
+import { ICamera } from '../camera/cameraInterface'
 
 // TODO make things private cleanup api.
 export class Axis {

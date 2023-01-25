@@ -1,142 +1,16 @@
-/**
- @module viw-webgl-viewer
-*/
-
 import * as THREE from 'three'
-import { CameraGizmo } from './gizmos/gizmoOrbit'
-import { Viewport } from './viewport'
-import { ViewerConfig } from './viewerSettings'
-import { Object } from '../vim'
-import { RenderScene } from './rendering/renderScene'
+
+import { Viewport } from '../viewport'
+import { Settings } from '../viewerSettings'
+import { Object } from '../../vim'
+import { RenderScene } from '../rendering/renderScene'
 import { Quaternion } from 'three'
 import { clamp } from 'three/src/math/MathUtils'
 import { ISignal, SignalDispatcher } from 'ste-signals'
-
-export const DIRECTIONS = {
-  forward: new THREE.Vector3(0, 0, -1),
-  back: new THREE.Vector3(0, 0, 1),
-  left: new THREE.Vector3(-1, 0, 0),
-  right: new THREE.Vector3(1, 0, 0),
-  up: new THREE.Vector3(0, 1, 0),
-  down: new THREE.Vector3(0, -1, 0)
-}
-
-/**
- * None : Frame from current position
- * Center : Cam.y = Object.y
- * number: Angle between the xz plane and the camera
- */
-export type FrameAngle = 'none' | 'center' | number
-
-export interface ICamera {
-  /**
-   * Three.js camera
-   */
-  camera: THREE.Camera
-  /**
-   * Multiplier for camera movements.
-   */
-  speed: number
-
-  /**
-   * True: Camera orbit around target mode.
-   * False: First person free camera mode.
-   */
-  orbitMode: boolean
-
-  /**
-   * True: Orthographic camera.
-   * False: Perspective camera.
-   */
-  orthographic: boolean
-
-  /**
-   * Current local velocity
-   */
-  localVelocity: THREE.Vector3
-
-  /**
-   * Moves the camera along all three axes.
-   */
-  move3(vector: THREE.Vector3): void
-
-  /**
-   * Moves the camera along two axes.
-   */
-  move2(vector: THREE.Vector2, axes: 'XY' | 'XZ'): void
-
-  /**
-   * Moves the camera along one axis.
-   */
-  move1(amount: number, axis: 'X' | 'Y' | 'Z'): void
-
-  /**
-   * Rotates the camera around the X or Y axis or both
-   * @param vector where coordinates in range [-1, 1] for rotations of [-180, 180] degrees
-   */
-  rotate(vector: THREE.Vector2, lerp?: boolean): void
-
-  /**
-   * Moves the camera closer or farther away from orbit target.
-   * @param amount movement size.
-   */
-  zoom(amount: number, lerp?: boolean): void
-
-  /**
-   * Moves the camera around the target so that it looks down given forward vector
-   * @param forward direction vector
-   */
-  orbit(forward: THREE.Vector3, lerp?: boolean): void
-
-  /**
-   * Sets orbit mode target and moves camera accordingly
-   */
-  target(target: Object | THREE.Vector3, lerp?: boolean): void
-
-  /**
-   * Moves and rotates the camera so that target is well framed.
-   * @param target Vim or Three object to frame, all to frame the whole scene, undefined has no effect.
-   * @param angle None will not force any angle, Center will force camera.y = object.y, providing an angle will move the camera so it is looking down at object by the provided angle.
-   * @param lerp Wether to lerp the camera over time or not.
-   */
-  frame(
-    target: Object | THREE.Sphere | THREE.Box3 | 'all' | undefined,
-    angle?: FrameAngle,
-    lerp?: boolean
-  ): void
-
-  /**
-   * Restore camera to initial values.
-   */
-  reset(): void
-
-  /**
-   * Returns the world height of the camera frustrum at given point
-   */
-  frustrumSizeAt(point: THREE.Vector3): THREE.Vector2
-
-  /**
-   * World forward of the camera.
-   */
-  get forward(): THREE.Vector3
-
-  /**
-   * Returns the position of the orbit center.
-   */
-  get orbitPosition(): THREE.Vector3
-
-  /**
-   * Signal dispatched when camera settings are updated.
-   */
-  get onValueChanged(): ISignal
-
-  /**
-   * Signal dispatched when camera is moved.
-   */
-  get onMoved(): ISignal
-}
-
-type Lerp = 'None' | 'Position' | 'Rotation' | 'Both'
+import { CameraGizmo } from '../gizmos/gizmoOrbit'
+import { ICamera, FrameAngle } from './cameraInterface'
+import { PerspectiveWrapper } from './perspective'
+import { OrthographicWrapper } from './orthographic'
 
 /**
  * Manages viewer camera movement and position
@@ -144,8 +18,10 @@ type Lerp = 'None' | 'Position' | 'Rotation' | 'Both'
 export class Camera implements ICamera {
   camera: THREE.PerspectiveCamera | THREE.OrthographicCamera
   gizmo: CameraGizmo | undefined
-  cameraPerspective: THREE.PerspectiveCamera
-  cameraOrthographic: THREE.OrthographicCamera | undefined
+
+  camPerspective: PerspectiveWrapper
+  camOrthographic: OrthographicWrapper
+
   private _viewport: Viewport
   private _scene: RenderScene
 
@@ -184,7 +60,7 @@ export class Camera implements ICamera {
   }
 
   // Settings
-  private _minOrbitalDistance: number = 0.05
+  private _minOrbitDistance: number = 0.05
   private _vimReferenceSize: number = 1
   private _sceneSizeMultiplier: number = 1
   private _velocityBlendFactor: number = 0.0001
@@ -194,19 +70,27 @@ export class Camera implements ICamera {
   private _zoomSpeed: number = 0.25
   private _firstPersonSpeed = 10
   private _minModelScrenSize = 0.05
-  private _minOrthoSize = 1
 
-  private _lerpSpd = 1
-  private _posMaxSpd = 5
+  private _posSpeed = 1
+  private _posMinSpeed = 0.001
+  private _posMaxSpeed = 5
+
   private _decelTime = 0.1
   private _accelTime = 0.05
-  private _posMinSpd = 0.001
-  private _rotMaxSpd = Math.PI / 2
-  private _rotSpd = 1
 
-  constructor (scene: RenderScene, viewport: Viewport, settings: ViewerConfig) {
-    this.cameraPerspective = new THREE.PerspectiveCamera()
-    this.camera = this.cameraPerspective
+  private _rotMaxSpeed = Math.PI / 2
+  private _rotSpeed = 1
+
+  constructor (scene: RenderScene, viewport: Viewport, settings: Settings) {
+    this.camPerspective = new PerspectiveWrapper(
+      new THREE.PerspectiveCamera(),
+      viewport
+    )
+    this.camOrthographic = new OrthographicWrapper(
+      new THREE.OrthographicCamera(-1, 1, 1, -1, -1, 1),
+      viewport
+    )
+    this.camera = this.camPerspective.camera
     this._scene = scene
     this._viewport = viewport
     this._viewport.onResize.subscribe(() => {
@@ -217,17 +101,9 @@ export class Camera implements ICamera {
   }
 
   frustrumSizeAt (point: THREE.Vector3) {
-    if (this.orthographic && this.cameraOrthographic) {
-      return new THREE.Vector2(
-        Math.abs(this.cameraOrthographic.right - this.cameraOrthographic.left),
-        Math.abs(this.cameraOrthographic.top - this.cameraOrthographic.bottom)
-      )
-    } else {
-      const dist = this.camera.position.distanceTo(point)
-      const size =
-        dist * Math.tan((this.cameraPerspective.fov / 2) * (Math.PI / 180))
-      return new THREE.Vector2(size, size)
-    }
+    return this.orthographic
+      ? this.camOrthographic.frustrumSizeAt(point)
+      : this.camPerspective.frustrumSizeAt(point)
   }
 
   dispose () {
@@ -341,18 +217,13 @@ export class Camera implements ICamera {
     }
   }
 
-  applySettings (settings: ViewerConfig) {
+  applySettings (settings: Settings) {
     // Mode
     this.orbitMode = settings.camera.controls.orbit
 
     // Camera
-    if (this.camera instanceof THREE.PerspectiveCamera) {
-      this.camera.fov = settings.camera.fov
-      this.camera.zoom = settings.camera.zoom
-      this.camera.near = settings.camera.near
-      this.camera.far = settings.camera.far
-      this.camera.updateProjectionMatrix()
-    }
+    this.camPerspective.applySettings(settings)
+    this.camOrthographic.applySettings(settings)
 
     // Controls
     this._moveSpeed = settings.camera.controls.moveSpeed
@@ -399,9 +270,9 @@ export class Camera implements ICamera {
       const factor = amount < 0 ? this._zoomSpeed : reverse
       const dist = this.targetOrbitDistance
       let offset = dist * factor
-      offset = Math.max(this._minOrbitalDistance, offset)
+      offset = Math.max(this._minOrbitDistance, offset)
       let targetDist = dist + offset * amount
-      targetDist = Math.max(this._minOrbitalDistance, targetDist)
+      targetDist = Math.max(this._minOrbitDistance, targetDist)
 
       // Distance is capped such that model is at least a certain screen size.
       const rad = (this.camera.fov / 2) * (Math.PI / 180)
@@ -417,10 +288,6 @@ export class Camera implements ICamera {
       target.add(this._orbitTarget)
       this._targetPosition = target
       this._lerpPosition = lerp
-      console.log(
-        'ZOOM DISTANCE : ' +
-          this.camera.position.distanceTo(this._targetPosition)
-      )
     } else {
       const multiplier = this._zoomSpeed * this.getBaseMultiplier()
       const padX = (this.camera.right - this.camera.left) * amount * multiplier
@@ -433,7 +300,7 @@ export class Camera implements ICamera {
       // View box size is capped such that model is at least a certain screen size.
       // And tha box is of size at least min orbit distance
       if (sphere.radius / radius < this._minModelScrenSize) return
-      if (radius * 2 < this._minOrbitalDistance) return
+      if (radius * 2 < this._minOrbitDistance) return
 
       this.camera.left -= padX
       this.camera.right += padX
@@ -448,17 +315,10 @@ export class Camera implements ICamera {
    * Moves the camera along all three axes.
    */
   move3 (vector: THREE.Vector3) {
-    const v = new THREE.Vector3()
-    if (this.orthographic && this.cameraOrthographic) {
-      const aspect = this._viewport.getAspectRatio()
-      const dx = this.cameraOrthographic.right - this.cameraOrthographic.left
-      const dy = this.cameraOrthographic.top - this.cameraOrthographic.bottom
-      v.set(-vector.x * dx * aspect, vector.y * dy, 0)
-    } else {
-      v.copy(vector)
-      v.applyQuaternion(this.camera.quaternion)
-      v.multiplyScalar(this.getMoveMultiplier() * this._moveSpeed)
-    }
+    const spd = this.getMoveMultiplier() * this._moveSpeed
+    const v = this.orthographic
+      ? this.camOrthographic.move3(vector, spd)
+      : this.camPerspective.move3(vector, spd)
 
     this._orbitTarget.add(v)
     this._targetPosition.add(v)
@@ -581,24 +441,8 @@ export class Camera implements ICamera {
   }
 
   private updateProjection (target: THREE.Sphere | THREE.Box3) {
-    if (target instanceof THREE.Box3) {
-      target = target.getBoundingSphere(new THREE.Sphere())
-    }
-    const aspect = this._viewport.getAspectRatio()
-    if (this.camera instanceof THREE.PerspectiveCamera) {
-      this.camera.aspect = aspect
-    } else {
-      if (target) {
-        this.camera.left = -target.radius * aspect
-        this.camera.right = target.radius * aspect
-        this.camera.top = target.radius
-        this.camera.bottom = -target.radius
-      }
-
-      this.camera.near = -this.cameraPerspective.far
-      this.camera.far = this.cameraPerspective.far
-    }
-    this.camera.updateProjectionMatrix()
+    this.camPerspective.updateProjection(target)
+    this.camOrthographic.updateProjection(target)
   }
 
   get orthographic () {
@@ -608,12 +452,9 @@ export class Camera implements ICamera {
   set orthographic (value: boolean) {
     if (value === this.orthographic) return
 
-    if (value && !this.cameraOrthographic) {
-      // prettier-ignore
-      this.cameraOrthographic = new THREE.OrthographicCamera(-1, 1, 1, -1, -1, 1)
-    }
-
-    const next = value ? this.cameraOrthographic! : this.cameraPerspective
+    const next = value
+      ? this.camOrthographic.camera!
+      : this.camPerspective.camera
     next.position.copy(this.camera.position)
     next.rotation.copy(this.camera.rotation)
     this.camera = next
@@ -738,51 +579,27 @@ export class Camera implements ICamera {
     this._targetPosition.copy(endPosition)
     this._orbitTarget.add(deltaPosition)
 
-    if (this.orthographic && this.cameraOrthographic) {
-      const aspect = this._viewport.getAspectRatio()
-      const d = -deltaPosition.dot(this.forward)
-
-      const dx =
-        this.cameraOrthographic.right -
-        this.cameraOrthographic.left +
-        2 * d * aspect
-      const dy =
-        this.cameraOrthographic.top -
-        this.cameraOrthographic.bottom +
-        2 * d * aspect
-      const radius = Math.min(dx, dy)
-      if (radius < this._minOrthoSize) return
-
-      this.cameraOrthographic.left -= d * aspect
-      this.cameraOrthographic.right += d * aspect
-      this.cameraOrthographic.top += d
-      this.cameraOrthographic.bottom -= d
-      this.cameraOrthographic.updateProjectionMatrix()
-      this.gizmo?.show()
-    }
+    this.camOrthographic.applyVelocity(deltaPosition)
   }
 
   private applyPositionLerp (deltaTime: number) {
     const dist = this.camera.position.distanceTo(this._targetPosition)
 
-    if (this._lerpSpd * this._decelTime * this._sceneSizeMultiplier > dist) {
-      console.log('position brake')
-      const spd = this._lerpSpd * (1 - deltaTime / this._decelTime)
-      this._lerpSpd = Math.max(spd, this._posMinSpd)
-    } else if (this._lerpSpd < this._posMaxSpd) {
-      console.log('position accel')
-      this._lerpSpd =
-        this._lerpSpd + this._posMaxSpd * (deltaTime / this._accelTime)
-      this._lerpSpd = Math.min(this._lerpSpd, this._posMaxSpd)
+    if (this._posSpeed * this._decelTime * this._sceneSizeMultiplier > dist) {
+      const spd = this._posSpeed * (1 - deltaTime / this._decelTime)
+      this._posSpeed = Math.max(spd, this._posMinSpeed)
+    } else if (this._posSpeed < this._posMaxSpeed) {
+      this._posSpeed =
+        this._posSpeed + this._posMaxSpeed * (deltaTime / this._accelTime)
+      this._posSpeed = Math.min(this._posSpeed, this._posMaxSpeed)
     }
-    console.log(this._lerpSpd)
 
     const direction = this._targetPosition
       .clone()
       .sub(this.camera.position)
       .normalize()
     const delta = direction.multiplyScalar(
-      this._lerpSpd * deltaTime * this._sceneSizeMultiplier
+      this._posSpeed * deltaTime * this._sceneSizeMultiplier
     )
 
     const orbitDist = this.orbitDistance
@@ -796,9 +613,8 @@ export class Camera implements ICamera {
       this.camera.position.copy(this._orbitTarget).add(offset)
     }
 
-    if (this._lerpSpd > dist) {
-      console.log('Position Done')
-      this._lerpSpd = 0.1
+    if (this._posSpeed > dist) {
+      this._posSpeed = 0.1
       this._lerpPosition = false
       this._lerpOrbit = false
     }
@@ -812,23 +628,20 @@ export class Camera implements ICamera {
       .add(this.forward.multiplyScalar(this.orbitDistance))
     const angle = a.angleTo(b)
 
-    if (this._rotSpd * this._decelTime > angle) {
-      console.log('rot brake')
-      const spd = this._rotSpd * (1 - deltaTime / this._decelTime)
-      this._rotSpd = Math.max(spd, this._posMinSpd)
-    } else if (this._rotSpd < this._rotMaxSpd) {
-      console.log('rot accel')
-      const spd = this._rotSpd * (1 + deltaTime / this._accelTime)
-      this._rotSpd = Math.min(spd, this._rotMaxSpd)
+    if (this._rotSpeed * this._decelTime > angle) {
+      const spd = this._rotSpeed * (1 - deltaTime / this._decelTime)
+      this._rotSpeed = Math.max(spd, this._posMinSpeed)
+    } else if (this._rotSpeed < this._rotMaxSpeed) {
+      const spd = this._rotSpeed * (1 + deltaTime / this._accelTime)
+      this._rotSpeed = Math.min(spd, this._rotMaxSpeed)
     }
 
-    const delta = deltaTime * this._rotSpd
+    const delta = deltaTime * this._rotSpeed
     const p = Math.min(delta / angle, 1.0)
 
     const look = current.lerp(this._orbitTarget, p)
     if (p >= 1) {
       this._lerpRotation = false
-      console.log('rotation done')
     }
     this.lookAt(look)
   }

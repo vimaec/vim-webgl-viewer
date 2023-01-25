@@ -3,7 +3,7 @@
  */
 
 import * as THREE from 'three'
-import { Vim, VimMaterials, ViewerConfig } from '../vim'
+import { Vim, VimMaterials, Settings } from '../vim'
 import { Object } from '../vim-loader/object'
 import { SignalDispatcher } from 'ste-signals'
 import { Renderer } from './rendering/renderer'

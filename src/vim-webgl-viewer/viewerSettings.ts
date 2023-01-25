@@ -23,7 +23,7 @@ export type RecursivePartial<T> = {
 }
 
 /** Viewer related options independant from vims */
-export type ViewerConfig = {
+export type Settings = {
   /**
    * Webgl canvas related options
    */
@@ -141,9 +141,9 @@ export type ViewerConfig = {
   }
 }
 
-export type ViewerOptions = RecursivePartial<ViewerConfig>
+export type PartialSettings = RecursivePartial<Settings>
 
-const defaultConfig: ViewerConfig = {
+const defaultConfig: Settings = {
   canvas: {
     id: undefined,
     resizeDelay: 200
@@ -220,8 +220,8 @@ const defaultConfig: ViewerConfig = {
   }
 }
 
-export function getConfig (options?: ViewerOptions) {
+export function getConfig (options?: PartialSettings) {
   return options
-    ? (deepmerge(defaultConfig, options, undefined) as ViewerConfig)
-    : (defaultConfig as ViewerConfig)
+    ? (deepmerge(defaultConfig, options, undefined) as Settings)
+    : (defaultConfig as Settings)
 }

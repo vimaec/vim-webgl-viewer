@@ -5,8 +5,9 @@
 import * as THREE from 'three'
 
 // internal
-import { ViewerConfig, getConfig, ViewerOptions } from './viewerSettings'
-import { Camera, ICamera } from './camera'
+import { Settings, getConfig, PartialSettings } from './viewerSettings'
+import { Camera } from './camera/camera'
+import { ICamera } from './camera/cameraInterface'
 import { Input } from './inputs/input'
 import { Selection } from './selection'
 import { Environment, IEnvironment } from './environment'
@@ -37,7 +38,7 @@ export class Viewer {
   /**
    * Current viewer settings.
    */
-  config: ViewerConfig
+  config: Settings
 
   /**
    * Interface to manage objects to be rendered.
@@ -129,7 +130,7 @@ export class Viewer {
     return this._gizmoAxes.canvas
   }
 
-  constructor (options?: ViewerOptions) {
+  constructor (options?: PartialSettings) {
     this.config = getConfig(options)
 
     const materials = new VimMaterials()
