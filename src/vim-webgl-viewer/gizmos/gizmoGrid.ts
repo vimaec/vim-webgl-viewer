@@ -74,39 +74,11 @@ export class Grid {
     return g
   }
 
-  isCell (cell: THREE.Vector3) {
-    if (!cell) return false
-    if (
-      !Number.isInteger(cell.x) ||
-      !Number.isInteger(cell.y) ||
-      !Number.isInteger(cell.z)
-    ) {
-      return false
-    }
-    if (cell.x < 0 || cell.y < 0 || cell.z < 0) {
-      return false
-    }
-    if (
-      cell.x >= this.size.x ||
-      cell.y >= this.size.y ||
-      cell.z >= this.size.z
-    ) {
-      return false
-    }
-    return true
-  }
-
-  isIndex (index: number) {
-    return !index || index < 0 || index >= this.cellCount
-  }
-
-  getIndex (cell: THREE.Vector3): number | undefined {
-    if (!this.isCell(cell)) return
-    return cell.x * this.size.y * this.size.z + cell.y * this.size.z + cell.z
+  getIndex (x: number, y: number, z: number) {
+    return x * this.size.y * this.size.z + y * this.size.z + z
   }
 
   getCell (index: number) {
-    if (!this.isIndex(index)) return
     let r: number = index
     const x = Math.trunc(r / (this.size.y * this.size.z))
     r = r % (this.size.y * this.size.z)
@@ -123,7 +95,6 @@ export class Grid {
 
   getBox (cell: number | THREE.Vector3) {
     const c = typeof cell === 'number' ? this.getCell(cell) : cell
-    if (!this.isCell(c)) return
     const min = this.box.min.clone().add(c.multiply(this._scale))
     const max = min.clone().add(this._scale)
     return new THREE.Box3(min, max)
@@ -146,14 +117,14 @@ export class Grid {
   }
 
   getOpacity (cell: number | THREE.Vector3) {
-    const index = typeof cell === 'number' ? cell : this.getIndex(cell)
-    if (!this.isIndex(index)) return
+    const index =
+      typeof cell === 'number' ? cell : this.getIndex(cell.x, cell.y, cell.z)
     return this._alpha.get(index)
   }
 
   setOpacity (cell: number | THREE.Vector3, opacity: number) {
-    const index = typeof cell === 'number' ? cell : this.getIndex(cell)
-    if (!this.isIndex(index)) return
+    const index =
+      typeof cell === 'number' ? cell : this.getIndex(cell.x, cell.y, cell.z)
     const colors = this.mesh.geometry.getAttribute('color')
 
     this._alpha.set(index, opacity)
@@ -165,8 +136,8 @@ export class Grid {
   }
 
   setColor (cell: number | THREE.Vector3, color: THREE.Color) {
-    const index = typeof cell === 'number' ? cell : this.getIndex(cell)
-    if (!this.isIndex(index)) return
+    const index =
+      typeof cell === 'number' ? cell : this.getIndex(cell.x, cell.y, cell.z)
     this._colors.set(index, color)
     const colors = this.mesh.geometry.getAttribute('color')
     const c = index * 8
@@ -177,8 +148,8 @@ export class Grid {
   }
 
   getColor (cell: number | THREE.Vector3) {
-    const index = typeof cell === 'number' ? cell : this.getIndex(cell)
-    if (!this.isIndex(index)) return
+    const index =
+      typeof cell === 'number' ? cell : this.getIndex(cell.x, cell.y, cell.z)
     return this._colors.get(index)
   }
 
@@ -190,12 +161,11 @@ export class Grid {
     const vertices = new Float32Array(this.cellCount * 24)
     const indices = new Int32Array(this.cellCount * 36)
 
-    const cell = new THREE.Vector3()
     for (let x = 0; x < this.size.x; x++) {
       for (let y = 0; y < this.size.y; y++) {
         for (let z = 0; z < this.size.z; z++) {
-          const index = this.getIndex(cell.set(x, y, z))
-          const vertex = index * 8
+          const cell = this.getIndex(x, y, z)
+          const vertex = cell * 8
           const v = vertex * 3
           vertices[v] = (0 + x) * this._scale.x + this.box.min.x
           vertices[v + 1] = (0 + y) * this._scale.y + this.box.min.y
@@ -229,7 +199,7 @@ export class Grid {
           vertices[v + 22] = (1 + y) * this._scale.y + this.box.min.y
           vertices[v + 23] = (1 + z) * this._scale.z + this.box.min.z
 
-          const i = index * 36
+          const i = cell * 36
           // 1
           indices[i] = vertex
           indices[i + 1] = vertex + 1
