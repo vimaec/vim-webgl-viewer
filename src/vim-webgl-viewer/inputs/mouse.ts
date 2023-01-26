@@ -219,7 +219,7 @@ export class MouseHandler extends InputHandler {
     if (event.ctrlKey) {
       this.camera.speed -= scrollValue
     } else {
-      this.camera.zoom(scrollValue, true)
+      this.camera.zoom(scrollValue, this.camera.defaultLerpDuration)
     }
   }
 
@@ -274,7 +274,11 @@ export class MouseHandler extends InputHandler {
     box.setFromCenterAndSize(center, size)
 
     // Frame Camera
-    this._viewer.camera.frame(box, 'none', true)
+    this._viewer.camera.frame(
+      box,
+      'none',
+      this._viewer.camera.defaultLerpDuration
+    )
   }
 
   private onDoubleClick = (event: MouseEvent) => {
