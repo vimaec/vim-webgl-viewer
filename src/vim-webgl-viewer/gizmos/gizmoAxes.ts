@@ -313,8 +313,7 @@ export class GizmoAxes {
   }
 
   update = () => {
-    this.camera.camera.updateMatrix()
-    this.invRotMat.extractRotation(this.camera.camera.matrix).invert()
+    this.invRotMat.extractRotation(this.camera.matrix).invert()
 
     for (let i = 0, length = this.axes.length; i < length; i++) {
       this.setAxisPosition(this.axes[i])

@@ -11,7 +11,7 @@ export interface ICamera {
   /**
    * Three.js camera
    */
-  camera: THREE.Camera
+  three: THREE.Camera
   /**
    * Multiplier for camera movements.
    */
@@ -33,6 +33,12 @@ export interface ICamera {
    * Current local velocity
    */
   localVelocity: THREE.Vector3
+
+  get quaternion()
+
+  get position()
+
+  get matrix()
 
   /**
    * Moves the camera along all three axes.
