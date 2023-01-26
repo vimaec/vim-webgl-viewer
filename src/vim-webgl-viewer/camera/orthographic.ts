@@ -6,10 +6,25 @@ export class OrthographicWrapper {
   camera: THREE.OrthographicCamera
   _viewport: Viewport
   _minOrthoSize: number = 1
+  _zoomSpeed: number
+  _minModelScrenSize: number
+  _minOrbitDistance: number
 
   constructor (camera: THREE.OrthographicCamera, viewport: Viewport) {
     this.camera = camera
     this._viewport = viewport
+  }
+
+  get position () {
+    return this.camera.position
+  }
+
+  get quaternion () {
+    return this.camera.quaternion
+  }
+
+  get forward () {
+    return this.camera.getWorldDirection(new THREE.Vector3())
   }
 
   applySettings (settings: Settings) {
@@ -65,5 +80,32 @@ export class OrthographicWrapper {
       Math.abs(this.camera.right - this.camera.left),
       Math.abs(this.camera.top - this.camera.bottom)
     )
+  }
+
+  zoom (
+    orbitTarget: THREE.Vector3,
+    modelSize: number,
+    currentTarget: number,
+    amount: number
+  ) {
+    const padX =
+      (this.camera.right - this.camera.left) * amount * this._zoomSpeed
+    const padY =
+      (this.camera.top - this.camera.bottom) * amount * this._zoomSpeed
+
+    const X = this.camera.right - this.camera.left + 2 * padX
+    const Y = this.camera.top - this.camera.bottom + 2 * padY
+    const radius = Math.min(X / 2, Y / 2)
+
+    // View box size is capped such that model is at least a certain screen size.
+    // And tha box is of size at least min orbit distance
+    if (modelSize / radius < this._minModelScrenSize) return
+    if (radius * 2 < this._minOrbitDistance) return
+
+    this.camera.left -= padX
+    this.camera.right += padX
+    this.camera.bottom -= padY
+    this.camera.top += padY
+    this.camera.updateProjectionMatrix()
   }
 }

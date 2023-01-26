@@ -70,7 +70,7 @@ export class RenderingComposer {
     this._materials = materials
     this._size = viewport.getSize()
 
-    this._camera = camera.camera
+    this._camera = camera.three
     this.setup()
 
     this._clock = new THREE.Clock()

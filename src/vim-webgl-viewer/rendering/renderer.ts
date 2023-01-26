@@ -113,7 +113,7 @@ export class Renderer {
     this.fitViewport()
     this._viewport.onResize.subscribe(() => this.fitViewport())
     this._camera.onValueChanged.sub(() => {
-      this._composer.camera = this._camera.camera
+      this._composer.camera = this._camera.three
       this.needsUpdate = true
     })
     this._materials.onUpdate.sub(() => (this.needsUpdate = true))
@@ -176,7 +176,7 @@ export class Renderer {
     this.skipAntialias = false
 
     if (this.textEnabled) {
-      this.textRenderer.render(this._scene.scene, this._camera.camera)
+      this.textRenderer.render(this._scene.scene, this._camera.three)
     }
 
     this._scene.clearUpdateFlags()
