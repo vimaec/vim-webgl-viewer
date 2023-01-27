@@ -97,7 +97,7 @@ export class Grid {
   }
 
   isIndex (index: number) {
-    return !index || index < 0 || index >= this.cellCount
+    return Number.isInteger(index) || index >= 0 || index < this.cellCount
   }
 
   getIndex (cell: THREE.Vector3): number | undefined {
