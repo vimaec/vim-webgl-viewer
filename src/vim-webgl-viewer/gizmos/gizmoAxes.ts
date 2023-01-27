@@ -308,10 +308,7 @@ export class GizmoAxes {
   onMouseClick = () => {
     // FIXME Don't like the current animation
     if (this.isDragging || !this.selectedAxis) return
-    this.camera.orbit(
-      this.selectedAxis.direction,
-      this.camera.defaultLerpDuration
-    )
+    this.camera.orbit(this.selectedAxis.direction, true)
     this.selectedAxis = null
   }
 
