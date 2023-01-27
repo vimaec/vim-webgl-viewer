@@ -113,8 +113,8 @@ export class Viewer {
 
   // State
   private _vims: (Vim | undefined)[] = []
-  private _disposed: boolean = false
   private _onVimLoaded = new SignalDispatcher()
+  private _updateId: number
 
   /**
    * Will be removed once gizmo axes are cleaned up to expose canvas.
@@ -181,7 +181,7 @@ export class Viewer {
    * Disposes all resources.
    */
   dispose () {
-    if (this._disposed) return
+    cancelAnimationFrame(this._updateId)
     this.selection.dispose()
     this._environment.dispose()
     this.selection.clear()
@@ -192,15 +192,11 @@ export class Viewer {
     this._vims.forEach((v) => v?.dispose())
     this.materials.dispose()
     this.gizmoRectangle.dispose()
-    this._disposed = true
   }
 
   // Calls render, and asks the framework to prepare the next frame
   private animate () {
-    // if viewer was disposed no more animation.
-    if (this._disposed) return
-
-    requestAnimationFrame(() => this.animate())
+    this._updateId = requestAnimationFrame(() => this.animate())
     // Camera
     this.renderer.needsUpdate = this._camera.update(this._clock.getDelta())
     // Rendering
