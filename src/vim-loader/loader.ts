@@ -8,7 +8,7 @@ import { BFast } from './bfast'
 import { Vim } from './vim'
 import { VimConfig } from './vimSettings'
 import { VimMaterials } from './materials/materials'
-import { MeshBuilder } from './mesh'
+import { MeshBuilder } from './meshBuilder'
 import { Scene } from './scene'
 
 /**

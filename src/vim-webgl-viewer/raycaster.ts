@@ -4,7 +4,7 @@
 
 import * as THREE from 'three'
 import { Object } from '../vim-loader/object'
-import { Vim } from '../vim-loader/vim'
+import { Mesh } from '../vim-loader/mesh'
 import { RenderScene } from './rendering/renderScene'
 import { Viewport } from './viewport'
 import { Camera } from './camera'
@@ -46,42 +46,14 @@ export class RaycastResult {
   }
 
   private getVimObjectFromHit (hit: THREE.Intersection) {
-    const vim = hit.object.userData.vim as Vim
-    if (!vim) return
+    const mesh = hit.object.userData.vim as Mesh
+    if (!mesh) return
 
-    if (hit.object.userData.merged) {
-      if (!hit.faceIndex) {
-        throw new Error('Raycast hit has no face index.')
-      }
-      const index = this.binarySearch(
-        hit.object.userData.submeshes,
-        hit.faceIndex * 3
-      )
-      const instance = hit.object.userData.instances[index]
-      return vim.getObjectFromInstance(instance)
-    } else if (hit.instanceId !== undefined) {
-      return vim.getObjectFromMesh(
-        hit.object as THREE.InstancedMesh,
-        hit.instanceId
-      )
-    }
-  }
+    const sub = mesh.merged
+      ? mesh.getSubmeshFromFace(hit.faceIndex)
+      : mesh.getSubMesh(hit.instanceId)
 
-  private binarySearch (array: number[], element: number) {
-    let m = 0
-    let n = array.length - 1
-    while (m <= n) {
-      const k = (n + m) >> 1
-      const cmp = element - array[k]
-      if (cmp > 0) {
-        m = k + 1
-      } else if (cmp < 0) {
-        n = k - 1
-      } else {
-        return k
-      }
-    }
-    return m - 1
+    return sub.object
   }
 
   // Convenience functions and mnemonics
@@ -214,7 +186,14 @@ export class InputAction {
   private _raycast: RaycastResult | undefined
 
   /**
-   * Raycast at current point. Can be computationally expensive. Lazy evaluation for performance.
+   * Returns a raycaster that can be used for custom raycast.
+   */
+  get raycaster () {
+    return this._raycaster.fromPoint2(this.position)
+  }
+
+  /**
+   * Raycast for VIM Ojbjects at current point. Can be computationally expensive. Lazy evaluation for performance.
    */
   get raycast () {
     return (

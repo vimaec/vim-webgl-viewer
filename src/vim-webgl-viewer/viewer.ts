@@ -27,7 +27,7 @@ import { BFast } from '../vim-loader/bfast'
 import { Vim } from '../vim-loader/vim'
 import { IProgressLogs, RemoteBuffer } from '../vim-loader/remoteBuffer'
 import { Renderer } from './rendering/renderer'
-import { VimMaterials } from '../vim'
+import { GizmoGrid, VimMaterials } from '../vim'
 import { SignalDispatcher } from 'ste-signals'
 
 /**
@@ -78,6 +78,11 @@ export class Viewer {
    * Interface to interact with the rectangle gizmo.
    */
   gizmoRectangle: GizmoRectangle
+
+  /**
+   * Interface to interact with the grid gizmo.
+   */
+  grid: GizmoGrid
 
   /**
    * Interface to interact with viewer materials
@@ -158,6 +163,7 @@ export class Viewer {
 
     this.sectionBox = new SectionBox(this)
     this.gizmoRectangle = new GizmoRectangle(this)
+    this.grid = new GizmoGrid(this.renderer, this.materials)
 
     this._environment = new Environment(this.config)
     this._environment.getObjects().forEach((o) => this.renderer.add(o))

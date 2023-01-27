@@ -4,7 +4,7 @@
 
 import { G3d, MeshSection } from './g3d'
 import { Transparency } from './geometry'
-import { MeshBuilder } from './mesh'
+import { MeshBuilder } from './meshBuilder'
 import { Scene } from './scene'
 
 /**

@@ -2,11 +2,14 @@
  * @module vim-loader
  */
 
-// external
+// External
 import * as THREE from 'three'
+
+// Vim
 import { Geometry } from './geometry'
 import { Vim } from './vim'
 import { ObjectAttribute, ColorAttribute } from './objectAttributes'
+import { Submesh } from './mesh'
 
 /**
  * High level api to interact with the loaded vim geometry and data.
@@ -17,7 +20,7 @@ export class Object {
   instances: number[] | undefined
   private _color: THREE.Color | undefined
   private _boundingBox: THREE.Box3 | undefined
-  private _meshes: [THREE.Mesh, number][] | undefined
+  private _meshes: Submesh[] | undefined
 
   private selectedAttribute: ObjectAttribute<boolean>
   private visibleAttribute: ObjectAttribute<boolean>
@@ -29,7 +32,7 @@ export class Object {
     vim: Vim,
     element: number,
     instances: number[] | undefined,
-    meshes: [THREE.Mesh, number][] | undefined
+    meshes: Submesh[] | undefined
   ) {
     this.vim = vim
     this.element = element
@@ -146,7 +149,7 @@ export class Object {
   /**
    * Internal - Replace this object meshes and apply color as needed.
    */
-  updateMeshes (meshes: [THREE.Mesh, number][] | undefined) {
+  updateMeshes (meshes: Submesh[] | undefined) {
     this._meshes = meshes
     if (!meshes) return
     this.vim.scene.updated = true
@@ -197,8 +200,8 @@ export class Object {
 
     let box: THREE.Box3 | undefined
     this._meshes.forEach((m) => {
-      const [mesh, index] = m
-      const b = mesh.userData.boxes[index]
+      const sub = m
+      const b = sub.boundingBox
       box = box ? box.union(b) : b.clone()
     })
     if (box) {
