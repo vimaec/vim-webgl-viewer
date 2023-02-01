@@ -45,6 +45,8 @@ export class GizmoGrid {
   }
 
   dispose () {
+    this._renderer.remove(this.grid.mesh)
+    this._renderer.remove(this.outline)
     this.grid?.dispose()
     this.outline?.dispose()
     this.grid = undefined
