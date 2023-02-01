@@ -286,12 +286,12 @@ export class Camera implements ICamera {
       this.targetOrbitDistance,
       amount
     )
+
     if (targetPos) {
       this._targetPosition.copy(targetPos)
       this._lerpPosition = lerp
+      this.gizmo?.show()
     }
-
-    this.gizmo?.show()
   }
 
   /**
@@ -362,6 +362,12 @@ export class Camera implements ICamera {
       this.orbit(target, lerp)
     } else {
       const offset = new THREE.Vector3(0, 0, -this.orbitDistance)
+
+      offset.applyQuaternion(rotation)
+      this._orbitTarget = this.camActive.position.clone().add(offset)
+
+      this._lerpRotation = lerp
+      /*
       if (!lerp) {
         // apply rotation directly to camera
         this.camActive.quaternion.copy(rotation)
@@ -372,6 +378,7 @@ export class Camera implements ICamera {
         this._lerpRotation = lerp
       }
       this._orbitTarget = this.camActive.position.clone().add(offset)
+      */
     }
   }
 
@@ -422,8 +429,7 @@ export class Camera implements ICamera {
   }
 
   private updateProjection (target: THREE.Sphere | THREE.Box3) {
-    this.camPerspective.updateProjection(target)
-    this.camOrthographic.updateProjection(target)
+    this.camActive.updateProjection(target)
   }
 
   get orthographic () {
