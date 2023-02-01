@@ -187,6 +187,7 @@ export class Renderer {
    */
   add (target: Scene | THREE.Object3D) {
     this._scene.add(target)
+    this._needsUpdate = true
   }
 
   /**
@@ -194,6 +195,7 @@ export class Renderer {
    */
   remove (target: Scene | THREE.Object3D) {
     this._scene.remove(target)
+    this._needsUpdate = true
   }
 
   /**
@@ -201,6 +203,7 @@ export class Renderer {
    */
   clear () {
     this._scene.clear()
+    this._needsUpdate = true
   }
 
   /** Set the target sample count on the rendering target. Higher number will increase quality. */
