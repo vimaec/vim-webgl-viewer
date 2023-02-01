@@ -45,12 +45,16 @@ export class GizmoGrid {
   }
 
   dispose () {
-    this._renderer.remove(this.grid.mesh)
-    this._renderer.remove(this.outline)
-    this.grid?.dispose()
-    this.outline?.dispose()
-    this.grid = undefined
-    this.outline = undefined
+    if (this.grid) {
+      this._renderer.remove(this.grid.mesh)
+      this.grid.dispose()
+      this.grid = undefined
+    }
+    if (this.outline) {
+      this._renderer.remove(this.outline)
+      this.outline?.dispose()
+      this.outline = undefined
+    }
   }
 }
 
