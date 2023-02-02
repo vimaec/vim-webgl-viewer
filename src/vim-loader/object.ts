@@ -6,9 +6,8 @@
 import * as THREE from 'three'
 import { Geometry } from './geometry'
 import { Vim } from './vim'
-import { VimDocument, IElement } from './../../node_modules/vim-ts/src/objectModel'
+import { VimDocument, IElement, VimHelpers, ElementParameter } from 'vim-format'
 import { ObjectAttribute, ColorAttribute } from './objectAttributes'
-import { VimHelpers, ElementParameter } from './../../node_modules/vim-ts/src/vimHelpers'
 
 /**
  * High level api to interact with the loaded vim geometry and data.

@@ -3,14 +3,12 @@
  */
 
 import { SceneBuilder } from './sceneBuilder'
-import { BFast } from './../../node_modules/vim-ts/src/bfast'
+import { BFast, G3d, VimDocument } from 'vim-format'
 import { Vim } from './vim'
 import { VimConfig } from './vimSettings'
 import { VimMaterials } from './materials/materials'
 import { MeshBuilder } from './mesh'
 import { Scene } from './scene'
-import { G3d } from './../../node_modules/vim-ts/src/g3d'
-import { VimDocument } from './../../node_modules/vim-ts/src/objectModel'
 import { ElementMapping } from './elementMapping'
 
 /**

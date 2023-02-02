@@ -3,11 +3,10 @@
  */
 
 import * as THREE from 'three'
-import { VimDocument } from './../../node_modules/vim-ts/src/objectModel'
+import { VimDocument, G3d } from 'vim-format'
 import { Scene } from './scene'
 import { VimConfig } from './vimSettings'
 import { Object } from './object'
-import { G3d } from './../../node_modules/vim-ts/src/g3d'
 import { ElementMapping } from './elementMapping'
 
 /**
