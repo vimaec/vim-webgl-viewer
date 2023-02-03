@@ -78,6 +78,7 @@ export class PerspectiveWrapper {
     const target = new THREE.Vector3(0, 0, targetDist)
     target.applyQuaternion(this.camera.quaternion)
     target.add(orbitTarget)
+    console.assert(Number.isFinite(target.x))
     return target
   }
 }

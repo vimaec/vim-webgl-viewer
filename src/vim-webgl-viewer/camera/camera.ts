@@ -87,8 +87,12 @@ export class Camera implements ICamera {
       this.updateProjection(this._scene.getBoundingBox())
     })
 
-    this.positionInterpolator = new Interpolator(0.0001, 5, 0.1, 0.05)
-    this.rotationInterpolator = new Interpolator(0.0001, Math.PI / 2, 0.1, 0.05)
+    this.positionInterpolator = new Interpolator(5, 25, 25)
+    this.rotationInterpolator = new Interpolator(
+      (5 * Math.PI) / 2,
+      (5 * Math.PI) / 2,
+      (5 * Math.PI) / 2
+    )
 
     this.applySettings(settings)
     this.reset()
@@ -255,7 +259,9 @@ export class Camera implements ICamera {
     this._sceneSizeMultiplier = sphere
       ? sphere.radius / this._vimReferenceSize
       : 1
-    this.positionInterpolator.multiplier = this._sceneSizeMultiplier
+    this.positionInterpolator.max = this._sceneSizeMultiplier * 5
+    this.positionInterpolator.accel = this.positionInterpolator.max
+    this.positionInterpolator.decel = this.positionInterpolator.max
   }
 
   get orbitDistance () {
@@ -516,6 +522,7 @@ export class Camera implements ICamera {
   }
 
   private applyPositionLerp (deltaTime: number) {
+    deltaTime = Math.min(deltaTime, 0.04)
     const dist = this.camActive.position.distanceTo(this._targetPosition)
     const spd = this.positionInterpolator.interpolate(dist, deltaTime)
 
@@ -536,7 +543,7 @@ export class Camera implements ICamera {
         .multiplyScalar(orbitDist)
       this.camActive.position.copy(this._orbitTarget).add(offset)
     }
-    if (spd > dist) {
+    if (spd < 1 * deltaTime) {
       this.positionInterpolator.reset()
       this._lerpPosition = false
       this._lerpOrbit = false
@@ -544,58 +551,52 @@ export class Camera implements ICamera {
   }
 
   private applyRotationLerp (deltaTime: number) {
+    deltaTime = Math.min(deltaTime, 0.04)
     const a = this.camActive.forward
     const b = this._orbitTarget.clone().sub(this.camActive.position)
     const current = this.camActive.position
       .clone()
       .add(this.camActive.forward.multiplyScalar(this.orbitDistance))
     const angle = a.angleTo(b)
+
     const delta = this.rotationInterpolator.interpolate(angle, deltaTime)
-    const p = Math.min(delta / angle, 1.0)
+    const p = angle > 0 ? Math.min(delta / angle, 1.0) : 1.0
 
     const look = current.lerp(this._orbitTarget, p)
     if (p >= 1) {
       this._lerpRotation = false
+    } else {
+      this.lookAt(look)
     }
-    this.lookAt(look)
   }
 }
 
 class Interpolator {
-  multiplier: number = 1
-  spd: number = 1
-  min: number
+  spd: number = 0
   max: number
-  accelTime: number
-  decelTime: number
+  accel: number
+  decel: number
 
-  constructor (min: number, max: number, accelTime: number, decelTime: number) {
-    this.min = min
+  constructor (max: number, accel: number, decel: number) {
     this.max = max
-    this.accelTime = accelTime
-    this.decelTime = decelTime
+    this.accel = accel
+    this.decel = decel
   }
 
   interpolate (dist: number, deltaTime: number) {
-    if (this.spd * this.decelTime * this.multiplier > dist) {
-      // deceleration
-      const spd = this.spd * (1 - deltaTime / this.decelTime)
-      this.spd = Math.max(spd, this.min)
-      console.log('decel')
-    } else if (this.spd < this.max) {
+    const d = (this.spd * this.spd) / (2 * this.decel)
+    if (d > dist) {
+      // decel
+      this.spd = Math.sqrt(2 * dist * this.decel)
+    } else {
       // acceleration
-      this.spd = this.spd + this.max * (deltaTime / this.accelTime)
+      this.spd = this.spd + this.accel * deltaTime
       this.spd = Math.min(this.spd, this.max)
-      console.log('accel')
     }
-    console.log('d : ' + deltaTime)
-    console.log(this.spd)
-    console.log(this.multiplier)
-    return this.spd * deltaTime * this.multiplier
+    return Math.min(this.spd * deltaTime, dist)
   }
 
   reset () {
-    this.spd = this.min
-    console.log('reset')
+    this.spd = 0
   }
 }
