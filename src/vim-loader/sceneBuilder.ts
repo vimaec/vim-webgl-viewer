@@ -4,7 +4,7 @@
 
 import { G3d, MeshSection } from 'vim-format'
 import { Transparency } from './geometry'
-import { MeshBuilder } from './mesh'
+import { MeshBuilder } from './meshBuilder'
 import { Scene } from './scene'
 
 /**

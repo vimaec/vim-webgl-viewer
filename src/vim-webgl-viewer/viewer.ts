@@ -26,7 +26,7 @@ import { Object } from '../vim-loader/object'
 import { BFast, IProgressLogs, RemoteBuffer } from 'vim-format'
 import { Vim } from '../vim-loader/vim'
 import { Renderer } from './rendering/renderer'
-import { VimMaterials } from '../vim'
+import { GizmoGrid, VimMaterials } from '../vim'
 import { SignalDispatcher } from 'ste-signals'
 
 /**
@@ -79,6 +79,11 @@ export class Viewer {
   gizmoRectangle: GizmoRectangle
 
   /**
+   * Interface to interact with the grid gizmo.
+   */
+  grid: GizmoGrid
+
+  /**
    * Interface to interact with viewer materials
    */
   materials: VimMaterials
@@ -112,8 +117,8 @@ export class Viewer {
 
   // State
   private _vims: (Vim | undefined)[] = []
-  private _disposed: boolean = false
   private _onVimLoaded = new SignalDispatcher()
+  private _updateId: number
 
   /**
    * Will be removed once gizmo axes are cleaned up to expose canvas.
@@ -157,6 +162,7 @@ export class Viewer {
 
     this.sectionBox = new SectionBox(this)
     this.gizmoRectangle = new GizmoRectangle(this)
+    this.grid = new GizmoGrid(this.renderer, this.materials)
 
     this._environment = new Environment(this.config)
     this._environment.getObjects().forEach((o) => this.renderer.add(o))
@@ -180,7 +186,7 @@ export class Viewer {
    * Disposes all resources.
    */
   dispose () {
-    if (this._disposed) return
+    cancelAnimationFrame(this._updateId)
     this.selection.dispose()
     this._environment.dispose()
     this.selection.clear()
@@ -191,15 +197,11 @@ export class Viewer {
     this._vims.forEach((v) => v?.dispose())
     this.materials.dispose()
     this.gizmoRectangle.dispose()
-    this._disposed = true
   }
 
   // Calls render, and asks the framework to prepare the next frame
   private animate () {
-    // if viewer was disposed no more animation.
-    if (this._disposed) return
-
-    requestAnimationFrame(() => this.animate())
+    this._updateId = requestAnimationFrame(() => this.animate())
     // Camera
     this.renderer.needsUpdate = this._camera.update(this._clock.getDelta())
     // Rendering

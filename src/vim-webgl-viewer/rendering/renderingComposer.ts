@@ -236,6 +236,7 @@ export class RenderingComposer {
     this._outlineTarget.dispose()
     this._outlinePass.dispose()
     this._ssaaRenderPass.dispose()
-    this._fxaaPass.dispose()
+    // Not defined in THREE 0.143.0
+    // this._fxaaPass.dispose()
   }
 }

@@ -7,7 +7,7 @@ import { BFast, G3d, VimDocument } from 'vim-format'
 import { Vim } from './vim'
 import { VimConfig } from './vimSettings'
 import { VimMaterials } from './materials/materials'
-import { MeshBuilder } from './mesh'
+import { MeshBuilder } from './meshBuilder'
 import { Scene } from './scene'
 import { ElementMapping } from './elementMapping'
 

@@ -10,6 +10,7 @@ import { OutlineMaterial } from './outlineMaterial'
 import { ViewerConfig } from '../../vim-webgl-viewer/viewerSettings'
 import { createMergeMaterial, MergeMaterial } from './mergeMaterial'
 import { SignalDispatcher } from 'ste-signals'
+import { createGridMaterial } from './gridMaterial'
 
 /**
  * Defines the materials to be used by the vim loader and allows for material injection.
@@ -45,6 +46,11 @@ export class VimMaterials {
    */
   merge: MergeMaterial
 
+  /**
+   * Material used for grid gizmo.
+   */
+  grid: THREE.ShaderMaterial
+
   private _clippingPlanes: THREE.Plane[] | undefined
   private _sectionStrokeWitdh: number = 0.01
   private _sectionStrokeFallof: number = 0.75
@@ -60,7 +66,8 @@ export class VimMaterials {
     isolation?: THREE.Material,
     mask?: THREE.ShaderMaterial,
     outline?: OutlineMaterial,
-    merge?: MergeMaterial
+    merge?: MergeMaterial,
+    grid?: THREE.ShaderMaterial
   ) {
     this.opaque = opaque ?? new StandardMaterial(createOpaque())
     this.transparent = transparent ?? new StandardMaterial(createTransparent())
@@ -69,6 +76,7 @@ export class VimMaterials {
     this.mask = mask ?? createMaskMaterial()
     this.outline = outline ?? new OutlineMaterial()
     this.merge = merge ?? new MergeMaterial()
+    this.grid = grid ?? createGridMaterial()
   }
 
   /** Update material settings from config */
@@ -162,6 +170,7 @@ export class VimMaterials {
     this.wireframe.clippingPlanes = value ?? null
     this.isolation.clippingPlanes = value ?? null
     this.mask.clippingPlanes = value ?? null
+    this.grid.clippingPlanes = value ?? null
     this._onUpdate.dispatch()
   }
 

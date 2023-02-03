@@ -6,158 +6,224 @@ import * as THREE from 'three'
 import { G3d, MeshSection } from 'vim-format'
 import { Geometry, Transparency } from './geometry'
 import { VimMaterials } from './materials/materials'
+import { Vim } from './vim'
 
 /**
- * Builds meshes from the g3d and BufferGeometry
- * Allows to reuse the same material for all new built meshes
+ * Wrapper around THREE.Mesh
+ * Keeps track of what VIM instances are part of this mesh.
+ * Is either merged on instanced.
  */
-export class MeshBuilder {
-  readonly materials: VimMaterials
-
-  constructor (materials?: VimMaterials) {
-    this.materials = materials ?? new VimMaterials()
-  }
+export class Mesh {
+  /**
+   * the wrapped THREE mesh
+   */
+  three: THREE.Mesh
 
   /**
-   * Creates Instanced Meshes from the g3d data
-   * @param transparency Specify wheter color is RBG or RGBA and whether material is opaque or transparent
-   * @param instances instance indices from the g3d for which meshes will be created.
-   *  If undefined, all multireferenced meshes will be created.
-   * @returns an array of THREE.InstancedMesh
+   * Vim file from which this mesh was created.
    */
-  createInstancedMeshes (
-    g3d: G3d,
-    transparency: Transparency.Mode,
-    instances?: number[]
-  ): THREE.InstancedMesh[] {
-    const result: (THREE.InstancedMesh | undefined)[] = []
-    const set = instances ? new Set(instances) : undefined
-
-    for (let mesh = 0; mesh < g3d.getMeshCount(); mesh++) {
-      let meshInstances = g3d.meshInstances[mesh]
-      if (!meshInstances) continue
-
-      meshInstances = set
-        ? meshInstances.filter((i) => set.has(i))
-        : meshInstances.filter((i) => (g3d.instanceFlags[i] & 1) === 0)
-
-      if (meshInstances.length <= 1) continue
-
-      const createMesh = (section: MeshSection, transparent: boolean) => {
-        const count = g3d.getMeshSubmeshCount(mesh, section)
-        if (count <= 0) return
-        const geometry = Geometry.createGeometryFromMesh(
-          g3d,
-          mesh,
-          section,
-          transparent
-        )
-        return this.createInstancedMesh(
-          geometry,
-          g3d,
-          meshInstances,
-          transparent
-        )
-      }
-
-      switch (transparency) {
-        case 'all': {
-          result.push(createMesh('opaque', false))
-          result.push(createMesh('transparent', true))
-          break
-        }
-        case 'allAsOpaque': {
-          result.push(createMesh('all', false))
-          break
-        }
-        case 'opaqueOnly': {
-          result.push(createMesh('opaque', false))
-          break
-        }
-        case 'transparentOnly': {
-          result.push(createMesh('transparent', true))
-          break
-        }
-      }
-    }
-    const filter = result.filter((m): m is THREE.InstancedMesh => !!m)
-    return filter
-  }
+  vim: Vim | undefined
 
   /**
-   * Creates a InstancedMesh from g3d data and given instance indices
-   * @param geometry Geometry to use in the mesh
-   * @param instances Instance indices for which matrices will be applied to the mesh
-   * @param useAlpha Specify whether to use RGB or RGBA
-   * @returns a THREE.InstancedMesh
+   * Wether the mesh is merged or not.
    */
-  createInstancedMesh (
-    geometry: THREE.BufferGeometry,
-    g3d: G3d,
-    instances: number[],
-    useAlpha: boolean
+  merged: boolean
+
+  /**
+   * Indices of the g3d instances that went into creating the mesh
+   */
+  instances: number[]
+
+  /**
+   * startPosition of each submesh on a merged mesh.
+   */
+  submeshes: number[]
+  /**
+   * bounding box of each instance
+   */
+  boxes: THREE.Box3[]
+
+  /**
+   * Set to true to ignore SetMaterial calls.
+   */
+  ignoreSceneMaterial: boolean
+
+  /**
+   * Total bounding box for this mesh.
+   */
+  boundingBox: THREE.Box3
+
+  /**
+   * initial material.
+   */
+  private _material: THREE.Material | THREE.Material[]
+
+  private constructor (
+    mesh: THREE.Mesh,
+    instance: number[],
+    boxes: THREE.Box3[]
   ) {
-    const material = useAlpha
-      ? this.materials.transparent
-      : this.materials.opaque
+    this.three = mesh
+    this.three.userData.vim = this
+    this.instances = instance
+    this.boxes = boxes
+    this.boundingBox = this.unionAllBox(boxes)
+  }
 
-    const result = new THREE.InstancedMesh(
-      geometry,
-      material.material,
-      instances.length
-    )
-    geometry.computeBoundingBox()
+  static createMerged (
+    mesh: THREE.Mesh,
+    instances: number[],
+    boxes: THREE.Box3[],
+    submeshes: number[]
+  ) {
+    const result = new Mesh(mesh, instances, boxes)
+    result.merged = true
+    result.submeshes = submeshes
+    return result
+  }
 
-    const boxes: THREE.Box3[] = []
-    for (let i = 0; i < instances.length; i++) {
-      const matrix = Geometry.getInstanceMatrix(g3d, instances[i])
-      result.setMatrixAt(i, matrix)
-      boxes[i] = geometry.boundingBox!.clone().applyMatrix4(matrix)
-    }
-    result.userData.instances = instances
-    result.userData.boxes = boxes
+  static createInstanced (
+    mesh: THREE.Mesh,
+    instances: number[],
+    boxes: THREE.Box3[]
+  ) {
+    const result = new Mesh(mesh, instances, boxes)
+    result.merged = false
     return result
   }
 
   /**
-   * Create a merged mesh from g3d instance indices
-   * @param transparency Specify wheter color is RBG or RGBA and whether material is opaque or transparent
-   * @param instances g3d instance indices to be included in the merged mesh. All mergeable meshes if undefined.
-   * @returns a THREE.Mesh or undefined if the mesh would be empty
+   * Overrides mesh material, set to undefine to restore initial material.
    */
-  createMergedMesh (
-    g3d: G3d,
-    section: MeshSection,
-    transparent: boolean,
-    instances?: number[]
-  ): THREE.Mesh | undefined {
-    const merge = instances
-      ? Geometry.mergeInstanceMeshes(g3d, section, transparent, instances)
-      : Geometry.mergeUniqueMeshes(g3d, section, transparent)
-    if (!merge) return
+  setMaterial (value: THREE.Material) {
+    if (this._material === value) return
+    if (this.ignoreSceneMaterial) return
 
-    const material = transparent
-      ? this.materials.transparent
-      : this.materials.opaque
-
-    const mesh = new THREE.Mesh(merge.geometry, material.material)
-    mesh.userData.merged = true
-    mesh.userData.instances = merge.instances
-    mesh.userData.submeshes = merge.submeshes
-    mesh.userData.boxes = merge.boxes
-
-    return mesh
+    if (value) {
+      if (!this._material) {
+        this._material = this.three.material
+      }
+      this.three.material = value
+    } else {
+      if (this._material) {
+        this.three.material = this._material
+        this._material = undefined
+      }
+    }
   }
 
   /**
-   * Create a wireframe mesh from g3d instance indices
-   * @param instances g3d instance indices to be included in the merged mesh. All mergeable meshes if undefined.
-   * @returns a THREE.Mesh
+   * Returns submesh for given index.
    */
-  createWireframe (g3d: G3d, instances: number[]) {
-    const geometry = Geometry.createGeometryFromInstances(g3d, instances)
-    if (!geometry) return
-    const wireframe = new THREE.WireframeGeometry(geometry)
-    return new THREE.LineSegments(wireframe, this.materials.wireframe)
+  getSubMesh (index: number) {
+    return new Submesh(this, index)
+  }
+
+  /**
+   * Returns submesh corresponding to given face on a merged mesh.
+   */
+  getSubmeshFromFace (faceIndex: number) {
+    if (!this.merged) {
+      throw new Error('Can only be called when mesh.merged = true')
+    }
+    const index = this.binarySearch(this.submeshes, faceIndex * 3)
+    return new Submesh(this, index)
+  }
+
+  /**
+   *
+   * @returns Returns all submeshes
+   */
+  getSubmeshes () {
+    return this.instances.map((s, i) => new Submesh(this, i))
+  }
+
+  private binarySearch (array: number[], element: number) {
+    let m = 0
+    let n = array.length - 1
+    while (m <= n) {
+      const k = (n + m) >> 1
+      const cmp = element - array[k]
+      if (cmp > 0) {
+        m = k + 1
+      } else if (cmp < 0) {
+        n = k - 1
+      } else {
+        return k
+      }
+    }
+    return m - 1
+  }
+
+  private unionAllBox (boxes: THREE.Box3[]) {
+    const box = boxes[0].clone()
+    for (let i = 1; i < boxes.length; i++) {
+      box.union(boxes[i])
+    }
+    return box
+  }
+}
+
+/**
+ * Represents one specific VIM instance as it is part of a Mesh.
+ */
+export class Submesh {
+  mesh: Mesh
+  index: number
+
+  constructor (mesh: Mesh, index: number) {
+    this.mesh = mesh
+    this.index = index
+  }
+
+  /**
+   * Returns parent three mesh.
+   */
+  get three () {
+    return this.mesh.three
+  }
+
+  /**
+   * True if parent mesh is merged.
+   */
+  get merged () {
+    return this.mesh.merged
+  }
+
+  /**
+   * Returns vim instance associated with this submesh.
+   */
+  get instance () {
+    return this.mesh.instances[this.index]
+  }
+
+  /**
+   * Returns bounding box for this submesh.
+   */
+  get boundingBox () {
+    return this.mesh.boxes[this.index]
+  }
+
+  /**
+   * Returns starting position in parent mesh for merged mesh.
+   */
+  get meshStart () {
+    return this.mesh.submeshes[this.index]
+  }
+
+  /**
+   * Returns ending position in parent mesh for merged mesh.
+   */
+  get meshEnd () {
+    return this.index + 1 < this.mesh.submeshes.length
+      ? this.mesh.submeshes[this.index + 1]
+      : this.three.geometry.index!.count
+  }
+
+  /**
+   * Returns vim object for this submesh.
+   */
+  get object () {
+    return this.mesh.vim.getObjectFromInstance(this.instance)
   }
 }

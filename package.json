@@ -1,6 +1,6 @@
 {
   "name": "vim-webgl-viewer",
-  "version": "1.4.15",
+  "version": "1.4.29",
   "description": "A high-performance 3D viewer and VIM file loader built on top of Three.JS.",
   "files": [
     "dist"
@@ -26,6 +26,7 @@
     "serve-docs": "http-server ./docs -o --host",
     "release-patch": "npm version patch && git push && npm publish",
     "release-dev": "npm run build && npm run bump-dev && git push && npm run publish-dev",
+    "release-current": "npm run build && npm publish",
     "eslint": "eslint --ext .js,.ts src --fix",
     "documentation": "typedoc --entryPointStrategy expand --mergeModulesMergeMode module --out docs/api --excludePrivate ./src/vim-webgl-viewer/ ./src/vim-loader/ && git add ./docs/",
     "declarations": "tsc --declaration --emitDeclarationOnly --outdir ./dist/types"
