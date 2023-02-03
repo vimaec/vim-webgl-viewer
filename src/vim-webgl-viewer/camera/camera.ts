@@ -60,26 +60,16 @@ export class Camera implements ICamera {
   }
 
   // Settings
-  private _minOrbitDistance: number = 0.05
   private _vimReferenceSize: number = 1
   private _sceneSizeMultiplier: number = 1
   private _velocityBlendFactor: number = 0.0001
   private _moveSpeed: number = 0.8
   private _rotateSpeed: number = 1
   private _orbitSpeed: number = 1
-  private _zoomSpeed: number = 0.25
   private _firstPersonSpeed = 10
-  private _minModelScrenSize = 0.05
 
-  private _posSpeed = 1
-  private _posMinSpeed = 0.001
-  private _posMaxSpeed = 5
-
-  private _decelTime = 0.1
-  private _accelTime = 0.05
-
-  private _rotMaxSpeed = Math.PI / 2
-  private _rotSpeed = 1
+  private positionInterpolator: Interpolator
+  private rotationInterpolator: Interpolator
 
   constructor (scene: RenderScene, viewport: Viewport, settings: Settings) {
     this.camPerspective = new PerspectiveWrapper(
@@ -96,6 +86,10 @@ export class Camera implements ICamera {
     this._viewport.onResize.subscribe(() => {
       this.updateProjection(this._scene.getBoundingBox())
     })
+
+    this.positionInterpolator = new Interpolator(0.0001, 5, 0.1, 0.05)
+    this.rotationInterpolator = new Interpolator(0.0001, Math.PI / 2, 0.1, 0.05)
+
     this.applySettings(settings)
     this.reset()
   }
@@ -207,7 +201,7 @@ export class Camera implements ICamera {
     }
 
     const position =
-      target instanceof THREE.Vector3 ? target : target.getCenter()!
+      target instanceof THREE.Vector3 ? target : target.getCenter()
 
     this._orbitTarget = position
     this._lerpRotation = lerp
@@ -261,6 +255,7 @@ export class Camera implements ICamera {
     this._sceneSizeMultiplier = sphere
       ? sphere.radius / this._vimReferenceSize
       : 1
+    this.positionInterpolator.multiplier = this._sceneSizeMultiplier
   }
 
   get orbitDistance () {
@@ -362,23 +357,9 @@ export class Camera implements ICamera {
       this.orbit(target, lerp)
     } else {
       const offset = new THREE.Vector3(0, 0, -this.orbitDistance)
-
       offset.applyQuaternion(rotation)
       this._orbitTarget = this.camActive.position.clone().add(offset)
-
       this._lerpRotation = lerp
-      /*
-      if (!lerp) {
-        // apply rotation directly to camera
-        this.camActive.quaternion.copy(rotation)
-        offset.applyQuaternion(this.camActive.quaternion)
-      } else {
-        // apply rotation to target and lerp
-        offset.applyQuaternion(rotation)
-        this._lerpRotation = lerp
-      }
-      this._orbitTarget = this.camActive.position.clone().add(offset)
-      */
     }
   }
 
@@ -480,22 +461,6 @@ export class Camera implements ICamera {
     return result
   }
 
-  private slerp (
-    center: THREE.Vector3,
-    start: THREE.Vector3,
-    end: THREE.Vector3,
-    value: number
-  ) {
-    const mid = start.clone().lerp(end, value)
-    const d1 = start.distanceTo(center)
-    const d2 = end.distanceTo(center)
-    const dist = d1 + (d2 - d1) * value
-    const dir = mid.clone().sub(center).normalize()
-    const pos = center.clone().add(dir.multiplyScalar(dist))
-
-    return pos
-  }
-
   /**
    * Apply the camera frame update
    */
@@ -528,24 +493,6 @@ export class Camera implements ICamera {
     return this._hasMoved
   }
 
-  private goesThrough (
-    origin: THREE.Vector3,
-    direction: THREE.Vector3,
-    point: THREE.Vector3,
-    tolerance: number
-  ) {
-    const x = (point.x - origin.x) / direction.x
-    const y = (point.y - origin.y) / direction.y
-    const z = (point.z - origin.z) / direction.z
-
-    const result =
-      Math.abs(x - y) < tolerance &&
-      Math.abs(x - z) < tolerance &&
-      Math.abs(y - z) < tolerance
-
-    return result
-  }
-
   private applyVelocity (deltaTime: number) {
     // Update the camera velocity and position
     const invBlendFactor = Math.pow(this._velocityBlendFactor, deltaTime)
@@ -570,26 +517,17 @@ export class Camera implements ICamera {
 
   private applyPositionLerp (deltaTime: number) {
     const dist = this.camActive.position.distanceTo(this._targetPosition)
+    const spd = this.positionInterpolator.interpolate(dist, deltaTime)
 
-    if (this._posSpeed * this._decelTime * this._sceneSizeMultiplier > dist) {
-      const spd = this._posSpeed * (1 - deltaTime / this._decelTime)
-      this._posSpeed = Math.max(spd, this._posMinSpeed)
-    } else if (this._posSpeed < this._posMaxSpeed) {
-      this._posSpeed =
-        this._posSpeed + this._posMaxSpeed * (deltaTime / this._accelTime)
-      this._posSpeed = Math.min(this._posSpeed, this._posMaxSpeed)
-    }
-
-    const direction = this._targetPosition
+    const delta = this._targetPosition
       .clone()
       .sub(this.camActive.position)
       .normalize()
-    const delta = direction.multiplyScalar(
-      this._posSpeed * deltaTime * this._sceneSizeMultiplier
-    )
+      .multiplyScalar(spd)
 
     const orbitDist = this.orbitDistance
     this.camActive.position.add(delta)
+
     if (this._lerpOrbit) {
       const offset = this.camActive.position
         .clone()
@@ -598,9 +536,8 @@ export class Camera implements ICamera {
         .multiplyScalar(orbitDist)
       this.camActive.position.copy(this._orbitTarget).add(offset)
     }
-
-    if (this._posSpeed > dist) {
-      this._posSpeed = 0.1
+    if (spd > dist) {
+      this.positionInterpolator.reset()
       this._lerpPosition = false
       this._lerpOrbit = false
     }
@@ -613,16 +550,7 @@ export class Camera implements ICamera {
       .clone()
       .add(this.camActive.forward.multiplyScalar(this.orbitDistance))
     const angle = a.angleTo(b)
-
-    if (this._rotSpeed * this._decelTime > angle) {
-      const spd = this._rotSpeed * (1 - deltaTime / this._decelTime)
-      this._rotSpeed = Math.max(spd, this._posMinSpeed)
-    } else if (this._rotSpeed < this._rotMaxSpeed) {
-      const spd = this._rotSpeed * (1 + deltaTime / this._accelTime)
-      this._rotSpeed = Math.min(spd, this._rotMaxSpeed)
-    }
-
-    const delta = deltaTime * this._rotSpeed
+    const delta = this.rotationInterpolator.interpolate(angle, deltaTime)
     const p = Math.min(delta / angle, 1.0)
 
     const look = current.lerp(this._orbitTarget, p)
@@ -630,5 +558,44 @@ export class Camera implements ICamera {
       this._lerpRotation = false
     }
     this.lookAt(look)
+  }
+}
+
+class Interpolator {
+  multiplier: number = 1
+  spd: number = 1
+  min: number
+  max: number
+  accelTime: number
+  decelTime: number
+
+  constructor (min: number, max: number, accelTime: number, decelTime: number) {
+    this.min = min
+    this.max = max
+    this.accelTime = accelTime
+    this.decelTime = decelTime
+  }
+
+  interpolate (dist: number, deltaTime: number) {
+    if (this.spd * this.decelTime * this.multiplier > dist) {
+      // deceleration
+      const spd = this.spd * (1 - deltaTime / this.decelTime)
+      this.spd = Math.max(spd, this.min)
+      console.log('decel')
+    } else if (this.spd < this.max) {
+      // acceleration
+      this.spd = this.spd + this.max * (deltaTime / this.accelTime)
+      this.spd = Math.min(this.spd, this.max)
+      console.log('accel')
+    }
+    console.log('d : ' + deltaTime)
+    console.log(this.spd)
+    console.log(this.multiplier)
+    return this.spd * deltaTime * this.multiplier
+  }
+
+  reset () {
+    this.spd = this.min
+    console.log('reset')
   }
 }
