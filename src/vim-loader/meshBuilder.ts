@@ -3,7 +3,7 @@
  */
 
 import * as THREE from 'three'
-import { G3d, MeshSection } from './g3d'
+import { G3d, MeshSection } from 'vim-format'
 import { Geometry, Transparency } from './geometry'
 import { VimMaterials } from './materials/materials'
 import { Mesh } from './mesh'
