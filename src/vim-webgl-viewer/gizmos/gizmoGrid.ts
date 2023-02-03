@@ -4,38 +4,65 @@ import { createGridMaterial } from '../../vim-loader/materials/gridMaterial'
 import { Viewer } from '../viewer'
 import { Renderer } from '../rendering/renderer'
 import { Vim, VimMaterials } from '../../vim'
+import { SectionBox } from './sectionBox/sectionBox'
+import { BoxOutline } from './sectionBox/sectionBoxGizmo'
 
 export class GizmoGrid {
-  renderer: Renderer
-  material: THREE.ShaderMaterial
+  private _renderer: Renderer
+  private _material: THREE.ShaderMaterial
   grid: Grid
+  outline: BoxOutline
 
   constructor (renderer: Renderer, materials: VimMaterials) {
-    this.renderer = renderer
-    this.material = materials.grid
+    this._renderer = renderer
+    this._material = materials.grid
   }
 
-  initGrid (vim: Vim, scale: THREE.Vector3) {
-    if (this.grid) {
-      this.renderer.remove(this.grid.mesh)
-      this.grid.dispose()
+  init (target: Vim | THREE.Box3, scale: THREE.Vector3) {
+    this.dispose()
+
+    const box = target instanceof Vim ? target.scene.getBoundingBox() : target
+    this.grid = Grid.createFromBox(box, scale, this._material)
+
+    this._renderer.add(this.grid.mesh)
+
+    this.outline = new BoxOutline()
+    this._renderer.add(this.outline)
+    this.outline.visible = false
+  }
+
+  highlight (cell: number | THREE.Vector3 | undefined) {
+    const box = this.grid.getBox(cell)
+    if (!box) {
+      this.outline.visible = false
+      return
     }
 
-    this.grid = Grid.createFromBox(
-      vim.scene.getBoundingBox(),
-      scale,
-      this.material
-    )
-    this.renderer.add(this.grid.mesh)
+    box.getCenter(this.outline.position)
+    box.getSize(this.outline.scale)
+    this.outline.visible = true
+    this._renderer.needsUpdate = true
+  }
+
+  dispose () {
+    if (this.grid) {
+      this._renderer.remove(this.grid.mesh)
+      this.grid.dispose()
+      this.grid = undefined
+    }
+    if (this.outline) {
+      this._renderer.remove(this.outline)
+      this.outline?.dispose()
+      this.outline = undefined
+    }
   }
 }
 
 export class Grid {
   size: THREE.Vector3
-  center: THREE.Vector3
   box: THREE.Box3
   mesh: THREE.Mesh
-  cellCount: number
+  private _cellCount: number
 
   private _scale: THREE.Vector3
   private _colors: Map<number, THREE.Color> = new Map<number, THREE.Color>()
@@ -57,7 +84,7 @@ export class Grid {
       size.clone().multiply(scale)
     )
 
-    this.cellCount = this.size.x * this.size.y * this.size.z
+    this._cellCount = this.size.x * this.size.y * this.size.z
     this.build(color, opacity, material)
   }
 
@@ -68,10 +95,13 @@ export class Grid {
   ) {
     const size = box.getSize(new THREE.Vector3()).divide(scale).ceil()
     const g = new Grid(size, scale, material)
-    const center = box.getCenter(new THREE.Vector3())
-    g.mesh.position.copy(center)
-    g.box.translate(center)
+    box.getCenter(g.mesh.position)
+    g.box.translate(g.mesh.position)
     return g
+  }
+
+  get cellCount () {
+    return this._cellCount
   }
 
   isCell (cell: THREE.Vector3) {
@@ -97,7 +127,7 @@ export class Grid {
   }
 
   isIndex (index: number) {
-    return !index || index < 0 || index >= this.cellCount
+    return index !== undefined || index >= 0 || index <= this._cellCount
   }
 
   getIndex (cell: THREE.Vector3): number | undefined {
@@ -122,9 +152,9 @@ export class Grid {
   }
 
   getBox (cell: number | THREE.Vector3) {
-    const c = typeof cell === 'number' ? this.getCell(cell) : cell
+    const c = typeof cell === 'number' ? this.getCell(cell) : cell?.clone()
     if (!this.isCell(c)) return
-    const min = this.box.min.clone().add(c.multiply(this._scale))
+    const min = c.multiply(this._scale).add(this.box.min)
     const max = min.clone().add(this._scale)
     return new THREE.Box3(min, max)
   }
@@ -187,8 +217,8 @@ export class Grid {
     opacity: number = 0.25,
     material: THREE.Material
   ) {
-    const vertices = new Float32Array(this.cellCount * 24)
-    const indices = new Int32Array(this.cellCount * 36)
+    const vertices = new Float32Array(this._cellCount * 24)
+    const indices = new Int32Array(this._cellCount * 36)
 
     const cell = new THREE.Vector3()
     for (let x = 0; x < this.size.x; x++) {
@@ -300,12 +330,12 @@ export class Grid {
 
     geometry.setAttribute(
       'color',
-      new Float32BufferAttribute(new Float32Array(this.cellCount * 32), 4)
+      new Float32BufferAttribute(new Float32Array(this._cellCount * 32), 4)
     )
 
     this.mesh = new THREE.Mesh(geometry, this._material)
 
-    for (let i = 0; i < this.cellCount; i++) {
+    for (let i = 0; i < this._cellCount; i++) {
       this.setOpacity(i, opacity)
       this.setColor(i, color)
     }
