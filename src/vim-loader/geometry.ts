@@ -3,7 +3,7 @@
  */
 
 import * as THREE from 'three'
-import { G3d, MeshSection } from './g3d'
+import { G3d, MeshSection } from 'vim-format'
 
 export namespace Transparency {
   /**

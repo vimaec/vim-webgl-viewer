@@ -142,7 +142,7 @@ export class ColorAttribute {
     const indices = sub.three.geometry.index!
     let mergedIndex = sub.meshStart
 
-    const g3d = this.vim.document.g3d!
+    const g3d = this.vim.g3d
     const g3dMesh = g3d.instanceMeshes[sub.instance]
     const subStart = g3d.getMeshSubmeshStart(g3dMesh)
     const subEnd = g3d.getMeshSubmeshEnd(g3dMesh)
