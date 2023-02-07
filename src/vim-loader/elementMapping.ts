@@ -10,13 +10,11 @@ export class ElementMapping {
 
   constructor (
     instanceToElement: number[],
-    elementToInstances: Map<number, number[]>,
-    elementIds: number[],
-    elementIdToElements: Map<number, number[]>) {
+    elementIds: number[]) {
     this._instanceToElement = instanceToElement
-    this._elementToInstances = elementToInstances
+    this._elementToInstances = ElementMapping.invert(instanceToElement!)
     this._elementIds = elementIds
-    this._elementIdToElements = elementIdToElements
+    this._elementIdToElements = ElementMapping.invert(elementIds!)
   }
 
   /**
@@ -65,5 +63,22 @@ export class ElementMapping {
    */
   getElementId (element: number) {
     return this._elementIds[element]
+  }
+
+  /**
+   * Returns a map where data[i] -> i
+   */
+  private static invert (data: number[]) {
+    const result = new Map<number, number[]>()
+    for (let i = 0; i < data.length; i++) {
+      const value = data[i]
+      const list = result.get(value)
+      if (list) {
+        list.push(i)
+      } else {
+        result.set(value, [i])
+      }
+    }
+    return result
   }
 }

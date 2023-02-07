@@ -49,16 +49,13 @@ export class Loader {
       ? this.sceneBuilder.createFromG3d(g3d, settings.transparency)
       : new Scene(this.sceneBuilder)
 
-    const elementToInstance = Loader.invert(instanceToElement!)
-    const elementIdToElements = Loader.invert(elementIds!)
-
     const vim = new Vim(
       doc,
       g3d,
       scene,
       settings,
       strings,
-      new ElementMapping(instanceToElement!, elementToInstance, elementIds!, elementIdToElements))
+      new ElementMapping(instanceToElement!, elementIds!))
 
     return vim
   }
@@ -85,22 +82,5 @@ export class Loader {
     }
     const strings = new TextDecoder('utf-8').decode(buffer).split('\0')
     return strings
-  }
-
-  /**
-   * Returns a map where data[i] -> i
-   */
-  private static invert (data: number[]) {
-    const result = new Map<number, number[]>()
-    for (let i = 0; i < data.length; i++) {
-      const value = data[i]
-      const list = result.get(value)
-      if (list) {
-        list.push(i)
-      } else {
-        result.set(value, [i])
-      }
-    }
-    return result
   }
 }
