@@ -278,8 +278,16 @@ export class Viewer {
   }
 
   private onLoad (vim: Vim) {
+    const success = this.renderer.add(vim.scene)
+    if (!success) {
+      vim.dispose()
+      throw new Error(
+        'Could not load vim. Max geometry memory reached. Vim disposed.'
+      )
+    }
+
     this.addVim(vim)
-    this.renderer.add(vim.scene)
+
     const box = this.renderer.getBoundingBox()
     if (box) {
       this._environment.adaptToContent(box)
