@@ -3,7 +3,7 @@
  */
 
 import * as THREE from 'three'
-import { TextureEncoding, ViewerConfig } from './viewerSettings'
+import { TextureEncoding, Settings } from './viewerSettings'
 import { Box3 } from 'three'
 
 /**
@@ -32,7 +32,7 @@ export class GroundPlane {
     this.mesh.renderOrder = -1
   }
 
-  applyViewerSettings (settings: ViewerConfig) {
+  applyViewerSettings (settings: Settings) {
     this._size = settings.groundPlane.size
     // Visibily
     this.mesh.visible = settings.groundPlane.visible
@@ -124,7 +124,7 @@ export class Environment {
     return this._groundPlane.mesh
   }
 
-  constructor (settings: ViewerConfig) {
+  constructor (settings: Settings) {
     this._groundPlane = new GroundPlane()
     this.skyLight = new THREE.HemisphereLight()
     this.sunLights = []
@@ -142,7 +142,7 @@ export class Environment {
     return [this._groundPlane.mesh, this.skyLight, ...this.sunLights]
   }
 
-  applySettings (settings: ViewerConfig) {
+  applySettings (settings: Settings) {
     // Plane
     this._groundPlane.applyViewerSettings(settings)
 

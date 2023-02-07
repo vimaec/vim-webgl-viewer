@@ -52,7 +52,7 @@ export class DefaultInputScheme implements InputScheme {
     if (!action?.object) {
       selection.select(undefined)
       if (action.type === 'double') {
-        camera.frame('all', 'none', camera.defaultLerpDuration)
+        camera.frame('all', 'none', true)
       }
       return
     }
@@ -64,7 +64,7 @@ export class DefaultInputScheme implements InputScheme {
     }
 
     if (action.type === 'double') {
-      camera.frame(action.object, 'none', camera.defaultLerpDuration)
+      camera.frame(action.object, 'none', true)
     }
 
     action.object.getBimElement().then((e) => {
@@ -100,7 +100,7 @@ export class DefaultInputScheme implements InputScheme {
         this._viewer.inputs.pointerActive = this._viewer.inputs.pointerFallback
         return true
       case KEYS.KEY_HOME:
-        camera.frame('all', 45, camera.defaultLerpDuration)
+        camera.frame('all', 45, true)
         return true
       // Selection
       case KEYS.KEY_ESCAPE:
@@ -109,13 +109,9 @@ export class DefaultInputScheme implements InputScheme {
       case KEYS.KEY_Z:
       case KEYS.KEY_F:
         if (selection.count > 0) {
-          camera.frame(
-            selection.getBoundingBox(),
-            'none',
-            camera.defaultLerpDuration
-          )
+          camera.frame(selection.getBoundingBox(), 'none', true)
         } else {
-          camera.frame('all', 45, camera.defaultLerpDuration)
+          camera.frame('all', 45, true)
         }
         return true
       default:

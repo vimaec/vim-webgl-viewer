@@ -5,8 +5,8 @@
 import * as THREE from 'three'
 import { MathUtils } from 'three'
 import { Renderer } from '../rendering/renderer'
-import { Camera } from '../camera'
-import { ViewerConfig } from '../viewerSettings'
+import { Camera } from '../camera/camera'
+import { Settings } from '../viewerSettings'
 
 /**
  * Manages the camera target gizmo
@@ -17,7 +17,7 @@ export class CameraGizmo {
   private _camera: Camera
 
   // Settings
-  private _size: number = 0.01
+  private _size: number = 1
   private _fov: number = 50
   private _color: THREE.Color = new THREE.Color('blue')
   private _opacity: number = 0.2
@@ -38,7 +38,7 @@ export class CameraGizmo {
   private _active: boolean = true
   private _animation: number = 0
 
-  constructor (renderer: Renderer, camera: Camera, settings: ViewerConfig) {
+  constructor (renderer: Renderer, camera: Camera, settings: Settings) {
     this._renderer = renderer
     this._camera = camera
     this.applySettings(settings)
@@ -154,7 +154,7 @@ export class CameraGizmo {
     this._materialAlways!.color = color
   }
 
-  applySettings (settings: ViewerConfig) {
+  applySettings (settings: Settings) {
     this._active = settings.camera.gizmo.enable
     this._fov = settings.camera.fov
     this.setColor(settings.camera.gizmo.color)
@@ -168,19 +168,10 @@ export class CameraGizmo {
 
   private updateScale () {
     if (!this._gizmos) return
-    const dist = this._camera.camera.position
-      .clone()
-      .distanceTo(this._gizmos.position)
-    let h = 0
-    const cam = this._camera.camera
-    if (cam instanceof THREE.OrthographicCamera) {
-      const dx = cam.right - cam.left
-      const dy = cam.top - cam.bottom
-      h = Math.min(dx, dy) * this._size
-    } else {
-      // computes scale such that gizmo screen size remains constant
-      h = dist * Math.tan(MathUtils.degToRad(this._fov) * this._size)
-    }
+
+    const frustrum = this._camera.frustrumSizeAt(this._gizmos.position)
+    const min = Math.min(frustrum.x, frustrum.y)
+    const h = min * this._size
     this._gizmos.scale.set(h, h, h)
   }
 

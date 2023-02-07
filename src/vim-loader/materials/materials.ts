@@ -7,7 +7,7 @@ import { StandardMaterial } from './standardMaterial'
 import { createMaskMaterial } from './maskMaterial'
 import { createIsolationMaterial } from './isolationMaterial'
 import { OutlineMaterial } from './outlineMaterial'
-import { ViewerConfig } from '../../vim-webgl-viewer/viewerSettings'
+import { Settings } from '../../vim-webgl-viewer/viewerSettings'
 import { createMergeMaterial, MergeMaterial } from './mergeMaterial'
 import { SignalDispatcher } from 'ste-signals'
 import { createGridMaterial } from './gridMaterial'
@@ -80,7 +80,7 @@ export class VimMaterials {
   }
 
   /** Update material settings from config */
-  applySettings (settings: ViewerConfig) {
+  applySettings (settings: Settings) {
     this.wireframeColor = settings.materials.highlight.color
     this.wireframeOpacity = settings.materials.highlight.opacity
 

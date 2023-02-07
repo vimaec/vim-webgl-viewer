@@ -11,10 +11,10 @@ import { CSS2DRenderer } from 'three/examples/jsm/renderers/CSS2DRenderer'
 import { SimpleEventDispatcher } from 'ste-simple-events'
 import { Vim } from '../../vim'
 
-import { Camera } from '../camera'
+import { Camera } from '../camera/camera'
 import { RenderingSection } from './renderingSection'
 import { RenderingComposer } from './renderingComposer'
-import { ViewerConfig } from '../viewerSettings'
+import { Settings } from '../viewerSettings'
 
 /**
  * Manages how vim objects are added and removed from the THREE.Scene to be rendered
@@ -79,7 +79,7 @@ export class Renderer {
     viewport: Viewport,
     materials: VimMaterials,
     camera: Camera,
-    config: ViewerConfig
+    config: Settings
   ) {
     this._viewport = viewport
     this._scene = scene
@@ -113,7 +113,7 @@ export class Renderer {
     this.fitViewport()
     this._viewport.onResize.subscribe(() => this.fitViewport())
     this._camera.onValueChanged.sub(() => {
-      this._composer.camera = this._camera.camera
+      this._composer.camera = this._camera.three
       this.needsUpdate = true
     })
     this._materials.onUpdate.sub(() => (this.needsUpdate = true))
@@ -176,7 +176,7 @@ export class Renderer {
     this.skipAntialias = false
 
     if (this.textEnabled) {
-      this.textRenderer.render(this._scene.scene, this._camera.camera)
+      this.textRenderer.render(this._scene.scene, this._camera.three)
     }
 
     this._scene.clearUpdateFlags()
