@@ -1,8 +1,9 @@
 name: Publish official release to NPM
 
 on:
-  release:
-    types: [created]
+  push:
+    branches:
+      - develop
 
 jobs:
   build:
@@ -17,9 +18,11 @@ jobs:
           registry-url: 'https://registry.npmjs.org'
       - name: Install dependencies
         run: npm install
+      - name: Bump dev version
+        run: npm run bump-dev
       - name: Build
         run: npm run build
-      - name: Publish package on NPM 📦
-        run: npm publish
+      - name: Publish dev package on NPM 📦
+        run: npm publish-dev
         env:
           NODE_AUTH_TOKEN: ${{ secrets.VIM_NPM_PUSH }}
