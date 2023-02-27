@@ -21,6 +21,12 @@ if (params.has('download')) {
   download = valid ? t : 'download'
 }
 
+let selection: number[] = []
+if (params.has('selection')) {
+  const p = params.get('selection')!
+  selection = p?.split('+').map((s) => Number.parseInt(s))
+}
+
 // Create Viewer
 const viewer = new VIM.Viewer()
 
@@ -58,13 +64,17 @@ function load2 (vim: string | ArrayBuffer) {
             rotation: new THREE.Vector3(270, 0, 0),
             position: new THREE.Vector3(i * 100, 0, j * 100),
             transparency,
-            download
+            download: 'stream'
           },
           (progress) => {
             console.log(`Loading : ${progress.loaded} / ${progress.total}`)
           }
         )
         .then((v) => {
+          const objs = selection
+            .map((e) => v.getObjectFromElement(e))
+            .filter((o): o is VIM.Object => o !== undefined)
+          viewer.selection.select(objs)
           console.log(
             'Loaded in ' + (new Date().getTime() - start) / 1000 + ' seconds'
           )

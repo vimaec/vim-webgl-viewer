@@ -3,7 +3,7 @@
  */
 
 import { SceneBuilder } from './sceneBuilder'
-import { BFast, G3d, VimDocument } from 'vim-format'
+import { BFast, G3d, RemoteG3d, VimDocument } from 'vim-format'
 import { Vim } from './vim'
 import { VimConfig } from './vimSettings'
 import { VimMaterials } from './materials/materials'
@@ -28,7 +28,7 @@ export class Loader {
     const mode = settings.download
     if (mode === 'download') await bfast.forceDownload()
 
-    let g3d: G3d | undefined
+    let g3d: G3d | RemoteG3d | undefined
     let strings: string[] | undefined
 
     let instanceToElement: number[] | undefined
@@ -37,25 +37,36 @@ export class Loader {
     const doc = await VimDocument.createFromBfast(bfast)
 
     await Promise.all([
-      Loader.requestG3d(bfast, mode === 'stream').then((g) => (g3d = g)),
-      Loader.requestStrings(bfast).then((s) => strings = s),
-      doc.node.getAllElementIndex().then(
-        (array) => (instanceToElement = array)
-      ),
+      // Loader.requestG3d(bfast, mode === 'stream').then((g) => (g3d = g)),
+      bfast
+        .getBfast('geometry')
+        .then((geometry) => RemoteG3d.createFromBfast(geometry))
+        .then((g) => (g3d = g)),
+
+      Loader.requestStrings(bfast).then((s) => (strings = s)),
+      doc.node
+        .getAllElementIndex()
+        .then((array) => (instanceToElement = array)),
       doc.element.getAllId().then((array) => (elementIds = array))
     ])
 
-    const scene = g3d
-      ? this.sceneBuilder.createFromG3d(g3d, settings.transparency)
+    const local = g3d instanceof G3d ?
+      g3d : await g3d.toG3d()
+    
+    const scene = local
+      ? this.sceneBuilder.createFromG3d(local, settings.transparency)
       : new Scene(this.sceneBuilder)
+    scene.meshes.forEach((m) => (m.instances = [0]))
 
     const vim = new Vim(
       doc,
-      g3d,
+      local,
       scene,
       settings,
       strings,
-      new ElementMapping(instanceToElement!, elementIds!))
+      new ElementMapping(instanceToElement!, elementIds!)
+    )
+    vim.remap(instanceToElement[1], [0])
 
     return vim
   }
@@ -69,6 +80,7 @@ export class Loader {
       throw new Error('Could not get G3d Data from VIM file.')
     }
     const g3d = await G3d.createFromBfast(geometry)
+
     return g3d
   }
 

@@ -8,13 +8,16 @@ export class ElementMapping {
   private _elementIds: number[]
   private _elementIdToElements: Map<number, number[]>
 
-  constructor (
-    instanceToElement: number[],
-    elementIds: number[]) {
+  constructor (instanceToElement: number[], elementIds: number[]) {
     this._instanceToElement = instanceToElement
     this._elementToInstances = ElementMapping.invert(instanceToElement!)
     this._elementIds = elementIds
     this._elementIdToElements = ElementMapping.invert(elementIds!)
+  }
+
+  remap (element: number, instances: number[]) {
+    instances.forEach((i) => (this._instanceToElement[i] = element))
+    this._elementToInstances.set(element, instances)
   }
 
   /**
