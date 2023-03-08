@@ -30,7 +30,7 @@ if (params.has('selection')) {
 // Create Viewer
 const viewer = new VIM.Viewer()
 
-if (url) load2(url)
+if (url) load2('residence_nozip.vim')
 
 const input = document.createElement('input')
 input.type = 'file'
@@ -60,21 +60,19 @@ function load2 (vim: string | ArrayBuffer) {
       viewer
         .loadVim(
           vim,
+          undefined,
           {
             rotation: new THREE.Vector3(270, 0, 0),
             position: new THREE.Vector3(i * 100, 0, j * 100),
             transparency,
-            download: 'stream'
+            streamBim: true,
+            streamGeometry: true
           },
           (progress) => {
             console.log(`Loading : ${progress.loaded} / ${progress.total}`)
           }
         )
         .then((v) => {
-          const objs = selection
-            .map((e) => v.getObjectFromElement(e))
-            .filter((o): o is VIM.Object => o !== undefined)
-          viewer.selection.select(objs)
           console.log(
             'Loaded in ' + (new Date().getTime() - start) / 1000 + ' seconds'
           )

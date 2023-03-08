@@ -3,21 +3,25 @@
  */
 
 export class ElementMapping {
-  private _instanceToElement: number[]
+  private _instanceToElement: Map<number, number>
   private _elementToInstances: Map<number, number[]>
   private _elementIds: number[]
   private _elementIdToElements: Map<number, number[]>
 
-  constructor (instanceToElement: number[], elementIds: number[]) {
-    this._instanceToElement = instanceToElement
-    this._elementToInstances = ElementMapping.invert(instanceToElement!)
+  constructor (
+    instances: number[],
+    instanceToElement: number[],
+    elementIds: number[]
+  ) {
+    this._instanceToElement = new Map<number, number>()
+    instances.forEach((i) =>
+      this._instanceToElement.set(i, instanceToElement[i])
+    )
+    this._elementToInstances = ElementMapping.invertMap(
+      this._instanceToElement!
+    )
     this._elementIds = elementIds
-    this._elementIdToElements = ElementMapping.invert(elementIds!)
-  }
-
-  remap (element: number, instances: number[]) {
-    instances.forEach((i) => (this._instanceToElement[i] = element))
-    this._elementToInstances.set(element, instances)
+    this._elementIdToElements = ElementMapping.invertArray(elementIds!)
   }
 
   /**
@@ -57,7 +61,7 @@ export class ElementMapping {
    * @returns element index or undefined if not found
    */
   getElementFromInstance (instance: number) {
-    return this._instanceToElement[instance]
+    return this._instanceToElement.get(instance)
   }
 
   /**
@@ -71,7 +75,7 @@ export class ElementMapping {
   /**
    * Returns a map where data[i] -> i
    */
-  private static invert (data: number[]) {
+  private static invertArray (data: number[]) {
     const result = new Map<number, number[]>()
     for (let i = 0; i < data.length; i++) {
       const value = data[i]
@@ -80,6 +84,22 @@ export class ElementMapping {
         list.push(i)
       } else {
         result.set(value, [i])
+      }
+    }
+    return result
+  }
+
+  /**
+   * Returns a map where data[i] -> i
+   */
+  private static invertMap (data: Map<number, number>) {
+    const result = new Map<number, number[]>()
+    for (const [key, value] of data.entries()) {
+      const list = result.get(value)
+      if (list) {
+        list.push(key)
+      } else {
+        result.set(value, [key])
       }
     }
     return result

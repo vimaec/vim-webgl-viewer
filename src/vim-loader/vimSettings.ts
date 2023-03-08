@@ -6,8 +6,6 @@ import deepmerge from 'deepmerge'
 import { Transparency } from './geometry'
 import * as THREE from 'three'
 
-export type LoadingMode = 'stream' | 'download' | 'geometry'
-
 /**
  * Config object for loading a vim
  */
@@ -39,7 +37,8 @@ export type VimConfig = {
    * Forces the viewer to download the whole data at once.
    * Otherwise bim data will be requested on per need basis.
    */
-  download: LoadingMode
+  streamBim: boolean
+  streamGeometry: boolean
 }
 
 export const defaultConfig: VimConfig = {
@@ -48,7 +47,8 @@ export const defaultConfig: VimConfig = {
   scale: 1,
   matrix: new THREE.Matrix4(),
   transparency: 'all',
-  download: 'stream'
+  streamBim: false,
+  streamGeometry: false
 }
 
 export type VimOptions = Partial<VimConfig>

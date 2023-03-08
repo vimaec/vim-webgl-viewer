@@ -52,10 +52,6 @@ export class Vim {
     this.scene.dispose()
   }
 
-  remap (element: number, instances: number[]) {
-    this._map.remap(element, instances)
-  }
-
   /**
    * Reloads the vim with only the instances provided
    * @param instances g3d instance indices to keep
