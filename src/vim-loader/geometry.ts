@@ -182,7 +182,7 @@ export namespace Geometry {
    * Returns merged geometry and meta data for picking.
    */
   function merge (g3d: G3d, info: MergeInfo, transparent: boolean) {
-    const buffer = new MergeBuffer(info, g3d.POSITION_SIZE, transparent ? 4 : 3)
+    const buffer = new MergeBuffer(info, G3d.POSITION_SIZE, transparent ? 4 : 3)
     fillBuffers(g3d, buffer, info)
     const geometry = buffer.toBufferGeometry()
     return new MergeResult(
@@ -295,18 +295,18 @@ export namespace Geometry {
 
       if (vertexEnd > vertexStart) {
         // First point is computed before to initialize box
-        vector.fromArray(g3d.positions, vertexStart * g3d.POSITION_SIZE)
+        vector.fromArray(g3d.positions, vertexStart * G3d.POSITION_SIZE)
         vector.applyMatrix4(matrix)
         vector.toArray(buffer.vertices, vertex)
-        vertex += g3d.POSITION_SIZE
+        vertex += G3d.POSITION_SIZE
         buffer.boxes[i] = new THREE.Box3(vector.clone(), vector.clone())
       }
 
       for (let p = vertexStart + 1; p < vertexEnd; p++) {
-        vector.fromArray(g3d.positions, p * g3d.POSITION_SIZE)
+        vector.fromArray(g3d.positions, p * G3d.POSITION_SIZE)
         vector.applyMatrix4(matrix)
         vector.toArray(buffer.vertices, vertex)
-        vertex += g3d.POSITION_SIZE
+        vertex += G3d.POSITION_SIZE
         buffer.boxes[i].expandByPoint(vector)
       }
 
