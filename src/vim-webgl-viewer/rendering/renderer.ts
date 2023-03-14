@@ -49,6 +49,8 @@ export class Renderer {
   private _needsUpdate: boolean
   private _skipAntialias: boolean
 
+  // 3GB
+  private maxMemory = 3 * Math.pow(10, 9)
   /**
    * Set this to true to cause a re-render of the scene.
    * Can only be set to true, Cleared on each render.
@@ -186,8 +188,16 @@ export class Renderer {
    * Add object to be rendered
    */
   add (target: Scene | THREE.Object3D) {
+    if (target instanceof Scene) {
+      const mem = target.getMemory()
+      const remaining = this.maxMemory - this.estimatedMemory
+      if (mem > remaining) {
+        return false
+      }
+    }
     this._scene.add(target)
     this._needsUpdate = true
+    return true
   }
 
   /**
@@ -204,6 +214,10 @@ export class Renderer {
   clear () {
     this._scene.clear()
     this._needsUpdate = true
+  }
+
+  get estimatedMemory () {
+    return this._scene.estimatedMemory
   }
 
   /** Set the target sample count on the rendering target. Higher number will increase quality. */

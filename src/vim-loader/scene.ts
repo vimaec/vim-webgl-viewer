@@ -6,6 +6,7 @@ import * as THREE from 'three'
 import { Mesh, Submesh } from './mesh'
 import { SceneBuilder } from './sceneBuilder'
 import { Vim } from './vim'
+import { estimateBytesUsed } from 'three/examples/jsm/utils/BufferGeometryUtils'
 
 /**
  * A Scene regroups many Meshes
@@ -61,6 +62,12 @@ export class Scene {
    */
   getBoundingBox (target: THREE.Box3 = new THREE.Box3()) {
     return target.copy(this._boundingBox)
+  }
+
+  getMemory () {
+    return this.meshes
+      .map((m) => estimateBytesUsed(m.three.geometry))
+      .reduce((n1, n2) => n1 + n2)
   }
 
   /**
