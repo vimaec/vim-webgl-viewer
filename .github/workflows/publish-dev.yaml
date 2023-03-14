@@ -12,6 +12,14 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v2
 
+      - name: Setup user
+        run: |
+          git config --global user.email "simon.roberge@vimaec.com"
+          git config --global user.name "Simon Roberge"
+
+      - name: Pull changes from remote
+        run: git pull origin main
+
       - name: Setup Node
         uses: actions/setup-node@v2
         with:
@@ -28,10 +36,7 @@ jobs:
         run: echo "NEW_VERSION=$(npm --no-git-tag-version version prerelease --preid=dev | cut -c 2-)" >> $GITHUB_ENV
 
       - name: Commit version bump
-        run: |
-          git config --global user.email "simon.roberge@vimaec.com"
-          git config --global user.name "Simon Roberge"
-          git commit -am "Bump version to $NEW_VERSION"
+        run: git commit -am "Bump version to $NEW_VERSION"
 
       - name: Push changes
         uses: ad-m/github-push-action@master
