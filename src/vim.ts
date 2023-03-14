@@ -1,6 +1,7 @@
 // Links files to generate package type exports
 import './style.css'
 export * as THREE from 'three'
+export * as Format from 'vim-format'
 
 export * from './vim-webgl-viewer/viewer'
 export * from './vim-webgl-viewer/gizmos/gizmoGrid'
@@ -17,7 +18,6 @@ export * from './vim-loader/loader'
 export * from './vim-loader/materials/materials'
 export * from './vim-loader/meshBuilder'
 export * from './vim-loader/object'
-export type { IProgressLogs } from 'vim-format'
 export * from './vim-loader/scene'
 export * from './vim-loader/vim'
 export * from './vim-loader/vimSettings'

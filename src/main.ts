@@ -21,10 +21,16 @@ if (params.has('download')) {
   download = valid ? t : 'download'
 }
 
+let selection: number[] = []
+if (params.has('selection')) {
+  const p = params.get('selection')!
+  selection = p?.split('+').map((s) => Number.parseInt(s))
+}
+
 // Create Viewer
 const viewer = new VIM.Viewer()
 
-if (url) load2(url)
+if (url) load2('residence_nozip.vim')
 
 const input = document.createElement('input')
 input.type = 'file'
@@ -54,11 +60,13 @@ function load2 (vim: string | ArrayBuffer) {
       viewer
         .loadVim(
           vim,
+          undefined,
           {
             rotation: new THREE.Vector3(270, 0, 0),
             position: new THREE.Vector3(i * 100, 0, j * 100),
             transparency,
-            download
+            streamBim: true,
+            streamGeometry: true
           },
           (progress) => {
             console.log(`Loading : ${progress.loaded} / ${progress.total}`)

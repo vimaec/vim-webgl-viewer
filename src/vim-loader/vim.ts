@@ -26,12 +26,14 @@ export class Vim {
 
   private _map: ElementMapping
 
-  constructor (document: VimDocument,
+  constructor (
+    document: VimDocument,
     g3d: G3d | undefined,
     scene: Scene,
     settings: VimConfig,
     strings: string[] | undefined,
-    map: ElementMapping) {
+    map: ElementMapping
+  ) {
     this.document = document
     this.g3d = g3d
     this.scene = scene
