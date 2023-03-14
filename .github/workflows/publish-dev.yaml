@@ -26,7 +26,7 @@ jobs:
         run: npm run bump-dev
       - name: Commit version
         run: |
-          git add -all
+          git add --all
           git commit -m 'auto versioning'
           git push
       - name: Build
