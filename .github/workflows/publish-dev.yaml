@@ -22,26 +22,21 @@ jobs:
         run: npm install
 
       - name: Get current version
-        id: get_version
-        run: echo "::set-output name=current_version::$(npm version --json | jq -r '.version')"
+        run: echo "CURRENT_VERSION=$(npm version --json | jq -r '.version')" >> $GITHUB_ENV
 
-      - name: Increment version
-        id: inc_version
-        run: echo "::set-output name=new_version::$(npm version ${{ inputs.type }})"
-
-        env:
-          INPUT_TYPE: patch
+      - name: Bump dev version
+        run: echo "NEW_VERSION=$(npm --no-git-tag-version version prerelease --preid=dev | cut -c 2-)" >> $GITHUB_ENV
 
       - name: Commit version bump
         run: |
-          git config --global user.name "Simon Roberge"
           git config --global user.email "simon.roberge@vimaec.com"
-          git commit -am "Bump version to ${{ steps.inc_version.outputs.new_version }}"
+          git config --global user.name "Simon Roberge"
+          git commit -am "Bump version to $NEW_VERSION"
 
       - name: Push changes
         uses: ad-m/github-push-action@master
         with:
-          github_token: ${{ secrets.GITHUB_TOKEN }}
+          github_token: ${{ github.token }}
 
       - name: Build
         run: npm run build
