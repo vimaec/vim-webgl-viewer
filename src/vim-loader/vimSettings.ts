@@ -10,6 +10,7 @@ import * as THREE from 'three'
  * Config object for loading a vim
  */
 export type VimConfig = {
+  instances: number[]
   /**
    * Position offset for the vim
    */
@@ -42,6 +43,7 @@ export type VimConfig = {
 }
 
 export const defaultConfig: VimConfig = {
+  instances: undefined,
   position: new THREE.Vector3(),
   rotation: new THREE.Vector3(),
   scale: 1,

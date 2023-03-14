@@ -31,7 +31,7 @@ export class Loader {
     this.sceneBuilder = new SceneBuilder(this.meshBuilder)
   }
 
-  async load (bfast: BFast, settings: VimConfig, instances?: number[]) {
+  async load (bfast: BFast, settings: VimConfig) {
     if (!settings.streamBim && !settings.streamGeometry) {
       await bfast.forceDownload()
     }
@@ -54,7 +54,11 @@ export class Loader {
     ])
 
     const scene = g3d
-      ? this.sceneBuilder.createFromG3d(g3d, settings.transparency, instances)
+      ? this.sceneBuilder.createFromG3d(
+        g3d,
+        settings.transparency,
+        settings.instances
+      )
       : new Scene(this.sceneBuilder)
 
     const mapping = new ElementMapping(
@@ -68,7 +72,7 @@ export class Loader {
     return vim
   }
 
-  async loadRemote (bfast: BFast, settings: VimConfig, instances?: number[]) {
+  async loadRemote (bfast: BFast, settings: VimConfig) {
     let strings: string[] | undefined
 
     let instanceToElement: number[] | undefined
@@ -86,8 +90,8 @@ export class Loader {
       doc.element.getAllId().then((array) => (elementIds = array))
     ])
 
-    const g3d = instances
-      ? await remoteG3d?.filter(instances)
+    const g3d = settings.instances
+      ? await remoteG3d?.filter(settings.instances)
       : await remoteG3d?.toG3d()
 
     const scene = g3d

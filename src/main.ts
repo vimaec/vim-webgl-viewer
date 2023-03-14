@@ -30,7 +30,7 @@ if (params.has('selection')) {
 // Create Viewer
 const viewer = new VIM.Viewer()
 
-if (url) load2('residence_nozip.vim')
+if (url) load2(url)
 
 const input = document.createElement('input')
 input.type = 'file'
@@ -60,8 +60,8 @@ function load2 (vim: string | ArrayBuffer) {
       viewer
         .loadVim(
           vim,
-          undefined,
           {
+            // instances: [1, 2, 3, 4],
             rotation: new THREE.Vector3(270, 0, 0),
             position: new THREE.Vector3(i * 100, 0, j * 100),
             transparency,

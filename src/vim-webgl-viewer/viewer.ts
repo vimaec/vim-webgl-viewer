@@ -250,7 +250,6 @@ export class Viewer {
    */
   async loadVim (
     source: string | ArrayBuffer,
-    instances?: number[],
     options?: VimOptions,
     onProgress?: (logger: IProgressLogs) => void
   ) {
@@ -267,8 +266,8 @@ export class Viewer {
     const settings = getVimConfig(options)
     const bfast = new BFast(buffer, 0, 'vim')
     const vim = settings.streamGeometry
-      ? await this._loader.loadRemote(bfast, settings, instances)
-      : await this._loader.load(bfast, settings, instances)
+      ? await this._loader.loadRemote(bfast, settings)
+      : await this._loader.load(bfast, settings)
     vim.source = url
 
     // Remove progress listener
@@ -277,12 +276,6 @@ export class Viewer {
     this.onLoad(vim)
 
     return vim
-  }
-
-  fetchVim (source: string) {
-    let buffer: RemoteBuffer
-    buffer = new RemoteBuffer(source)
-    const bfast = new BFast(buffer, 0, 'vim')
   }
 
   private onLoad (vim: Vim) {
