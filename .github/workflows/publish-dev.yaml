@@ -9,6 +9,10 @@ jobs:
   build:
     runs-on: ubuntu-latest
     steps:
+      - name: Set up Git
+        run: |
+          git config --global user.name "Simon Roberge"
+          git config --global user.email "simon.roberge@vimaec.com"
       - name: Checkout
         uses: actions/checkout@v2
       - name: Setup Node
