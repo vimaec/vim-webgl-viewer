@@ -21,12 +21,7 @@
   "scripts": {
     "dev": "vite --host",
     "build": "vite build && npm run declarations",
-    "bump-dev": "npm version prerelease --preid=dev",
-    "publish-dev": "npm publish --tag=dev",
     "serve-docs": "http-server ./docs -o --host",
-    "release-patch": "npm version patch && git push && npm publish",
-    "release-dev": "npm run build && npm run bump-dev && git push && npm run publish-dev",
-    "release-current": "npm run build && npm publish",
     "eslint": "eslint --ext .js,.ts src --fix",
     "documentation": "typedoc --entryPointStrategy expand --mergeModulesMergeMode module --out docs/api --excludePrivate ./src/vim-webgl-viewer/ ./src/vim-loader/ && git add ./docs/",
     "declarations": "tsc --declaration --emitDeclarationOnly --outdir ./dist/types"
