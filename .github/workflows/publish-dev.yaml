@@ -39,9 +39,7 @@ jobs:
         run: git commit -am "Bump version to $NEW_VERSION"
 
       - name: Push changes
-        uses: ad-m/github-push-action@master
-        with:
-          github_token: ${{ github.token }}
+        run: git push
 
       - name: Build
         run: npm run build
