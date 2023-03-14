@@ -38,6 +38,9 @@ jobs:
       - name: Commit version bump
         run: git commit -am "Bump version to $NEW_VERSION"
 
+      - name: Pull changes from remote
+        run: git pull
+
       - name: Push changes
         uses: ad-m/github-push-action@master
         with:
