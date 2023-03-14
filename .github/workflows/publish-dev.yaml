@@ -13,24 +13,38 @@ jobs:
         run: |
           git config --global user.name "Simon Roberge"
           git config --global user.email "simon.roberge@vimaec.com"
+
       - name: Checkout
         uses: actions/checkout@v2
+
       - name: Setup Node
         uses: actions/setup-node@v2
         with:
           node-version: '14.x'
           registry-url: 'https://registry.npmjs.org'
+
       - name: Install dependencies
         run: npm install
-      - name: Bump dev version
-        run: npm run bump-dev
-      - name: Commit version
-        run: |
-          git add --all
-          git commit -m 'auto versioning'
-          git push
+
+      - name: Get current version
+        id: get_version
+        run: echo "::set-output name=current_version::$(npm version --json | jq -r '.version')"
+
+      - name: Increment version
+        id: inc_version
+        run: echo "::set-output name=new_version::$(npm version ${{ inputs.type }})"
+
+        env:
+          INPUT_TYPE: patch
+
+      - name: Push changes
+        uses: ad-m/github-push-action@master
+        with:
+          github_token: ${{ secrets.GITHUB_TOKEN }}
+
       - name: Build
         run: npm run build
+
       - name: Publish dev package on NPM 📦
         run: npm run publish-dev
         env:
