@@ -24,6 +24,11 @@ jobs:
         run: npm install
       - name: Bump dev version
         run: npm run bump-dev
+      - name: Commit version
+        run: |
+          git add -all
+          git commit -m 'auto versioning'
+          git push
       - name: Build
         run: npm run build
       - name: Publish dev package on NPM 📦
