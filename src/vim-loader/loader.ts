@@ -8,14 +8,16 @@ import {
   G3d,
   RemoteG3d,
   VimDocument,
-  setRemoteBufferMaxConcurency
+  setRemoteBufferMaxConcurency,
+  VimHeader,
+  requestHeader
 } from 'vim-format'
-import { Vim } from './vim'
 import { VimConfig } from './vimSettings'
 import { VimMaterials } from './materials/materials'
 import { MeshBuilder } from './meshBuilder'
 import { Scene } from './scene'
 import { ElementMapping } from './elementMapping'
+import { Vim } from './vim'
 
 setRemoteBufferMaxConcurency(20)
 /**
@@ -36,23 +38,16 @@ export class Loader {
       await bfast.forceDownload()
     }
 
-    let g3d: G3d | undefined
-    let strings: string[] | undefined
-
-    let instanceToElement: number[] | undefined
-    let elementIds: number[] | undefined
-
     const doc = await VimDocument.createFromBfast(bfast)
 
-    await Promise.all([
-      Loader.requestG3d(bfast).then((g) => (g3d = g)),
-      Loader.requestStrings(bfast).then((s) => (strings = s)),
-      doc.node
-        .getAllElementIndex()
-        .then((array) => (instanceToElement = array)),
-      doc.element.getAllId().then((array) => (elementIds = array))
-    ])
-
+    const [header, g3d, strings, instanceToElement, elementIds] =
+      await Promise.all([
+        Loader.requestHeader(bfast),
+        Loader.requestG3d(bfast),
+        Loader.requestStrings(bfast),
+        doc.node.getAllElementIndex(),
+        doc.element.getAllId()
+      ])
     const scene = g3d
       ? this.sceneBuilder.createFromG3d(
         g3d,
@@ -67,27 +62,21 @@ export class Loader {
       elementIds!
     )
 
-    const vim = new Vim(doc, g3d, scene, settings, strings, mapping)
+    const vim = new Vim(header, doc, g3d, scene, settings, strings, mapping)
 
     return vim
   }
 
   async loadRemote (bfast: BFast, settings: VimConfig) {
-    let strings: string[] | undefined
-
-    let instanceToElement: number[] | undefined
-    let elementIds: number[] | undefined
-
     const doc = await VimDocument.createFromBfast(bfast)
     const geometry = await bfast.getBfast('geometry')
     const remoteG3d: RemoteG3d = RemoteG3d.createFromBfast(geometry)
 
-    await Promise.all([
-      Loader.requestStrings(bfast).then((s) => (strings = s)),
-      doc.node
-        .getAllElementIndex()
-        .then((array) => (instanceToElement = array)),
-      doc.element.getAllId().then((array) => (elementIds = array))
+    const [header, strings, instanceToElement, elementIds] = await Promise.all([
+      Loader.requestHeader(bfast),
+      Loader.requestStrings(bfast),
+      doc.node.getAllElementIndex(),
+      doc.element.getAllId()
     ])
 
     const g3d = settings.instances
@@ -104,9 +93,18 @@ export class Loader {
       elementIds!
     )
 
-    const vim = new Vim(doc, g3d, scene, settings, strings, mapping)
+    const vim = new Vim(header, doc, g3d, scene, settings, strings, mapping)
 
     return vim
+  }
+
+  private static async requestHeader (bfast: BFast): Promise<VimHeader> {
+    const header = await requestHeader(bfast)
+
+    if (!header) {
+      throw new Error('Could not get VIM file header.')
+    }
+    return header
   }
 
   private static async requestG3d (bfast: BFast) {

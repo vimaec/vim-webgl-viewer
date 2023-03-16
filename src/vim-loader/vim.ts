@@ -3,7 +3,7 @@
  */
 
 import * as THREE from 'three'
-import { VimDocument, G3d } from 'vim-format'
+import { VimDocument, G3d, VimHeader } from 'vim-format'
 import { Scene } from './scene'
 import { VimConfig } from './vimSettings'
 import { Object } from './object'
@@ -15,6 +15,7 @@ import { Submesh } from './mesh'
  * Dispenses Objects for high level scene manipulation
  */
 export class Vim {
+  header: VimHeader
   source: string | undefined
   readonly document: VimDocument
   readonly g3d: G3d | undefined
@@ -27,6 +28,7 @@ export class Vim {
   private _map: ElementMapping
 
   constructor (
+    header: VimHeader,
     document: VimDocument,
     g3d: G3d | undefined,
     scene: Scene,
@@ -34,6 +36,7 @@ export class Vim {
     strings: string[] | undefined,
     map: ElementMapping
   ) {
+    this.header = header
     this.document = document
     this.g3d = g3d
     this.scene = scene
