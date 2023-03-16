@@ -47,7 +47,6 @@
         download = valid ? t : 'geometry'
       }
 
-
       // Create Viewer
       const viewer = new VIM.Viewer()
 
@@ -57,9 +56,8 @@
         viewer.loadVim(
           vim,
           {
-            rotation: { x: 270, y: 0, z: 0 },
+            rotation: new THREE.Vector3(270, 0, 0),
             transparency: transparency,
-            download: download
           }
         ).then((v) =>
         console.log(
