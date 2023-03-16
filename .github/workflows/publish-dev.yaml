@@ -45,6 +45,6 @@ jobs:
         run: npm run build
 
       - name: Publish dev package on NPM 📦
-        run: npm run publish-dev
+        run: npm publish --tag=dev
         env:
           NODE_AUTH_TOKEN: ${{ secrets.VIM_NPM_PUSH }}
