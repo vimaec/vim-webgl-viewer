@@ -1,26 +1,35 @@
 import * as VIM from './vim'
 import * as THREE from 'three'
-import { LoadingMode } from './vim'
 
-// Parse URL
+// Parse URL for source file
 const params = new URLSearchParams(window.location.search)
 const url = params.has('vim')
   ? params.get('vim')
   : 'https://vimdevelopment01storage.blob.core.windows.net/samples/residence_nozip.vim'
 
+// Parse URL for transparency mode
 let transparency: VIM.Transparency.Mode = 'all'
 if (params.has('transparency')) {
   const t = params.get('transparency')
   transparency = VIM.Transparency.isValid(t) ? t : 'all'
 }
 
-let download: LoadingMode = 'download'
+// Parse URL for streaming method
+let streamBim: boolean = false
+let streamGeometry: boolean = false
 if (params.has('download')) {
   const t = params.get('download')
-  const valid = t === 'download' || t === 'stream' || t === 'geometry'
-  download = valid ? t : 'download'
+  const [bim, geo] =
+    t === 'geometry'
+      ? [true, false]
+      : t === 'stream'
+        ? [true, true]
+        : [false, false]
+  streamBim = bim
+  streamGeometry = geo
 }
 
+// Parse URL for initial selection
 let selection: number[] = []
 if (params.has('selection')) {
   const p = params.get('selection')!
@@ -65,8 +74,8 @@ function load2 (vim: string | ArrayBuffer) {
             rotation: new THREE.Vector3(270, 0, 0),
             position: new THREE.Vector3(i * 100, 0, j * 100),
             transparency,
-            streamBim: true,
-            streamGeometry: true
+            streamBim,
+            streamGeometry
           },
           (progress) => {
             console.log(`Loading : ${progress.loaded} / ${progress.total}`)
