@@ -15,7 +15,7 @@ import { VimMaterials } from '../../vim-loader/materials/materials'
 import { OutlinePass } from './outlinePass'
 import { MergePass } from './mergePass'
 import { TransferPass } from './transferPass'
-import { Camera } from '../camera'
+import { Camera } from '../camera/camera'
 
 /*
   *---------------------*
@@ -63,14 +63,14 @@ export class RenderingComposer {
     camera: Camera
   ) {
     this._samples = renderer.capabilities.isWebGL2
-      ? renderer.capabilities.maxSamples
+      ? 8 // ? renderer.capabilities.maxSamples until we can update three.
       : 0
     this._renderer = renderer
     this._scene = scene
     this._materials = materials
     this._size = viewport.getSize()
 
-    this._camera = camera.camera
+    this._camera = camera.three
     this.setup()
 
     this._clock = new THREE.Clock()
@@ -235,8 +235,9 @@ export class RenderingComposer {
     this._sceneTarget.dispose()
     this._outlineTarget.dispose()
     this._outlinePass.dispose()
-    this._ssaaRenderPass.dispose()
+
     // Not defined in THREE 0.143.0
+    // this._ssaaRenderPass.dispose()
     // this._fxaaPass.dispose()
   }
 }

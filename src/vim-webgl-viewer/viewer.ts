@@ -5,8 +5,9 @@
 import * as THREE from 'three'
 
 // internal
-import { ViewerConfig, getConfig, ViewerOptions } from './viewerSettings'
-import { Camera, ICamera } from './camera'
+import { Settings, getConfig, PartialSettings } from './viewerSettings'
+import { Camera } from './camera/camera'
+import { ICamera } from './camera/cameraInterface'
 import { Input } from './inputs/input'
 import { Selection } from './selection'
 import { Environment, IEnvironment } from './environment'
@@ -23,9 +24,8 @@ import { GizmoRectangle } from './gizmos/gizmoRectangle'
 import { getVimConfig, VimOptions } from '../vim-loader/vimSettings'
 import { Loader } from '../vim-loader/loader'
 import { Object } from '../vim-loader/object'
-import { BFast } from '../vim-loader/bfast'
+import { BFast, IProgressLogs, RemoteBuffer } from 'vim-format'
 import { Vim } from '../vim-loader/vim'
-import { IProgressLogs, RemoteBuffer } from '../vim-loader/remoteBuffer'
 import { Renderer } from './rendering/renderer'
 import { GizmoGrid, VimMaterials } from '../vim'
 import { SignalDispatcher } from 'ste-signals'
@@ -37,7 +37,7 @@ export class Viewer {
   /**
    * Current viewer settings.
    */
-  config: ViewerConfig
+  config: Settings
 
   /**
    * Interface to manage objects to be rendered.
@@ -129,7 +129,7 @@ export class Viewer {
     return this._gizmoAxes.canvas
   }
 
-  constructor (options?: ViewerOptions) {
+  constructor (options?: PartialSettings) {
     this.config = getConfig(options)
 
     const materials = new VimMaterials()
@@ -265,7 +265,9 @@ export class Viewer {
 
     const settings = getVimConfig(options)
     const bfast = new BFast(buffer, 0, 'vim')
-    const vim = await this._loader.load(bfast, settings)
+    const vim = settings.streamGeometry
+      ? await this._loader.loadRemote(bfast, settings)
+      : await this._loader.load(bfast, settings)
     vim.source = url
 
     // Remove progress listener
@@ -277,8 +279,16 @@ export class Viewer {
   }
 
   private onLoad (vim: Vim) {
+    const success = this.renderer.add(vim.scene)
+    if (!success) {
+      vim.dispose()
+      throw new Error(
+        'Could not load vim. Max geometry memory reached. Vim disposed.'
+      )
+    }
+
     this.addVim(vim)
-    this.renderer.add(vim.scene)
+
     const box = this.renderer.getBoundingBox()
     if (box) {
       this._environment.adaptToContent(box)

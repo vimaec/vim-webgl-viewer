@@ -105,7 +105,7 @@ export class GizmoRectangle {
 
   private updateRect (position: THREE.Vector3, dx: number, dy: number) {
     // Update rectangle transform
-    this.line.quaternion.copy(this.viewer.camera.camera.quaternion)
+    this.line.quaternion.copy(this.viewer.camera.quaternion)
     this.line.position.copy(position)
     this.line.scale.set(dx, dy, 1)
     this.line.updateMatrix()
@@ -115,10 +115,8 @@ export class GizmoRectangle {
   private getBoxSize (A: THREE.Vector3, B: THREE.Vector3) {
     const cam = this.viewer.camera
     // Compute the basis components of the projection plane.
-    const up = new THREE.Vector3(0, 1, 0).applyQuaternion(cam.camera.quaternion)
-    const right = new THREE.Vector3(1, 0, 0).applyQuaternion(
-      cam.camera.quaternion
-    )
+    const up = new THREE.Vector3(0, 1, 0).applyQuaternion(cam.quaternion)
+    const right = new THREE.Vector3(1, 0, 0).applyQuaternion(cam.quaternion)
 
     // Transform the 3d positions to 2d on the projection plane.
     const Ax = A.dot(right)

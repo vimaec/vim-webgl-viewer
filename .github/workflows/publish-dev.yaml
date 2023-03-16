@@ -1,0 +1,50 @@
+name: Publish official release to NPM
+
+on:
+  push:
+    branches:
+      - develop
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v2
+
+      - name: Setup user
+        run: |
+          git config --global user.email "simon.roberge@vimaec.com"
+          git config --global user.name "Simon Roberge"
+
+      - name: Pull changes from remote
+        run: git pull origin develop
+
+      - name: Setup Node
+        uses: actions/setup-node@v2
+        with:
+          node-version: '14.x'
+          registry-url: 'https://registry.npmjs.org'
+
+      - name: Install dependencies
+        run: npm install
+
+      - name: Get current version
+        run: echo "CURRENT_VERSION=$(npm version --json | jq -r '.version')" >> $GITHUB_ENV
+
+      - name: Bump dev version
+        run: echo "NEW_VERSION=$(npm --no-git-tag-version version prerelease --preid=dev | cut -c 2-)" >> $GITHUB_ENV
+
+      - name: Commit version bump
+        run: git commit -am "Bump version to $NEW_VERSION"
+
+      - name: Push changes
+        run: git push
+
+      - name: Build
+        run: npm run build
+
+      - name: Publish dev package on NPM 📦
+        run: npm publish --tag=dev
+        env:
+          NODE_AUTH_TOKEN: ${{ secrets.VIM_NPM_PUSH }}

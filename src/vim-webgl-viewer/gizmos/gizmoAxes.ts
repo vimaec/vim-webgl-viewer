@@ -3,7 +3,7 @@
  */
 
 import * as THREE from 'three'
-import { ICamera } from '../camera'
+import { ICamera } from '../camera/cameraInterface'
 
 // TODO make things private cleanup api.
 export class Axis {
@@ -308,16 +308,12 @@ export class GizmoAxes {
   onMouseClick = () => {
     // FIXME Don't like the current animation
     if (this.isDragging || !this.selectedAxis) return
-    this.camera.orbit(
-      this.selectedAxis.direction,
-      this.camera.defaultLerpDuration
-    )
+    this.camera.orbit(this.selectedAxis.direction, true)
     this.selectedAxis = null
   }
 
   update = () => {
-    this.camera.camera.updateMatrix()
-    this.invRotMat.extractRotation(this.camera.camera.matrix).invert()
+    this.invRotMat.extractRotation(this.camera.matrix).invert()
 
     for (let i = 0, length = this.axes.length; i < length; i++) {
       this.setAxisPosition(this.axes[i])

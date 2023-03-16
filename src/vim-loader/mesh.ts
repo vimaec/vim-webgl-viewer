@@ -1,3 +1,11 @@
+/**
+ * @module vim-loader
+ */
+
+import * as THREE from 'three'
+import { G3d, MeshSection } from 'vim-format'
+import { Geometry, Transparency } from './geometry'
+import { VimMaterials } from './materials/materials'
 import { Vim } from './vim'
 
 /**

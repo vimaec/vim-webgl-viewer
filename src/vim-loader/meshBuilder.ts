@@ -3,7 +3,7 @@
  */
 
 import * as THREE from 'three'
-import { G3d, MeshSection } from './g3d'
+import { G3d, MeshSection } from 'vim-format'
 import { Geometry, Transparency } from './geometry'
 import { VimMaterials } from './materials/materials'
 import { Mesh } from './mesh'
@@ -115,7 +115,8 @@ export class MeshBuilder {
       mesh.setMatrixAt(i, matrix)
       boxes[i] = geometry.boundingBox!.clone().applyMatrix4(matrix)
     }
-    const result = Mesh.createInstanced(mesh, instances, boxes)
+    const nodes = instances.map((i) => g3d.instanceNodes[i])
+    const result = Mesh.createInstanced(mesh, nodes, boxes)
     return result
   }
 
@@ -141,12 +142,8 @@ export class MeshBuilder {
       : this.materials.opaque
 
     const mesh = new THREE.Mesh(merge.geometry, material.material)
-    const result = Mesh.createMerged(
-      mesh,
-      merge.instances,
-      merge.boxes,
-      merge.submeshes
-    )
+    const nodes = merge.instances.map((i) => g3d.instanceNodes[i])
+    const result = Mesh.createMerged(mesh, nodes, merge.boxes, merge.submeshes)
 
     return result
   }

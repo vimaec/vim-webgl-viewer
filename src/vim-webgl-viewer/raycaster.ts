@@ -7,7 +7,7 @@ import { Object } from '../vim-loader/object'
 import { Mesh } from '../vim-loader/mesh'
 import { RenderScene } from './rendering/renderScene'
 import { Viewport } from './viewport'
-import { Camera } from './camera'
+import { Camera } from './camera/camera'
 import { Renderer } from './rendering/renderer'
 
 /**
@@ -141,7 +141,7 @@ export class Raycaster {
     const size = this._viewport.getSize()
     const x = (position.x / size.x) * 2 - 1
     const y = -(position.y / size.y) * 2 + 1
-    target.setFromCamera(new THREE.Vector2(x, y), this._camera.camera)
+    target.setFromCamera(new THREE.Vector2(x, y), this._camera.three)
     return target
   }
 
@@ -152,12 +152,9 @@ export class Raycaster {
     position: THREE.Vector3,
     target: THREE.Raycaster = new THREE.Raycaster()
   ) {
-    const direction = position
-      .clone()
-      .sub(this._camera.camera.position)
-      .normalize()
+    const direction = position.clone().sub(this._camera.position).normalize()
 
-    target.set(this._camera.camera.position, direction)
+    target.set(this._camera.position, direction)
     return target
   }
 }
