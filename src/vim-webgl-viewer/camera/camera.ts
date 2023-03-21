@@ -27,7 +27,7 @@ export class Camera implements ICamera {
 
   // movements
   private _targetPosition: THREE.Vector3 = new THREE.Vector3()
-  private _targetVelocity = new THREE.Vector3()
+  private _inputVelocity = new THREE.Vector3()
   private _velocity = new THREE.Vector3()
   private _speed: number = 0
 
@@ -114,7 +114,7 @@ export class Camera implements ICamera {
     this.camActive.position.set(0, 0, -1000)
     this._targetPosition = this.camActive.position
 
-    this._targetVelocity.set(0, 0, 0)
+    this._inputVelocity.set(0, 0, 0)
     this._velocity.set(0, 0, 0)
 
     this._orbitTarget.set(0, 0, 0)
@@ -169,10 +169,10 @@ export class Camera implements ICamera {
   set localVelocity (vector: THREE.Vector3) {
     const move = vector.clone()
     move.setZ(-move.z)
-    move.applyQuaternion(this.camActive.quaternion)
+    // move.applyQuaternion(this.camActive.quaternion)
     move.multiplyScalar(this.getVelocityMultiplier() * this._moveSpeed)
 
-    this._targetVelocity.copy(move)
+    this._inputVelocity.copy(move)
   }
 
   /**
@@ -188,6 +188,7 @@ export class Camera implements ICamera {
    * False: First person free camera mode.
    */
   public set orbitMode (value: boolean) {
+    if (this._orbitMode === value) return
     this._orbitMode = value
     if (this.gizmo) {
       this.gizmo.enabled = value
@@ -291,7 +292,6 @@ export class Camera implements ICamera {
     if (targetPos) {
       this._targetPosition.copy(targetPos)
       this._lerpPosition = lerp
-      this.gizmo?.show()
     }
   }
 
@@ -304,7 +304,6 @@ export class Camera implements ICamera {
 
     this._orbitTarget.add(v)
     this._targetPosition.add(v)
-    this.gizmo?.show()
   }
 
   /**
@@ -407,7 +406,6 @@ export class Camera implements ICamera {
     this._lerpRotation = lerp
     this._lerpPosition = lerp
     this.updateProjection(sphere)
-    this.gizmo?.show()
   }
 
   private lookAt (position: THREE.Vector3) {
@@ -483,13 +481,13 @@ export class Camera implements ICamera {
       this.lookAt(this._orbitTarget)
     }
 
-    this.gizmo?.setPosition(this._orbitTarget)
-
     this._hasMoved = false
     if (
       !this._lastPosition.equals(this.camActive.position) ||
       !this.camActive.quaternion.equals(this._lastQuaternion)
     ) {
+      this.gizmo?.setPosition(this._orbitTarget)
+      this.gizmo.show(true)
       this._hasMoved = true
       this._onMoved.dispatch()
     }
@@ -505,7 +503,7 @@ export class Camera implements ICamera {
     const blendFactor = 1.0 - invBlendFactor
 
     this._velocity.multiplyScalar(invBlendFactor)
-    const deltaVelocity = this._targetVelocity
+    const deltaVelocity = this._inputVelocity
       .clone()
       .multiplyScalar(blendFactor)
     this._velocity.add(deltaVelocity)
@@ -513,7 +511,11 @@ export class Camera implements ICamera {
       this._velocity.set(0, 0, 0)
     }
 
-    const deltaPosition = this._velocity.clone().multiplyScalar(deltaTime)
+    const deltaPosition = this._velocity
+      .clone()
+      .applyQuaternion(this.quaternion)
+      .multiplyScalar(deltaTime)
+
     const endPosition = this.camActive.position.clone().add(deltaPosition)
     this._targetPosition.copy(endPosition)
     this._orbitTarget.add(deltaPosition)
