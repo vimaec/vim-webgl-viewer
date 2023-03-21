@@ -21,7 +21,7 @@ import { Measure, IMeasure } from './gizmos/measure/measure'
 import { GizmoRectangle } from './gizmos/gizmoRectangle'
 
 // loader
-import { getVimConfig, VimOptions } from '../vim-loader/vimSettings'
+import { getVimConfig, VimPartialSettings } from '../vim-loader/vimSettings'
 import { Loader } from '../vim-loader/loader'
 import { Object } from '../vim-loader/object'
 import { BFast, IProgressLogs, RemoteBuffer } from 'vim-format'
@@ -250,11 +250,10 @@ export class Viewer {
    */
   async loadVim (
     source: string | ArrayBuffer,
-    options?: VimOptions,
+    options?: VimPartialSettings,
     onProgress?: (logger: IProgressLogs) => void
   ) {
     let buffer: RemoteBuffer | ArrayBuffer
-
     let url: string | undefined
     if (typeof source === 'string') {
       url = source
@@ -317,29 +316,5 @@ export class Viewer {
    */
   clearVims () {
     this.vims.forEach((v) => this.unloadVim(v))
-  }
-
-  /**
-   * Reloads the vim with only objects included in the array.
-   * @param objects array of objects to keep or undefined to load all objects.
-   */
-  filterVim (vim: Vim, objects: Object[] | undefined) {
-    const instances = objects
-      ?.flatMap((o) => o?.instances)
-      .filter((i): i is number => i !== undefined)
-
-    this.renderer.remove(vim.scene)
-    vim.filter(instances)
-    this.renderer.add(vim.scene)
-  }
-
-  loadMore (vim: Vim, flagTest: (flag: number) => boolean) {
-    const more = vim.loadMore(flagTest)
-    if (!more) return
-
-    this.renderer.remove(vim.scene)
-    vim.scene.merge(more)
-    this.renderer.add(vim.scene)
-    return more
   }
 }

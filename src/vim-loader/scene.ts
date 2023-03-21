@@ -67,7 +67,7 @@ export class Scene {
   getMemory () {
     return this.meshes
       .map((m) => estimateBytesUsed(m.three.geometry))
-      .reduce((n1, n2) => n1 + n2)
+      .reduce((n1, n2) => n1 + n2, 0)
   }
 
   /**

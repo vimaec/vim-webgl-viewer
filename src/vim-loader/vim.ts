@@ -5,7 +5,7 @@
 import * as THREE from 'three'
 import { VimDocument, G3d, VimHeader } from 'vim-format'
 import { Scene } from './scene'
-import { VimConfig } from './vimSettings'
+import { VimSettings } from './vimSettings'
 import { Object } from './object'
 import { ElementMapping } from './elementMapping'
 import { Submesh } from './mesh'
@@ -19,7 +19,7 @@ export class Vim {
   source: string | undefined
   readonly document: VimDocument
   readonly g3d: G3d | undefined
-  settings: VimConfig
+  settings: VimSettings
 
   scene: Scene
   private _elementToObject: Map<number, Object> = new Map<number, Object>()
@@ -32,7 +32,7 @@ export class Vim {
     document: VimDocument,
     g3d: G3d | undefined,
     scene: Scene,
-    settings: VimConfig,
+    settings: VimSettings,
     strings: string[] | undefined,
     map: ElementMapping
   ) {
@@ -56,38 +56,9 @@ export class Vim {
   }
 
   /**
-   * Reloads the vim with only the instances provided
-   * @param instances g3d instance indices to keep
-   */
-  filter (instances?: number[]) {
-    if (!this.g3d) return
-    const next = this.scene.builder.createFromG3d(
-      this.g3d,
-      this.settings.transparency,
-      instances
-    )
-    this.scene.dispose()
-
-    next.applyMatrix4(this.settings.matrix)
-    next.vim = this
-    this.scene = next
-    for (const [element, object] of this._elementToObject.entries()) {
-      object.updateMeshes(this.getMeshesFromElement(element))
-    }
-  }
-
-  loadMore (flagTest: (flag: number) => boolean) {
-    if (!this.g3d) return
-    const more = this.scene.builder.createFromFlag(this.g3d, flagTest)
-    more.vim = this
-    more.applyMatrix4(this.settings.matrix)
-    return more
-  }
-
-  /**
    * Applies new settings to the vim
    */
-  applySettings (settings: VimConfig) {
+  applySettings (settings: VimSettings) {
     this.settings = settings
     this.scene.applyMatrix4(this.settings.matrix)
   }

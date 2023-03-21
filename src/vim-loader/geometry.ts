@@ -5,6 +5,13 @@
 import * as THREE from 'three'
 import { G3d, MeshSection } from 'vim-format'
 
+export type MergeArgs = {
+  section: MeshSection
+  instances: number[]
+  loadRooms: boolean
+  transparent: boolean
+}
+
 export namespace Transparency {
   /**
    * Determines how to draw (or not) transparent and opaque objects
@@ -35,8 +42,8 @@ export namespace Geometry {
    * @param instances indices of the instances from the g3d to merge
    * @returns a BufferGeometry
    */
-  export function createGeometryFromInstances (g3d: G3d, instances: number[]) {
-    return Geometry.mergeInstanceMeshes(g3d, 'all', false, instances)?.geometry
+  export function createGeometryFromInstances (g3d: G3d, args: MergeArgs) {
+    return Geometry.mergeInstanceMeshes(g3d, args)?.geometry
   }
 
   /**
@@ -151,15 +158,10 @@ export namespace Geometry {
    * @param transparent true to use a transparent material.
    * @param instances instances for which to merge meshes.
    */
-  export function mergeInstanceMeshes (
-    g3d: G3d,
-    section: MeshSection,
-    transparent: boolean,
-    instances: number[]
-  ) {
-    const info = getInstanceMergeInfo(g3d, instances, section)
+  export function mergeInstanceMeshes (g3d: G3d, mergeArgs: MergeArgs) {
+    const info = getInstanceMergeInfo(g3d, mergeArgs)
     if (info.instances.length === 0 || info.indexCount === 0) return
-    return merge(g3d, info, transparent)
+    return merge(g3d, info)
   }
 
   /**
@@ -168,21 +170,17 @@ export namespace Geometry {
    * @param transparent true to use a transparent material.
    * @param instances instances for which to merge meshes.
    */
-  export function mergeUniqueMeshes (
-    g3d: G3d,
-    section: MeshSection,
-    transparent: boolean
-  ) {
-    const info = getUniqueMeshMergeInfo(g3d, section)
+  export function mergeUniqueMeshes (g3d: G3d, args: MergeArgs) {
+    const info = getUniqueMeshMergeInfo(g3d, args)
     if (info.instances.length === 0 || info.indexCount === 0) return
-    return merge(g3d, info, transparent)
+    return merge(g3d, info)
   }
 
   /**
    * Returns merged geometry and meta data for picking.
    */
-  function merge (g3d: G3d, info: MergeInfo, transparent: boolean) {
-    const buffer = new MergeBuffer(info, G3d.POSITION_SIZE, transparent ? 4 : 3)
+  function merge (g3d: G3d, info: MergeInfo) {
+    const buffer = info.createBuffer()
     fillBuffers(g3d, buffer, info)
     const geometry = buffer.toBufferGeometry()
     return new MergeResult(
@@ -196,7 +194,7 @@ export namespace Geometry {
   /**
    * Precomputes array sizes required to merge all unique meshes
    */
-  function getUniqueMeshMergeInfo (g3d: G3d, section: MeshSection) {
+  function getUniqueMeshMergeInfo (g3d: G3d, args: MergeArgs) {
     let vertexCount = 0
     let indexCount = 0
     const instances = []
@@ -207,9 +205,9 @@ export namespace Geometry {
       if (!meshInstances || meshInstances.length !== 1) continue
 
       const instance = meshInstances[0]
-      if ((g3d.instanceFlags[instance] & 1) > 0) continue
+      if (!args.loadRooms && (g3d.instanceFlags[instance] & 1) > 0) continue
 
-      const count = g3d.getMeshIndexCount(mesh, section)
+      const count = g3d.getMeshIndexCount(mesh, args.section)
       if (count <= 0) continue
 
       indexCount += count
@@ -217,27 +215,32 @@ export namespace Geometry {
       instances.push(instance)
     }
 
-    return new MergeInfo(section, instances, indexCount, vertexCount)
+    return new MergeInfo(
+      args.section,
+      args.transparent,
+      instances,
+      indexCount,
+      vertexCount
+    )
   }
 
   /**
    * Precomputes array sizes required to merge all meshes of given instances.
    */
-  function getInstanceMergeInfo (
-    g3d: G3d,
-    instances: number[],
-    section: MeshSection
-  ) {
+  function getInstanceMergeInfo (g3d: G3d, args: MergeArgs) {
     let vertexCount = 0
     let indexCount = 0
     const instancesFiltered = []
 
-    for (let i = 0; i < instances.length; i++) {
-      const instance = instances[i]
+    for (let i = 0; i < args.instances.length; i++) {
+      const instance = args.instances[i]
+      if (!args.loadRooms && (g3d.instanceFlags[instance] & 1) > 0) {
+        continue
+      }
       const mesh = g3d.instanceMeshes[instance]
 
-      const start = g3d.getMeshIndexStart(mesh, section)
-      const end = g3d.getMeshIndexEnd(mesh, section)
+      const start = g3d.getMeshIndexStart(mesh, args.section)
+      const end = g3d.getMeshIndexEnd(mesh, args.section)
       const count = end - start
       if (count <= 0) continue
       indexCount += count
@@ -245,7 +248,13 @@ export namespace Geometry {
       instancesFiltered.push(instance)
     }
 
-    return new MergeInfo(section, instancesFiltered, indexCount, vertexCount)
+    return new MergeInfo(
+      args.section,
+      args.transparent,
+      instancesFiltered,
+      indexCount,
+      vertexCount
+    )
   }
 
   /**
@@ -320,20 +329,27 @@ export namespace Geometry {
    */
   export class MergeInfo {
     section: MeshSection
+    transparent: boolean
     instances: number[]
     indexCount: number
     vertexCount: number
 
     constructor (
       section: MeshSection,
+      transparent: boolean,
       instance: number[],
       indexCount: number,
       vertexCount: number
     ) {
       this.section = section
+      this.transparent = transparent
       this.instances = instance
       this.indexCount = indexCount
       this.vertexCount = vertexCount
+    }
+
+    createBuffer () {
+      return new MergeBuffer(this, G3d.POSITION_SIZE, this.transparent ? 4 : 3)
     }
   }
 

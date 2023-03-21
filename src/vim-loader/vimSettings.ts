@@ -9,7 +9,7 @@ import * as THREE from 'three'
 /**
  * Config object for loading a vim
  */
-export type VimConfig = {
+export type VimSettings = {
   instances: number[]
   /**
    * Position offset for the vim
@@ -34,6 +34,8 @@ export type VimConfig = {
    */
   transparency: Transparency.Mode
 
+  loadRooms: boolean
+
   /**
    * Forces the viewer to download the whole data at once.
    * Otherwise bim data will be requested on per need basis.
@@ -42,24 +44,26 @@ export type VimConfig = {
   streamGeometry: boolean
 }
 
-export const defaultConfig: VimConfig = {
+export const defaultConfig: VimSettings = {
   instances: undefined,
+  loadRooms: false,
   position: new THREE.Vector3(),
   rotation: new THREE.Vector3(),
   scale: 1,
   matrix: new THREE.Matrix4(),
   transparency: 'all',
+
   streamBim: false,
   streamGeometry: false
 }
 
-export type VimOptions = Partial<VimConfig>
+export type VimPartialSettings = Partial<VimSettings>
 /**
  * <p>Wrapper around Vim Options.</p>
  * <p>Casts options values into related THREE.js type</p>
  * <p>Provides default values for options</p>
  */
-export function getVimConfig (options?: VimOptions) {
+export function getVimConfig (options?: VimPartialSettings) {
   const merge = options
     ? deepmerge(defaultConfig, options, undefined)
     : defaultConfig

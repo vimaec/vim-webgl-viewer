@@ -12,7 +12,7 @@ import {
   VimHeader,
   requestHeader
 } from 'vim-format'
-import { VimConfig } from './vimSettings'
+import { VimSettings } from './vimSettings'
 import { VimMaterials } from './materials/materials'
 import { MeshBuilder } from './meshBuilder'
 import { Scene } from './scene'
@@ -33,7 +33,7 @@ export class Loader {
     this.sceneBuilder = new SceneBuilder(this.meshBuilder)
   }
 
-  async load (bfast: BFast, settings: VimConfig) {
+  async load (bfast: BFast, settings: VimSettings) {
     if (!settings.streamBim && !settings.streamGeometry) {
       await bfast.forceDownload()
     }
@@ -49,11 +49,7 @@ export class Loader {
         doc.element.getAllId()
       ])
     const scene = g3d
-      ? this.sceneBuilder.createFromG3d(
-        g3d,
-        settings.transparency,
-        settings.instances
-      )
+      ? this.sceneBuilder.createFromG3d(g3d, settings)
       : new Scene(this.sceneBuilder)
 
     const mapping = new ElementMapping(
@@ -67,7 +63,7 @@ export class Loader {
     return vim
   }
 
-  async loadRemote (bfast: BFast, settings: VimConfig) {
+  async loadRemote (bfast: BFast, settings: VimSettings) {
     const doc = await VimDocument.createFromBfast(bfast)
     const geometry = await bfast.getBfast('geometry')
     const remoteG3d: RemoteG3d = RemoteG3d.createFromBfast(geometry)
@@ -82,9 +78,10 @@ export class Loader {
     const g3d = settings.instances
       ? await remoteG3d?.filter(settings.instances)
       : await remoteG3d?.toG3d()
+    settings.instances = undefined
 
     const scene = g3d
-      ? this.sceneBuilder.createFromG3d(g3d, settings.transparency)
+      ? this.sceneBuilder.createFromG3d(g3d, settings)
       : new Scene(this.sceneBuilder)
 
     const mapping = new ElementMapping(
