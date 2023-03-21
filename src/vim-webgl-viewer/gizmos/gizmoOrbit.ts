@@ -50,7 +50,6 @@ export class CameraGizmo {
   dispose () {
     cancelAnimationFrame(this._animation)
     clearTimeout(this._timeout)
-
     this._box?.dispose()
     this._wireframe?.dispose()
     this._material?.dispose()
@@ -114,6 +113,7 @@ export class CameraGizmo {
       this._material!.opacity = MathUtils.lerp(0, this._opacity, t)
       this._materialAlways!.opacity = MathUtils.lerp(0, this._opacityAlways, t)
     }
+    this._renderer.needsUpdate = true
   }
 
   /**
