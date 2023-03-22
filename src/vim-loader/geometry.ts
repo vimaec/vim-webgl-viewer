@@ -205,7 +205,7 @@ export namespace Geometry {
       if (!meshInstances || meshInstances.length !== 1) continue
 
       const instance = meshInstances[0]
-      if (!args.loadRooms && (g3d.instanceFlags[instance] & 1) > 0) continue
+      if (!args.loadRooms && g3d.getInstanceHasFlag(instance, 1)) continue
 
       const count = g3d.getMeshIndexCount(mesh, args.section)
       if (count <= 0) continue
@@ -234,7 +234,7 @@ export namespace Geometry {
 
     for (let i = 0; i < args.instances.length; i++) {
       const instance = args.instances[i]
-      if (!args.loadRooms && (g3d.instanceFlags[instance] & 1) > 0) {
+      if (!args.loadRooms && g3d.getInstanceHasFlag(instance, 1)) {
         continue
       }
       const mesh = g3d.instanceMeshes[instance]

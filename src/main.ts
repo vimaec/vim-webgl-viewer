@@ -3,9 +3,10 @@ import * as THREE from 'three'
 
 // Parse URL for source file
 const params = new URLSearchParams(window.location.search)
+// Edge server doesn't serve http ranges properly
 const url = params.has('vim')
   ? params.get('vim')
-  : 'https://vimdevelopment01storage.blob.core.windows.net/samples/residence_nozip.vim'
+  : 'https://vimdevelopment01storage.blob.core.windows.net/samples/TowerS-ARCHITECTURE-ALL.v1.2.50.vim'
 
 // Parse URL for transparency mode
 let transparency: VIM.Transparency.Mode = 'all'
@@ -39,7 +40,7 @@ if (params.has('selection')) {
 // Create Viewer
 const viewer = new VIM.Viewer()
 
-if (url) load2(url)
+if (url) load2('tower_nozip.v1.2.50.vim')
 
 const input = document.createElement('input')
 input.type = 'file'
@@ -70,12 +71,13 @@ function load2 (vim: string | ArrayBuffer) {
         .loadVim(
           vim,
           {
-            // instances: [1, 2, 3, 4],
+            instances: new Array<number>(100).fill(0).map((v, i) => i + 30000),
+            // loadRooms: true,
             rotation: new THREE.Vector3(270, 0, 0),
             position: new THREE.Vector3(i * 100, 0, j * 100),
             transparency,
-            streamBim,
-            streamGeometry
+            streamBim: true,
+            streamGeometry: true
           },
           (progress) => {
             console.log(`Loading : ${progress.loaded} / ${progress.total}`)

@@ -44,7 +44,9 @@ export class MeshBuilder {
         meshInstances = meshInstances.filter((i) => set.has(i))
       }
       if (!args.loadRooms) {
-        meshInstances = meshInstances.filter((i) => !g3d.instanceFlags[i])
+        meshInstances = meshInstances.filter(
+          (i) => !g3d.getInstanceHasFlag(i, 1)
+        )
       }
 
       if (meshInstances.length <= 1) continue
