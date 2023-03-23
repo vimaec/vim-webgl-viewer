@@ -78,10 +78,12 @@ export class Loader {
     const g3d = settings.instances
       ? await remoteG3d?.filter(settings.instances)
       : await remoteG3d?.toG3d()
-    settings.instances = undefined
+
+    // Filtering already occured so we don't pass it to the builder.
+    const copy = { ...settings, instances: undefined } as VimSettings
 
     const scene = g3d
-      ? this.sceneBuilder.createFromG3d(g3d, settings)
+      ? this.sceneBuilder.createFromG3d(g3d, copy)
       : new Scene(this.sceneBuilder)
 
     const mapping = new ElementMapping(
