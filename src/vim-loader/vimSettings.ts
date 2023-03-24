@@ -42,6 +42,7 @@ export type VimSettings = {
    */
   streamBim: boolean
   streamGeometry: boolean
+  ignoreStrings: boolean
 }
 
 export const defaultConfig: VimSettings = {
@@ -54,7 +55,8 @@ export const defaultConfig: VimSettings = {
   transparency: 'all',
 
   streamBim: false,
-  streamGeometry: false
+  streamGeometry: false,
+  ignoreStrings: false
 }
 
 export type VimPartialSettings = Partial<VimSettings>

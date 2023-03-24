@@ -10,7 +10,8 @@ import {
   VimDocument,
   setRemoteBufferMaxConcurency,
   VimHeader,
-  requestHeader
+  requestHeader,
+  ignoreStrings
 } from 'vim-format'
 import { VimSettings } from './vimSettings'
 import { VimMaterials } from './materials/materials'
@@ -40,14 +41,12 @@ export class Loader {
 
     const doc = await VimDocument.createFromBfast(bfast)
 
-    const [header, g3d, strings, instanceToElement, elementIds] =
-      await Promise.all([
-        Loader.requestHeader(bfast),
-        Loader.requestG3d(bfast),
-        Loader.requestStrings(bfast),
-        doc.node.getAllElementIndex(),
-        doc.element.getAllId()
-      ])
+    const [header, g3d, instanceToElement, elementIds] = await Promise.all([
+      Loader.requestHeader(bfast),
+      Loader.requestG3d(bfast),
+      doc.node.getAllElementIndex(),
+      doc.element.getAllId()
+    ])
     const scene = g3d
       ? this.sceneBuilder.createFromG3d(g3d, settings)
       : new Scene(this.sceneBuilder)
@@ -58,19 +57,19 @@ export class Loader {
       elementIds!
     )
 
-    const vim = new Vim(header, doc, g3d, scene, settings, strings, mapping)
+    const vim = new Vim(header, doc, g3d, scene, settings, mapping)
 
     return vim
   }
 
   async loadRemote (bfast: BFast, settings: VimSettings) {
+    ignoreStrings(settings.ignoreStrings) // This should be per VIM-file. Requires objectmodel API update.
     const doc = await VimDocument.createFromBfast(bfast)
     const geometry = await bfast.getBfast('geometry')
     const remoteG3d: RemoteG3d = RemoteG3d.createFromBfast(geometry)
 
-    const [header, strings, instanceToElement, elementIds] = await Promise.all([
+    const [header, instanceToElement, elementIds] = await Promise.all([
       Loader.requestHeader(bfast),
-      Loader.requestStrings(bfast),
       doc.node.getAllElementIndex(),
       doc.element.getAllId()
     ])
@@ -92,7 +91,7 @@ export class Loader {
       elementIds!
     )
 
-    const vim = new Vim(header, doc, g3d, scene, settings, strings, mapping)
+    const vim = new Vim(header, doc, g3d, scene, settings, mapping)
 
     return vim
   }
@@ -115,17 +114,5 @@ export class Loader {
     const g3d = await G3d.createFromBfast(geometry)
 
     return g3d
-  }
-
-  private static async requestStrings (bfast: BFast) {
-    const buffer = await bfast.getBuffer('strings')
-    if (!buffer) {
-      console.error(
-        'Could not get String Data from VIM file. Bim features will be disabled.'
-      )
-      return
-    }
-    const strings = new TextDecoder('utf-8').decode(buffer).split('\0')
-    return strings
   }
 }
