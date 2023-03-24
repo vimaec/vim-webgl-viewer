@@ -84,7 +84,7 @@ export class Object {
    * Returns true if this object has geometry
    */
   get hasMesh () {
-    return this._meshes?.length!!
+    return (this._meshes?.length ?? 0) > 0
   }
 
   /**
