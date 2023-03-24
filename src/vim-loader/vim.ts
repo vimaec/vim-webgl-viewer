@@ -7,7 +7,7 @@ import { VimDocument, G3d, VimHeader } from 'vim-format'
 import { Scene } from './scene'
 import { VimSettings } from './vimSettings'
 import { Object } from './object'
-import { ElementMapping } from './elementMapping'
+import { ElementMapping, ElementNoMapping } from './elementMapping'
 import { Submesh } from './mesh'
 
 /**
@@ -23,9 +23,7 @@ export class Vim {
 
   scene: Scene
   private _elementToObject: Map<number, Object> = new Map<number, Object>()
-  private _strings: string[] | undefined
-
-  private _map: ElementMapping
+  private _map: ElementMapping | ElementNoMapping
 
   constructor (
     header: VimHeader,
@@ -33,7 +31,7 @@ export class Vim {
     g3d: G3d | undefined,
     scene: Scene,
     settings: VimSettings,
-    map: ElementMapping
+    map: ElementMapping | ElementNoMapping
   ) {
     this.header = header
     this.document = document
@@ -43,7 +41,7 @@ export class Vim {
     this.settings = settings
     this.scene.applyMatrix4(this.settings.matrix)
 
-    this._map = map
+    this._map = map ?? new ElementNoMapping()
   }
 
   /**
@@ -73,7 +71,7 @@ export class Vim {
    * @param instance g3d instance index
    */
   getObjectFromInstance (instance: number) {
-    const element = this._map.getElementFromInstance(instance)
+    const element = this._map?.getElementFromInstance(instance)
     if (!element) return
     return this.getObjectFromElement(element)
   }
