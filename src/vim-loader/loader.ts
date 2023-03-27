@@ -42,7 +42,7 @@ export class Loader {
     const doc = await VimDocument.createFromBfast(bfast)
 
     const [header, g3d, instanceToElement, elementIds] = await Promise.all([
-      Loader.requestHeader(bfast),
+      settings.noHeader ? undefined : Loader.requestHeader(bfast),
       Loader.requestG3d(bfast),
       settings.noMap ? undefined : doc.node.getAllElementIndex(),
       settings.noMap ? undefined : doc.element.getAllId()
@@ -71,7 +71,7 @@ export class Loader {
     const remoteG3d: RemoteG3d = RemoteG3d.createFromBfast(geometry)
 
     const [header, instanceToElement, elementIds] = await Promise.all([
-      Loader.requestHeader(bfast),
+      settings.noHeader ? undefined : Loader.requestHeader(bfast),
       settings.noMap ? undefined : doc.node.getAllElementIndex(),
       settings.noMap ? undefined : doc.element.getAllId()
     ])

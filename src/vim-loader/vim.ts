@@ -26,7 +26,7 @@ export class Vim {
   private _map: ElementMapping | ElementNoMapping
 
   constructor (
-    header: VimHeader,
+    header: VimHeader | undefined,
     document: VimDocument,
     g3d: G3d | undefined,
     scene: Scene,
