@@ -9,6 +9,7 @@ import { VimSettings } from './vimSettings'
 import { Object } from './object'
 import { ElementMapping, ElementNoMapping } from './elementMapping'
 import { Submesh } from './mesh'
+import { ISignal, SignalDispatcher } from 'ste-signals'
 
 /**
  * Container for the built three meshes and the vim data from which it was built.
@@ -24,6 +25,11 @@ export class Vim {
   scene: Scene
   private _elementToObject: Map<number, Object> = new Map<number, Object>()
   private _map: ElementMapping | ElementNoMapping
+
+  private _onDispose = new SignalDispatcher()
+  get onDispose () {
+    return this._onDispose as ISignal
+  }
 
   constructor (
     header: VimHeader | undefined,
@@ -48,6 +54,8 @@ export class Vim {
    * Disposes of all resources.
    */
   dispose () {
+    this._onDispose.dispatch()
+    this._onDispose.clear()
     this.scene.dispose()
   }
 

@@ -19,6 +19,7 @@ import { MeshBuilder } from './meshBuilder'
 import { Scene } from './scene'
 import { ElementMapping } from './elementMapping'
 import { Vim } from './vim'
+import { VimRequest } from '../vim-webgl-viewer/vimRequest'
 
 setRemoteBufferMaxConcurency(20)
 /**
@@ -32,6 +33,10 @@ export class Loader {
   constructor (materials: VimMaterials) {
     this.meshBuilder = new MeshBuilder(materials)
     this.sceneBuilder = new SceneBuilder(this.meshBuilder)
+  }
+
+  request (source: string | ArrayBuffer, settings: VimSettings) {
+    return new VimRequest(this, source, settings)
   }
 
   async load (bfast: BFast, settings: VimSettings) {

@@ -10,6 +10,7 @@ import { Camera } from './camera/camera'
 import { ICamera } from './camera/cameraInterface'
 import { Input } from './inputs/input'
 import { Selection } from './selection'
+import { VimRequest } from './vimRequest'
 import { Environment, IEnvironment } from './environment'
 import { Raycaster } from './raycaster'
 import { CameraGizmo } from './gizmos/gizmoOrbit'
@@ -248,32 +249,28 @@ export class Viewer {
    * @param source if string downloads the vim from url then loads it, if ArrayBuffer directly loads the vim
    * @param options vim options
    */
+  requestVim (source: string | ArrayBuffer, options?: VimPartialSettings) {
+    const settings = getVimConfig(options)
+    const request = this._loader.request(source, settings)
+    request.onLoaded.sub((vim) => this.onLoad(vim))
+
+    return request
+  }
+
+  /**
+   * Loads a vim into the viewer from local or remote location
+   * @param source if string downloads the vim from url then loads it, if ArrayBuffer directly loads the vim
+   * @param options vim options
+   */
   async loadVim (
     source: string | ArrayBuffer,
     options?: VimPartialSettings,
     onProgress?: (logger: IProgressLogs) => void
   ) {
-    let buffer: RemoteBuffer | ArrayBuffer
-    let url: string | undefined
-    if (typeof source === 'string') {
-      url = source
-      buffer = new RemoteBuffer(source)
-      // Add progress listener
-      buffer.logger.onUpdate = (log) => onProgress?.(log)
-    } else buffer = source
-
     const settings = getVimConfig(options)
-    const bfast = new BFast(buffer, 0, 'vim')
-    const vim = settings.streamGeometry
-      ? await this._loader.loadRemote(bfast, settings)
-      : await this._loader.load(bfast, settings)
-    vim.source = url
-
-    // Remove progress listener
-    if (buffer instanceof RemoteBuffer) buffer.logger.onUpdate = undefined
-
-    this.onLoad(vim)
-
+    const request = this._loader.request(source, settings)
+    request.onProgress.sub((log) => onProgress?.(log))
+    const vim = await request.send()
     return vim
   }
 
