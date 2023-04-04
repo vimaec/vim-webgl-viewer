@@ -45,6 +45,7 @@ export type VimSettings = {
   noStrings: boolean
   noMap: boolean
   noHeader: boolean
+  loghttp: boolean
 }
 
 export const defaultConfig: VimSettings = {
@@ -60,7 +61,8 @@ export const defaultConfig: VimSettings = {
   streamGeometry: false,
   noStrings: false,
   noMap: false,
-  noHeader: false
+  noHeader: false,
+  loghttp: false
 }
 
 export type VimPartialSettings = Partial<VimSettings>

@@ -29,9 +29,8 @@ export class VimRequest {
     this.settings = settings
     if (typeof source === 'string') {
       this.url = source
-      this.buffer = new RemoteBuffer(source)
-      // Add progress listener
-      this.buffer.logger.onUpdate = (log) => this._onProgress.dispatch(log)
+      this.buffer = new RemoteBuffer(source, settings.loghttp)
+      this.buffer.onProgress = (log) => this._onProgress.dispatch(log)
     } else this.buffer = source
     this.bfast = new BFast(this.buffer, 0, 'vim')
   }
