@@ -19,7 +19,7 @@ import { MeshBuilder } from './meshBuilder'
 import { Scene } from './scene'
 import { ElementMapping } from './elementMapping'
 import { Vim } from './vim'
-import { VimRequest } from '../vim-webgl-viewer/vimRequest'
+import { VimRequest } from './vimRequest'
 
 setRemoteBufferMaxConcurency(20)
 /**

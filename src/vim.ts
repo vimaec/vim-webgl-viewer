@@ -4,6 +4,8 @@ export * as THREE from 'three'
 export * as Format from 'vim-format'
 
 export * from './vim-webgl-viewer/viewer'
+export * from './vim-loader/vimRequest'
+export * from './vim-loader/geometry'
 export * from './vim-webgl-viewer/gizmos/gizmoGrid'
 export type { PointerMode, InputScheme } from './vim-webgl-viewer/inputs/input'
 export { DefaultInputScheme, KEYS } from './vim-webgl-viewer/inputs/input'
