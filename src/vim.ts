@@ -16,6 +16,7 @@ export {
 } from './vim-webgl-viewer/raycaster'
 
 export * from './vim-loader/geometry'
+export * from './vim-loader/vimBuilder'
 export * from './vim-loader/loader'
 export * from './vim-loader/materials/materials'
 export * from './vim-loader/meshBuilder'

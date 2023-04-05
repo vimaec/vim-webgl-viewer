@@ -38,23 +38,20 @@ if (params.has('selection')) {
   selection = p?.split('+').map((s) => Number.parseInt(s))
 }
 
-// Create Viewer
 const viewer = new VIM.Viewer()
-async function load (url: string | ArrayBuffer) {
-  const request = viewer.requestVim(url, {
+
+async function load (source: string | ArrayBuffer) {
+  const loader = new VIM.Loader()
+  const request = loader.createRequest(source, {
     rotation: new THREE.Vector3(270, 0, 0),
     transparency
   })
   request.onProgress.sub((progress) => {
     console.log(`Loading : ${progress.loaded} / ${progress.total}`)
   })
-  globalThis.request = request
-  return await request.send()
-}
+  const vim = await request.send()
 
-if (url) {
-  const vim = await load(url)
-  globalThis.VIM = vim
+  viewer.add(vim)
 }
 
 const input = document.createElement('input')
@@ -62,7 +59,7 @@ input.type = 'file'
 document.body.prepend(input)
 
 input.onchange = (e: any) => {
-  viewer.clearVims()
+  viewer.clear()
   // getting a hold of the file reference
   const file = e.target.files[0]
 

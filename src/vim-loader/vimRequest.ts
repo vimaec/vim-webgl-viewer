@@ -1,9 +1,9 @@
 import { ISimpleEvent, SimpleEventDispatcher } from 'ste-simple-events'
 import { BFast, IProgressLogs, RemoteBuffer } from 'vim-format'
-import { Loader, Vim, VimSettings } from '../vim'
+import { VimBuilder, Vim, VimSettings } from '../vim'
 
 export class VimRequest {
-  loader: Loader
+  loader: VimBuilder
   url: string | undefined
   settings: VimSettings
   buffer: RemoteBuffer | ArrayBuffer
@@ -21,7 +21,7 @@ export class VimRequest {
   }
 
   constructor (
-    loader: Loader,
+    loader: VimBuilder,
     source: string | ArrayBuffer,
     settings: VimSettings
   ) {

@@ -71,7 +71,7 @@ export type VimPartialSettings = Partial<VimSettings>
  * <p>Casts options values into related THREE.js type</p>
  * <p>Provides default values for options</p>
  */
-export function getVimConfig (options?: VimPartialSettings) {
+export function getFullSettings (options?: VimPartialSettings) {
   const merge = options
     ? deepmerge(defaultConfig, options, undefined)
     : defaultConfig
