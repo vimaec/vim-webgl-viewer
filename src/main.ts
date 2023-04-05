@@ -53,6 +53,7 @@ async function load (source: string | ArrayBuffer) {
 
   viewer.add(vim)
 }
+load(url)
 
 const input = document.createElement('input')
 input.type = 'file'
