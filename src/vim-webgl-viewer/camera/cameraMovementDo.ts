@@ -10,43 +10,45 @@ export class CameraMovementDo extends CameraMovement {
    */
 
   zoom (amount: number): void {
-    const dist = this.camera.orbitDistance * amount
+    const dist = this._camera.orbitDistance * amount
     this.setDistance(dist)
   }
 
   reset () {
-    this.set(this.camera._savedPosition, this.camera._savedTarget)
+    this.set(this._camera._savedPosition, this._camera._savedTarget)
   }
 
   setDistance (dist: number): void {
-    const pos = this.camera.orbitPosition
+    const pos = this._camera.orbitPosition
       .clone()
-      .sub(this.camera.forward.multiplyScalar(dist))
-    this.camera.position.copy(pos)
+      .sub(this._camera.forward.multiplyScalar(dist))
+    this._camera.position.copy(pos)
   }
 
   rotate (angle: THREE.Vector2): void {
-    const rotation = this.predictRotate(this.camera.quaternion, angle)
+    const rotation = this.predictRotate(this._camera.quaternion, angle)
     this.applyRotation(rotation)
   }
 
   applyRotation (quaternion: THREE.Quaternion) {
-    const offset = this.camera.forward.multiplyScalar(this.camera.orbitDistance)
-    this.camera.quaternion.copy(quaternion)
-    this.camera.orbitPosition.copy(this.camera.position).add(offset)
+    const offset = this._camera.forward.multiplyScalar(
+      this._camera.orbitDistance
+    )
+    this._camera.quaternion.copy(quaternion)
+    this._camera.orbitPosition.copy(this._camera.position).add(offset)
   }
 
   target (target: Object | THREE.Vector3): void {
     const pos = target instanceof Object ? target.getCenter() : target
     if (!pos) return
-    this.camera.orbitPosition.copy(pos)
-    this.camera.camActive.camera.lookAt(pos)
-    this.camera.camActive.camera.up.set(0, 1, 0)
+    this._camera.orbitPosition.copy(pos)
+    this._camera.camPerspective.camera.lookAt(pos)
+    this._camera.camPerspective.camera.up.set(0, 1, 0)
   }
 
   set (position: THREE.Vector3, target?: THREE.Vector3) {
-    this.camera.position.copy(position)
-    this.target(target ?? this.camera.orbitPosition)
+    this._camera.position.copy(position)
+    this.target(target ?? this._camera.orbitPosition)
   }
 
   protected override frameSphere (
@@ -54,11 +56,11 @@ export class CameraMovementDo extends CameraMovement {
     angle: number | undefined
   ) {
     // Compute best distance to frame sphere
-    const fov = (this.camera.camPerspective.camera.fov * Math.PI) / 180
+    const fov = (this._camera.camPerspective.camera.fov * Math.PI) / 180
     const dist = (sphere.radius * 1.2) / Math.tan(fov / 2)
     console.log(dist)
     if (angle !== undefined) {
-      this.camera.position.setY(sphere.center.y)
+      this._camera.position.setY(sphere.center.y)
     }
 
     this.target(sphere.center)
@@ -71,28 +73,28 @@ export class CameraMovementDo extends CameraMovement {
   }
 
   orbit (angle: THREE.Vector2): void {
-    const rotation = this.predictRotate(this.camera.quaternion, angle)
+    const rotation = this.predictRotate(this._camera.quaternion, angle)
 
     const delta = new THREE.Vector3(0, 0, 1)
       .applyQuaternion(rotation)
-      .multiplyScalar(this.camera.orbitDistance)
+      .multiplyScalar(this._camera.orbitDistance)
 
-    const pos = this.camera.orbitPosition.clone().add(delta)
-    this.set(pos, this.camera.orbitPosition)
+    const pos = this._camera.orbitPosition.clone().add(delta)
+    this.set(pos, this._camera.orbitPosition)
   }
 
   orbitTowards (direction: THREE.Vector3) {
-    const offset = direction.clone().multiplyScalar(this.camera.orbitDistance)
-    this.camera.position.copy(this.camera.orbitPosition).sub(offset)
-    this.target(this.camera.orbitPosition)
+    const offset = direction.clone().multiplyScalar(this._camera.orbitDistance)
+    this._camera.position.copy(this._camera.orbitPosition).sub(offset)
+    this.target(this._camera.orbitPosition)
   }
 
   override move3 (vector: THREE.Vector3): void {
     const v = vector.clone()
-    v.applyQuaternion(this.camera.quaternion)
+    v.applyQuaternion(this._camera.quaternion)
 
-    this.camera.orbitPosition.add(v)
-    this.camera.position.add(v)
+    this._camera.orbitPosition.add(v)
+    this._camera.position.add(v)
   }
 
   private predictRotate (current: THREE.Quaternion, angle: THREE.Vector2) {

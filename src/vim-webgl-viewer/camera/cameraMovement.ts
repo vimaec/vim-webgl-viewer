@@ -3,10 +3,10 @@ import { Object } from '../../vim'
 import * as THREE from 'three'
 
 export abstract class CameraMovement {
-  camera: Camera
+  protected _camera: Camera
 
   constructor (camera: Camera) {
-    this.camera = camera
+    this._camera = camera
   }
 
   abstract move3(vector: THREE.Vector3): void
@@ -57,7 +57,7 @@ export abstract class CameraMovement {
       target = target.getBoundingBox()
     }
     if (target === 'all') {
-      target = this.camera._scene.getBoundingBox()
+      target = this._camera._scene.getBoundingBox()
     }
     if (target instanceof THREE.Box3) {
       target = target.getBoundingSphere(new THREE.Sphere())

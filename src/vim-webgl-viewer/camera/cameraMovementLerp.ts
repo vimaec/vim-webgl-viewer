@@ -6,7 +6,6 @@ import { CameraMovement } from './cameraMovement'
 
 export class CameraLerp extends CameraMovement {
   _movement: CameraMovementDo
-  _camera: Camera
   _clock = new THREE.Clock()
 
   // position
@@ -20,6 +19,7 @@ export class CameraLerp extends CameraMovement {
   }
 
   init (duration: number) {
+    this.cancel()
     this._duration = duration
     this._clock.start()
     this.animate()
@@ -188,11 +188,7 @@ export class CameraLerp extends CameraMovement {
       pos.setY(sphere.center.y)
     }
 
-    const offset = pos
-      .clone()
-      .sub(sphere.center)
-      .normalize()
-      .multiplyScalar(dist)
+    const offset = this._camera.forward.multiplyScalar(-dist)
 
     pos.copy(sphere.center).add(offset)
     this.set(pos, sphere.center)

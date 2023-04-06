@@ -7,10 +7,8 @@ import * as THREE from 'three'
 // internal
 import { Settings, getConfig, PartialSettings } from './viewerSettings'
 import { Camera } from './camera/camera'
-import { ICamera } from './camera/cameraInterface'
 import { Input } from './inputs/input'
 import { Selection } from './selection'
-import { VimRequest } from '../vim-loader/vimRequest'
 import { Environment, IEnvironment } from './environment'
 import { Raycaster } from './raycaster'
 import { CameraGizmo } from './gizmos/gizmoOrbit'
@@ -93,7 +91,7 @@ export class Viewer {
    * Interface to manipulate the viewer camera.
    */
   get camera () {
-    return this._camera as ICamera
+    return this._camera
   }
 
   /**
@@ -222,7 +220,7 @@ export class Viewer {
       this.sectionBox.fitBox(box)
     }
     this._camera.adaptToContent()
-    this._camera.frame('all', 45)
+    this._camera.do().frame('all', 45)
     this._onVimLoaded.dispatch()
   }
 
