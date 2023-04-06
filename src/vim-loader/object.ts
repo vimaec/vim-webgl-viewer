@@ -8,7 +8,7 @@ import * as THREE from 'three'
 // Vim
 import { Geometry } from './geometry'
 import { Vim } from './vim'
-import { VimDocument, IElement, VimHelpers, ElementParameter } from 'vim-format'
+import { VimDocument, IElement, VimHelpers } from 'vim-format'
 import { ObjectAttribute, ColorAttribute } from './objectAttributes'
 import { Submesh } from './mesh'
 
@@ -172,7 +172,7 @@ export class Object {
   /**
    * Returns Bim data for the element associated with this object.
    */
-  getBimParameters (): Promise<ElementParameter[]> {
+  getBimParameters (): Promise<VimHelpers.ElementParameter[]> {
     return VimHelpers.getElementParameters(this.vim.document, this.element)
   }
 

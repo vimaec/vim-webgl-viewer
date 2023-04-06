@@ -45,6 +45,7 @@ export type VimSettings = {
   noStrings: boolean
   noMap: boolean
   noHeader: boolean
+  loghttp: boolean
 }
 
 export const defaultConfig: VimSettings = {
@@ -60,7 +61,8 @@ export const defaultConfig: VimSettings = {
   streamGeometry: false,
   noStrings: false,
   noMap: false,
-  noHeader: false
+  noHeader: false,
+  loghttp: false
 }
 
 export type VimPartialSettings = Partial<VimSettings>
@@ -69,7 +71,7 @@ export type VimPartialSettings = Partial<VimSettings>
  * <p>Casts options values into related THREE.js type</p>
  * <p>Provides default values for options</p>
  */
-export function getVimConfig (options?: VimPartialSettings) {
+export function getFullSettings (options?: VimPartialSettings) {
   const merge = options
     ? deepmerge(defaultConfig, options, undefined)
     : defaultConfig

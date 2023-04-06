@@ -7,8 +7,10 @@ import * as THREE from 'three'
 // internal
 import { Settings, getConfig, PartialSettings } from './viewerSettings'
 import { Camera } from './camera/camera'
+import { ICamera } from './camera/cameraInterface'
 import { Input } from './inputs/input'
 import { Selection } from './selection'
+import { VimRequest } from '../vim-loader/vimRequest'
 import { Environment, IEnvironment } from './environment'
 import { Raycaster } from './raycaster'
 import { CameraGizmo } from './gizmos/gizmoOrbit'
@@ -20,10 +22,9 @@ import { Measure, IMeasure } from './gizmos/measure/measure'
 import { GizmoRectangle } from './gizmos/gizmoRectangle'
 
 // loader
-import { getVimConfig, VimPartialSettings } from '../vim-loader/vimSettings'
-import { Loader } from '../vim-loader/loader'
-import { Object } from '../vim-loader/object'
-import { BFast, IProgressLogs, RemoteBuffer } from 'vim-format'
+import { getFullSettings, VimPartialSettings } from '../vim-loader/vimSettings'
+import { VimBuilder } from '../vim-loader/vimBuilder'
+import { IProgressLogs } from 'vim-format'
 import { Vim } from '../vim-loader/vim'
 import { Renderer } from './rendering/renderer'
 import { GizmoGrid, VimMaterials } from '../vim'
@@ -92,7 +93,7 @@ export class Viewer {
    * Interface to manipulate the viewer camera.
    */
   get camera () {
-    return this._camera
+    return this._camera as ICamera
   }
 
   /**
@@ -109,17 +110,6 @@ export class Viewer {
     return this._onVimLoaded.asEvent()
   }
 
-  private _environment: Environment
-  private _camera: Camera
-  private _loader: Loader
-  private _clock = new THREE.Clock()
-  private _gizmoAxes: GizmoAxes
-
-  // State
-  private _vims: (Vim | undefined)[] = []
-  private _onVimLoaded = new SignalDispatcher()
-  private _updateId: number
-
   /**
    * Will be removed once gizmo axes are cleaned up to expose canvas.
    * @deprecated
@@ -128,13 +118,20 @@ export class Viewer {
     return this._gizmoAxes.canvas
   }
 
+  private _environment: Environment
+  private _camera: Camera
+  private _clock = new THREE.Clock()
+  private _gizmoAxes: GizmoAxes
+
+  // State
+  private _vims = new Set<Vim>()
+  private _onVimLoaded = new SignalDispatcher()
+  private _updateId: number
+
   constructor (options?: PartialSettings) {
     this.config = getConfig(options)
 
-    const materials = new VimMaterials()
-
-    this._loader = new Loader(materials)
-    this.materials = materials
+    this.materials = VimMaterials.getInstance()
 
     const scene = new RenderScene()
     this.viewport = new Viewport(this.config)
@@ -142,7 +139,7 @@ export class Viewer {
     this.renderer = new Renderer(
       scene,
       this.viewport,
-      materials,
+      this.materials,
       this._camera,
       this.config
     )
@@ -168,7 +165,7 @@ export class Viewer {
     this._environment.getObjects().forEach((o) => this.renderer.add(o))
 
     // Input and Selection
-    this.selection = new Selection(materials)
+    this.selection = new Selection(this.materials)
     this.raycaster = new Raycaster(
       this.viewport,
       this._camera,
@@ -180,6 +177,77 @@ export class Viewer {
 
     // Start Loop
     this.animate()
+  }
+
+  // Calls render, and asks the framework to prepare the next frame
+  private animate () {
+    this._updateId = requestAnimationFrame(() => this.animate())
+    // Camera
+    this.renderer.needsUpdate = this._camera.update(this._clock.getDelta())
+    // Rendering
+    this.renderer.render()
+  }
+
+  /**
+   * Returns an array with all loaded vims.
+   */
+  get vims () {
+    return Array.from(this._vims)
+  }
+
+  /**
+   * Current loaded vim count
+   */
+  get vimCount () {
+    return this._vims.size
+  }
+
+  add (vim: Vim) {
+    if (this._vims.has(vim)) {
+      throw new Error('Vim cannot be added again, unless removed first.')
+    }
+
+    const success = this.renderer.add(vim.scene)
+    if (!success) {
+      vim.dispose()
+      throw new Error(
+        'Could not load vim. Max geometry memory reached. Vim disposed.'
+      )
+    }
+    this._vims.add(vim)
+
+    const box = this.renderer.getBoundingBox()
+    if (box) {
+      this._environment.adaptToContent(box)
+      this.sectionBox.fitBox(box)
+    }
+    this._camera.adaptToContent()
+    this._camera.frame('all', 45)
+    this._onVimLoaded.dispatch()
+  }
+
+  /**
+   * Unload given vim from viewer.
+   */
+  remove (vim: Vim) {
+    if (this._vims.has(vim)) {
+      throw new Error('Cannot remove missing vim from viewer.')
+    }
+
+    this._vims.add(vim)
+    this.renderer.remove(vim.scene)
+    vim.dispose()
+    if (this.selection.vim === vim) {
+      this.selection.clear()
+    }
+    this._onVimLoaded.dispatch()
+  }
+
+  /**
+   * Unloads all vim from viewer.
+   */
+  clear () {
+    this.vims.forEach((v) => this.remove(v))
   }
 
   /**
@@ -197,124 +265,5 @@ export class Viewer {
     this._vims.forEach((v) => v?.dispose())
     this.materials.dispose()
     this.gizmoRectangle.dispose()
-  }
-
-  // Calls render, and asks the framework to prepare the next frame
-  private animate () {
-    this._updateId = requestAnimationFrame(() => this.animate())
-    // Camera
-    this.renderer.needsUpdate = this._camera.update(this._clock.getDelta())
-    // Rendering
-    this.renderer.render()
-  }
-
-  /**
-   * Returns an array with all loaded vims.
-   */
-  get vims () {
-    return this._vims.filter((v): v is Vim => v !== undefined)
-  }
-
-  /**
-   * Current loaded vim count
-   */
-  get vimCount () {
-    return this._vims.length
-  }
-
-  /**
-   * Adds given vim to the first empty spot of the vims array
-   */
-  private addVim (vim: Vim) {
-    for (let i = 0; i <= this._vims.length; i++) {
-      if (this._vims[i] === undefined) {
-        this._vims[i] = vim
-        return
-      }
-    }
-  }
-
-  /**
-   * Remove given vim from the vims array and leaves an undefined spot.
-   */
-  private removeVim (vim: Vim) {
-    const i = this._vims.indexOf(vim)
-    this._vims[i] = undefined
-  }
-
-  /**
-   * Loads a vim into the viewer from local or remote location
-   * @param source if string downloads the vim from url then loads it, if ArrayBuffer directly loads the vim
-   * @param options vim options
-   */
-  async loadVim (
-    source: string | ArrayBuffer,
-    options?: VimPartialSettings,
-    onProgress?: (logger: IProgressLogs) => void
-  ) {
-    let buffer: RemoteBuffer | ArrayBuffer
-    let url: string | undefined
-    if (typeof source === 'string') {
-      url = source
-      buffer = new RemoteBuffer(source)
-      // Add progress listener
-      buffer.logger.onUpdate = (log) => onProgress?.(log)
-    } else buffer = source
-
-    const settings = getVimConfig(options)
-    const bfast = new BFast(buffer, 0, 'vim')
-    const vim = settings.streamGeometry
-      ? await this._loader.loadRemote(bfast, settings)
-      : await this._loader.load(bfast, settings)
-    vim.source = url
-
-    // Remove progress listener
-    if (buffer instanceof RemoteBuffer) buffer.logger.onUpdate = undefined
-
-    this.onLoad(vim)
-
-    return vim
-  }
-
-  private onLoad (vim: Vim) {
-    const success = this.renderer.add(vim.scene)
-    if (!success) {
-      vim.dispose()
-      throw new Error(
-        'Could not load vim. Max geometry memory reached. Vim disposed.'
-      )
-    }
-
-    this.addVim(vim)
-
-    const box = this.renderer.getBoundingBox()
-    if (box) {
-      this._environment.adaptToContent(box)
-      this.sectionBox.fitBox(box)
-    }
-    this._camera.adaptToContent()
-    this._camera.do().frame('all', 45)
-    this._camera.save()
-    this._onVimLoaded.dispatch()
-  }
-
-  /**
-   * Unload given vim from viewer.
-   */
-  unloadVim (vim: Vim) {
-    this.removeVim(vim)
-    this.renderer.remove(vim.scene)
-    vim.dispose()
-    if (this.selection.vim === vim) {
-      this.selection.clear()
-    }
-    this._onVimLoaded.dispatch()
-  }
-
-  /**
-   * Unloads all vim from viewer.
-   */
-  clearVims () {
-    this.vims.forEach((v) => this.unloadVim(v))
   }
 }
