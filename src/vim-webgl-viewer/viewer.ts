@@ -203,7 +203,7 @@ export class Viewer {
   }
 
   add (vim: Vim) {
-    if (this._vims.has(vim)) {
+    if (!this._vims.has(vim)) {
       throw new Error('Vim cannot be added again, unless removed first.')
     }
 
