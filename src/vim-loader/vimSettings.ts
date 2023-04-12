@@ -36,6 +36,7 @@ export type VimSettings = {
 
   loadRooms: boolean
 
+  restApi: string
   /**
    * Forces the viewer to download the whole data at once.
    * Otherwise bim data will be requested on per need basis.
@@ -57,6 +58,7 @@ export const defaultConfig: VimSettings = {
   matrix: new THREE.Matrix4(),
   transparency: 'all',
 
+  restApi: undefined,
   streamBim: false,
   streamGeometry: false,
   noStrings: false,

@@ -9,8 +9,7 @@ import {
   RemoteG3d,
   VimDocument,
   VimHeader,
-  requestHeader,
-  ignoreStrings
+  requestHeader
 } from 'vim-format'
 import { VimSettings } from './vimSettings'
 import { VimMaterials } from './materials/materials'
@@ -63,8 +62,7 @@ export class VimBuilder {
   }
 
   async loadRemote (bfast: BFast, settings: VimSettings) {
-    ignoreStrings(settings.noStrings) // This should be per VIM-file. Requires objectmodel API update.
-    const doc = await VimDocument.createFromBfast(bfast)
+    const doc = await VimDocument.createFromBfast(bfast, settings.noStrings)
     const geometry = await bfast.getBfast('geometry')
     const remoteG3d: RemoteG3d = RemoteG3d.createFromBfast(geometry)
 
@@ -77,6 +75,44 @@ export class VimBuilder {
     const g3d = settings.instances
       ? await remoteG3d?.filter(settings.instances)
       : await remoteG3d?.toG3d()
+
+    // Filtering already occured so we don't pass it to the builder.
+    const copy = { ...settings, instances: undefined } as VimSettings
+
+    const scene = g3d
+      ? this.sceneBuilder.createFromG3d(g3d, copy)
+      : new Scene(this.sceneBuilder)
+
+    const mapping = settings.noMap
+      ? undefined
+      : new ElementMapping(
+        Array.from(g3d.instanceNodes),
+          instanceToElement!,
+          elementIds!
+      )
+
+    const vim = new Vim(header, doc, g3d, scene, settings, mapping)
+
+    return vim
+  }
+
+  async loadRemoteRest (bfast: BFast, settings: VimSettings) {
+    const doc = await VimDocument.createFromBfast(bfast, settings.noStrings)
+
+    const [header, instanceToElement, elementIds] = await Promise.all([
+      settings.noHeader ? undefined : VimBuilder.requestHeader(bfast),
+      settings.noMap ? undefined : doc.node.getAllElementIndex(),
+      settings.noMap ? undefined : doc.element.getAllId()
+    ])
+
+    const response = await fetch(settings.restApi, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(settings.instances)
+    })
+    const bytes = await response.arrayBuffer()
+    const g3d = await G3d.createFromBfast(new BFast(bytes))
+    console.log(g3d)
 
     // Filtering already occured so we don't pass it to the builder.
     const copy = { ...settings, instances: undefined } as VimSettings
