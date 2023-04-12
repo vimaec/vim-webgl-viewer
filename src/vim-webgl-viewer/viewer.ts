@@ -228,7 +228,7 @@ export class Viewer {
    * Unload given vim from viewer.
    */
   remove (vim: Vim) {
-    if (this._vims.has(vim)) {
+    if (!this._vims.has(vim)) {
       throw new Error('Cannot remove missing vim from viewer.')
     }
 
