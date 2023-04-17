@@ -307,7 +307,9 @@ export class GizmoAxes {
 
   onMouseClick = () => {
     if (this.isDragging || !this.selectedAxis) return
-    this.camera.lerp(1).orbitTowards(this.selectedAxis.direction)
+    this.camera
+      .lerp(1)
+      .orbitTowards(this.selectedAxis.direction.clone().multiplyScalar(-1))
     this.selectedAxis = null
   }
 

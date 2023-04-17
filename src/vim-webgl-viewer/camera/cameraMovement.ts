@@ -52,7 +52,6 @@ export abstract class CameraMovement {
     target: Object | THREE.Sphere | THREE.Box3 | 'all' | undefined,
     angle?: number
   ): void {
-    console.log('frame')
     if (target instanceof Object) {
       target = target.getBoundingBox()
     }

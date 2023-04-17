@@ -84,7 +84,8 @@ export class Camera {
     return this._movement as CameraMovement
   }
 
-  lerp (duration: number) {
+  lerp (duration: number = 1) {
+    this.stop()
     this._lerp.init(duration)
     return this._lerp as CameraMovement
   }
@@ -143,7 +144,12 @@ export class Camera {
   set localVelocity (vector: THREE.Vector3) {
     this._lerp.cancel()
     this._inputVelocity.copy(vector)
-    this._inputVelocity.setZ(this.orthographic ? 0 : -this._inputVelocity.z)
+    this._inputVelocity.setZ(-this._inputVelocity.z)
+  }
+
+  stop () {
+    this._inputVelocity.set(0, 0, 0)
+    this._velocity.set(0, 0, 0)
   }
 
   get orbitPosition () {
@@ -238,6 +244,18 @@ export class Camera {
   }
 
   private applyVelocity (deltaTime: number) {
+    if (
+      this._inputVelocity.x === 0 &&
+      this._inputVelocity.y === 0 &&
+      this._inputVelocity.z === 0 &&
+      this._velocity.x === 0 &&
+      this._velocity.y === 0 &&
+      this._velocity.z === 0
+    ) {
+      // Skip update if unneeded.
+      return
+    }
+
     // Update the camera velocity and position
     const invBlendFactor = Math.pow(this._velocityBlendFactor, deltaTime)
     const blendFactor = 1.0 - invBlendFactor
@@ -256,6 +274,13 @@ export class Camera {
       .multiplyScalar(deltaTime * this.getVelocityMultiplier())
 
     this.do().move3(deltaPosition)
+
+    // Only move the orbit target in XY in orthographic mode.
+    if (this.orthographic) {
+      this._orbitTarget
+        .copy(this._lastTarget)
+        .add(deltaPosition.setZ(0).applyQuaternion(this.quaternion))
+    }
   }
 
   private getVelocityMultiplier () {

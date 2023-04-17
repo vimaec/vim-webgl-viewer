@@ -26,7 +26,7 @@ export class CameraMovementDo extends CameraMovement {
   }
 
   rotate (angle: THREE.Vector2): void {
-    const rotation = this.predictRotate(this._camera.quaternion, angle)
+    const rotation = this.predictRotate(angle)
     this.applyRotation(rotation)
   }
 
@@ -76,14 +76,8 @@ export class CameraMovementDo extends CameraMovement {
   }
 
   orbit (angle: THREE.Vector2): void {
-    const rotation = this.predictRotate(this._camera.quaternion, angle)
-
-    const delta = new THREE.Vector3(0, 0, 1)
-      .applyQuaternion(rotation)
-      .multiplyScalar(this._camera.orbitDistance)
-
-    const pos = this._camera.orbitPosition.clone().add(delta)
-    this.set(pos, this._camera.orbitPosition)
+    const pos = this.predictOrbit(angle)
+    this.set(pos)
   }
 
   orbitTowards (direction: THREE.Vector3) {
@@ -101,16 +95,26 @@ export class CameraMovementDo extends CameraMovement {
     this._camera.notifyMovement()
   }
 
-  private predictRotate (current: THREE.Quaternion, angle: THREE.Vector2) {
+  predictOrbit (angle: THREE.Vector2) {
+    const rotation = this.predictRotate(angle)
+
+    const delta = new THREE.Vector3(0, 0, 1)
+      .applyQuaternion(rotation)
+      .multiplyScalar(this._camera.orbitDistance)
+
+    return this._camera.orbitPosition.clone().add(delta)
+  }
+
+  predictRotate (angle: THREE.Vector2) {
     const euler = new THREE.Euler(0, 0, 0, 'YXZ')
-    euler.setFromQuaternion(current)
+    euler.setFromQuaternion(this._camera.quaternion)
 
     euler.x += (angle.x * Math.PI) / 180
     euler.y += (angle.y * Math.PI) / 180
     euler.z = 0
 
     // Clamp X rotation to prevent performing a loop.
-    const max = Math.PI * 0.48
+    const max = Math.PI * 0.499
     euler.x = Math.max(-max, Math.min(max, euler.x))
 
     const rotation = new THREE.Quaternion().setFromEuler(euler)

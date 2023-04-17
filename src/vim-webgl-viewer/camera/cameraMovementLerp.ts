@@ -109,41 +109,35 @@ export class CameraLerp extends CameraMovement {
     }
   }
 
-  orbit (vector: THREE.Vector2): void {
-    const euler = new THREE.Euler(0, 0, 0, 'YXZ')
-    euler.setFromQuaternion(this._camera.quaternion)
-
-    // When moving the mouse one full sreen
-    // Orbit will rotate 180 degree around the scene
-    const factor = -Math.PI
-    euler.y += vector.x * factor
-    euler.x += vector.y * factor
-    euler.z = 0
-
-    // Clamp X rotation to prevent performing a loop.
-    const max = Math.PI * 0.48
-    euler.x = Math.max(-max, Math.min(max, euler.x))
-
-    const startRot = this._camera.quaternion.clone()
+  orbit (angle: THREE.Vector2): void {
     const startPos = this._camera.position.clone()
-    const endRot = new THREE.Quaternion().setFromEuler(euler)
-    const rot = new THREE.Quaternion()
+    const startTarget = this._camera.orbitPosition.clone()
+    const a = new THREE.Vector2()
 
     this.onProgress = (progress) => {
-      rot.copy(startRot)
-      rot.slerp(endRot, progress)
-      const d = startPos.clone()
-      d.sub(this._camera.orbitPosition)
-      d.applyQuaternion(rot)
-
-      this._movement.set(d)
+      a.set(0, 0)
+      a.lerp(angle, progress)
+      this._movement.set(startPos, startTarget)
+      this._movement.orbit(a)
     }
   }
 
   orbitTowards (direction: THREE.Vector3) {
-    const offset = direction.clone().multiplyScalar(this._camera.orbitDistance)
-    const pos = this._camera.orbitPosition.clone().add(offset)
-    this.set(pos)
+    const forward = this._camera.forward
+
+    // Compute angle between vectors on a flat plane.
+    const flatP = forward.clone().setY(0)
+    const flatT = direction.clone().setY(0)
+    const azimuth = flatP.angleTo(flatT) * Math.sign(flatP.cross(flatT).y)
+
+    // Compute difference between angles infered by elevation.
+    const declination = Math.asin(direction.y) - Math.asin(forward.y)
+
+    // convert to degress
+    const angle = new THREE.Vector2(declination, azimuth)
+    angle.multiplyScalar(180 / Math.PI)
+
+    this.orbit(angle)
   }
 
   target (target: Object | THREE.Vector3): void {
@@ -177,7 +171,6 @@ export class CameraLerp extends CameraMovement {
   }
 
   override frameSphere (sphere: THREE.Sphere, angle: number | undefined) {
-    console.log('frame')
     // Compute best distance to frame sphere
     const fov = (this._camera.camPerspective.camera.fov * Math.PI) / 180
     const dist = (sphere.radius * 1.2) / Math.tan(fov / 2)
