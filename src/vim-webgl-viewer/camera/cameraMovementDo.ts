@@ -8,7 +8,6 @@ export class CameraMovementDo extends CameraMovement {
    * Moves the camera closer or farther away from orbit target.
    * @param amount movement size.
    */
-
   zoom (amount: number): void {
     const dist = this._camera.orbitDistance * amount
     this.setDistance(dist)
@@ -23,6 +22,7 @@ export class CameraMovementDo extends CameraMovement {
       .clone()
       .sub(this._camera.forward.multiplyScalar(dist))
     this._camera.position.copy(pos)
+    this._camera.notifyMovement()
   }
 
   rotate (angle: THREE.Vector2): void {
@@ -31,11 +31,13 @@ export class CameraMovementDo extends CameraMovement {
   }
 
   applyRotation (quaternion: THREE.Quaternion) {
+    this._camera.quaternion.copy(quaternion)
     const offset = this._camera.forward.multiplyScalar(
       this._camera.orbitDistance
     )
-    this._camera.quaternion.copy(quaternion)
+
     this._camera.orbitPosition.copy(this._camera.position).add(offset)
+    this._camera.notifyMovement()
   }
 
   target (target: Object | THREE.Vector3): void {
@@ -44,6 +46,7 @@ export class CameraMovementDo extends CameraMovement {
     this._camera.orbitPosition.copy(pos)
     this._camera.camPerspective.camera.lookAt(pos)
     this._camera.camPerspective.camera.up.set(0, 1, 0)
+    this._camera.notifyMovement()
   }
 
   set (position: THREE.Vector3, target?: THREE.Vector3) {
@@ -95,6 +98,7 @@ export class CameraMovementDo extends CameraMovement {
 
     this._camera.orbitPosition.add(v)
     this._camera.position.add(v)
+    this._camera.notifyMovement()
   }
 
   private predictRotate (current: THREE.Quaternion, angle: THREE.Vector2) {

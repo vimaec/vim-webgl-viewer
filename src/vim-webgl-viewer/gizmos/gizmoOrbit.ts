@@ -11,7 +11,7 @@ import { Settings } from '../viewerSettings'
 /**
  * Manages the camera target gizmo
  */
-export class CameraGizmo {
+export class GizmoOrbit {
   // Dependencies
   private _renderer: Renderer
   private _camera: Camera
@@ -31,6 +31,7 @@ export class CameraGizmo {
   private _material: THREE.LineBasicMaterial | undefined
   private _materialAlways: THREE.LineBasicMaterial | undefined
   private _gizmos: THREE.LineSegments | undefined
+  private _disconnectCamera: () => void
 
   // State
   private _timeout: ReturnType<typeof setTimeout> | undefined
@@ -42,6 +43,25 @@ export class CameraGizmo {
     this._renderer = renderer
     this._camera = camera
     this.applySettings(settings)
+    this.connectCamera()
+  }
+
+  connectCamera () {
+    const onMove = this._camera.onMoved.subscribe(() => this.onCameraUpdate())
+    const onChange = this._camera.onValueChanged.subscribe(() =>
+      this.onCameraUpdate()
+    )
+    this._disconnectCamera = () => {
+      onMove()
+      onChange()
+    }
+  }
+
+  onCameraUpdate () {
+    this.updateScale()
+    this.setPosition(this._camera.orbitPosition)
+    // this.enabled = this._camera.orbitMode
+    this.show(true)
   }
 
   /**
@@ -54,10 +74,12 @@ export class CameraGizmo {
     this._wireframe?.dispose()
     this._material?.dispose()
     this._materialAlways?.dispose()
+    this._disconnectCamera?.()
     this._box = undefined
     this._wireframe = undefined
     this._material = undefined
     this._materialAlways = undefined
+    this._disconnectCamera = undefined
 
     if (this._gizmos) {
       this._renderer.remove(this._gizmos)

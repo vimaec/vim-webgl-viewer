@@ -2,12 +2,9 @@ import * as THREE from 'three'
 
 import { Viewport } from '../viewport'
 import { Settings } from '../viewerSettings'
-import { Object } from '../../vim'
 import { RenderScene } from '../rendering/renderScene'
-import { Quaternion } from 'three'
 import { clamp } from 'three/src/math/MathUtils'
 import { ISignal, SignalDispatcher } from 'ste-signals'
-import { CameraGizmo } from '../gizmos/gizmoOrbit'
 import { PerspectiveWrapper } from './perspective'
 import { OrthographicWrapper } from './orthographic'
 import { CameraLerp } from './cameraMovementLerp'
@@ -18,8 +15,6 @@ import { CameraMovement } from './cameraMovement'
  * Manages viewer camera movement and position
  */
 export class Camera {
-  gizmo: CameraGizmo | undefined
-
   camPerspective: PerspectiveWrapper
   camOrthographic: OrthographicWrapper
 
@@ -98,9 +93,9 @@ export class Camera {
     return this.camPerspective.frustrumSizeAt(point)
   }
 
-  dispose () {
-    this.gizmo?.dispose()
-    this.gizmo = undefined
+  notifyMovement () {
+    this._hasMoved = true
+    this._onMoved.dispatch()
   }
 
   get three () {
@@ -170,10 +165,7 @@ export class Camera {
   public set orbitMode (value: boolean) {
     if (this._orbitMode === value) return
     this._orbitMode = value
-    if (this.gizmo) {
-      this.gizmo.enabled = value
-      this.gizmo.show(value)
-    }
+
     this._onValueChanged.dispatch()
   }
 
@@ -261,13 +253,15 @@ export class Camera {
 
     const deltaPosition = this._velocity
       .clone()
-      .multiplyScalar(deltaTime * this.getVelocityMultiplier() * 100)
+      .multiplyScalar(deltaTime * this.getVelocityMultiplier())
 
-    this._movement.move3(deltaPosition)
+    this.do().move3(deltaPosition)
   }
 
   private getVelocityMultiplier () {
-    return Math.pow(1.25, this.speed) * this._moveSpeed
+    const rotated = !this._lastQuaternion.equals(this.quaternion)
+    const mod = !this._orbitMode && rotated ? 1 : 1.66
+    return Math.pow(1.25, this.speed) * this._moveSpeed * mod * 100
   }
 
   private checkForMovement () {
@@ -277,8 +271,6 @@ export class Camera {
       !this._lastQuaternion.equals(this.quaternion) ||
       !this._lastTarget.equals(this._orbitTarget)
     ) {
-      this.gizmo?.setPosition(this._orbitTarget)
-      this.gizmo.show(true)
       this._hasMoved = true
       this._onMoved.dispatch()
     }

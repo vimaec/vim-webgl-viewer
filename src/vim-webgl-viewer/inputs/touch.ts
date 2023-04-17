@@ -76,19 +76,23 @@ export class TouchHandler extends InputHandler {
     this._touchStart = this._touch
   }
 
+  private toRotation (delta: THREE.Vector2) {
+    return delta.clone().multiplyScalar(180)
+  }
+
   private onDrag = (delta: THREE.Vector2) => {
-    this.camera.rotate(delta)
+    this.camera.do().rotate(this.toRotation(delta))
   }
 
   private onDoubleDrag = (delta: THREE.Vector2) => {
-    this.camera.move2(delta, 'XY')
+    this.camera.do().move2(delta, 'XY')
   }
 
   private onPinchOrSpread = (delta: number) => {
     if (this.camera.orbitMode) {
-      this.camera.zoom(delta * this.ZOOM_SPEED)
+      this.camera.do().zoom(delta * this.ZOOM_SPEED)
     } else {
-      this.camera.move1(delta * this.ZOOM_SPEED, 'Z')
+      this.camera.do().move1(delta * this.ZOOM_SPEED, 'Z')
     }
   }
 

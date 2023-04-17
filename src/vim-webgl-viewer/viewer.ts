@@ -11,7 +11,7 @@ import { Input } from './inputs/input'
 import { Selection } from './selection'
 import { Environment, IEnvironment } from './environment'
 import { Raycaster } from './raycaster'
-import { CameraGizmo } from './gizmos/gizmoOrbit'
+import { GizmoOrbit } from './gizmos/gizmoOrbit'
 import { RenderScene } from './rendering/renderScene'
 import { Viewport } from './viewport'
 import { GizmoAxes } from './gizmos/gizmoAxes'
@@ -120,6 +120,7 @@ export class Viewer {
   private _camera: Camera
   private _clock = new THREE.Clock()
   private _gizmoAxes: GizmoAxes
+  private _gizmoOrbit: GizmoOrbit
 
   // State
   private _vims = new Set<Vim>()
@@ -141,8 +142,9 @@ export class Viewer {
       this._camera,
       this.config
     )
+
     if (this.config.camera.gizmo.enable) {
-      this._camera.gizmo = new CameraGizmo(
+      this._gizmoOrbit = new GizmoOrbit(
         this.renderer,
         this._camera,
         this.config
@@ -256,7 +258,7 @@ export class Viewer {
     this.selection.dispose()
     this._environment.dispose()
     this.selection.clear()
-    this._camera.dispose()
+    this._gizmoOrbit.dispose()
     this.viewport.dispose()
     this.renderer.dispose()
     this.inputs.unregisterAll()
