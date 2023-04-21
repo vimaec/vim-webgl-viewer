@@ -114,7 +114,7 @@ export class CameraMovementDo extends CameraMovement {
     euler.z = 0
 
     // Clamp X rotation to prevent performing a loop.
-    const max = Math.PI * 0.499
+    const max = Math.PI * 0.4999
     euler.x = Math.max(-max, Math.min(max, euler.x))
 
     const rotation = new THREE.Quaternion().setFromEuler(euler)

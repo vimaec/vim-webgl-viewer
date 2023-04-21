@@ -232,8 +232,8 @@ export class MouseHandler extends InputHandler {
     if (event.ctrlKey) {
       this.camera.speed -= scrollValue
     } else {
-      const zoom = Math.pow(1.25, scrollValue)
-      this.camera.lerp(1).zoom(zoom)
+      const zoom = Math.pow(1.3, scrollValue)
+      this.camera.lerp(0.75).zoom(zoom)
     }
   }
 

@@ -275,11 +275,20 @@ export class Camera {
 
     this.do().move3(deltaPosition)
 
-    // Only move the orbit target in XY in orthographic mode.
     if (this.orthographic) {
+      // Cancel target movement in Z in orthographic mode.
       this._orbitTarget
         .copy(this._lastTarget)
         .add(deltaPosition.setZ(0).applyQuaternion(this.quaternion))
+
+      // Prevent orthograpic camera from moving past orbit.
+      const prev = this._lastPosition.clone().sub(this._orbitTarget)
+      const next = this.position.clone().sub(this._orbitTarget)
+      if (prev.dot(next) < 0 || next.lengthSq() < 1) {
+        this.position
+          .copy(this._orbitTarget)
+          .add(this.forward.normalize().multiplyScalar(-1))
+      }
     }
   }
 
