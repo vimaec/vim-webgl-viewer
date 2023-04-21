@@ -14,9 +14,15 @@ export class RenderScene {
   // state
   private _scenes: Scene[] = []
   private _boundingBox: THREE.Box3 | undefined
+  private _memory: number = 0
+  
 
   constructor () {
     this.scene = new THREE.Scene()
+  }
+
+  get estimatedMemory () {
+    return this._memory
   }
 
   /** Returns an array of all the scenes that were updated since last clearUpdateFlags */
@@ -78,6 +84,7 @@ export class RenderScene {
   clear () {
     this.scene.clear()
     this._boundingBox = undefined
+    this._memory = 0
   }
 
   private addScene (scene: Scene) {
@@ -90,6 +97,9 @@ export class RenderScene {
     this._boundingBox = this._boundingBox
       ? this._boundingBox.union(scene.getBoundingBox())
       : scene.getBoundingBox()
+
+    // Memory
+    this._memory += scene.getMemory()
   }
 
   private removeScene (scene: Scene) {
@@ -108,5 +118,6 @@ export class RenderScene {
           .map((s) => s.getBoundingBox())
           .reduce((b1, b2) => b1.union(b2))
         : undefined
+    this._memory -= scene.getMemory()
   }
 }

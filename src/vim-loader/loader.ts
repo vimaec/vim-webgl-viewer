@@ -1,47 +1,24 @@
-/**
- * @module vim-loader
- */
+import { setRemoteBufferMaxConcurency } from 'vim-format'
+import { VimSettings, getFullSettings, VimPartialSettings } from './vimSettings'
+import { VimRequest } from './vimRequest'
+import { VimBuilder } from './vimBuilder'
 
-import { Document, IDocument } from './document'
-import { SceneBuilder } from './sceneBuilder'
-import { BFast } from './bfast'
-import { Vim } from './vim'
-import { VimConfig } from './vimSettings'
-import { VimMaterials } from './materials/materials'
-import { MeshBuilder } from './meshBuilder'
-import { Scene } from './scene'
+setRemoteBufferMaxConcurency(20)
 
-/**
- * Loader for the Vim File format.
- * See https://github.com/vimaec/vim
- */
 export class Loader {
-  readonly sceneBuilder: SceneBuilder
-  readonly meshBuilder: MeshBuilder
+  private _builder: VimBuilder = new VimBuilder()
 
-  constructor (materials: VimMaterials) {
-    this.meshBuilder = new MeshBuilder(materials)
-    this.sceneBuilder = new SceneBuilder(this.meshBuilder)
+  /**
+   * Loads a vim into the viewer from local or remote location
+   * @param source if string downloads the vim from url then loads it, if ArrayBuffer directly loads the vim
+   * @param options vim options
+   */
+  createRequest (source: string | ArrayBuffer, settings: VimPartialSettings) {
+    const fullSettings = getFullSettings(settings)
+    return new VimRequest(this._builder, source, fullSettings)
   }
 
-  async load (bfast: BFast, settings: VimConfig) {
-    let document: IDocument | undefined
-
-    const mode = settings.download
-    if (mode === 'download') await bfast.forceDownload()
-
-    await Document.createFromBfast(bfast, mode === 'stream').then(
-      (d) => (document = d)
-    )
-    if (!document) {
-      throw Error('Could not load parse document.')
-    }
-
-    const scene = document.g3d
-      ? this.sceneBuilder.createFromG3d(document!.g3d, settings.transparency)
-      : new Scene(this.sceneBuilder)
-
-    const vim = new Vim(document!, scene, settings)
-    return vim
+  async load (source: string | ArrayBuffer, settings: VimPartialSettings) {
+    return await this.createRequest(source, settings).send()
   }
 }

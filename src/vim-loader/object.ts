@@ -8,6 +8,7 @@ import * as THREE from 'three'
 // Vim
 import { Geometry } from './geometry'
 import { Vim } from './vim'
+import { VimDocument, IElement, VimHelpers } from 'vim-format'
 import { ObjectAttribute, ColorAttribute } from './objectAttributes'
 import { Submesh } from './mesh'
 
@@ -16,6 +17,7 @@ import { Submesh } from './mesh'
  */
 export class Object {
   vim: Vim
+  document: VimDocument
   element: number
   instances: number[] | undefined
   private _color: THREE.Color | undefined
@@ -82,7 +84,7 @@ export class Object {
    * Returns true if this object has geometry
    */
   get hasMesh () {
-    return this._meshes?.length!!
+    return (this._meshes?.length ?? 0) > 0
   }
 
   /**
@@ -163,31 +165,22 @@ export class Object {
    * Returns Bim data for the element associated with this object.
    * Returns undefined if no associated bim
    */
-  getBimElement () {
-    return this.vim.document.getElement(this.element)
+  getBimElement (): Promise<IElement> {
+    return this.vim.document.element.get(this.element)
   }
 
   /**
    * Returns Bim data for the element associated with this object.
    */
-  async getBimElementValue (field: string, resolveString: boolean) {
-    const value = await this.vim.document.getElementValue(this.element, field)
-    if (!value) return
-    return resolveString ? this.vim.document.getString(value) : value
-  }
-
-  /**
-   * Returns Bim data for the element associated with this object.
-   */
-  async getBimParameters () {
-    return await this.vim.document.getElementParameters(this.element)
+  getBimParameters (): Promise<VimHelpers.ElementParameter[]> {
+    return VimHelpers.getElementParameters(this.vim.document, this.element)
   }
 
   /**
    * Returns the element id of the element associated with this object
    */
   get elementId () {
-    return this.vim.document.getElementId(this.element)
+    return this.vim.getElementId(this.element)
   }
 
   /**
@@ -225,10 +218,10 @@ export class Object {
    * Creates a new three wireframe Line object from the object geometry
    */
   createWireframe () {
-    if (!this.instances || !this.vim.document.g3d) return
+    if (!this.instances || !this.vim.g3d) return
 
     const wireframe = this.meshBuilder.createWireframe(
-      this.vim.document.g3d,
+      this.vim.g3d,
       this.instances
     )
     wireframe?.applyMatrix4(this.vim.getMatrix())
@@ -240,12 +233,14 @@ export class Object {
    * Returns undefined if object has no geometry.
    */
   createGeometry () {
-    if (!this.instances || !this.vim.document.g3d) return
+    if (!this.instances || !this.vim.g3d) return
 
-    const geometry = Geometry.createGeometryFromInstances(
-      this.vim.document.g3d,
-      this.instances
-    )
+    const geometry = Geometry.createGeometryFromInstances(this.vim.g3d, {
+      section: 'all',
+      transparent: false,
+      instances: this.instances,
+      loadRooms: true
+    })
     geometry?.applyMatrix4(this.vim.getMatrix())
     return geometry
   }

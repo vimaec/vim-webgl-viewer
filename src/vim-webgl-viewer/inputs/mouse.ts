@@ -174,19 +174,27 @@ export class MouseHandler extends InputHandler {
     }
   }
 
+  private toRotation (delta: THREE.Vector2) {
+    const rot = delta.clone()
+    rot.x = -delta.y
+    rot.y = -delta.x
+    rot.multiplyScalar(180)
+    return rot
+  }
+
   private onMouseMainDrag (delta: THREE.Vector2) {
     switch (this.inputs.pointerActive) {
       case 'orbit':
-        this.camera.rotate(delta)
+        this.camera.do().orbit(this.toRotation(delta))
         break
       case 'look':
-        this.camera.rotate(delta)
+        this.camera.do().rotate(this.toRotation(delta))
         break
       case 'pan':
-        this.camera.move2(delta, 'XY')
+        this.camera.do().move2(delta.multiplyScalar(10), 'XY')
         break
       case 'zoom':
-        this.camera.zoom(delta.y * this.ZOOM_SPEED)
+        this.camera.do().zoom(delta.y * this.ZOOM_SPEED)
         break
       case 'rect':
         if (!this._hasCameraMoved) {
@@ -195,16 +203,21 @@ export class MouseHandler extends InputHandler {
         }
         break
       default:
-        this.camera.rotate(delta)
+        if (this.camera.orbitMode) {
+          this.camera.do().orbit(this.toRotation(delta))
+        } else {
+          this.camera.do().rotate(this.toRotation(delta))
+        }
     }
   }
 
   private onMouseMiddleDrag (delta: THREE.Vector2) {
-    this.camera.move2(delta, 'XY')
+    console.log('pan')
+    this.camera.do().move2(delta.multiplyScalar(100), 'XY')
   }
 
   private onMouseRightDrag (delta: THREE.Vector2) {
-    this.camera.rotate(delta)
+    this.camera.do().rotate(this.toRotation(delta))
   }
 
   private onMouseWheel = (event: WheelEvent) => {
@@ -219,7 +232,8 @@ export class MouseHandler extends InputHandler {
     if (event.ctrlKey) {
       this.camera.speed -= scrollValue
     } else {
-      this.camera.zoom(scrollValue, this.camera.defaultLerpDuration)
+      const zoom = Math.pow(1.3, scrollValue)
+      this.camera.lerp(0.75).zoom(zoom)
     }
   }
 
@@ -274,11 +288,7 @@ export class MouseHandler extends InputHandler {
     box.setFromCenterAndSize(center, size)
 
     // Frame Camera
-    this._viewer.camera.frame(
-      box,
-      'none',
-      this._viewer.camera.defaultLerpDuration
-    )
+    this._viewer.camera.lerp(1).frame(box)
   }
 
   private onDoubleClick = (event: MouseEvent) => {

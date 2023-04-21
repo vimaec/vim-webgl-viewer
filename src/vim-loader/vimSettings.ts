@@ -6,12 +6,11 @@ import deepmerge from 'deepmerge'
 import { Transparency } from './geometry'
 import * as THREE from 'three'
 
-export type LoadingMode = 'stream' | 'download' | 'geometry'
-
 /**
  * Config object for loading a vim
  */
-export type VimConfig = {
+export type VimSettings = {
+  instances: number[]
   /**
    * Position offset for the vim
    */
@@ -35,29 +34,46 @@ export type VimConfig = {
    */
   transparency: Transparency.Mode
 
+  loadRooms: boolean
+
+  restApi: string
   /**
    * Forces the viewer to download the whole data at once.
    * Otherwise bim data will be requested on per need basis.
    */
-  download: LoadingMode
+  streamBim: boolean
+  streamGeometry: boolean
+  noStrings: boolean
+  noMap: boolean
+  noHeader: boolean
+  loghttp: boolean
 }
 
-export const defaultConfig: VimConfig = {
+export const defaultConfig: VimSettings = {
+  instances: undefined,
+  loadRooms: false,
   position: new THREE.Vector3(),
   rotation: new THREE.Vector3(),
   scale: 1,
   matrix: new THREE.Matrix4(),
   transparency: 'all',
-  download: 'stream'
+
+  restApi: undefined,
+  streamBim: false,
+  streamGeometry: false,
+  noStrings: false,
+  noMap: false,
+  noHeader: false,
+  loghttp: false
 }
 
-export type VimOptions = Partial<VimConfig>
+export type VimPartialSettings = Partial<VimSettings>
 /**
  * <p>Wrapper around Vim Options.</p>
  * <p>Casts options values into related THREE.js type</p>
  * <p>Provides default values for options</p>
  */
-export function getVimConfig (options?: VimOptions) {
+export function getFullSettings (options?: VimPartialSettings) {
   const merge = options
     ? deepmerge(defaultConfig, options, undefined)
     : defaultConfig

@@ -5,13 +5,13 @@
 import * as THREE from 'three'
 import { CSS2DObject } from 'three/examples/jsm/renderers/CSS2DRenderer'
 import { MeshLine, MeshLineMaterial } from '../../../utils/meshLine'
-import { ICamera } from '../../camera'
 import { Viewer } from '../../viewer'
 import {
   createMeasureElement,
   MeasureStyle,
   MeasureElement
 } from './measureHtml'
+import { Camera } from '../../camera/camera'
 
 /**
  * Wrapper for a two points line drawn using MeshLine
@@ -92,10 +92,10 @@ class MeasureMarker {
   mesh: THREE.Mesh
   private _material: THREE.Material
   private _materialAlways: THREE.Material
-  private _camera: ICamera
+  private _camera: Camera
   private disconnect: () => void
 
-  constructor (color: THREE.Color, camera: ICamera, viewer: Viewer) {
+  constructor (color: THREE.Color, camera: Camera, viewer: Viewer) {
     this._material = new THREE.MeshBasicMaterial({
       color
     })

@@ -11,10 +11,10 @@ import { CSS2DRenderer } from 'three/examples/jsm/renderers/CSS2DRenderer'
 import { SimpleEventDispatcher } from 'ste-simple-events'
 import { Vim } from '../../vim'
 
-import { Camera } from '../camera'
+import { Camera } from '../camera/camera'
 import { RenderingSection } from './renderingSection'
 import { RenderingComposer } from './renderingComposer'
-import { ViewerConfig } from '../viewerSettings'
+import { Settings } from '../viewerSettings'
 
 /**
  * Manages how vim objects are added and removed from the THREE.Scene to be rendered
@@ -49,6 +49,8 @@ export class Renderer {
   private _needsUpdate: boolean
   private _skipAntialias: boolean
 
+  // 3GB
+  private maxMemory = 3 * Math.pow(10, 9)
   /**
    * Set this to true to cause a re-render of the scene.
    * Can only be set to true, Cleared on each render.
@@ -79,7 +81,7 @@ export class Renderer {
     viewport: Viewport,
     materials: VimMaterials,
     camera: Camera,
-    config: ViewerConfig
+    config: Settings
   ) {
     this._viewport = viewport
     this._scene = scene
@@ -113,7 +115,7 @@ export class Renderer {
     this.fitViewport()
     this._viewport.onResize.subscribe(() => this.fitViewport())
     this._camera.onValueChanged.sub(() => {
-      this._composer.camera = this._camera.camera
+      this._composer.camera = this._camera.three
       this.needsUpdate = true
     })
     this._materials.onUpdate.sub(() => (this.needsUpdate = true))
@@ -176,7 +178,7 @@ export class Renderer {
     this.skipAntialias = false
 
     if (this.textEnabled) {
-      this.textRenderer.render(this._scene.scene, this._camera.camera)
+      this.textRenderer.render(this._scene.scene, this._camera.three)
     }
 
     this._scene.clearUpdateFlags()
@@ -186,8 +188,16 @@ export class Renderer {
    * Add object to be rendered
    */
   add (target: Scene | THREE.Object3D) {
+    if (target instanceof Scene) {
+      const mem = target.getMemory()
+      const remaining = this.maxMemory - this.estimatedMemory
+      if (mem > remaining) {
+        return false
+      }
+    }
     this._scene.add(target)
     this._needsUpdate = true
+    return true
   }
 
   /**
@@ -204,6 +214,10 @@ export class Renderer {
   clear () {
     this._scene.clear()
     this._needsUpdate = true
+  }
+
+  get estimatedMemory () {
+    return this._scene.estimatedMemory
   }
 
   /** Set the target sample count on the rendering target. Higher number will increase quality. */

@@ -5,19 +5,19 @@
 import * as THREE from 'three'
 import { MathUtils } from 'three'
 import { Renderer } from '../rendering/renderer'
-import { Camera } from '../camera'
-import { ViewerConfig } from '../viewerSettings'
+import { Camera } from '../camera/camera'
+import { Settings } from '../viewerSettings'
 
 /**
  * Manages the camera target gizmo
  */
-export class CameraGizmo {
+export class GizmoOrbit {
   // Dependencies
   private _renderer: Renderer
   private _camera: Camera
 
   // Settings
-  private _size: number = 0.01
+  private _size: number = 1
   private _fov: number = 50
   private _color: THREE.Color = new THREE.Color('blue')
   private _opacity: number = 0.2
@@ -31,6 +31,7 @@ export class CameraGizmo {
   private _material: THREE.LineBasicMaterial | undefined
   private _materialAlways: THREE.LineBasicMaterial | undefined
   private _gizmos: THREE.LineSegments | undefined
+  private _disconnectCamera: () => void
 
   // State
   private _timeout: ReturnType<typeof setTimeout> | undefined
@@ -38,10 +39,29 @@ export class CameraGizmo {
   private _active: boolean = true
   private _animation: number = 0
 
-  constructor (renderer: Renderer, camera: Camera, settings: ViewerConfig) {
+  constructor (renderer: Renderer, camera: Camera, settings: Settings) {
     this._renderer = renderer
     this._camera = camera
     this.applySettings(settings)
+    this.connectCamera()
+  }
+
+  connectCamera () {
+    const onMove = this._camera.onMoved.subscribe(() => this.onCameraUpdate())
+    const onChange = this._camera.onValueChanged.subscribe(() =>
+      this.onCameraUpdate()
+    )
+    this._disconnectCamera = () => {
+      onMove()
+      onChange()
+    }
+  }
+
+  onCameraUpdate () {
+    this.updateScale()
+    this.setPosition(this._camera.orbitPosition)
+    // this.enabled = this._camera.orbitMode
+    this.show(true)
   }
 
   /**
@@ -50,15 +70,16 @@ export class CameraGizmo {
   dispose () {
     cancelAnimationFrame(this._animation)
     clearTimeout(this._timeout)
-
     this._box?.dispose()
     this._wireframe?.dispose()
     this._material?.dispose()
     this._materialAlways?.dispose()
+    this._disconnectCamera?.()
     this._box = undefined
     this._wireframe = undefined
     this._material = undefined
     this._materialAlways = undefined
+    this._disconnectCamera = undefined
 
     if (this._gizmos) {
       this._renderer.remove(this._gizmos)
@@ -114,6 +135,7 @@ export class CameraGizmo {
       this._material!.opacity = MathUtils.lerp(0, this._opacity, t)
       this._materialAlways!.opacity = MathUtils.lerp(0, this._opacityAlways, t)
     }
+    this._renderer.needsUpdate = true
   }
 
   /**
@@ -154,7 +176,7 @@ export class CameraGizmo {
     this._materialAlways!.color = color
   }
 
-  applySettings (settings: ViewerConfig) {
+  applySettings (settings: Settings) {
     this._active = settings.camera.gizmo.enable
     this._fov = settings.camera.fov
     this.setColor(settings.camera.gizmo.color)
@@ -168,19 +190,10 @@ export class CameraGizmo {
 
   private updateScale () {
     if (!this._gizmos) return
-    const dist = this._camera.camera.position
-      .clone()
-      .distanceTo(this._gizmos.position)
-    let h = 0
-    const cam = this._camera.camera
-    if (cam instanceof THREE.OrthographicCamera) {
-      const dx = cam.right - cam.left
-      const dy = cam.top - cam.bottom
-      h = Math.min(dx, dy) * this._size
-    } else {
-      // computes scale such that gizmo screen size remains constant
-      h = dist * Math.tan(MathUtils.degToRad(this._fov) * this._size)
-    }
+
+    const frustrum = this._camera.frustrumSizeAt(this._gizmos.position)
+    const min = Math.min(frustrum.x, frustrum.y)
+    const h = min * this._size
     this._gizmos.scale.set(h, h, h)
   }
 

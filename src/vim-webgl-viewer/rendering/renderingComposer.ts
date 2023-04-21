@@ -15,7 +15,7 @@ import { VimMaterials } from '../../vim-loader/materials/materials'
 import { OutlinePass } from './outlinePass'
 import { MergePass } from './mergePass'
 import { TransferPass } from './transferPass'
-import { Camera } from '../camera'
+import { Camera } from '../camera/camera'
 
 /*
   *---------------------*
@@ -70,7 +70,7 @@ export class RenderingComposer {
     this._materials = materials
     this._size = viewport.getSize()
 
-    this._camera = camera.camera
+    this._camera = camera.three
     this.setup()
 
     this._clock = new THREE.Clock()

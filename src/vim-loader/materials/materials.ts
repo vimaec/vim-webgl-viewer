@@ -7,7 +7,7 @@ import { StandardMaterial } from './standardMaterial'
 import { createMaskMaterial } from './maskMaterial'
 import { createIsolationMaterial } from './isolationMaterial'
 import { OutlineMaterial } from './outlineMaterial'
-import { ViewerConfig } from '../../vim-webgl-viewer/viewerSettings'
+import { Settings } from '../../vim-webgl-viewer/viewerSettings'
 import { createMergeMaterial, MergeMaterial } from './mergeMaterial'
 import { SignalDispatcher } from 'ste-signals'
 import { createGridMaterial } from './gridMaterial'
@@ -16,6 +16,19 @@ import { createGridMaterial } from './gridMaterial'
  * Defines the materials to be used by the vim loader and allows for material injection.
  */
 export class VimMaterials {
+  static instance: VimMaterials
+
+  static createInstance (instance: VimMaterials) {
+    this.instance = instance
+  }
+
+  static getInstance () {
+    if (!this.instance) {
+      this.instance = new VimMaterials()
+    }
+    return this.instance
+  }
+
   /**
    * Material used for opaque model geometry
    */
@@ -80,7 +93,7 @@ export class VimMaterials {
   }
 
   /** Update material settings from config */
-  applySettings (settings: ViewerConfig) {
+  applySettings (settings: Settings) {
     this.wireframeColor = settings.materials.highlight.color
     this.wireframeOpacity = settings.materials.highlight.opacity
 
