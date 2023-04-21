@@ -7,13 +7,11 @@ import * as THREE from 'three'
 // internal
 import { Settings, getConfig, PartialSettings } from './viewerSettings'
 import { Camera } from './camera/camera'
-import { ICamera } from './camera/cameraInterface'
 import { Input } from './inputs/input'
 import { Selection } from './selection'
-import { VimRequest } from '../vim-loader/vimRequest'
 import { Environment, IEnvironment } from './environment'
 import { Raycaster } from './raycaster'
-import { CameraGizmo } from './gizmos/gizmoOrbit'
+import { GizmoOrbit } from './gizmos/gizmoOrbit'
 import { RenderScene } from './rendering/renderScene'
 import { Viewport } from './viewport'
 import { GizmoAxes } from './gizmos/gizmoAxes'
@@ -93,7 +91,7 @@ export class Viewer {
    * Interface to manipulate the viewer camera.
    */
   get camera () {
-    return this._camera as ICamera
+    return this._camera
   }
 
   /**
@@ -122,6 +120,7 @@ export class Viewer {
   private _camera: Camera
   private _clock = new THREE.Clock()
   private _gizmoAxes: GizmoAxes
+  private _gizmoOrbit: GizmoOrbit
 
   // State
   private _vims = new Set<Vim>()
@@ -143,8 +142,9 @@ export class Viewer {
       this._camera,
       this.config
     )
+
     if (this.config.camera.gizmo.enable) {
-      this._camera.gizmo = new CameraGizmo(
+      this._gizmoOrbit = new GizmoOrbit(
         this.renderer,
         this._camera,
         this.config
@@ -222,7 +222,7 @@ export class Viewer {
       this.sectionBox.fitBox(box)
     }
     this._camera.adaptToContent()
-    this._camera.frame('all', 45)
+    this._camera.do().frame('all', 45)
     this._onVimLoaded.dispatch()
   }
 
@@ -258,7 +258,7 @@ export class Viewer {
     this.selection.dispose()
     this._environment.dispose()
     this.selection.clear()
-    this._camera.dispose()
+    this._gizmoOrbit.dispose()
     this.viewport.dispose()
     this.renderer.dispose()
     this.inputs.unregisterAll()

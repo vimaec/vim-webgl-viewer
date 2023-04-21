@@ -3,7 +3,7 @@
  */
 
 import * as THREE from 'three'
-import { ICamera } from '../camera/cameraInterface'
+import { Camera } from '../camera/camera'
 
 // TODO make things private cleanup api.
 export class Axis {
@@ -82,7 +82,7 @@ export class GizmoAxes {
   axes: Axis[]
 
   // dependencies
-  camera: ICamera
+  camera: Camera
   canvas: HTMLCanvasElement
   context: CanvasRenderingContext2D
   rect: DOMRect
@@ -97,7 +97,7 @@ export class GizmoAxes {
   invRotMat: THREE.Matrix4 = new THREE.Matrix4()
   selectedAxis: Axis | null
 
-  constructor (camera: ICamera, options?: Partial<GizmoOptions>) {
+  constructor (camera: Camera, options?: Partial<GizmoOptions>) {
     this.options = new GizmoOptions(options)
     this.camera = camera
     this.pointer = new THREE.Vector3()
@@ -292,7 +292,7 @@ export class GizmoAxes {
 
     const rotX = drag.x / this.canvas.width
     const rotY = drag.y / this.canvas.height
-    this.camera.rotate(new THREE.Vector2(rotX, rotY))
+    this.camera.do().rotate(new THREE.Vector2(rotX, rotY))
   }
 
   endDrag () {
@@ -306,9 +306,10 @@ export class GizmoAxes {
   }
 
   onMouseClick = () => {
-    // FIXME Don't like the current animation
     if (this.isDragging || !this.selectedAxis) return
-    this.camera.orbit(this.selectedAxis.direction, true)
+    this.camera
+      .lerp(1)
+      .orbitTowards(this.selectedAxis.direction.clone().multiplyScalar(-1))
     this.selectedAxis = null
   }
 
