@@ -26,7 +26,7 @@
   </head>
   <body>
     <script src="https://unpkg.com/three@0.143"></script>
-    <script src="https://unpkg.com/vim-webgl-viewer@1.5.2"></script>
+    <script src="https://unpkg.com/vim-webgl-viewer@1.5.5"></script>
     <script>
       // Parse URL
       const params = new URLSearchParams(window.location.search)
@@ -51,19 +51,26 @@
       const viewer = new VIM.Viewer()
 
       // Load function string | arrayBuffer
-      function load(vim) {
+      const loader = new VIM.Loader()
+      async function load(vim) {
+
         const start = new Date().getTime()
-        viewer.loadVim(
-          vim,
-          {
+
+        const request = loader.createRequest(source, {
             rotation: new THREE.Vector3(270, 0, 0),
-            transparency: transparency,
-          }
-        ).then((v) =>
+            transparency
+        })
+        request.onProgress.sub((progress) => {
+            console.log(`Loading : ${progress.loaded} / ${progress.total}`)
+        })
+        const vim = await request.send()
+
+        viewer.add(vim)
+
         console.log(
           `Loaded ${vim} in ${(new Date().getTime() - start) / 1000} seconds`
         )
-      )}
+      }
 
       // Add load file button
       const input = document.createElement('input')
