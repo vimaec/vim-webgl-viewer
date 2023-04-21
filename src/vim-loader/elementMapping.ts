@@ -2,6 +2,32 @@
  * @module vim-loader
  */
 
+export class ElementNoMapping {
+  getElementsFromElementId (id: number) {
+    return undefined
+  }
+
+  hasElement (element: number) {
+    return false
+  }
+
+  getAllElements () {
+    return []
+  }
+
+  getInstancesFromElement (element: number): number[] | undefined {
+    return undefined
+  }
+
+  getElementFromInstance (instance: number) {
+    return undefined
+  }
+
+  getElementId (element: number) {
+    return undefined
+  }
+}
+
 export class ElementMapping {
   private _instanceToElement: Map<number, number>
   private _elementToInstances: Map<number, number[]>

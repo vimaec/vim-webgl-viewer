@@ -4,9 +4,15 @@
 
 import * as THREE from 'three'
 import { G3d, MeshSection } from 'vim-format'
-import { Geometry, Transparency } from './geometry'
+import { Geometry, Transparency, MergeArgs } from './geometry'
 import { VimMaterials } from './materials/materials'
 import { Mesh } from './mesh'
+
+export type InstancingArgs = {
+  instances: number[]
+  loadRooms: boolean
+  transparency: Transparency.Mode
+}
 
 /**
  * Builds meshes from the g3d and BufferGeometry
@@ -26,21 +32,22 @@ export class MeshBuilder {
    *  If undefined, all multireferenced meshes will be created.
    * @returns an array of THREE.InstancedMesh
    */
-  createInstancedMeshes (
-    g3d: G3d,
-    transparency: Transparency.Mode,
-    instances?: number[]
-  ) {
+  createInstancedMeshes (g3d: G3d, args: InstancingArgs) {
     const result: (Mesh | undefined)[] = []
-    const set = instances ? new Set(instances) : undefined
+    const set = args.instances ? new Set(args.instances) : undefined
 
     for (let mesh = 0; mesh < g3d.getMeshCount(); mesh++) {
       let meshInstances = g3d.meshInstances[mesh]
-      if (!meshInstances) continue
+      if (!meshInstances?.length) continue
 
-      meshInstances = set
-        ? meshInstances.filter((i) => set.has(i))
-        : meshInstances.filter((i) => (g3d.instanceFlags[i] & 1) === 0)
+      if (set) {
+        meshInstances = meshInstances.filter((i) => set.has(i))
+      }
+      if (!args.loadRooms) {
+        meshInstances = meshInstances.filter(
+          (i) => !g3d.getInstanceHasFlag(i, 1)
+        )
+      }
 
       if (meshInstances.length <= 1) continue
 
@@ -61,7 +68,7 @@ export class MeshBuilder {
         )
       }
 
-      switch (transparency) {
+      switch (args.transparency ?? 'all') {
         case 'all': {
           result.push(createMesh('opaque', false))
           result.push(createMesh('transparent', true))
@@ -126,18 +133,13 @@ export class MeshBuilder {
    * @param instances g3d instance indices to be included in the merged mesh. All mergeable meshes if undefined.
    * @returns a VIM.Mesh or undefined if the mesh would be empty
    */
-  createMergedMesh (
-    g3d: G3d,
-    section: MeshSection,
-    transparent: boolean,
-    instances?: number[]
-  ) {
-    const merge = instances
-      ? Geometry.mergeInstanceMeshes(g3d, section, transparent, instances)
-      : Geometry.mergeUniqueMeshes(g3d, section, transparent)
+  createMergedMesh (g3d: G3d, args: MergeArgs) {
+    const merge = args.instances
+      ? Geometry.mergeInstanceMeshes(g3d, args)
+      : Geometry.mergeUniqueMeshes(g3d, args)
     if (!merge) return
 
-    const material = transparent
+    const material = args.transparent
       ? this.materials.transparent
       : this.materials.opaque
 
@@ -154,7 +156,12 @@ export class MeshBuilder {
    * @returns a THREE.Mesh
    */
   createWireframe (g3d: G3d, instances: number[]) {
-    const geometry = Geometry.createGeometryFromInstances(g3d, instances)
+    const geometry = Geometry.createGeometryFromInstances(g3d, {
+      section: 'all',
+      transparent: false,
+      instances,
+      loadRooms: true
+    })
     if (!geometry) return
     const wireframe = new THREE.WireframeGeometry(geometry)
     return new THREE.LineSegments(wireframe, this.materials.wireframe)

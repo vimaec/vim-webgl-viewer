@@ -8,7 +8,7 @@ import * as THREE from 'three'
 // Vim
 import { Geometry } from './geometry'
 import { Vim } from './vim'
-import { VimDocument, IElement, VimHelpers, ElementParameter } from 'vim-format'
+import { VimDocument, IElement, VimHelpers } from 'vim-format'
 import { ObjectAttribute, ColorAttribute } from './objectAttributes'
 import { Submesh } from './mesh'
 
@@ -84,7 +84,7 @@ export class Object {
    * Returns true if this object has geometry
    */
   get hasMesh () {
-    return this._meshes?.length!!
+    return (this._meshes?.length ?? 0) > 0
   }
 
   /**
@@ -165,14 +165,14 @@ export class Object {
    * Returns Bim data for the element associated with this object.
    * Returns undefined if no associated bim
    */
-  getBimElement(): Promise<IElement> {
+  getBimElement (): Promise<IElement> {
     return this.vim.document.element.get(this.element)
   }
 
   /**
    * Returns Bim data for the element associated with this object.
    */
-  getBimParameters(): Promise<ElementParameter[]> {
+  getBimParameters (): Promise<VimHelpers.ElementParameter[]> {
     return VimHelpers.getElementParameters(this.vim.document, this.element)
   }
 
@@ -235,10 +235,12 @@ export class Object {
   createGeometry () {
     if (!this.instances || !this.vim.g3d) return
 
-    const geometry = Geometry.createGeometryFromInstances(
-      this.vim.g3d,
-      this.instances
-    )
+    const geometry = Geometry.createGeometryFromInstances(this.vim.g3d, {
+      section: 'all',
+      transparent: false,
+      instances: this.instances,
+      loadRooms: true
+    })
     geometry?.applyMatrix4(this.vim.getMatrix())
     return geometry
   }

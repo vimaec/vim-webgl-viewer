@@ -13,7 +13,8 @@ export class TouchHandler extends InputHandler {
   private readonly TAP_DURATION_MS: number = 500
   private readonly DOUBLE_TAP_DELAY_MS = 500
   private readonly TAP_MAX_MOVE_PIXEL = 5
-  private readonly ZOOM_SPEED = 5
+  private readonly ZOOM_SPEED = 1
+  private readonly MOVE_SPEED = 100
 
   private get camera () {
     return this._viewer.camera
@@ -76,19 +77,28 @@ export class TouchHandler extends InputHandler {
     this._touchStart = this._touch
   }
 
+  private toRotation (delta: THREE.Vector2) {
+    const rotation = new THREE.Vector2()
+    rotation.x = delta.y
+    rotation.y = delta.x
+    rotation.multiplyScalar(180)
+    return rotation
+  }
+
   private onDrag = (delta: THREE.Vector2) => {
-    this.camera.rotate(delta)
+    this.camera.do().rotate(this.toRotation(delta))
   }
 
   private onDoubleDrag = (delta: THREE.Vector2) => {
-    this.camera.move2(delta, 'XY')
+    const move = delta.clone().multiplyScalar(this.MOVE_SPEED)
+    this.camera.do().move2(move, 'XY')
   }
 
   private onPinchOrSpread = (delta: number) => {
     if (this.camera.orbitMode) {
-      this.camera.zoom(delta * this.ZOOM_SPEED)
+      this.camera.do().zoom(1 + delta * this.ZOOM_SPEED)
     } else {
-      this.camera.move1(delta * this.ZOOM_SPEED, 'Z')
+      this.camera.do().move1(delta * this.ZOOM_SPEED, 'Z')
     }
   }
 

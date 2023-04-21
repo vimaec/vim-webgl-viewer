@@ -3,88 +3,66 @@
  */
 
 import * as THREE from 'three'
-import { VimDocument, G3d } from 'vim-format'
+import { VimDocument, G3d, VimHeader } from 'vim-format'
 import { Scene } from './scene'
-import { VimConfig } from './vimSettings'
+import { VimSettings } from './vimSettings'
 import { Object } from './object'
-import { ElementMapping } from './elementMapping'
+import { ElementMapping, ElementNoMapping } from './elementMapping'
 import { Submesh } from './mesh'
+import { ISignal, SignalDispatcher } from 'ste-signals'
 
 /**
  * Container for the built three meshes and the vim data from which it was built.
  * Dispenses Objects for high level scene manipulation
  */
 export class Vim {
+  header: VimHeader
   source: string | undefined
   readonly document: VimDocument
   readonly g3d: G3d | undefined
-  settings: VimConfig
+  settings: VimSettings
 
   scene: Scene
   private _elementToObject: Map<number, Object> = new Map<number, Object>()
-  private _strings: string[] | undefined
+  private _map: ElementMapping | ElementNoMapping
 
-  private _map: ElementMapping
+  private _onDispose = new SignalDispatcher()
+  get onDispose () {
+    return this._onDispose as ISignal
+  }
 
   constructor (
+    header: VimHeader | undefined,
     document: VimDocument,
     g3d: G3d | undefined,
     scene: Scene,
-    settings: VimConfig,
-    strings: string[] | undefined,
-    map: ElementMapping
+    settings: VimSettings,
+    map: ElementMapping | ElementNoMapping
   ) {
+    this.header = header
     this.document = document
     this.g3d = g3d
     this.scene = scene
     this.scene.vim = this
     this.settings = settings
-    this._strings = strings
     this.scene.applyMatrix4(this.settings.matrix)
 
-    this._map = map
+    this._map = map ?? new ElementNoMapping()
   }
 
   /**
    * Disposes of all resources.
    */
   dispose () {
+    this._onDispose.dispatch()
+    this._onDispose.clear()
     this.scene.dispose()
-  }
-
-  /**
-   * Reloads the vim with only the instances provided
-   * @param instances g3d instance indices to keep
-   */
-  filter (instances?: number[]) {
-    if (!this.g3d) return
-    const next = this.scene.builder.createFromG3d(
-      this.g3d,
-      this.settings.transparency,
-      instances
-    )
-    this.scene.dispose()
-
-    next.applyMatrix4(this.settings.matrix)
-    next.vim = this
-    this.scene = next
-    for (const [element, object] of this._elementToObject.entries()) {
-      object.updateMeshes(this.getMeshesFromElement(element))
-    }
-  }
-
-  loadMore (flagTest: (flag: number) => boolean) {
-    if (!this.g3d) return
-    const more = this.scene.builder.createFromFlag(this.g3d, flagTest)
-    more.vim = this
-    more.applyMatrix4(this.settings.matrix)
-    return more
   }
 
   /**
    * Applies new settings to the vim
    */
-  applySettings (settings: VimConfig) {
+  applySettings (settings: VimSettings) {
     this.settings = settings
     this.scene.applyMatrix4(this.settings.matrix)
   }
@@ -101,7 +79,7 @@ export class Vim {
    * @param instance g3d instance index
    */
   getObjectFromInstance (instance: number) {
-    const element = this._map.getElementFromInstance(instance)
+    const element = this._map?.getElementFromInstance(instance)
     if (!element) return
     return this.getObjectFromElement(element)
   }
@@ -205,13 +183,6 @@ export class Vim {
    */
   getElementId (element: number) {
     return this._map.getElementId(element)
-  }
-
-  /**
-   * Returns string at given index
-   */
-  getString (index: number) {
-    return this._strings?.[index]
   }
 
   private getMeshesFromInstances (instances: number[] | undefined) {
