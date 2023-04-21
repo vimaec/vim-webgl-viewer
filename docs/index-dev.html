@@ -52,16 +52,15 @@
 
       // Load function string | arrayBuffer
       const loader = new VIM.Loader()
-      async function load(vim) {
-
+      async function load(source) {
         const start = new Date().getTime()
 
         const request = loader.createRequest(source, {
-            rotation: new THREE.Vector3(270, 0, 0),
-            transparency
+          rotation: new THREE.Vector3(270, 0, 0),
+          transparency,
         })
         request.onProgress.sub((progress) => {
-            console.log(`Loading : ${progress.loaded} / ${progress.total}`)
+          console.log(`Loading : ${progress.loaded} / ${progress.total}`)
         })
         const vim = await request.send()
 
