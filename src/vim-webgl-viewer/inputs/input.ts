@@ -68,11 +68,6 @@ export class DefaultInputScheme implements InputScheme {
     if (action.type === 'double') {
       camera.lerp(1).frame(action.object)
     }
-
-    action.object.getBimElement().then((e) => {
-      if (e) e.index = action.object?.element
-      console.log(e)
-    })
   }
 
   onIdleAction (hit: InputAction): void {
