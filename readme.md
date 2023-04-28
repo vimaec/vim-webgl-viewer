@@ -9,14 +9,15 @@ https://vimaec.github.io/vim-webgl-viewer/api/
 
 # Live Demo
 
-- [JsFiddle - General usage](https://jsfiddle.net/mavimaec/ou174Lz9/)
-- [JsFiddle - Embedding](https://jsfiddle.net/simon_vimaec/wd4zr6hq/5/)
-- [JsFiddle - Coloring](https://jsfiddle.net/simon_vimaec/j5uhyp7k/19/)
-- [JsFiddle - Visibility](https://jsfiddle.net/simon_vimaec/j5uhyp7k/28/)
-- [JsFiddle - Outlines](https://jsfiddle.net/simon_vimaec/nfLsab8k/3/)
-- [JsFiddle - Isolation](https://jsfiddle.net/simon_vimaec/amp65cb8/23/)
-- [JsFiddle - Measure](https://jsfiddle.net/simon_vimaec/anLh63tv/4/)
-- [JsFiddle - Section Box](https://jsfiddle.net/simon_vimaec/ryeu9L40/18/)
+- [JsFiddle - General usage](https://jsfiddle.net/simon_vimaec/5hL06tvp/)
+- [JsFiddle - Custom http request](https://jsfiddle.net/simon_vimaec/k5jn9sd8/)
+- [JsFiddle - Embedding](https://jsfiddle.net/simon_vimaec/wd4zr6hq)
+- [JsFiddle - Coloring](https://jsfiddle.net/simon_vimaec/pcLdzvne/)
+- [JsFiddle - Visibility](https://jsfiddle.net/simon_vimaec/j5uhyp7k)
+- [JsFiddle - Outlines](https://jsfiddle.net/simon_vimaec/nfLsab8k/)
+- [JsFiddle - Isolation](https://jsfiddle.net/simon_vimaec/amp65cb8/)
+- [JsFiddle - Measure](https://jsfiddle.net/simon_vimaec/anLh63tv/)
+- [JsFiddle - Section Box](https://jsfiddle.net/simon_vimaec/ryeu9L40/)
 - [Small Model Demo - Residence](https://vimaec.github.io/vim-webgl-viewer)
 - [Medium Model Demo - Medical Tower](https://vimaec.github.io/vim-webgl-viewer?vim=https://vim.azureedge.net/samples/skanska.vim)
 - [Large Model Demo - Stadium](https://vimaec.github.io/vim-webgl-viewer?vim=https://vim.azureedge.net/samples/stadium.vim) (_Warning_: slow download times)
