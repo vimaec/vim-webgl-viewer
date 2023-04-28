@@ -27,11 +27,9 @@ export class Camera {
   private _inputVelocity = new THREE.Vector3()
   private _velocity = new THREE.Vector3()
   private _speed: number = 0
-  private _sceneSizeMultiplier: number
 
   // orbit
   private _orthographic: boolean = false
-  private _orbitMode: boolean = false
   private _orbitTarget = new THREE.Vector3()
 
   // updates
@@ -59,10 +57,11 @@ export class Camera {
     return this._onMoved.asEvent()
   }
 
+  defaultForward = new THREE.Vector3()
+
   // Settings
-  private _vimReferenceSize: number = 1
   private _velocityBlendFactor: number = 0.0001
-  private _moveSpeed: number = 0.8
+  private _moveSpeed: number = 1
 
   constructor (scene: RenderScene, viewport: Viewport, settings: Settings) {
     this.camPerspective = new PerspectiveWrapper(new THREE.PerspectiveCamera())
@@ -70,7 +69,13 @@ export class Camera {
     this.camOrthographic = new OrthographicWrapper(
       new THREE.OrthographicCamera()
     )
-    this.camPerspective.camera.position.set(0, 0, -1000)
+    this.defaultForward.copy(settings.camera.forward)
+
+    this.position
+      .copy(settings.camera.forward)
+      .normalize()
+      .multiplyScalar(-1000)
+
     this._movement = new CameraMovementDo(this)
     this._lerp = new CameraLerp(this, this._movement)
     this._scene = scene
@@ -156,29 +161,7 @@ export class Camera {
     return this._orbitTarget
   }
 
-  /**
-   * True: Camera orbit around target mode.
-   * False: First person free camera mode.
-   */
-  public get orbitMode () {
-    return this._orbitMode
-  }
-
-  /**
-   * True: Camera orbit around target mode.
-   * False: First person free camera mode.
-   */
-  public set orbitMode (value: boolean) {
-    if (this._orbitMode === value) return
-    this._orbitMode = value
-
-    this._onValueChanged.dispatch()
-  }
-
   applySettings (settings: Settings) {
-    // Mode
-    this.orbitMode = settings.camera.controls.orbit
-
     // Camera
     this.camPerspective.applySettings(settings)
     this.camOrthographic.applySettings(settings)
@@ -187,21 +170,7 @@ export class Camera {
     this._moveSpeed = settings.camera.controls.moveSpeed
 
     // Values
-    this._vimReferenceSize = settings.camera.controls.modelReferenceSize
     this._onValueChanged.dispatch()
-  }
-
-  /**
-   * Adapts camera speed to be faster for large model and slower for small models.
-   */
-  adaptToContent () {
-    const sphere = this._scene
-      .getBoundingBox()
-      .getBoundingSphere(new THREE.Sphere())
-
-    this._sceneSizeMultiplier = sphere
-      ? sphere.radius / this._vimReferenceSize
-      : 1
   }
 
   get orbitDistance () {
@@ -294,7 +263,7 @@ export class Camera {
 
   private getVelocityMultiplier () {
     const rotated = !this._lastQuaternion.equals(this.quaternion)
-    const mod = !this._orbitMode && rotated ? 1 : 1.66
+    const mod = rotated ? 1 : 1.66
     return Math.pow(1.25, this.speed) * this._moveSpeed * mod * 100
   }
 

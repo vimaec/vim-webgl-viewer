@@ -7,6 +7,7 @@ import { MathUtils } from 'three'
 import { Renderer } from '../rendering/renderer'
 import { Camera } from '../camera/camera'
 import { Settings } from '../viewerSettings'
+import { Input } from '../inputs/input'
 
 /**
  * Manages the camera target gizmo
@@ -15,6 +16,7 @@ export class GizmoOrbit {
   // Dependencies
   private _renderer: Renderer
   private _camera: Camera
+  private _inputs: Input
 
   // Settings
   private _size: number = 1
@@ -39,28 +41,37 @@ export class GizmoOrbit {
   private _active: boolean = true
   private _animation: number = 0
 
-  constructor (renderer: Renderer, camera: Camera, settings: Settings) {
+  constructor (
+    renderer: Renderer,
+    camera: Camera,
+    input: Input,
+    settings: Settings
+  ) {
     this._renderer = renderer
     this._camera = camera
+    this._inputs = input
     this.applySettings(settings)
-    this.connectCamera()
+    this.connect()
   }
 
-  connectCamera () {
-    const onMove = this._camera.onMoved.subscribe(() => this.onCameraUpdate())
+  private connect () {
+    const onMode = this._inputs.onPointerModeChanged.subscribe(() =>
+      this.onUpdate()
+    )
+    const onMove = this._camera.onMoved.subscribe(() => this.onUpdate())
     const onChange = this._camera.onValueChanged.subscribe(() =>
-      this.onCameraUpdate()
+      this.onUpdate()
     )
     this._disconnectCamera = () => {
+      onMode()
       onMove()
       onChange()
     }
   }
 
-  onCameraUpdate () {
+  private onUpdate () {
     this.updateScale()
     this.setPosition(this._camera.orbitPosition)
-    // this.enabled = this._camera.orbitMode
     this.show(true)
   }
 

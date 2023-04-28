@@ -169,21 +169,4 @@ export class CameraLerp extends CameraMovement {
       )
     }
   }
-
-  override frameSphere (sphere: THREE.Sphere, angle: number | undefined) {
-    // Compute best distance to frame sphere
-    const fov = (this._camera.camPerspective.camera.fov * Math.PI) / 180
-    const dist = (sphere.radius * 1.2) / Math.tan(fov / 2)
-
-    const pos = this._camera.position.clone()
-
-    if (angle !== undefined) {
-      pos.setY(sphere.center.y)
-    }
-
-    const offset = this._camera.forward.multiplyScalar(-dist)
-
-    pos.copy(sphere.center).add(offset)
-    this.set(pos, sphere.center)
-  }
 }

@@ -54,27 +54,6 @@ export class CameraMovementDo extends CameraMovement {
     this.target(target ?? this._camera.orbitPosition)
   }
 
-  protected override frameSphere (
-    sphere: THREE.Sphere,
-    angle: number | undefined
-  ) {
-    // Compute best distance to frame sphere
-    const fov = (this._camera.camPerspective.camera.fov * Math.PI) / 180
-    const dist = (sphere.radius * 1.2) / Math.tan(fov / 2)
-    console.log(dist)
-    if (angle !== undefined) {
-      this._camera.position.setY(sphere.center.y)
-    }
-
-    this.target(sphere.center)
-    this.setDistance(dist)
-
-    if (angle !== undefined) {
-      const rot = angle
-      this.orbit(new THREE.Vector2(-rot, 0))
-    }
-  }
-
   orbit (angle: THREE.Vector2): void {
     const pos = this.predictOrbit(angle)
     this.set(pos)

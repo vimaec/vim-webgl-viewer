@@ -45,6 +45,9 @@ export type Settings = {
     fov: number
     /** Zoom level */
     zoom: number
+    /** Initial forward of the camera */
+    forward: THREE.Vector3
+
     /** Camera controls related options */
     controls: {
       /**
@@ -54,8 +57,6 @@ export type Settings = {
        * <p>Orbit rotates the camera around a focus point</p>
        */
       orbit: boolean
-      /** Camera speed is scaled according to SceneRadius/sceneReferenceSize */
-      modelReferenceSize: number
       /** Camera rotation speed factor */
       rotateSpeed: number
       orbitSpeed: number
@@ -153,9 +154,10 @@ const defaultConfig: Settings = {
     far: 15000,
     fov: 50,
     zoom: 1,
+    // 45 deg down looking down z.
+    forward: new THREE.Vector3(0, -0.707, 0.707),
     controls: {
       orbit: true,
-      modelReferenceSize: 1,
       rotateSpeed: 1,
       orbitSpeed: 1,
       moveSpeed: 1

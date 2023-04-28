@@ -10,6 +10,7 @@ import { MouseHandler } from './mouse'
 import { InputAction } from '../raycaster'
 import { SignalDispatcher } from 'ste-signals'
 import { SimpleEventDispatcher } from 'ste-simple-events'
+import { GizmoRectangle } from '../gizmos/gizmoRectangle'
 export { KEYS } from './keyboard'
 
 /** Pointers mode supported by the viewer */
@@ -41,6 +42,7 @@ export interface InputScheme {
  */
 export class DefaultInputScheme implements InputScheme {
   private _viewer: Viewer
+
   constructor (viewer: Viewer) {
     this._viewer = viewer
   }
@@ -110,7 +112,7 @@ export class DefaultInputScheme implements InputScheme {
         if (selection.count > 0) {
           camera.lerp(1).frame(selection.getBoundingBox())
         } else {
-          camera.lerp(1).frame('all', 45)
+          camera.lerp(1).frame('all')
         }
         return true
       default:
@@ -142,6 +144,21 @@ export class Input {
   private _pointerActive: PointerMode = 'orbit'
   private _pointerFallback: PointerMode = 'look'
   private _pointerOverride: PointerMode | undefined
+
+  constructor (viewer: Viewer) {
+    this._viewer = viewer
+
+    this.keyboard = new KeyboardHandler(viewer)
+    this.mouse = new MouseHandler(viewer)
+    this.touch = new TouchHandler(viewer)
+    this._scheme = new DefaultInputScheme(viewer)
+    this.pointerActive = viewer.settings.camera.controls.orbit
+      ? 'orbit'
+      : 'look'
+    this._pointerFallback = viewer.settings.camera.controls.orbit
+      ? 'look'
+      : 'orbit'
+  }
 
   /**
    * Returns the last main mode (orbit, look) that was active.
@@ -180,7 +197,6 @@ export class Input {
     else if (value === 'orbit') this._pointerFallback = 'look'
     this._viewer.gizmoRectangle.visible = false
 
-    this._viewer.camera.orbitMode = value !== 'look'
     this._pointerActive = value
     this._onPointerModeChanged.dispatch()
   }
@@ -251,17 +267,6 @@ export class Input {
    */
   ContextMenu (position: THREE.Vector2 | undefined) {
     this._onContextMenu.dispatch(position)
-  }
-
-  constructor (viewer: Viewer) {
-    this._viewer = viewer
-
-    this.keyboard = new KeyboardHandler(viewer)
-    this.mouse = new MouseHandler(viewer)
-    this.touch = new TouchHandler(viewer)
-    this._scheme = new DefaultInputScheme(viewer)
-    this.pointerActive = 'orbit'
-    this._pointerFallback = 'look'
   }
 
   /**
