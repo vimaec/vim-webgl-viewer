@@ -12,6 +12,7 @@ https://vimaec.github.io/vim-webgl-viewer/api/
 - [JsFiddle - General usage](https://jsfiddle.net/simon_vimaec/5hL06tvp/)
 - [JsFiddle - Custom http request](https://jsfiddle.net/simon_vimaec/k5jn9sd8/)
 - [JsFiddle - Embedding](https://jsfiddle.net/simon_vimaec/wd4zr6hq)
+- [JsFiddle - Plan View](https://jsfiddle.net/simon_vimaec/hLp62f50/)
 - [JsFiddle - Coloring](https://jsfiddle.net/simon_vimaec/pcLdzvne/)
 - [JsFiddle - Visibility](https://jsfiddle.net/simon_vimaec/j5uhyp7k)
 - [JsFiddle - Outlines](https://jsfiddle.net/simon_vimaec/nfLsab8k/)
