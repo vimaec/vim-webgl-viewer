@@ -128,7 +128,7 @@ export class Raycaster {
    * Raycast projecting a ray from camera center
    */
   raycastForward () {
-    return this.raycast3(this._camera.orbitPosition)
+    return this.raycast3(this._camera.target)
   }
 
   /**

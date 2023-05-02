@@ -37,6 +37,15 @@ export type Settings = {
    * Three.js camera related options
    */
   camera: {
+    /** Start with orthographic camera */
+    orthographic: boolean
+
+    /** Vector3 of 0 or 1 to enable/disable movement along each axis */
+    allowedMovement: THREE.Vector3
+
+    /** Vector2 of 0 or 1 to enable/disable rotation around x or y. */
+    allowedRotation: THREE.Vector2
+
     /** Near clipping plane distance */
     near: number
     /** Far clipping plane distance */
@@ -150,6 +159,9 @@ const defaultConfig: Settings = {
     resizeDelay: 200
   },
   camera: {
+    orthographic: false,
+    allowedMovement: new THREE.Vector3(1, 1, 1),
+    allowedRotation: new THREE.Vector2(1, 1),
     near: 0.01,
     far: 15000,
     fov: 50,

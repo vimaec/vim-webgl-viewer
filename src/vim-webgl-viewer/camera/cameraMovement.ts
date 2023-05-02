@@ -40,7 +40,23 @@ export abstract class CameraMovement {
 
   abstract orbit(vector: THREE.Vector2): void
 
-  abstract orbitTowards(direction: THREE.Vector3)
+  orbitTowards (direction: THREE.Vector3) {
+    const forward = this._camera.forward
+
+    // Compute angle between vectors on a flat plane.
+    const flatP = forward.clone().setY(0)
+    const flatT = direction.clone().setY(0)
+    const azimuth = flatP.angleTo(flatT) * Math.sign(flatP.cross(flatT).y)
+
+    // Compute difference between angles infered by elevation.
+    const declination = Math.asin(direction.y) - Math.asin(forward.y)
+
+    // convert to degress
+    const angle = new THREE.Vector2(declination, azimuth)
+    angle.multiplyScalar(180 / Math.PI)
+
+    this.orbit(angle)
+  }
 
   abstract target(target: Object | THREE.Vector3): void
 

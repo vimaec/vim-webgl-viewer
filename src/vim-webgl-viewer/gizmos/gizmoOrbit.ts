@@ -71,7 +71,7 @@ export class GizmoOrbit {
 
   private onUpdate () {
     this.updateScale()
-    this.setPosition(this._camera.orbitPosition)
+    this.setPosition(this._camera.target)
     this.show(true)
   }
 

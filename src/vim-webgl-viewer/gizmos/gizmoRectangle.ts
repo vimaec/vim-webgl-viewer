@@ -76,7 +76,7 @@ export class GizmoRectangle {
     // Plane perpedicular to camera
     const plane = new THREE.Plane().setFromNormalAndCoplanarPoint(
       this.viewer.camera.forward,
-      this.viewer.camera.orbitPosition
+      this.viewer.camera.target
     )
 
     // Points intersections with plane

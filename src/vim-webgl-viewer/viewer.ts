@@ -225,7 +225,7 @@ export class Viewer {
       this._environment.adaptToContent(box)
       this.sectionBox.fitBox(box)
     }
-    this._camera.do().frame('all', this._camera.defaultForward)
+    this._camera.do(true).frame('all', this._camera.defaultForward)
     this._onVimLoaded.dispatch()
   }
 

@@ -18,60 +18,68 @@ export class CameraMovementDo extends CameraMovement {
   }
 
   setDistance (dist: number): void {
-    const pos = this._camera.orbitPosition
+    const pos = this._camera.target
       .clone()
       .sub(this._camera.forward.multiplyScalar(dist))
-    this._camera.position.copy(pos)
-    this._camera.notifyMovement()
+      .multiply(this._camera.allowedMovement)
+
+    this.set(pos, this._camera.target)
   }
 
   rotate (angle: THREE.Vector2): void {
-    const rotation = this.predictRotate(angle)
+    const locked = angle.clone().multiply(this._camera.allowedRotation)
+    const rotation = this.predictRotate(locked)
     this.applyRotation(rotation)
   }
 
   applyRotation (quaternion: THREE.Quaternion) {
     this._camera.quaternion.copy(quaternion)
-    const offset = this._camera.forward.multiplyScalar(
-      this._camera.orbitDistance
-    )
+    const target = this._camera.forward
+      .multiplyScalar(this._camera.orbitDistance)
+      .add(this._camera.position)
 
-    this._camera.orbitPosition.copy(this._camera.position).add(offset)
-    this._camera.notifyMovement()
+    this.set(this._camera.position, target)
   }
 
   target (target: Object | THREE.Vector3): void {
     const pos = target instanceof Object ? target.getCenter() : target
     if (!pos) return
-    this._camera.orbitPosition.copy(pos)
-    this._camera.camPerspective.camera.lookAt(pos)
-    this._camera.camPerspective.camera.up.set(0, 1, 0)
-    this._camera.notifyMovement()
-  }
-
-  set (position: THREE.Vector3, target?: THREE.Vector3) {
-    this._camera.position.copy(position)
-    this.target(target ?? this._camera.orbitPosition)
+    this.set(this._camera.position, pos)
   }
 
   orbit (angle: THREE.Vector2): void {
-    const pos = this.predictOrbit(angle)
+    const locked = angle.clone().multiply(this._camera.allowedRotation)
+    const pos = this.predictOrbit(locked)
     this.set(pos)
-  }
-
-  orbitTowards (direction: THREE.Vector3) {
-    const offset = direction.clone().multiplyScalar(this._camera.orbitDistance)
-    this._camera.position.copy(this._camera.orbitPosition).sub(offset)
-    this.target(this._camera.orbitPosition)
   }
 
   override move3 (vector: THREE.Vector3): void {
     const v = vector.clone()
     v.applyQuaternion(this._camera.quaternion)
+    const locked = this.lockVector(v, new THREE.Vector3())
+    const pos = this._camera.position.clone().add(locked)
+    const target = this._camera.target.clone().add(locked)
+    this.set(pos, target)
+  }
 
-    this._camera.orbitPosition.add(v)
-    this._camera.position.add(v)
-    this._camera.notifyMovement()
+  set (position: THREE.Vector3, target?: THREE.Vector3) {
+    // apply position
+    const locked = this.lockVector(position, this._camera.position)
+    this._camera.position.copy(locked)
+
+    // apply target and rotation
+    target = target ?? this._camera.target
+    this._camera.target.copy(target)
+    this._camera.camPerspective.camera.lookAt(target)
+    this._camera.camPerspective.camera.up.set(0, 1, 0)
+  }
+
+  private lockVector (position: THREE.Vector3, fallback: THREE.Vector3) {
+    const x = this._camera.allowedMovement.x === 0 ? fallback.x : position.x
+    const y = this._camera.allowedMovement.y === 0 ? fallback.y : position.y
+    const z = this._camera.allowedMovement.z === 0 ? fallback.z : position.z
+
+    return new THREE.Vector3(x, y, z)
   }
 
   predictOrbit (angle: THREE.Vector2) {
@@ -81,7 +89,7 @@ export class CameraMovementDo extends CameraMovement {
       .applyQuaternion(rotation)
       .multiplyScalar(this._camera.orbitDistance)
 
-    return this._camera.orbitPosition.clone().add(delta)
+    return this._camera.target.clone().add(delta)
   }
 
   predictRotate (angle: THREE.Vector2) {
