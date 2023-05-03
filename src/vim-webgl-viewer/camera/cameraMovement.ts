@@ -1,3 +1,7 @@
+/**
+ * @module viw-webgl-viewer/camera
+ */
+
 import { Camera } from './camera'
 import { Object } from '../../vim'
 import * as THREE from 'three'

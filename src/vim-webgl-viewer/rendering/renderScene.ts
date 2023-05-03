@@ -1,5 +1,5 @@
 /**
- * @module viw-webgl-viewer
+ * @module viw-webgl-viewer/rendering
  */
 
 import * as THREE from 'three'
@@ -15,7 +15,6 @@ export class RenderScene {
   private _scenes: Scene[] = []
   private _boundingBox: THREE.Box3 | undefined
   private _memory: number = 0
-  
 
   constructor () {
     this.scene = new THREE.Scene()
