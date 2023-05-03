@@ -21,7 +21,6 @@ export class CameraMovementDo extends CameraMovement {
     const pos = this._camera.target
       .clone()
       .sub(this._camera.forward.multiplyScalar(dist))
-      .multiply(this._camera.allowedMovement)
 
     this.set(pos, this._camera.target)
   }
