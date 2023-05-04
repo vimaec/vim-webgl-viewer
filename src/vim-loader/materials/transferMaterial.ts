@@ -1,5 +1,5 @@
 /**
- * @module vim-loader
+ * @module vim-loader/materials
  */
 
 import * as THREE from 'three'

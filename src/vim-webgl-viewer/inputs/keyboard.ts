@@ -1,6 +1,7 @@
 /**
- * @module viw-webgl-viewer
+ * @module viw-webgl-viewer/inputs
  */
+
 
 import * as THREE from 'three'
 import { InputHandler } from './inputHandler'

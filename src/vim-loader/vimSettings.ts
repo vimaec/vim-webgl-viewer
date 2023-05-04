@@ -10,6 +10,7 @@ import * as THREE from 'three'
  * Config object for loading a vim
  */
 export type VimSettings = {
+  /** Instance indices of objects to load. All objects are loaded if no value provided. */
   instances: number[]
   /**
    * Position offset for the vim
@@ -34,19 +35,30 @@ export type VimSettings = {
    */
   transparency: Transparency.Mode
 
+  /**
+   * Set to true to load room geometry.
+   */
   loadRooms: boolean
 
-  restApi: string
+  /** Set to true to get verbose http logs. */
+  loghttp: boolean
+
   /**
    * Forces the viewer to download the whole data at once.
    * Otherwise bim data will be requested on per need basis.
    */
   streamBim: boolean
+
+  /** EXPERIMENTAL: Set to true to get geometry from a REST server. */
+  restApi: string
+  /** EXPERIMENTAL: Set to true to stream geometry. Can be really slow on big models. */
   streamGeometry: boolean
+  /** EXPERIMENTAL: Set to true to not download strings. */
   noStrings: boolean
+  /** EXPERIMENTAL: Set to true to not download element/geometry map */
   noMap: boolean
+  /** EXPERIMENTAL: Set to true to not download header. */
   noHeader: boolean
-  loghttp: boolean
 }
 
 export const defaultConfig: VimSettings = {

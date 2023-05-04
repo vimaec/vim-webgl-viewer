@@ -1,5 +1,5 @@
 /**
- * @module viw-webgl-viewer
+ * @module viw-webgl-viewer/rendering
  */
 
 import THREE from 'three'

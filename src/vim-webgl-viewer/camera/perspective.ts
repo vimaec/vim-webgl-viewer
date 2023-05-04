@@ -1,5 +1,8 @@
+/**
+ * @module viw-webgl-viewer/camera
+ */
+
 import * as THREE from 'three'
-import { Viewport } from '../viewport'
 import { Settings } from '../viewerSettings'
 
 export class PerspectiveWrapper {

@@ -17,16 +17,16 @@
 <li><a href="vim_loader.Scene.html">Scene</a></li></ul>
 <h1>Class Scene</h1></div>
 <section class="tsd-panel tsd-comment">
-<div class="tsd-comment tsd-typography"><p>A Scene regroups many THREE.Meshes
+<div class="tsd-comment tsd-typography"><p>A Scene regroups many Meshes
 It keep tracks of the global bounding box as Meshes are added
-It keeps a map from g3d instance indices to THREE.Mesh and vice versa</p>
+It keeps a map from g3d instance indices to Meshes and vice versa</p>
 </div></section>
 <section class="tsd-panel tsd-hierarchy">
 <h4>Hierarchy</h4>
 <ul class="tsd-hierarchy">
 <li><span class="target">Scene</span></li></ul></section><aside class="tsd-sources">
 <ul>
-<li>Defined in <a href="https://github.com/vimaec/vim-webgl-viewer/blob/aa46919/src/vim-loader/scene.ts#L14">src/vim-loader/scene.ts:14</a></li></ul></aside>
+<li>Defined in <a href="https://github.com/vimaec/vim-webgl-viewer/blob/2023d14/src/vim-loader/scene.ts#L16">src/vim-loader/scene.ts:16</a></li></ul></aside>
 <section class="tsd-panel-group tsd-index-group">
 <section class="tsd-panel tsd-index-panel">
 <details class="tsd-index-content tsd-index-accordion" open><summary class="tsd-accordion-summary tsd-index-summary">
@@ -55,7 +55,7 @@ It keeps a map from g3d instance indices to THREE.Mesh and vice versa</p>
 <a href="vim_loader.Scene.html#clearUpdateFlag" class="tsd-index-link tsd-kind-method tsd-parent-kind-class"><svg class="tsd-kind-icon" width="24" height="24" viewBox="0 0 24 24"><use href="#icon-2048-path"></use><use href="#icon-2048-text"></use></svg><span>clear<wbr/>Update<wbr/>Flag</span></a>
 <a href="vim_loader.Scene.html#dispose" class="tsd-index-link tsd-kind-method tsd-parent-kind-class"><svg class="tsd-kind-icon" width="24" height="24" viewBox="0 0 24 24"><use href="#icon-2048-path"></use><use href="#icon-2048-text"></use></svg><span>dispose</span></a>
 <a href="vim_loader.Scene.html#getBoundingBox" class="tsd-index-link tsd-kind-method tsd-parent-kind-class"><svg class="tsd-kind-icon" width="24" height="24" viewBox="0 0 24 24"><use href="#icon-2048-path"></use><use href="#icon-2048-text"></use></svg><span>get<wbr/>Bounding<wbr/>Box</span></a>
-<a href="vim_loader.Scene.html#getInstanceFromMesh" class="tsd-index-link tsd-kind-method tsd-parent-kind-class"><svg class="tsd-kind-icon" width="24" height="24" viewBox="0 0 24 24"><use href="#icon-2048-path"></use><use href="#icon-2048-text"></use></svg><span>get<wbr/>Instance<wbr/>From<wbr/>Mesh</span></a>
+<a href="vim_loader.Scene.html#getMemory" class="tsd-index-link tsd-kind-method tsd-parent-kind-class"><svg class="tsd-kind-icon" width="24" height="24" viewBox="0 0 24 24"><use href="#icon-2048-path"></use><use href="#icon-2048-text"></use></svg><span>get<wbr/>Memory</span></a>
 <a href="vim_loader.Scene.html#getMeshFromInstance" class="tsd-index-link tsd-kind-method tsd-parent-kind-class"><svg class="tsd-kind-icon" width="24" height="24" viewBox="0 0 24 24"><use href="#icon-2048-path"></use><use href="#icon-2048-text"></use></svg><span>get<wbr/>Mesh<wbr/>From<wbr/>Instance</span></a>
 <a href="vim_loader.Scene.html#hasOutline" class="tsd-index-link tsd-kind-method tsd-parent-kind-class"><svg class="tsd-kind-icon" width="24" height="24" viewBox="0 0 24 24"><use href="#icon-2048-path"></use><use href="#icon-2048-text"></use></svg><span>has<wbr/>Outline</span></a>
 <a href="vim_loader.Scene.html#merge" class="tsd-index-link tsd-kind-method tsd-parent-kind-class"><svg class="tsd-kind-icon" width="24" height="24" viewBox="0 0 24 24"><use href="#icon-2048-path"></use><use href="#icon-2048-text"></use></svg><span>merge</span></a>
@@ -75,19 +75,19 @@ It keeps a map from g3d instance indices to THREE.Mesh and vice versa</p>
 <h5>builder: <a href="vim_loader.SceneBuilder.html" class="tsd-signature-type" data-tsd-kind="Class">SceneBuilder</a></h5></li></ul></div>
 <h4 class="tsd-returns-title">Returns <a href="vim_loader.Scene.html" class="tsd-signature-type" data-tsd-kind="Class">Scene</a></h4><aside class="tsd-sources">
 <ul>
-<li>Defined in <a href="https://github.com/vimaec/vim-webgl-viewer/blob/aa46919/src/vim-loader/scene.ts#L57">src/vim-loader/scene.ts:57</a></li></ul></aside></li></ul></section></section>
+<li>Defined in <a href="https://github.com/vimaec/vim-webgl-viewer/blob/2023d14/src/vim-loader/scene.ts#L30">src/vim-loader/scene.ts:30</a></li></ul></aside></li></ul></section></section>
 <section class="tsd-panel-group tsd-member-group">
 <h2>Properties</h2>
 <section class="tsd-panel tsd-member tsd-kind-property tsd-parent-kind-class"><a id="builder" class="tsd-anchor"></a>
 <h3 class="tsd-anchor-link"><code class="tsd-tag ts-flagReadonly">Readonly</code> <span>builder</span><a href="#builder" aria-label="Permalink" class="tsd-anchor-icon"><svg class="icon icon-tabler icon-tabler-link" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" fill="none" stroke-linecap="round" stroke-linejoin="round"><use href="#icon-anchor-a"></use><use href="#icon-anchor-b"></use><use href="#icon-anchor-c"></use></svg></a></h3>
 <div class="tsd-signature">builder<span class="tsd-signature-symbol">:</span> <a href="vim_loader.SceneBuilder.html" class="tsd-signature-type" data-tsd-kind="Class">SceneBuilder</a></div><aside class="tsd-sources">
 <ul>
-<li>Defined in <a href="https://github.com/vimaec/vim-webgl-viewer/blob/aa46919/src/vim-loader/scene.ts#L16">src/vim-loader/scene.ts:16</a></li></ul></aside></section>
+<li>Defined in <a href="https://github.com/vimaec/vim-webgl-viewer/blob/2023d14/src/vim-loader/scene.ts#L18">src/vim-loader/scene.ts:18</a></li></ul></aside></section>
 <section class="tsd-panel tsd-member tsd-kind-property tsd-parent-kind-class"><a id="meshes" class="tsd-anchor"></a>
 <h3 class="tsd-anchor-link"><span>meshes</span><a href="#meshes" aria-label="Permalink" class="tsd-anchor-icon"><svg class="icon icon-tabler icon-tabler-link" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" fill="none" stroke-linecap="round" stroke-linejoin="round"><use href="#icon-anchor-a"></use><use href="#icon-anchor-b"></use><use href="#icon-anchor-c"></use></svg></a></h3>
-<div class="tsd-signature">meshes<span class="tsd-signature-symbol">:</span> <span class="tsd-signature-type">Mesh</span><span class="tsd-signature-symbol">&lt;</span><span class="tsd-signature-type">BufferGeometry</span><span class="tsd-signature-symbol">, </span><span class="tsd-signature-type">Material</span><span class="tsd-signature-symbol"> | </span><span class="tsd-signature-type">Material</span><span class="tsd-signature-symbol">[]</span><span class="tsd-signature-symbol">&gt;</span><span class="tsd-signature-symbol">[]</span><span class="tsd-signature-symbol"> = []</span></div><aside class="tsd-sources">
+<div class="tsd-signature">meshes<span class="tsd-signature-symbol">:</span> <a href="vim_loader.Mesh.html" class="tsd-signature-type" data-tsd-kind="Class">Mesh</a><span class="tsd-signature-symbol">[]</span><span class="tsd-signature-symbol"> = []</span></div><aside class="tsd-sources">
 <ul>
-<li>Defined in <a href="https://github.com/vimaec/vim-webgl-viewer/blob/aa46919/src/vim-loader/scene.ts#L19">src/vim-loader/scene.ts:19</a></li></ul></aside></section></section>
+<li>Defined in <a href="https://github.com/vimaec/vim-webgl-viewer/blob/2023d14/src/vim-loader/scene.ts#L21">src/vim-loader/scene.ts:21</a></li></ul></aside></section></section>
 <section class="tsd-panel-group tsd-member-group">
 <h2>Accessors</h2>
 <section class="tsd-panel tsd-member tsd-kind-accessor tsd-parent-kind-class"><a id="material" class="tsd-anchor"></a>
@@ -99,7 +99,7 @@ It keeps a map from g3d instance indices to THREE.Mesh and vice versa</p>
 </div>
 <h4 class="tsd-returns-title">Returns <span class="tsd-signature-type">Material</span></h4><aside class="tsd-sources">
 <ul>
-<li>Defined in <a href="https://github.com/vimaec/vim-webgl-viewer/blob/aa46919/src/vim-loader/scene.ts#L169">src/vim-loader/scene.ts:169</a></li></ul></aside></li>
+<li>Defined in <a href="https://github.com/vimaec/vim-webgl-viewer/blob/2023d14/src/vim-loader/scene.ts#L148">src/vim-loader/scene.ts:148</a></li></ul></aside></li>
 <li class="tsd-signature" id="material.material-2"><span class="tsd-signature-symbol">set</span> material<span class="tsd-signature-symbol">(</span>value<span class="tsd-signature-symbol">: </span><span class="tsd-signature-type">Material</span><span class="tsd-signature-symbol">)</span><span class="tsd-signature-symbol">: </span><span class="tsd-signature-type">void</span></li>
 <li class="tsd-description">
 <div class="tsd-comment tsd-typography"><p>Sets and apply a material override to the scene, set to undefined to remove override.</p>
@@ -111,7 +111,7 @@ It keeps a map from g3d instance indices to THREE.Mesh and vice versa</p>
 <h5>value: <span class="tsd-signature-type">Material</span></h5></li></ul></div>
 <h4 class="tsd-returns-title">Returns <span class="tsd-signature-type">void</span></h4><aside class="tsd-sources">
 <ul>
-<li>Defined in <a href="https://github.com/vimaec/vim-webgl-viewer/blob/aa46919/src/vim-loader/scene.ts#L176">src/vim-loader/scene.ts:176</a></li></ul></aside></li></ul></section>
+<li>Defined in <a href="https://github.com/vimaec/vim-webgl-viewer/blob/2023d14/src/vim-loader/scene.ts#L155">src/vim-loader/scene.ts:155</a></li></ul></aside></li></ul></section>
 <section class="tsd-panel tsd-member tsd-kind-accessor tsd-parent-kind-class"><a id="updated" class="tsd-anchor"></a>
 <h3 class="tsd-anchor-link"><span>updated</span><a href="#updated" aria-label="Permalink" class="tsd-anchor-icon"><svg class="icon icon-tabler icon-tabler-link" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" fill="none" stroke-linecap="round" stroke-linejoin="round"><use href="#icon-anchor-a"></use><use href="#icon-anchor-b"></use><use href="#icon-anchor-c"></use></svg></a></h3>
 <ul class="tsd-signatures tsd-kind-accessor tsd-parent-kind-class">
@@ -119,7 +119,7 @@ It keeps a map from g3d instance indices to THREE.Mesh and vice versa</p>
 <li class="tsd-description">
 <h4 class="tsd-returns-title">Returns <span class="tsd-signature-type">boolean</span></h4><aside class="tsd-sources">
 <ul>
-<li>Defined in <a href="https://github.com/vimaec/vim-webgl-viewer/blob/aa46919/src/vim-loader/scene.ts#L24">src/vim-loader/scene.ts:24</a></li></ul></aside></li>
+<li>Defined in <a href="https://github.com/vimaec/vim-webgl-viewer/blob/2023d14/src/vim-loader/scene.ts#L34">src/vim-loader/scene.ts:34</a></li></ul></aside></li>
 <li class="tsd-signature" id="updated.updated-2"><span class="tsd-signature-symbol">set</span> updated<span class="tsd-signature-symbol">(</span>value<span class="tsd-signature-symbol">: </span><span class="tsd-signature-type">boolean</span><span class="tsd-signature-symbol">)</span><span class="tsd-signature-symbol">: </span><span class="tsd-signature-type">void</span></li>
 <li class="tsd-description">
 <div class="tsd-parameters">
@@ -129,7 +129,7 @@ It keeps a map from g3d instance indices to THREE.Mesh and vice versa</p>
 <h5>value: <span class="tsd-signature-type">boolean</span></h5></li></ul></div>
 <h4 class="tsd-returns-title">Returns <span class="tsd-signature-type">void</span></h4><aside class="tsd-sources">
 <ul>
-<li>Defined in <a href="https://github.com/vimaec/vim-webgl-viewer/blob/aa46919/src/vim-loader/scene.ts#L28">src/vim-loader/scene.ts:28</a></li></ul></aside></li></ul></section>
+<li>Defined in <a href="https://github.com/vimaec/vim-webgl-viewer/blob/2023d14/src/vim-loader/scene.ts#L38">src/vim-loader/scene.ts:38</a></li></ul></aside></li></ul></section>
 <section class="tsd-panel tsd-member tsd-kind-accessor tsd-parent-kind-class"><a id="vim" class="tsd-anchor"></a>
 <h3 class="tsd-anchor-link"><span>vim</span><a href="#vim" aria-label="Permalink" class="tsd-anchor-icon"><svg class="icon icon-tabler icon-tabler-link" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" fill="none" stroke-linecap="round" stroke-linejoin="round"><use href="#icon-anchor-a"></use><use href="#icon-anchor-b"></use><use href="#icon-anchor-c"></use></svg></a></h3>
 <ul class="tsd-signatures tsd-kind-accessor tsd-parent-kind-class">
@@ -137,7 +137,7 @@ It keeps a map from g3d instance indices to THREE.Mesh and vice versa</p>
 <li class="tsd-description">
 <h4 class="tsd-returns-title">Returns <a href="vim_loader.Vim.html" class="tsd-signature-type" data-tsd-kind="Class">Vim</a></h4><aside class="tsd-sources">
 <ul>
-<li>Defined in <a href="https://github.com/vimaec/vim-webgl-viewer/blob/aa46919/src/vim-loader/scene.ts#L101">src/vim-loader/scene.ts:101</a></li></ul></aside></li>
+<li>Defined in <a href="https://github.com/vimaec/vim-webgl-viewer/blob/2023d14/src/vim-loader/scene.ts#L93">src/vim-loader/scene.ts:93</a></li></ul></aside></li>
 <li class="tsd-signature" id="vim.vim-2"><span class="tsd-signature-symbol">set</span> vim<span class="tsd-signature-symbol">(</span>value<span class="tsd-signature-symbol">: </span><a href="vim_loader.Vim.html" class="tsd-signature-type" data-tsd-kind="Class">Vim</a><span class="tsd-signature-symbol">)</span><span class="tsd-signature-symbol">: </span><span class="tsd-signature-type">void</span></li>
 <li class="tsd-description">
 <div class="tsd-comment tsd-typography"><p>Sets vim index for this scene and all its THREE.Meshes.</p>
@@ -149,13 +149,13 @@ It keeps a map from g3d instance indices to THREE.Mesh and vice versa</p>
 <h5>value: <a href="vim_loader.Vim.html" class="tsd-signature-type" data-tsd-kind="Class">Vim</a></h5></li></ul></div>
 <h4 class="tsd-returns-title">Returns <span class="tsd-signature-type">void</span></h4><aside class="tsd-sources">
 <ul>
-<li>Defined in <a href="https://github.com/vimaec/vim-webgl-viewer/blob/aa46919/src/vim-loader/scene.ts#L108">src/vim-loader/scene.ts:108</a></li></ul></aside></li></ul></section></section>
+<li>Defined in <a href="https://github.com/vimaec/vim-webgl-viewer/blob/2023d14/src/vim-loader/scene.ts#L100">src/vim-loader/scene.ts:100</a></li></ul></aside></li></ul></section></section>
 <section class="tsd-panel-group tsd-member-group">
 <h2>Methods</h2>
 <section class="tsd-panel tsd-member tsd-kind-method tsd-parent-kind-class"><a id="addMesh" class="tsd-anchor"></a>
 <h3 class="tsd-anchor-link"><span>add<wbr/>Mesh</span><a href="#addMesh" aria-label="Permalink" class="tsd-anchor-icon"><svg class="icon icon-tabler icon-tabler-link" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" fill="none" stroke-linecap="round" stroke-linejoin="round"><use href="#icon-anchor-a"></use><use href="#icon-anchor-b"></use><use href="#icon-anchor-c"></use></svg></a></h3>
 <ul class="tsd-signatures tsd-kind-method tsd-parent-kind-class">
-<li class="tsd-signature tsd-anchor-link" id="addMesh.addMesh-1">add<wbr/>Mesh<span class="tsd-signature-symbol">(</span>mesh<span class="tsd-signature-symbol">: </span><span class="tsd-signature-type">Mesh</span><span class="tsd-signature-symbol">&lt;</span><span class="tsd-signature-type">BufferGeometry</span><span class="tsd-signature-symbol">, </span><span class="tsd-signature-type">Material</span><span class="tsd-signature-symbol"> | </span><span class="tsd-signature-type">Material</span><span class="tsd-signature-symbol">[]</span><span class="tsd-signature-symbol">&gt;</span><span class="tsd-signature-symbol">)</span><span class="tsd-signature-symbol">: </span><a href="vim_loader.Scene.html" class="tsd-signature-type" data-tsd-kind="Class">Scene</a><a href="#addMesh.addMesh-1" aria-label="Permalink" class="tsd-anchor-icon"><svg class="icon icon-tabler icon-tabler-link" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" fill="none" stroke-linecap="round" stroke-linejoin="round"><use href="#icon-anchor-a"></use><use href="#icon-anchor-b"></use><use href="#icon-anchor-c"></use></svg></a></li>
+<li class="tsd-signature tsd-anchor-link" id="addMesh.addMesh-1">add<wbr/>Mesh<span class="tsd-signature-symbol">(</span>mesh<span class="tsd-signature-symbol">: </span><a href="vim_loader.Mesh.html" class="tsd-signature-type" data-tsd-kind="Class">Mesh</a><span class="tsd-signature-symbol">)</span><span class="tsd-signature-symbol">: </span><a href="vim_loader.Scene.html" class="tsd-signature-type" data-tsd-kind="Class">Scene</a><a href="#addMesh.addMesh-1" aria-label="Permalink" class="tsd-anchor-icon"><svg class="icon icon-tabler icon-tabler-link" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" fill="none" stroke-linecap="round" stroke-linejoin="round"><use href="#icon-anchor-a"></use><use href="#icon-anchor-b"></use><use href="#icon-anchor-c"></use></svg></a></li>
 <li class="tsd-description">
 <div class="tsd-comment tsd-typography"><p>Add an instanced mesh to the Scene and recomputes fields as needed.</p>
 </div>
@@ -163,14 +163,14 @@ It keeps a map from g3d instance indices to THREE.Mesh and vice versa</p>
 <h4 class="tsd-parameters-title">Parameters</h4>
 <ul class="tsd-parameter-list">
 <li>
-<h5>mesh: <span class="tsd-signature-type">Mesh</span><span class="tsd-signature-symbol">&lt;</span><span class="tsd-signature-type">BufferGeometry</span><span class="tsd-signature-symbol">, </span><span class="tsd-signature-type">Material</span><span class="tsd-signature-symbol"> | </span><span class="tsd-signature-type">Material</span><span class="tsd-signature-symbol">[]</span><span class="tsd-signature-symbol">&gt;</span></h5>
+<h5>mesh: <a href="vim_loader.Mesh.html" class="tsd-signature-type" data-tsd-kind="Class">Mesh</a></h5>
 <div class="tsd-comment tsd-typography"><p>Is expected to have:
 userData.instances = number[] (indices of the g3d instances that went into creating the mesh)
 userData.boxes = THREE.Box3[] (bounding box of each instance)</p>
 </div></li></ul></div>
 <h4 class="tsd-returns-title">Returns <a href="vim_loader.Scene.html" class="tsd-signature-type" data-tsd-kind="Class">Scene</a></h4><aside class="tsd-sources">
 <ul>
-<li>Defined in <a href="https://github.com/vimaec/vim-webgl-viewer/blob/aa46919/src/vim-loader/scene.ts#L121">src/vim-loader/scene.ts:121</a></li></ul></aside></li></ul></section>
+<li>Defined in <a href="https://github.com/vimaec/vim-webgl-viewer/blob/2023d14/src/vim-loader/scene.ts#L111">src/vim-loader/scene.ts:111</a></li></ul></aside></li></ul></section>
 <section class="tsd-panel tsd-member tsd-kind-method tsd-parent-kind-class"><a id="addOutline" class="tsd-anchor"></a>
 <h3 class="tsd-anchor-link"><span>add<wbr/>Outline</span><a href="#addOutline" aria-label="Permalink" class="tsd-anchor-icon"><svg class="icon icon-tabler icon-tabler-link" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" fill="none" stroke-linecap="round" stroke-linejoin="round"><use href="#icon-anchor-a"></use><use href="#icon-anchor-b"></use><use href="#icon-anchor-c"></use></svg></a></h3>
 <ul class="tsd-signatures tsd-kind-method tsd-parent-kind-class">
@@ -178,13 +178,13 @@ userData.boxes = THREE.Box3[] (bounding box of each instance)</p>
 <li class="tsd-description">
 <h4 class="tsd-returns-title">Returns <span class="tsd-signature-type">void</span></h4><aside class="tsd-sources">
 <ul>
-<li>Defined in <a href="https://github.com/vimaec/vim-webgl-viewer/blob/aa46919/src/vim-loader/scene.ts#L36">src/vim-loader/scene.ts:36</a></li></ul></aside></li></ul></section>
+<li>Defined in <a href="https://github.com/vimaec/vim-webgl-viewer/blob/2023d14/src/vim-loader/scene.ts#L46">src/vim-loader/scene.ts:46</a></li></ul></aside></li></ul></section>
 <section class="tsd-panel tsd-member tsd-kind-method tsd-parent-kind-class"><a id="applyMatrix4" class="tsd-anchor"></a>
 <h3 class="tsd-anchor-link"><span>apply<wbr/>Matrix4</span><a href="#applyMatrix4" aria-label="Permalink" class="tsd-anchor-icon"><svg class="icon icon-tabler icon-tabler-link" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" fill="none" stroke-linecap="round" stroke-linejoin="round"><use href="#icon-anchor-a"></use><use href="#icon-anchor-b"></use><use href="#icon-anchor-c"></use></svg></a></h3>
 <ul class="tsd-signatures tsd-kind-method tsd-parent-kind-class">
 <li class="tsd-signature tsd-anchor-link" id="applyMatrix4.applyMatrix4-1">apply<wbr/>Matrix4<span class="tsd-signature-symbol">(</span>matrix<span class="tsd-signature-symbol">: </span><span class="tsd-signature-type">Matrix4</span><span class="tsd-signature-symbol">)</span><span class="tsd-signature-symbol">: </span><span class="tsd-signature-type">void</span><a href="#applyMatrix4.applyMatrix4-1" aria-label="Permalink" class="tsd-anchor-icon"><svg class="icon icon-tabler icon-tabler-link" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" fill="none" stroke-linecap="round" stroke-linejoin="round"><use href="#icon-anchor-a"></use><use href="#icon-anchor-b"></use><use href="#icon-anchor-c"></use></svg></a></li>
 <li class="tsd-description">
-<div class="tsd-comment tsd-typography"><p>Applies given transform matrix to all THREE.Meshes and bounding box.</p>
+<div class="tsd-comment tsd-typography"><p>Applies given transform matrix to all Meshes and bounding box.</p>
 </div>
 <div class="tsd-parameters">
 <h4 class="tsd-parameters-title">Parameters</h4>
@@ -193,7 +193,7 @@ userData.boxes = THREE.Box3[] (bounding box of each instance)</p>
 <h5>matrix: <span class="tsd-signature-type">Matrix4</span></h5></li></ul></div>
 <h4 class="tsd-returns-title">Returns <span class="tsd-signature-type">void</span></h4><aside class="tsd-sources">
 <ul>
-<li>Defined in <a href="https://github.com/vimaec/vim-webgl-viewer/blob/aa46919/src/vim-loader/scene.ts#L93">src/vim-loader/scene.ts:93</a></li></ul></aside></li></ul></section>
+<li>Defined in <a href="https://github.com/vimaec/vim-webgl-viewer/blob/2023d14/src/vim-loader/scene.ts#L85">src/vim-loader/scene.ts:85</a></li></ul></aside></li></ul></section>
 <section class="tsd-panel tsd-member tsd-kind-method tsd-parent-kind-class"><a id="clearUpdateFlag" class="tsd-anchor"></a>
 <h3 class="tsd-anchor-link"><span>clear<wbr/>Update<wbr/>Flag</span><a href="#clearUpdateFlag" aria-label="Permalink" class="tsd-anchor-icon"><svg class="icon icon-tabler icon-tabler-link" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" fill="none" stroke-linecap="round" stroke-linejoin="round"><use href="#icon-anchor-a"></use><use href="#icon-anchor-b"></use><use href="#icon-anchor-c"></use></svg></a></h3>
 <ul class="tsd-signatures tsd-kind-method tsd-parent-kind-class">
@@ -201,7 +201,7 @@ userData.boxes = THREE.Box3[] (bounding box of each instance)</p>
 <li class="tsd-description">
 <h4 class="tsd-returns-title">Returns <span class="tsd-signature-type">void</span></h4><aside class="tsd-sources">
 <ul>
-<li>Defined in <a href="https://github.com/vimaec/vim-webgl-viewer/blob/aa46919/src/vim-loader/scene.ts#L46">src/vim-loader/scene.ts:46</a></li></ul></aside></li></ul></section>
+<li>Defined in <a href="https://github.com/vimaec/vim-webgl-viewer/blob/2023d14/src/vim-loader/scene.ts#L56">src/vim-loader/scene.ts:56</a></li></ul></aside></li></ul></section>
 <section class="tsd-panel tsd-member tsd-kind-method tsd-parent-kind-class"><a id="dispose" class="tsd-anchor"></a>
 <h3 class="tsd-anchor-link"><span>dispose</span><a href="#dispose" aria-label="Permalink" class="tsd-anchor-icon"><svg class="icon icon-tabler icon-tabler-link" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" fill="none" stroke-linecap="round" stroke-linejoin="round"><use href="#icon-anchor-a"></use><use href="#icon-anchor-b"></use><use href="#icon-anchor-c"></use></svg></a></h3>
 <ul class="tsd-signatures tsd-kind-method tsd-parent-kind-class">
@@ -211,7 +211,7 @@ userData.boxes = THREE.Box3[] (bounding box of each instance)</p>
 </div>
 <h4 class="tsd-returns-title">Returns <span class="tsd-signature-type">void</span></h4><aside class="tsd-sources">
 <ul>
-<li>Defined in <a href="https://github.com/vimaec/vim-webgl-viewer/blob/aa46919/src/vim-loader/scene.ts#L204">src/vim-loader/scene.ts:204</a></li></ul></aside></li></ul></section>
+<li>Defined in <a href="https://github.com/vimaec/vim-webgl-viewer/blob/2023d14/src/vim-loader/scene.ts#L165">src/vim-loader/scene.ts:165</a></li></ul></aside></li></ul></section>
 <section class="tsd-panel tsd-member tsd-kind-method tsd-parent-kind-class"><a id="getBoundingBox" class="tsd-anchor"></a>
 <h3 class="tsd-anchor-link"><span>get<wbr/>Bounding<wbr/>Box</span><a href="#getBoundingBox" aria-label="Permalink" class="tsd-anchor-icon"><svg class="icon icon-tabler icon-tabler-link" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" fill="none" stroke-linecap="round" stroke-linejoin="round"><use href="#icon-anchor-a"></use><use href="#icon-anchor-b"></use><use href="#icon-anchor-c"></use></svg></a></h3>
 <ul class="tsd-signatures tsd-kind-method tsd-parent-kind-class">
@@ -226,34 +226,19 @@ userData.boxes = THREE.Box3[] (bounding box of each instance)</p>
 <h5>target: <span class="tsd-signature-type">Box3</span><span class="tsd-signature-symbol"> = ...</span></h5></li></ul></div>
 <h4 class="tsd-returns-title">Returns <span class="tsd-signature-type">Box3</span></h4><aside class="tsd-sources">
 <ul>
-<li>Defined in <a href="https://github.com/vimaec/vim-webgl-viewer/blob/aa46919/src/vim-loader/scene.ts#L64">src/vim-loader/scene.ts:64</a></li></ul></aside></li></ul></section>
-<section class="tsd-panel tsd-member tsd-kind-method tsd-parent-kind-class"><a id="getInstanceFromMesh" class="tsd-anchor"></a>
-<h3 class="tsd-anchor-link"><span>get<wbr/>Instance<wbr/>From<wbr/>Mesh</span><a href="#getInstanceFromMesh" aria-label="Permalink" class="tsd-anchor-icon"><svg class="icon icon-tabler icon-tabler-link" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" fill="none" stroke-linecap="round" stroke-linejoin="round"><use href="#icon-anchor-a"></use><use href="#icon-anchor-b"></use><use href="#icon-anchor-c"></use></svg></a></h3>
+<li>Defined in <a href="https://github.com/vimaec/vim-webgl-viewer/blob/2023d14/src/vim-loader/scene.ts#L63">src/vim-loader/scene.ts:63</a></li></ul></aside></li></ul></section>
+<section class="tsd-panel tsd-member tsd-kind-method tsd-parent-kind-class"><a id="getMemory" class="tsd-anchor"></a>
+<h3 class="tsd-anchor-link"><span>get<wbr/>Memory</span><a href="#getMemory" aria-label="Permalink" class="tsd-anchor-icon"><svg class="icon icon-tabler icon-tabler-link" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" fill="none" stroke-linecap="round" stroke-linejoin="round"><use href="#icon-anchor-a"></use><use href="#icon-anchor-b"></use><use href="#icon-anchor-c"></use></svg></a></h3>
 <ul class="tsd-signatures tsd-kind-method tsd-parent-kind-class">
-<li class="tsd-signature tsd-anchor-link" id="getInstanceFromMesh.getInstanceFromMesh-1">get<wbr/>Instance<wbr/>From<wbr/>Mesh<span class="tsd-signature-symbol">(</span>mesh<span class="tsd-signature-symbol">: </span><span class="tsd-signature-type">Mesh</span><span class="tsd-signature-symbol">&lt;</span><span class="tsd-signature-type">BufferGeometry</span><span class="tsd-signature-symbol">, </span><span class="tsd-signature-type">Material</span><span class="tsd-signature-symbol"> | </span><span class="tsd-signature-type">Material</span><span class="tsd-signature-symbol">[]</span><span class="tsd-signature-symbol">&gt;</span>, index<span class="tsd-signature-symbol">: </span><span class="tsd-signature-type">number</span><span class="tsd-signature-symbol">)</span><span class="tsd-signature-symbol">: </span><span class="tsd-signature-type">number</span><a href="#getInstanceFromMesh.getInstanceFromMesh-1" aria-label="Permalink" class="tsd-anchor-icon"><svg class="icon icon-tabler icon-tabler-link" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" fill="none" stroke-linecap="round" stroke-linejoin="round"><use href="#icon-anchor-a"></use><use href="#icon-anchor-b"></use><use href="#icon-anchor-c"></use></svg></a></li>
+<li class="tsd-signature tsd-anchor-link" id="getMemory.getMemory-1">get<wbr/>Memory<span class="tsd-signature-symbol">(</span><span class="tsd-signature-symbol">)</span><span class="tsd-signature-symbol">: </span><span class="tsd-signature-type">number</span><a href="#getMemory.getMemory-1" aria-label="Permalink" class="tsd-anchor-icon"><svg class="icon icon-tabler icon-tabler-link" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" fill="none" stroke-linecap="round" stroke-linejoin="round"><use href="#icon-anchor-a"></use><use href="#icon-anchor-b"></use><use href="#icon-anchor-c"></use></svg></a></li>
 <li class="tsd-description">
-<div class="tsd-comment tsd-typography"><p>Returns the index of the g3d instance that from which this mesh instance was created</p>
-
-<h3>Returns</h3><p>a g3d instance index.</p>
-</div>
-<div class="tsd-parameters">
-<h4 class="tsd-parameters-title">Parameters</h4>
-<ul class="tsd-parameter-list">
-<li>
-<h5>mesh: <span class="tsd-signature-type">Mesh</span><span class="tsd-signature-symbol">&lt;</span><span class="tsd-signature-type">BufferGeometry</span><span class="tsd-signature-symbol">, </span><span class="tsd-signature-type">Material</span><span class="tsd-signature-symbol"> | </span><span class="tsd-signature-type">Material</span><span class="tsd-signature-symbol">[]</span><span class="tsd-signature-symbol">&gt;</span></h5>
-<div class="tsd-comment tsd-typography"><p>a mesh created by the vim loader</p>
-</div></li>
-<li>
-<h5>index: <span class="tsd-signature-type">number</span></h5>
-<div class="tsd-comment tsd-typography"><p>if merged mesh the index into the merged mesh, if instance mesh the instance index.</p>
-</div></li></ul></div>
 <h4 class="tsd-returns-title">Returns <span class="tsd-signature-type">number</span></h4><aside class="tsd-sources">
 <ul>
-<li>Defined in <a href="https://github.com/vimaec/vim-webgl-viewer/blob/aa46919/src/vim-loader/scene.ts#L83">src/vim-loader/scene.ts:83</a></li></ul></aside></li></ul></section>
+<li>Defined in <a href="https://github.com/vimaec/vim-webgl-viewer/blob/2023d14/src/vim-loader/scene.ts#L67">src/vim-loader/scene.ts:67</a></li></ul></aside></li></ul></section>
 <section class="tsd-panel tsd-member tsd-kind-method tsd-parent-kind-class"><a id="getMeshFromInstance" class="tsd-anchor"></a>
 <h3 class="tsd-anchor-link"><span>get<wbr/>Mesh<wbr/>From<wbr/>Instance</span><a href="#getMeshFromInstance" aria-label="Permalink" class="tsd-anchor-icon"><svg class="icon icon-tabler icon-tabler-link" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" fill="none" stroke-linecap="round" stroke-linejoin="round"><use href="#icon-anchor-a"></use><use href="#icon-anchor-b"></use><use href="#icon-anchor-c"></use></svg></a></h3>
 <ul class="tsd-signatures tsd-kind-method tsd-parent-kind-class">
-<li class="tsd-signature tsd-anchor-link" id="getMeshFromInstance.getMeshFromInstance-1">get<wbr/>Mesh<wbr/>From<wbr/>Instance<span class="tsd-signature-symbol">(</span>instance<span class="tsd-signature-symbol">: </span><span class="tsd-signature-type">number</span><span class="tsd-signature-symbol">)</span><span class="tsd-signature-symbol">: </span><span class="tsd-signature-symbol">[</span><span class="tsd-signature-type">Mesh</span><span class="tsd-signature-symbol">&lt;</span><span class="tsd-signature-type">BufferGeometry</span><span class="tsd-signature-symbol">, </span><span class="tsd-signature-type">Material</span><span class="tsd-signature-symbol"> | </span><span class="tsd-signature-type">Material</span><span class="tsd-signature-symbol">[]</span><span class="tsd-signature-symbol">&gt;</span><span class="tsd-signature-symbol">, </span><span class="tsd-signature-type">number</span><span class="tsd-signature-symbol">]</span><span class="tsd-signature-symbol">[]</span><a href="#getMeshFromInstance.getMeshFromInstance-1" aria-label="Permalink" class="tsd-anchor-icon"><svg class="icon icon-tabler icon-tabler-link" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" fill="none" stroke-linecap="round" stroke-linejoin="round"><use href="#icon-anchor-a"></use><use href="#icon-anchor-b"></use><use href="#icon-anchor-c"></use></svg></a></li>
+<li class="tsd-signature tsd-anchor-link" id="getMeshFromInstance.getMeshFromInstance-1">get<wbr/>Mesh<wbr/>From<wbr/>Instance<span class="tsd-signature-symbol">(</span>instance<span class="tsd-signature-symbol">: </span><span class="tsd-signature-type">number</span><span class="tsd-signature-symbol">)</span><span class="tsd-signature-symbol">: </span><a href="vim_loader.Submesh.html" class="tsd-signature-type" data-tsd-kind="Class">Submesh</a><span class="tsd-signature-symbol">[]</span><a href="#getMeshFromInstance.getMeshFromInstance-1" aria-label="Permalink" class="tsd-anchor-icon"><svg class="icon icon-tabler icon-tabler-link" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" fill="none" stroke-linecap="round" stroke-linejoin="round"><use href="#icon-anchor-a"></use><use href="#icon-anchor-b"></use><use href="#icon-anchor-c"></use></svg></a></li>
 <li class="tsd-description">
 <div class="tsd-comment tsd-typography"><p>Returns the THREE.Mesh in which this instance is represented along with index
 For merged mesh, index refers to submesh index
@@ -264,9 +249,9 @@ For instanced mesh, index refers to instance index.</p>
 <ul class="tsd-parameter-list">
 <li>
 <h5>instance: <span class="tsd-signature-type">number</span></h5></li></ul></div>
-<h4 class="tsd-returns-title">Returns <span class="tsd-signature-symbol">[</span><span class="tsd-signature-type">Mesh</span><span class="tsd-signature-symbol">&lt;</span><span class="tsd-signature-type">BufferGeometry</span><span class="tsd-signature-symbol">, </span><span class="tsd-signature-type">Material</span><span class="tsd-signature-symbol"> | </span><span class="tsd-signature-type">Material</span><span class="tsd-signature-symbol">[]</span><span class="tsd-signature-symbol">&gt;</span><span class="tsd-signature-symbol">, </span><span class="tsd-signature-type">number</span><span class="tsd-signature-symbol">]</span><span class="tsd-signature-symbol">[]</span></h4><aside class="tsd-sources">
+<h4 class="tsd-returns-title">Returns <a href="vim_loader.Submesh.html" class="tsd-signature-type" data-tsd-kind="Class">Submesh</a><span class="tsd-signature-symbol">[]</span></h4><aside class="tsd-sources">
 <ul>
-<li>Defined in <a href="https://github.com/vimaec/vim-webgl-viewer/blob/aa46919/src/vim-loader/scene.ts#L73">src/vim-loader/scene.ts:73</a></li></ul></aside></li></ul></section>
+<li>Defined in <a href="https://github.com/vimaec/vim-webgl-viewer/blob/2023d14/src/vim-loader/scene.ts#L78">src/vim-loader/scene.ts:78</a></li></ul></aside></li></ul></section>
 <section class="tsd-panel tsd-member tsd-kind-method tsd-parent-kind-class"><a id="hasOutline" class="tsd-anchor"></a>
 <h3 class="tsd-anchor-link"><span>has<wbr/>Outline</span><a href="#hasOutline" aria-label="Permalink" class="tsd-anchor-icon"><svg class="icon icon-tabler icon-tabler-link" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" fill="none" stroke-linecap="round" stroke-linejoin="round"><use href="#icon-anchor-a"></use><use href="#icon-anchor-b"></use><use href="#icon-anchor-c"></use></svg></a></h3>
 <ul class="tsd-signatures tsd-kind-method tsd-parent-kind-class">
@@ -274,7 +259,7 @@ For instanced mesh, index refers to instance index.</p>
 <li class="tsd-description">
 <h4 class="tsd-returns-title">Returns <span class="tsd-signature-type">boolean</span></h4><aside class="tsd-sources">
 <ul>
-<li>Defined in <a href="https://github.com/vimaec/vim-webgl-viewer/blob/aa46919/src/vim-loader/scene.ts#L32">src/vim-loader/scene.ts:32</a></li></ul></aside></li></ul></section>
+<li>Defined in <a href="https://github.com/vimaec/vim-webgl-viewer/blob/2023d14/src/vim-loader/scene.ts#L42">src/vim-loader/scene.ts:42</a></li></ul></aside></li></ul></section>
 <section class="tsd-panel tsd-member tsd-kind-method tsd-parent-kind-class"><a id="merge" class="tsd-anchor"></a>
 <h3 class="tsd-anchor-link"><span>merge</span><a href="#merge" aria-label="Permalink" class="tsd-anchor-icon"><svg class="icon icon-tabler icon-tabler-link" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" fill="none" stroke-linecap="round" stroke-linejoin="round"><use href="#icon-anchor-a"></use><use href="#icon-anchor-b"></use><use href="#icon-anchor-c"></use></svg></a></h3>
 <ul class="tsd-signatures tsd-kind-method tsd-parent-kind-class">
@@ -289,7 +274,7 @@ For instanced mesh, index refers to instance index.</p>
 <h5>other: <a href="vim_loader.Scene.html" class="tsd-signature-type" data-tsd-kind="Class">Scene</a></h5></li></ul></div>
 <h4 class="tsd-returns-title">Returns <a href="vim_loader.Scene.html" class="tsd-signature-type" data-tsd-kind="Class">Scene</a></h4><aside class="tsd-sources">
 <ul>
-<li>Defined in <a href="https://github.com/vimaec/vim-webgl-viewer/blob/aa46919/src/vim-loader/scene.ts#L149">src/vim-loader/scene.ts:149</a></li></ul></aside></li></ul></section>
+<li>Defined in <a href="https://github.com/vimaec/vim-webgl-viewer/blob/2023d14/src/vim-loader/scene.ts#L130">src/vim-loader/scene.ts:130</a></li></ul></aside></li></ul></section>
 <section class="tsd-panel tsd-member tsd-kind-method tsd-parent-kind-class"><a id="removeOutline" class="tsd-anchor"></a>
 <h3 class="tsd-anchor-link"><span>remove<wbr/>Outline</span><a href="#removeOutline" aria-label="Permalink" class="tsd-anchor-icon"><svg class="icon icon-tabler icon-tabler-link" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" fill="none" stroke-linecap="round" stroke-linejoin="round"><use href="#icon-anchor-a"></use><use href="#icon-anchor-b"></use><use href="#icon-anchor-c"></use></svg></a></h3>
 <ul class="tsd-signatures tsd-kind-method tsd-parent-kind-class">
@@ -297,7 +282,7 @@ For instanced mesh, index refers to instance index.</p>
 <li class="tsd-description">
 <h4 class="tsd-returns-title">Returns <span class="tsd-signature-type">void</span></h4><aside class="tsd-sources">
 <ul>
-<li>Defined in <a href="https://github.com/vimaec/vim-webgl-viewer/blob/aa46919/src/vim-loader/scene.ts#L41">src/vim-loader/scene.ts:41</a></li></ul></aside></li></ul></section></section></div>
+<li>Defined in <a href="https://github.com/vimaec/vim-webgl-viewer/blob/2023d14/src/vim-loader/scene.ts#L51">src/vim-loader/scene.ts:51</a></li></ul></aside></li></ul></section></section></div>
 <div class="col-4 col-menu menu-sticky-wrap menu-highlight">
 <div class="tsd-navigation settings">
 <details class="tsd-index-accordion"><summary class="tsd-accordion-summary">
@@ -322,7 +307,16 @@ For instanced mesh, index refers to instance index.</p>
 <ul>
 <li class="tsd-kind-namespace tsd-parent-kind-module"><a href="../modules/vim_loader.Geometry.html">Geometry</a></li>
 <li class="tsd-kind-namespace tsd-parent-kind-module"><a href="../modules/vim_loader.Transparency.html">Transparency</a></li></ul></li>
-<li class="tsd-kind-module"><a href="../modules/viw_webgl_viewer.html">viw-<wbr/>webgl-<wbr/>viewer</a></li></ul></li></ul></div></details></nav>
+<li class="tsd-kind-module"><a href="../modules/vim_loader_loader.html">vim-<wbr/>loader/loader</a></li>
+<li class="tsd-kind-module"><a href="../modules/vim_loader_materials.html">vim-<wbr/>loader/materials</a></li>
+<li class="tsd-kind-module"><a href="../modules/vim_loader_vimRequest.html">vim-<wbr/>loader/vim<wbr/>Request</a></li>
+<li class="tsd-kind-module"><a href="../modules/viw_webgl_viewer.html">viw-<wbr/>webgl-<wbr/>viewer</a></li>
+<li class="tsd-kind-module"><a href="../modules/viw_webgl_viewer_camera.html">viw-<wbr/>webgl-<wbr/>viewer/camera</a></li>
+<li class="tsd-kind-module"><a href="../modules/viw_webgl_viewer_gizmos.html">viw-<wbr/>webgl-<wbr/>viewer/gizmos</a></li>
+<li class="tsd-kind-module"><a href="../modules/viw_webgl_viewer_gizmos_measure.html">viw-<wbr/>webgl-<wbr/>viewer/gizmos/measure</a></li>
+<li class="tsd-kind-module"><a href="../modules/viw_webgl_viewer_gizmos_sectionBox.html">viw-<wbr/>webgl-<wbr/>viewer/gizmos/section<wbr/>Box</a></li>
+<li class="tsd-kind-module"><a href="../modules/viw_webgl_viewer_inputs.html">viw-<wbr/>webgl-<wbr/>viewer/inputs</a></li>
+<li class="tsd-kind-module"><a href="../modules/viw_webgl_viewer_rendering.html">viw-<wbr/>webgl-<wbr/>viewer/rendering</a></li></ul></li></ul></div></details></nav>
 <nav class="tsd-navigation secondary menu-sticky">
 <ul>
 <li class="current tsd-kind-class tsd-parent-kind-module"><a href="vim_loader.Scene.html" class="tsd-index-link"><svg class="tsd-kind-icon" width="24" height="24" viewBox="0 0 24 24"><rect fill="var(--color-icon-background)" stroke="var(--color-ts-class)" stroke-width="1.5" x="1" y="1" width="22" height="22" rx="6" id="icon-128-path"></rect><path d="M11.898 16.1201C11.098 16.1201 10.466 15.8961 10.002 15.4481C9.53803 15.0001 9.30603 14.3841 9.30603 13.6001V9.64012C9.30603 8.85612 9.53803 8.24012 10.002 7.79212C10.466 7.34412 11.098 7.12012 11.898 7.12012C12.682 7.12012 13.306 7.34812 13.77 7.80412C14.234 8.25212 14.466 8.86412 14.466 9.64012H13.386C13.386 9.14412 13.254 8.76412 12.99 8.50012C12.734 8.22812 12.37 8.09212 11.898 8.09212C11.426 8.09212 11.054 8.22412 10.782 8.48812C10.518 8.75212 10.386 9.13212 10.386 9.62812V13.6001C10.386 14.0961 10.518 14.4801 10.782 14.7521C11.054 15.0161 11.426 15.1481 11.898 15.1481C12.37 15.1481 12.734 15.0161 12.99 14.7521C13.254 14.4801 13.386 14.0961 13.386 13.6001H14.466C14.466 14.3761 14.234 14.9921 13.77 15.4481C13.306 15.8961 12.682 16.1201 11.898 16.1201Z" fill="var(--color-text)" id="icon-128-text"></path></svg><span>Scene</span></a>
@@ -339,7 +333,7 @@ For instanced mesh, index refers to instance index.</p>
 <li class="tsd-kind-method tsd-parent-kind-class"><a href="vim_loader.Scene.html#clearUpdateFlag" class="tsd-index-link"><svg class="tsd-kind-icon" width="24" height="24" viewBox="0 0 24 24"><use href="#icon-2048-path"></use><use href="#icon-2048-text"></use></svg>clear<wbr/>Update<wbr/>Flag</a></li>
 <li class="tsd-kind-method tsd-parent-kind-class"><a href="vim_loader.Scene.html#dispose" class="tsd-index-link"><svg class="tsd-kind-icon" width="24" height="24" viewBox="0 0 24 24"><use href="#icon-2048-path"></use><use href="#icon-2048-text"></use></svg>dispose</a></li>
 <li class="tsd-kind-method tsd-parent-kind-class"><a href="vim_loader.Scene.html#getBoundingBox" class="tsd-index-link"><svg class="tsd-kind-icon" width="24" height="24" viewBox="0 0 24 24"><use href="#icon-2048-path"></use><use href="#icon-2048-text"></use></svg>get<wbr/>Bounding<wbr/>Box</a></li>
-<li class="tsd-kind-method tsd-parent-kind-class"><a href="vim_loader.Scene.html#getInstanceFromMesh" class="tsd-index-link"><svg class="tsd-kind-icon" width="24" height="24" viewBox="0 0 24 24"><use href="#icon-2048-path"></use><use href="#icon-2048-text"></use></svg>get<wbr/>Instance<wbr/>From<wbr/>Mesh</a></li>
+<li class="tsd-kind-method tsd-parent-kind-class"><a href="vim_loader.Scene.html#getMemory" class="tsd-index-link"><svg class="tsd-kind-icon" width="24" height="24" viewBox="0 0 24 24"><use href="#icon-2048-path"></use><use href="#icon-2048-text"></use></svg>get<wbr/>Memory</a></li>
 <li class="tsd-kind-method tsd-parent-kind-class"><a href="vim_loader.Scene.html#getMeshFromInstance" class="tsd-index-link"><svg class="tsd-kind-icon" width="24" height="24" viewBox="0 0 24 24"><use href="#icon-2048-path"></use><use href="#icon-2048-text"></use></svg>get<wbr/>Mesh<wbr/>From<wbr/>Instance</a></li>
 <li class="tsd-kind-method tsd-parent-kind-class"><a href="vim_loader.Scene.html#hasOutline" class="tsd-index-link"><svg class="tsd-kind-icon" width="24" height="24" viewBox="0 0 24 24"><use href="#icon-2048-path"></use><use href="#icon-2048-text"></use></svg>has<wbr/>Outline</a></li>
 <li class="tsd-kind-method tsd-parent-kind-class"><a href="vim_loader.Scene.html#merge" class="tsd-index-link"><svg class="tsd-kind-icon" width="24" height="24" viewBox="0 0 24 24"><use href="#icon-2048-path"></use><use href="#icon-2048-text"></use></svg>merge</a></li>

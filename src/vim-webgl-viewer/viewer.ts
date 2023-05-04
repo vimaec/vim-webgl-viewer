@@ -5,7 +5,7 @@
 import * as THREE from 'three'
 
 // internal
-import { Settings, getConfig, PartialSettings } from './viewerSettings'
+import { Settings, getSettings, PartialSettings } from './viewerSettings'
 import { Camera } from './camera/camera'
 import { Input } from './inputs/input'
 import { Selection } from './selection'
@@ -35,7 +35,7 @@ export class Viewer {
   /**
    * Current viewer settings.
    */
-  config: Settings
+  settings: Settings
 
   /**
    * Interface to manage objects to be rendered.
@@ -128,40 +128,44 @@ export class Viewer {
   private _updateId: number
 
   constructor (options?: PartialSettings) {
-    this.config = getConfig(options)
+    this.settings = getSettings(options)
 
     this.materials = VimMaterials.getInstance()
 
     const scene = new RenderScene()
-    this.viewport = new Viewport(this.config)
-    this._camera = new Camera(scene, this.viewport, this.config)
+    this.viewport = new Viewport(this.settings)
+    this._camera = new Camera(scene, this.viewport, this.settings)
     this.renderer = new Renderer(
       scene,
       this.viewport,
       this.materials,
       this._camera,
-      this.config
+      this.settings
     )
 
-    if (this.config.camera.gizmo.enable) {
+    this.gizmoRectangle = new GizmoRectangle(this)
+    this.inputs = new Input(this)
+
+    if (this.settings.camera.gizmo.enable) {
       this._gizmoOrbit = new GizmoOrbit(
         this.renderer,
         this._camera,
-        this.config
+        this.inputs,
+        this.settings
       )
     }
-    this.materials.applySettings(this.config)
+    this.materials.applySettings(this.settings)
 
     // TODO add options
     this.measure = new Measure(this)
-    this._gizmoAxes = new GizmoAxes(this.camera, this.config.axes)
+    this._gizmoAxes = new GizmoAxes(this.camera, this.settings.axes)
     this.viewport.canvas.parentElement?.prepend(this._gizmoAxes.canvas)
 
     this.sectionBox = new SectionBox(this)
-    this.gizmoRectangle = new GizmoRectangle(this)
+
     this.grid = new GizmoGrid(this.renderer, this.materials)
 
-    this._environment = new Environment(this.config)
+    this._environment = new Environment(this.settings)
     this._environment.getObjects().forEach((o) => this.renderer.add(o))
 
     // Input and Selection
@@ -172,7 +176,7 @@ export class Viewer {
       scene,
       this.renderer
     )
-    this.inputs = new Input(this)
+
     this.inputs.registerAll()
 
     // Start Loop
@@ -221,8 +225,7 @@ export class Viewer {
       this._environment.adaptToContent(box)
       this.sectionBox.fitBox(box)
     }
-    this._camera.adaptToContent()
-    this._camera.do().frame('all', 45)
+    this._camera.do(true).frame('all', this._camera.defaultForward)
     this._onVimLoaded.dispatch()
   }
 

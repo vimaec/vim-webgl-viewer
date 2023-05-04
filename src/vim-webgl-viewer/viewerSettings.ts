@@ -37,6 +37,15 @@ export type Settings = {
    * Three.js camera related options
    */
   camera: {
+    /** Start with orthographic camera */
+    orthographic: boolean
+
+    /** Vector3 of 0 or 1 to enable/disable movement along each axis */
+    allowedMovement: THREE.Vector3
+
+    /** Vector2 of 0 or 1 to enable/disable rotation around x or y. */
+    allowedRotation: THREE.Vector2
+
     /** Near clipping plane distance */
     near: number
     /** Far clipping plane distance */
@@ -45,6 +54,9 @@ export type Settings = {
     fov: number
     /** Zoom level */
     zoom: number
+    /** Initial forward of the camera */
+    forward: THREE.Vector3
+
     /** Camera controls related options */
     controls: {
       /**
@@ -54,8 +66,6 @@ export type Settings = {
        * <p>Orbit rotates the camera around a focus point</p>
        */
       orbit: boolean
-      /** Camera speed is scaled according to SceneRadius/sceneReferenceSize */
-      modelReferenceSize: number
       /** Camera rotation speed factor */
       rotateSpeed: number
       orbitSpeed: number
@@ -149,13 +159,17 @@ const defaultConfig: Settings = {
     resizeDelay: 200
   },
   camera: {
+    orthographic: false,
+    allowedMovement: new THREE.Vector3(1, 1, 1),
+    allowedRotation: new THREE.Vector2(1, 1),
     near: 0.01,
     far: 15000,
     fov: 50,
     zoom: 1,
+    // 45 deg down looking down z.
+    forward: new THREE.Vector3(0, -0.707, 0.707),
     controls: {
       orbit: true,
-      modelReferenceSize: 1,
       rotateSpeed: 1,
       orbitSpeed: 1,
       moveSpeed: 1
@@ -220,7 +234,7 @@ const defaultConfig: Settings = {
   }
 }
 
-export function getConfig (options?: PartialSettings) {
+export function getSettings (options?: PartialSettings) {
   return options
     ? (deepmerge(defaultConfig, options, undefined) as Settings)
     : (defaultConfig as Settings)

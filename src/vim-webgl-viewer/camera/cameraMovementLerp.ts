@@ -1,3 +1,7 @@
+/**
+ * @module viw-webgl-viewer/camera
+ */
+
 import * as THREE from 'three'
 import { Camera } from './camera'
 import { Object } from '../../vim'
@@ -99,7 +103,7 @@ export class CameraLerp extends CameraMovement {
 
   setDistance (dist: number): void {
     const start = this._camera.position.clone()
-    const end = this._camera.orbitPosition
+    const end = this._camera.target
       .clone()
       .lerp(start, dist / this._camera.orbitDistance)
 
@@ -111,7 +115,7 @@ export class CameraLerp extends CameraMovement {
 
   orbit (angle: THREE.Vector2): void {
     const startPos = this._camera.position.clone()
-    const startTarget = this._camera.orbitPosition.clone()
+    const startTarget = this._camera.target.clone()
     const a = new THREE.Vector2()
 
     this.onProgress = (progress) => {
@@ -120,24 +124,6 @@ export class CameraLerp extends CameraMovement {
       this._movement.set(startPos, startTarget)
       this._movement.orbit(a)
     }
-  }
-
-  orbitTowards (direction: THREE.Vector3) {
-    const forward = this._camera.forward
-
-    // Compute angle between vectors on a flat plane.
-    const flatP = forward.clone().setY(0)
-    const flatT = direction.clone().setY(0)
-    const azimuth = flatP.angleTo(flatT) * Math.sign(flatP.cross(flatT).y)
-
-    // Compute difference between angles infered by elevation.
-    const declination = Math.asin(direction.y) - Math.asin(forward.y)
-
-    // convert to degress
-    const angle = new THREE.Vector2(declination, azimuth)
-    angle.multiplyScalar(180 / Math.PI)
-
-    this.orbit(angle)
   }
 
   target (target: Object | THREE.Vector3): void {
@@ -159,31 +145,14 @@ export class CameraLerp extends CameraMovement {
   }
 
   set (position: THREE.Vector3, target?: THREE.Vector3) {
-    const endTarget = target ?? this._camera.orbitPosition
+    const endTarget = target ?? this._camera.target
     const startPos = this._camera.position.clone()
-    const startTarget = this._camera.orbitPosition.clone()
+    const startTarget = this._camera.target.clone()
     this.onProgress = (progress) => {
       this._movement.set(
         startPos.clone().lerp(position, progress),
         startTarget.clone().lerp(endTarget, progress)
       )
     }
-  }
-
-  override frameSphere (sphere: THREE.Sphere, angle: number | undefined) {
-    // Compute best distance to frame sphere
-    const fov = (this._camera.camPerspective.camera.fov * Math.PI) / 180
-    const dist = (sphere.radius * 1.2) / Math.tan(fov / 2)
-
-    const pos = this._camera.position.clone()
-
-    if (angle !== undefined) {
-      pos.setY(sphere.center.y)
-    }
-
-    const offset = this._camera.forward.multiplyScalar(-dist)
-
-    pos.copy(sphere.center).add(offset)
-    this.set(pos, sphere.center)
   }
 }

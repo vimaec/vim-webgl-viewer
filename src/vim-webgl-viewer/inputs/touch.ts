@@ -1,10 +1,11 @@
 /**
- * @module viw-webgl-viewer
+ * @module viw-webgl-viewer/inputs
  */
 
 import * as THREE from 'three'
 import { InputHandler } from './inputHandler'
 import { InputAction } from '../raycaster'
+import { Viewer } from '../viewer'
 
 /**
  * Manages user touch inputs.
@@ -15,6 +16,14 @@ export class TouchHandler extends InputHandler {
   private readonly TAP_MAX_MOVE_PIXEL = 5
   private readonly ZOOM_SPEED = 1
   private readonly MOVE_SPEED = 100
+  rotateSpeed = 1
+  orbitSpeed = 1
+
+  constructor (viewer: Viewer) {
+    super(viewer)
+    this.rotateSpeed = viewer.settings.camera.controls.rotateSpeed
+    this.orbitSpeed = viewer.settings.camera.controls.orbitSpeed
+  }
 
   private get camera () {
     return this._viewer.camera
@@ -77,16 +86,20 @@ export class TouchHandler extends InputHandler {
     this._touchStart = this._touch
   }
 
-  private toRotation (delta: THREE.Vector2) {
+  private toRotation (delta: THREE.Vector2, speed: number) {
     const rotation = new THREE.Vector2()
     rotation.x = delta.y
     rotation.y = delta.x
-    rotation.multiplyScalar(180)
+    rotation.multiplyScalar(-180 * speed)
     return rotation
   }
 
   private onDrag = (delta: THREE.Vector2) => {
-    this.camera.do().rotate(this.toRotation(delta))
+    if (this._viewer.inputs.pointerActive === 'orbit') {
+      this.camera.do().orbit(this.toRotation(delta, this.orbitSpeed))
+    } else {
+      this.camera.do().rotate(this.toRotation(delta, this.rotateSpeed))
+    }
   }
 
   private onDoubleDrag = (delta: THREE.Vector2) => {
@@ -95,7 +108,7 @@ export class TouchHandler extends InputHandler {
   }
 
   private onPinchOrSpread = (delta: number) => {
-    if (this.camera.orbitMode) {
+    if (this._viewer.inputs.pointerActive === 'orbit') {
       this.camera.do().zoom(1 + delta * this.ZOOM_SPEED)
     } else {
       this.camera.do().move1(delta * this.ZOOM_SPEED, 'Z')
@@ -156,7 +169,6 @@ export class TouchHandler extends InputHandler {
     if (this.isSingleTouch() && this._touchStart && this._touch) {
       const touchDurationMs = new Date().getTime() - this._touchStartTime!
       const length = this._touch.distanceTo(this._touchStart)
-      console.log(length)
       if (
         touchDurationMs < this.TAP_DURATION_MS &&
         length < this.TAP_MAX_MOVE_PIXEL

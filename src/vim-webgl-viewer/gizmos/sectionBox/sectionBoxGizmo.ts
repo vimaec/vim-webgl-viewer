@@ -1,5 +1,5 @@
 /**
- * @module viw-webgl-viewer
+ * @module viw-webgl-viewer/gizmos/sectionBox
  */
 
 import * as THREE from 'three'

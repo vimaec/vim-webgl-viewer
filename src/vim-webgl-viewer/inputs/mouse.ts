@@ -1,10 +1,12 @@
 /**
- * @module viw-webgl-viewer
+ * @module viw-webgl-viewer/inputs
  */
+
 
 import * as THREE from 'three'
 import { InputHandler } from './inputHandler'
 import { InputAction } from '../raycaster'
+import { Viewer } from '../viewer'
 
 type Button = 'main' | 'middle' | 'right' | undefined
 type Modifier = 'ctrl' | 'shift' | 'none'
@@ -13,7 +15,10 @@ type Modifier = 'ctrl' | 'shift' | 'none'
  */
 export class MouseHandler extends InputHandler {
   private readonly _idleDelayMs = 150
-  private readonly ZOOM_SPEED = 5
+  zoomSpeed = 1
+  panSpeed = 100
+  rotateSpeed = 1
+  orbitSpeed = 1
 
   // State
   private _buttonDown: Button
@@ -25,6 +30,12 @@ export class MouseHandler extends InputHandler {
 
   private _lastPosition: THREE.Vector2 | undefined
   private _downPosition: THREE.Vector2 | undefined
+
+  constructor (viewer: Viewer) {
+    super(viewer)
+    this.rotateSpeed = viewer.settings.camera.controls.rotateSpeed
+    this.orbitSpeed = viewer.settings.camera.controls.orbitSpeed
+  }
 
   private get camera () {
     return this._viewer.camera
@@ -141,8 +152,6 @@ export class MouseHandler extends InputHandler {
           ? 'look'
           : undefined
     this.inputs.pointerOverride = pointer
-
-    if (pointer === 'look') this.camera.orbitMode = false
   }
 
   private onMouseDrag (event: any) {
@@ -174,27 +183,27 @@ export class MouseHandler extends InputHandler {
     }
   }
 
-  private toRotation (delta: THREE.Vector2) {
+  private toRotation (delta: THREE.Vector2, speed: number) {
     const rot = delta.clone()
     rot.x = -delta.y
     rot.y = -delta.x
-    rot.multiplyScalar(180)
+    rot.multiplyScalar(180 * speed)
     return rot
   }
 
   private onMouseMainDrag (delta: THREE.Vector2) {
     switch (this.inputs.pointerActive) {
       case 'orbit':
-        this.camera.do().orbit(this.toRotation(delta))
+        this.camera.do().orbit(this.toRotation(delta, this.orbitSpeed))
         break
       case 'look':
-        this.camera.do().rotate(this.toRotation(delta))
+        this.camera.do().rotate(this.toRotation(delta, this.rotateSpeed))
         break
       case 'pan':
-        this.camera.do().move2(delta.multiplyScalar(10), 'XY')
+        this.camera.do().move2(delta.multiplyScalar(this.panSpeed), 'XY')
         break
       case 'zoom':
-        this.camera.do().zoom(delta.y * this.ZOOM_SPEED)
+        this.camera.do().zoom(1 + delta.y * this.zoomSpeed)
         break
       case 'rect':
         if (!this._hasCameraMoved) {
@@ -202,22 +211,15 @@ export class MouseHandler extends InputHandler {
           this.gizmoRect.visible = true
         }
         break
-      default:
-        if (this.camera.orbitMode) {
-          this.camera.do().orbit(this.toRotation(delta))
-        } else {
-          this.camera.do().rotate(this.toRotation(delta))
-        }
     }
   }
 
   private onMouseMiddleDrag (delta: THREE.Vector2) {
-    console.log('pan')
     this.camera.do().move2(delta.multiplyScalar(100), 'XY')
   }
 
   private onMouseRightDrag (delta: THREE.Vector2) {
-    this.camera.do().rotate(this.toRotation(delta))
+    this.camera.do().rotate(this.toRotation(delta, this.rotateSpeed))
   }
 
   private onMouseWheel = (event: WheelEvent) => {
@@ -272,7 +274,6 @@ export class MouseHandler extends InputHandler {
     } else if (event.button === 2 && !this._hasMouseMoved) {
       this.inputs.ContextMenu(new THREE.Vector2(event.clientX, event.clientY))
     }
-    this.camera.orbitMode = this.inputs.pointerActive !== 'look'
     this._buttonDown = undefined
     this.inputs.pointerOverride = undefined
   }

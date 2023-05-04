@@ -1,10 +1,12 @@
+/**
+ * @module viw-webgl-viewer/gizmos
+ */
+
 import { Float32BufferAttribute, Raycaster } from 'three'
 import * as THREE from 'three'
 import { createGridMaterial } from '../../vim-loader/materials/gridMaterial'
-import { Viewer } from '../viewer'
 import { Renderer } from '../rendering/renderer'
 import { Vim, VimMaterials } from '../../vim'
-import { SectionBox } from './sectionBox/sectionBox'
 import { BoxOutline } from './sectionBox/sectionBoxGizmo'
 
 export class GizmoGrid {

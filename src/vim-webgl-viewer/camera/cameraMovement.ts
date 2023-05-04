@@ -1,3 +1,7 @@
+/**
+ * @module viw-webgl-viewer/camera
+ */
+
 import { Camera } from './camera'
 import { Object } from '../../vim'
 import * as THREE from 'three'
@@ -40,7 +44,23 @@ export abstract class CameraMovement {
 
   abstract orbit(vector: THREE.Vector2): void
 
-  abstract orbitTowards(direction: THREE.Vector3)
+  orbitTowards (direction: THREE.Vector3) {
+    const forward = this._camera.forward
+
+    // Compute angle between vectors on a flat plane.
+    const flatP = forward.clone().setY(0)
+    const flatT = direction.clone().setY(0)
+    const azimuth = flatP.angleTo(flatT) * Math.sign(flatP.cross(flatT).y)
+
+    // Compute difference between angles infered by elevation.
+    const declination = Math.asin(direction.y) - Math.asin(forward.y)
+
+    // convert to degress
+    const angle = new THREE.Vector2(declination, azimuth)
+    angle.multiplyScalar(180 / Math.PI)
+
+    this.orbit(angle)
+  }
 
   abstract target(target: Object | THREE.Vector3): void
 
@@ -50,7 +70,7 @@ export abstract class CameraMovement {
 
   frame (
     target: Object | THREE.Sphere | THREE.Box3 | 'all' | undefined,
-    angle?: number
+    forward?: THREE.Vector3
   ): void {
     if (target instanceof Object) {
       target = target.getBoundingBox()
@@ -62,12 +82,17 @@ export abstract class CameraMovement {
       target = target.getBoundingSphere(new THREE.Sphere())
     }
     if (target instanceof THREE.Sphere) {
-      this.frameSphere(target, angle)
+      this.frameSphere(target, forward ?? this._camera.forward)
     }
   }
 
-  protected abstract frameSphere(
-    sphere: THREE.Sphere,
-    angle: number | undefined
-  )
+  protected frameSphere (sphere: THREE.Sphere, forward: THREE.Vector3) {
+    // Compute best distance to frame sphere
+    const fov = (this._camera.camPerspective.camera.fov * Math.PI) / 180
+    const dist = (sphere.radius * 1.2) / Math.tan(fov / 2)
+
+    const pos = forward.clone().multiplyScalar(-dist).add(sphere.center)
+
+    this.set(pos, sphere.center)
+  }
 }

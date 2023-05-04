@@ -1,3 +1,7 @@
+/**
+ * @module viw-webgl-viewer/camera
+ */
+
 import * as THREE from 'three'
 
 import { Viewport } from '../viewport'
@@ -27,12 +31,10 @@ export class Camera {
   private _inputVelocity = new THREE.Vector3()
   private _velocity = new THREE.Vector3()
   private _speed: number = 0
-  private _sceneSizeMultiplier: number
 
   // orbit
   private _orthographic: boolean = false
-  private _orbitMode: boolean = false
-  private _orbitTarget = new THREE.Vector3()
+  private _target = new THREE.Vector3()
 
   // updates
   private _lastPosition = new THREE.Vector3()
@@ -59,10 +61,40 @@ export class Camera {
     return this._onMoved.asEvent()
   }
 
+  /** Ignore movement permissions when true */
+  private _force: boolean = false
+
+  /** Vector3 of 0 or 1 to enable/disable movement along each axis */
+  private _allowedMovement = new THREE.Vector3(1, 1, 1)
+  get allowedMovement () {
+    return this._force ? new THREE.Vector3(1, 1, 1) : this._allowedMovement
+  }
+
+  set allowedMovement (axes: THREE.Vector3) {
+    this._allowedMovement.copy(axes)
+    this._allowedMovement.x = this._allowedMovement.x === 0 ? 0 : 1
+    this._allowedMovement.y = this._allowedMovement.y === 0 ? 0 : 1
+    this._allowedMovement.z = this._allowedMovement.z === 0 ? 0 : 1
+  }
+
+  /** Vector2 of 0 or 1 to enable/disable rotation around x or y. */
+  get allowedRotation () {
+    return this._force ? new THREE.Vector2(1, 1) : this._allowedRotation
+  }
+
+  set allowedRotation (axes: THREE.Vector2) {
+    this._allowedRotation.copy(axes)
+    this._allowedRotation.x = this._allowedRotation.x === 0 ? 0 : 1
+    this._allowedRotation.y = this._allowedRotation.y === 0 ? 0 : 1
+  }
+
+  private _allowedRotation = new THREE.Vector2(1, 1)
+
+  defaultForward: THREE.Vector3
+
   // Settings
-  private _vimReferenceSize: number = 1
   private _velocityBlendFactor: number = 0.0001
-  private _moveSpeed: number = 0.8
+  private _moveSpeed: number = 1
 
   constructor (scene: RenderScene, viewport: Viewport, settings: Settings) {
     this.camPerspective = new PerspectiveWrapper(new THREE.PerspectiveCamera())
@@ -70,22 +102,27 @@ export class Camera {
     this.camOrthographic = new OrthographicWrapper(
       new THREE.OrthographicCamera()
     )
-    this.camPerspective.camera.position.set(0, 0, -1000)
+
     this._movement = new CameraMovementDo(this)
     this._lerp = new CameraLerp(this, this._movement)
+
     this._scene = scene
     this._viewport = viewport
 
     this.applySettings(settings)
+    this.do().orbitTowards(this.defaultForward)
+    this.do().setDistance(-1000)
   }
 
-  do () {
+  do (force: boolean = false) {
+    this._force = force
     this._lerp.cancel()
     return this._movement as CameraMovement
   }
 
-  lerp (duration: number = 1) {
+  lerp (duration: number = 1, force: boolean = false) {
     this.stop()
+    this._force = force
     this._lerp.init(duration)
     return this._lerp as CameraMovement
   }
@@ -152,34 +189,16 @@ export class Camera {
     this._velocity.set(0, 0, 0)
   }
 
-  get orbitPosition () {
-    return this._orbitTarget
-  }
-
-  /**
-   * True: Camera orbit around target mode.
-   * False: First person free camera mode.
-   */
-  public get orbitMode () {
-    return this._orbitMode
-  }
-
-  /**
-   * True: Camera orbit around target mode.
-   * False: First person free camera mode.
-   */
-  public set orbitMode (value: boolean) {
-    if (this._orbitMode === value) return
-    this._orbitMode = value
-
-    this._onValueChanged.dispatch()
+  get target () {
+    return this._target
   }
 
   applySettings (settings: Settings) {
-    // Mode
-    this.orbitMode = settings.camera.controls.orbit
-
     // Camera
+    this.defaultForward = new THREE.Vector3().copy(settings.camera.forward)
+    this._orthographic = settings.camera.orthographic
+    this.allowedMovement = settings.camera.allowedMovement
+    this.allowedRotation = settings.camera.allowedRotation
     this.camPerspective.applySettings(settings)
     this.camOrthographic.applySettings(settings)
 
@@ -187,38 +206,24 @@ export class Camera {
     this._moveSpeed = settings.camera.controls.moveSpeed
 
     // Values
-    this._vimReferenceSize = settings.camera.controls.modelReferenceSize
     this._onValueChanged.dispatch()
   }
 
-  /**
-   * Adapts camera speed to be faster for large model and slower for small models.
-   */
-  adaptToContent () {
-    const sphere = this._scene
-      .getBoundingBox()
-      .getBoundingSphere(new THREE.Sphere())
-
-    this._sceneSizeMultiplier = sphere
-      ? sphere.radius / this._vimReferenceSize
-      : 1
-  }
-
   get orbitDistance () {
-    return this.position.distanceTo(this._orbitTarget)
+    return this.position.distanceTo(this._target)
   }
 
   save () {
     this._lerp.cancel()
     this._savedPosition.copy(this.position)
-    this._savedTarget.copy(this._orbitTarget)
+    this._savedTarget.copy(this._target)
   }
 
   private updateProjection () {
     const aspect = this._viewport.getAspectRatio()
     this.camPerspective.updateProjection(aspect)
 
-    const size = this.camPerspective.frustrumSizeAt(this.orbitPosition)
+    const size = this.camPerspective.frustrumSizeAt(this.target)
     this.camOrthographic.updateProjection(size, aspect)
   }
 
@@ -233,7 +238,10 @@ export class Camera {
   }
 
   update (deltaTime: number) {
-    this.applyVelocity(deltaTime)
+    if (this.applyVelocity(deltaTime)) {
+      this.updateOrthographic()
+    }
+
     const moved = this.checkForMovement()
     if (moved) {
       this.camOrthographic.camera.position.copy(this.position)
@@ -253,7 +261,7 @@ export class Camera {
       this._velocity.z === 0
     ) {
       // Skip update if unneeded.
-      return
+      return false
     }
 
     // Update the camera velocity and position
@@ -266,7 +274,7 @@ export class Camera {
     this._velocity.add(deltaVelocity)
     if (this._velocity.lengthSq() < deltaTime / 10) {
       this._velocity.set(0, 0, 0)
-      return
+      return false
     }
 
     const deltaPosition = this._velocity
@@ -274,27 +282,28 @@ export class Camera {
       .multiplyScalar(deltaTime * this.getVelocityMultiplier())
 
     this.do().move3(deltaPosition)
+    return true
+  }
 
+  private updateOrthographic () {
     if (this.orthographic) {
       // Cancel target movement in Z in orthographic mode.
-      this._orbitTarget
-        .copy(this._lastTarget)
-        .add(deltaPosition.setZ(0).applyQuaternion(this.quaternion))
+      const delta = this._lastTarget.clone().sub(this.position)
+      const dist = delta.dot(this.forward)
+      this.target.copy(this.forward).multiplyScalar(dist).add(this.position)
 
       // Prevent orthograpic camera from moving past orbit.
-      const prev = this._lastPosition.clone().sub(this._orbitTarget)
-      const next = this.position.clone().sub(this._orbitTarget)
+      const prev = this._lastPosition.clone().sub(this._target)
+      const next = this.position.clone().sub(this._target)
       if (prev.dot(next) < 0 || next.lengthSq() < 1) {
-        this.position
-          .copy(this._orbitTarget)
-          .add(this.forward.normalize().multiplyScalar(-1))
+        this.position.copy(this._target).add(this.forward.multiplyScalar(-1))
       }
     }
   }
 
   private getVelocityMultiplier () {
     const rotated = !this._lastQuaternion.equals(this.quaternion)
-    const mod = !this._orbitMode && rotated ? 1 : 1.66
+    const mod = rotated ? 1 : 1.66
     return Math.pow(1.25, this.speed) * this._moveSpeed * mod * 100
   }
 
@@ -303,14 +312,14 @@ export class Camera {
     if (
       !this._lastPosition.equals(this.position) ||
       !this._lastQuaternion.equals(this.quaternion) ||
-      !this._lastTarget.equals(this._orbitTarget)
+      !this._lastTarget.equals(this._target)
     ) {
       this._hasMoved = true
       this._onMoved.dispatch()
     }
     this._lastPosition.copy(this.position)
     this._lastQuaternion.copy(this.quaternion)
-    this._lastTarget.copy(this._orbitTarget)
+    this._lastTarget.copy(this._target)
     return this._hasMoved
   }
 }
