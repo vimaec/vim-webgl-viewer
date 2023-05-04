@@ -5,7 +5,7 @@
 import * as THREE from 'three'
 
 // internal
-import { Settings, getConfig, PartialSettings } from './viewerSettings'
+import { Settings, getSettings, PartialSettings } from './viewerSettings'
 import { Camera } from './camera/camera'
 import { Input } from './inputs/input'
 import { Selection } from './selection'
@@ -128,7 +128,7 @@ export class Viewer {
   private _updateId: number
 
   constructor (options?: PartialSettings) {
-    this.settings = getConfig(options)
+    this.settings = getSettings(options)
 
     this.materials = VimMaterials.getInstance()
 

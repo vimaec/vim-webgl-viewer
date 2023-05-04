@@ -234,7 +234,7 @@ const defaultConfig: Settings = {
   }
 }
 
-export function getConfig (options?: PartialSettings) {
+export function getSettings (options?: PartialSettings) {
   return options
     ? (deepmerge(defaultConfig, options, undefined) as Settings)
     : (defaultConfig as Settings)
