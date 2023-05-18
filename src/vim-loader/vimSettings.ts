@@ -49,6 +49,8 @@ export type VimSettings = {
    */
   streamBim: boolean
 
+  /** EXPERIMENTAL: Set url to get geometry from a split G3d Folder. */
+  folder: string
   /** EXPERIMENTAL: Set to true to get geometry from a REST server. */
   restApi: string
   /** EXPERIMENTAL: Set to true to stream geometry. Can be really slow on big models. */
@@ -70,6 +72,7 @@ export const defaultConfig: VimSettings = {
   matrix: new THREE.Matrix4(),
   transparency: 'all',
 
+  folder: undefined,
   restApi: undefined,
   streamBim: false,
   streamGeometry: false,

@@ -6,6 +6,8 @@ import { SceneBuilder } from './sceneBuilder'
 import {
   BFast,
   G3d,
+  G3dBuilder,
+  G3dMeshIndex,
   RemoteG3d,
   VimDocument,
   VimHeader,
@@ -119,6 +121,37 @@ export class VimBuilder {
 
     const scene = g3d
       ? this.sceneBuilder.createFromG3d(g3d, copy)
+      : new Scene(this.sceneBuilder)
+
+    const mapping = settings.noMap
+      ? undefined
+      : new ElementMapping(
+        Array.from(g3d.instanceNodes),
+          instanceToElement!,
+          elementIds!
+      )
+
+    const vim = new Vim(header, doc, g3d, scene, settings, mapping)
+
+    return vim
+  }
+
+  async loadFromFiles (bfast: BFast, path: string, settings: VimSettings) {
+    const index = await G3dMeshIndex.createFromPath(`${path}_index.gz`)
+    const builder = G3dBuilder.fromIndexInstances(index)
+    await builder.all((m) => `${path}_mesh_${m}.gz`, false)
+    const g3d = builder.ToG3d()
+
+    const doc = await VimDocument.createFromBfast(bfast, settings.noStrings)
+
+    const [header, instanceToElement, elementIds] = await Promise.all([
+      settings.noHeader ? undefined : VimBuilder.requestHeader(bfast),
+      settings.noMap ? undefined : doc.node.getAllElementIndex(),
+      settings.noMap ? undefined : doc.element.getAllId()
+    ])
+
+    const scene = g3d
+      ? this.sceneBuilder.createFromG3d(g3d, settings)
       : new Scene(this.sceneBuilder)
 
     const mapping = settings.noMap

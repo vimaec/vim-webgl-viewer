@@ -27,6 +27,7 @@
     "declarations": "tsc --declaration --emitDeclarationOnly --outdir ./dist/types"
   },
   "devDependencies": {
+    "@types/axios": "^0.14.0",
     "@types/three": "^0.143.0",
     "@typescript-eslint/eslint-plugin": "^5.45.1",
     "@typescript-eslint/parser": "^5.45.1",
@@ -52,7 +53,7 @@
     "ste-signals": "^3.0.9",
     "ste-simple-events": "^3.0.7",
     "three": "0.143.0",
-    "vim-format": "1.0.4"
+    "vim-format": "1.0.5-dev.45"
   },
   "keywords": [
     "3d",
