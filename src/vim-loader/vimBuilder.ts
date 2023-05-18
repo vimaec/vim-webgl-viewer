@@ -144,7 +144,7 @@ export class VimBuilder {
     settings: VimSettings
   ) {
     const index = await G3dMeshIndex.createFromPath(`${path}_index.gz`)
-    const builder = G3dBuilder.fromIndexInstances(index)
+    const builder = G3dBuilder.fromIndexInstances(index, settings.instances)
     await builder.all((m) => `${path}_mesh_${m}.gz`, requester)
     const g3d = builder.ToG3d()
 
