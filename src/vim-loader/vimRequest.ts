@@ -1,5 +1,5 @@
 import { ISimpleEvent, SimpleEventDispatcher } from 'ste-simple-events'
-import { BFast, IProgressLogs, RemoteBuffer } from 'vim-format'
+import { BFast, IProgressLogs, RemoteBuffer, Requester } from 'vim-format'
 import { VimBuilder, Vim, VimSettings } from '../vim'
 
 export class VimRequest {
@@ -7,6 +7,7 @@ export class VimRequest {
   url: string | undefined
   settings: VimSettings
   buffer: RemoteBuffer | ArrayBuffer
+  requester: Requester
   bfast: BFast
   vim: Vim
 
@@ -33,12 +34,14 @@ export class VimRequest {
       this.buffer.onProgress = (log) => this._onProgress.dispatch(log)
     } else this.buffer = source
     this.bfast = new BFast(this.buffer, 0, 'vim')
+    this.requester = new Requester()
   }
 
   async send () {
     this.vim = this.settings.folder
       ? await this.loader.loadFromFiles(
         this.bfast,
+        this.requester,
         this.settings.folder,
         this.settings
       )
@@ -57,5 +60,6 @@ export class VimRequest {
     if (this.buffer instanceof RemoteBuffer) {
       this.buffer.abort()
     }
+    this.requester?.abort()
   }
 }

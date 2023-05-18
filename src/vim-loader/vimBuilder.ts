@@ -11,7 +11,8 @@ import {
   RemoteG3d,
   VimDocument,
   VimHeader,
-  requestHeader
+  requestHeader,
+  Requester
 } from 'vim-format'
 import { VimSettings } from './vimSettings'
 import { VimMaterials } from './materials/materials'
@@ -136,10 +137,15 @@ export class VimBuilder {
     return vim
   }
 
-  async loadFromFiles (bfast: BFast, path: string, settings: VimSettings) {
+  async loadFromFiles (
+    bfast: BFast,
+    requester: Requester,
+    path: string,
+    settings: VimSettings
+  ) {
     const index = await G3dMeshIndex.createFromPath(`${path}_index.gz`)
     const builder = G3dBuilder.fromIndexInstances(index)
-    await builder.all((m) => `${path}_mesh_${m}.gz`, false)
+    await builder.all((m) => `${path}_mesh_${m}.gz`, requester)
     const g3d = builder.ToG3d()
 
     const doc = await VimDocument.createFromBfast(bfast, settings.noStrings)
