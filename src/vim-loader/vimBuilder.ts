@@ -144,9 +144,19 @@ export class VimBuilder {
     settings: VimSettings
   ) {
     const index = await G3dMeshIndex.createFromPath(`${path}_index.gz`)
+    console.log(index)
     const builder = G3dBuilder.fromIndexInstances(index, settings.instances)
+    console.log(builder)
     await builder.all((m) => `${path}_mesh_${m}.gz`, requester)
     const g3d = builder.ToG3d()
+    console.log(g3d)
+
+    const map = new Map<number, number>()
+    g3d.instanceNodes.forEach((instance, i) => {
+      map.set(instance, i)
+    })
+
+    const instances = settings.instances?.map((i) => map.get(i))
 
     const doc = await VimDocument.createFromBfast(bfast, settings.noStrings)
 
@@ -156,8 +166,11 @@ export class VimBuilder {
       settings.noMap ? undefined : doc.element.getAllId()
     ])
 
+    // Filtering already occured so we don't pass it to the builder.
+    const copy = { ...settings, instances } as VimSettings
+
     const scene = g3d
-      ? this.sceneBuilder.createFromG3d(g3d, settings)
+      ? this.sceneBuilder.createFromG3d(g3d, copy)
       : new Scene(this.sceneBuilder)
 
     const mapping = settings.noMap
