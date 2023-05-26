@@ -143,35 +143,14 @@ export class VimBuilder {
     path: string,
     settings: VimSettings
   ) {
-    const index = await G3dMeshIndex.createFromPath(`${path}_index.gz`)
-    console.log(index)
-    const builder = G3dBuilder.fromIndexInstances(index, settings.instances)
-    console.log(builder)
-    await builder.all((m) => `${path}_mesh_${m}.gz`, requester)
-    const g3d = builder.ToG3d()
-    console.log(g3d)
-
-    const map = new Map<number, number>()
-    g3d.instanceNodes.forEach((instance, i) => {
-      map.set(instance, i)
-    })
-
-    const instances = settings.instances?.map((i) => map.get(i))
-
     const doc = await VimDocument.createFromBfast(bfast, settings.noStrings)
 
-    const [header, instanceToElement, elementIds] = await Promise.all([
+    const [g3d, header, instanceToElement, elementIds] = await Promise.all([
+      this.getGeometry(requester, path, settings),
       settings.noHeader ? undefined : VimBuilder.requestHeader(bfast),
       settings.noMap ? undefined : doc.node.getAllElementIndex(),
       settings.noMap ? undefined : doc.element.getAllId()
     ])
-
-    // Filtering already occured so we don't pass it to the builder.
-    const copy = { ...settings, instances } as VimSettings
-
-    const scene = g3d
-      ? this.sceneBuilder.createFromG3d(g3d, copy)
-      : new Scene(this.sceneBuilder)
 
     const mapping = settings.noMap
       ? undefined
@@ -181,12 +160,35 @@ export class VimBuilder {
           elementIds!
       )
 
+    const instances = settings.instances
+      ? g3d.remapInstances(settings.instances)
+      : undefined
+
+    settings = instances
+      ? ({ ...settings, instances } as VimSettings)
+      : settings
+
+    const scene = g3d
+      ? this.sceneBuilder.createFromG3d(g3d, settings)
+      : new Scene(this.sceneBuilder)
+
     const vim = new Vim(header, doc, g3d, scene, settings, mapping)
 
     return vim
   }
 
-  private static async requestHeader (bfast: BFast): Promise<VimHeader> {
+  private async getGeometry (
+    requester: Requester,
+    path: string,
+    settings: VimSettings
+  ) {
+    const index = await G3dMeshIndex.createFromPath(`${path}_index.gz`)
+    const builder = G3dBuilder.fromIndexInstances(index, settings.instances)
+    await builder.all((m) => `${path}_mesh_${m}.gz`, requester)
+    return builder.ToG3d()
+  }
+
+  public static async requestHeader (bfast: BFast): Promise<VimHeader> {
     const header = await requestHeader(bfast)
 
     if (!header) {

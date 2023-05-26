@@ -20,13 +20,35 @@ import { Measure, IMeasure } from './gizmos/measure/measure'
 import { GizmoRectangle } from './gizmos/gizmoRectangle'
 
 // loader
-import { getFullSettings, VimPartialSettings } from '../vim-loader/vimSettings'
+import {
+  getFullSettings,
+  VimPartialSettings,
+  VimSettings
+} from '../vim-loader/vimSettings'
 import { VimBuilder } from '../vim-loader/vimBuilder'
-import { IProgressLogs } from 'vim-format'
 import { Vim } from '../vim-loader/vim'
 import { Renderer } from './rendering/renderer'
-import { GizmoGrid, VimMaterials } from '../vim'
+import {
+  GizmoGrid,
+  InstancingArgs,
+  MergeArgs,
+  Scene,
+  VimMaterials
+} from '../vim'
 import { SignalDispatcher } from 'ste-signals'
+import {
+  BFast,
+  IProgressLogs,
+  RemoteBuffer,
+  Requester,
+  G3dMeshIndex,
+  G3dBuilder,
+  G3dMesh,
+  G3d,
+  VimDocument
+} from 'vim-format'
+import { SceneBuilder } from '../vim-loader/sceneBuilder'
+import { ElementMapping } from '../vim-loader/elementMapping'
 
 /**
  * Viewer and loader for vim files.
@@ -251,6 +273,89 @@ export class Viewer {
    */
   clear () {
     this.vims.forEach((v) => this.remove(v))
+  }
+
+  async createProgressiveVim (
+    vimPath: string,
+    folder: string,
+    settings: VimPartialSettings
+  ) {
+    const vimSettings = getFullSettings(settings)
+    const buffer = new RemoteBuffer(vimPath, vimSettings.loghttp)
+    const bfast = new BFast(buffer)
+    const doc = await VimDocument.createFromBfast(bfast, vimSettings.noStrings)
+
+    const [header, instanceToElement, elementIds] = await Promise.all([
+      vimSettings.noHeader ? undefined : VimBuilder.requestHeader(bfast),
+      vimSettings.noMap ? undefined : doc.node.getAllElementIndex(),
+      vimSettings.noMap ? undefined : doc.element.getAllId()
+    ])
+
+    const index = await G3dMeshIndex.createFromPath(`${folder}_index.gz`)
+    const sceneBuilder = new SceneBuilder()
+    let scene: Scene
+    let mapping: ElementMapping
+
+    let g3d = new G3d(
+      new Int32Array(0),
+      new Uint16Array(0),
+      new Float32Array(0),
+      new Int32Array(0),
+      new Int32Array(0),
+      new Int32Array(0),
+      new Int32Array(0),
+      new Int32Array(0),
+      new Float32Array(0),
+      new Float32Array(0)
+    )
+
+    const set = new Set<number>()
+    let i = 0
+    while (i < index.instanceFiles.length) {
+      // Create batch
+      const batch: number[] = []
+      while (batch.length < 5 && i < index.instanceFiles.length) {
+        const m = index.instanceFiles[i]
+        if (!set.has(m) && m >= 0) {
+          set.add(m)
+          batch.push(m)
+        }
+        i++
+      }
+      if (batch.length === 0) {
+        break
+      }
+
+      // Get Meshes
+      const g3dBuilder = G3dBuilder.fromIndexMeshes(index, batch)
+      await g3dBuilder.all((m) => `${folder}_mesh_${m}.gz`)
+      const next = g3dBuilder.ToG3d()
+      g3d = g3d.append(next)
+
+      console.log(next)
+      console.log(g3d)
+
+      // Update Scene
+      const selection = [...this.selection.objects].map((o) => o.element)
+      this.renderer.remove(scene)
+      scene = sceneBuilder.createFromG3d(g3d, vimSettings)
+      scene.applyMatrix4(vimSettings.matrix)
+      this.renderer.add(scene)
+
+      mapping = vimSettings.noMap
+        ? undefined
+        : new ElementMapping(
+          Array.from(g3d.instanceNodes),
+            instanceToElement!,
+            elementIds!
+        )
+
+      scene.vim = new Vim(header, doc, g3d, scene, vimSettings, mapping)
+      const nextSelection = selection.map((o) =>
+        scene.vim.getObjectFromElement(o)
+      )
+      this.selection.select(nextSelection)
+    }
   }
 
   /**
