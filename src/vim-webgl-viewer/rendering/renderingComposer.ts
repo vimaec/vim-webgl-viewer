@@ -74,7 +74,6 @@ export class RenderingComposer {
     this.setup()
 
     this._clock = new THREE.Clock()
-    this._scene.scene.background = new THREE.Color('#d8d8e6')
   }
 
   private setup () {

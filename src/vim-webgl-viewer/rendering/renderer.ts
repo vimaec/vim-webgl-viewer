@@ -81,7 +81,7 @@ export class Renderer {
     viewport: Viewport,
     materials: VimMaterials,
     camera: Camera,
-    config: Settings
+    settings: Settings
   ) {
     this._viewport = viewport
     this._scene = scene
@@ -108,7 +108,7 @@ export class Renderer {
       materials,
       camera
     )
-    this._composer.onDemand = config.rendering.onDemand
+    this._composer.onDemand = settings.rendering.onDemand
 
     this.section = new RenderingSection(this, this._materials)
 
@@ -119,6 +119,7 @@ export class Renderer {
       this.needsUpdate = true
     })
     this._materials.onUpdate.sub(() => (this.needsUpdate = true))
+    this.background = settings.background.color
   }
 
   /**
@@ -131,6 +132,15 @@ export class Renderer {
     this.renderer.forceContextLoss()
     this.renderer.dispose()
     this._composer.dispose()
+  }
+
+  get background () {
+    return this._scene.scene.background
+  }
+
+  set background (color: THREE.Color | THREE.Texture) {
+    this._scene.scene.background = color
+    this.needsUpdate = true
   }
 
   /**

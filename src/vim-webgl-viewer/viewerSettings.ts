@@ -81,7 +81,12 @@ export type Settings = {
       opacityAlways: number
     }
   }
-  // background: Partial<BackgroundOptions>
+  /**
+   * Rendering background options
+   */
+  background: {
+    color: THREE.Color
+  }
   /**
    * Plane under scene related options
    */
@@ -174,6 +179,7 @@ const defaultConfig: Settings = {
       orbitSpeed: 1,
       moveSpeed: 1
     },
+
     gizmo: {
       enable: true,
       size: 0.01,
@@ -182,6 +188,7 @@ const defaultConfig: Settings = {
       opacityAlways: 0.125
     }
   },
+  background: { color: new THREE.Color('#d8d8e6') },
   groundPlane: {
     visible: true,
     encoding: 'base64',

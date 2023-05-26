@@ -94,6 +94,9 @@ export class VimMaterials {
 
   /** Update material settings from config */
   applySettings (settings: Settings) {
+    this.isolationOpacity = settings.materials.isolation.opacity
+    this.isolationColor = settings.materials.isolation.color
+
     this.wireframeColor = settings.materials.highlight.color
     this.wireframeOpacity = settings.materials.highlight.opacity
 
@@ -109,6 +112,29 @@ export class VimMaterials {
 
   get onUpdate () {
     return this._onUpdate.asEvent()
+  }
+
+  get isolationOpacity () {
+    return this.isolation.opacity
+  }
+
+  set isolationOpacity (opacity: number) {
+    const mat = this.isolation as THREE.ShaderMaterial
+    mat.uniforms.opacity.value = opacity
+    mat.uniformsNeedUpdate = true
+    this._onUpdate.dispatch()
+  }
+
+  get isolationColor (): THREE.Color {
+    const mat = this.isolation as THREE.ShaderMaterial
+    return mat.uniforms.fillColor.value
+  }
+
+  set isolationColor (color: THREE.Color) {
+    const mat = this.isolation as THREE.ShaderMaterial
+    mat.uniforms.fillColor.value = color
+    mat.uniformsNeedUpdate = true
+    this._onUpdate.dispatch()
   }
 
   /**
