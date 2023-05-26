@@ -15,7 +15,7 @@ export function createIsolationMaterial () {
   return new THREE.ShaderMaterial({
     uniforms: {
       opacity: { value: 0.1 },
-      fillColor: { value: new THREE.Vector3(0.5, 0.5, 0.5) }
+      fillColor: { value: new THREE.Vector3(0, 0, 0) }
     },
     vertexColors: true,
     transparent: true,

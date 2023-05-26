@@ -220,7 +220,7 @@ const defaultConfig: Settings = {
       opacity: 0.5
     },
     isolation: {
-      color: new THREE.Color(0x40, 0x40, 0x40),
+      color: new THREE.Color(0, 0, 0),
       opacity: 0.1
     },
     section: {
