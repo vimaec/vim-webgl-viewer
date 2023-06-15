@@ -30,6 +30,7 @@ import { Vim } from '../vim-loader/vim'
 import { Renderer } from './rendering/renderer'
 import {
   GizmoGrid,
+  InsertableMesh,
   InstancingArgs,
   MergeArgs,
   Scene,
@@ -356,6 +357,147 @@ export class Viewer {
       )
       this.selection.select(nextSelection)
     }
+  }
+
+  async createProgressiveVim2 (
+    vimPath: string,
+    folder: string,
+    settings: VimPartialSettings
+  ) {
+    const vimSettings = getFullSettings(settings)
+    const buffer = new RemoteBuffer(vimPath, vimSettings.loghttp)
+    const bfast = new BFast(buffer)
+    const doc = await VimDocument.createFromBfast(bfast, vimSettings.noStrings)
+
+    const [header, instanceToElement, elementIds] = await Promise.all([
+      vimSettings.noHeader ? undefined : VimBuilder.requestHeader(bfast),
+      vimSettings.noMap ? undefined : doc.node.getAllElementIndex(),
+      vimSettings.noMap ? undefined : doc.element.getAllId()
+    ])
+
+    const index = await G3dMeshIndex.createFromPath(`${folder}_index.gz`)
+    const sceneBuilder = new SceneBuilder()
+    let scene: Scene
+    let mapping: ElementMapping
+
+    // Get Meshes
+    const g3dBuilder = G3dBuilder.fromIndexMeshes(index)
+
+    g3dBuilder.all((m) => `${folder}_mesh_${m}.gz`)
+    await update(this)
+
+    async function update (self: Viewer) {
+      await new Promise((resolve) => setTimeout(resolve, 1000))
+      const [g3d, done] = g3dBuilder.upTo()
+
+      // Update Scene
+      const selection = [...self.selection.objects].map((o) => o.element)
+      self.renderer.remove(scene)
+      scene = sceneBuilder.createFromG3d(g3d, vimSettings)
+      scene.applyMatrix4(vimSettings.matrix)
+      self.renderer.add(scene)
+      self.camera.lerp(1).frame(scene.getBoundingBox())
+
+      mapping = vimSettings.noMap
+        ? undefined
+        : new ElementMapping(
+          Array.from(g3d.instanceNodes),
+            instanceToElement!,
+            elementIds!
+        )
+
+      scene.vim = new Vim(header, doc, g3d, scene, vimSettings, mapping)
+
+      const nextSelection = selection.map((o) =>
+        scene.vim.getObjectFromElement(o)
+      )
+      self.selection.select(nextSelection)
+
+      if (!done) {
+        update(self)
+      }
+    }
+  }
+
+  async createProgressiveVim3 (
+    vimPath: string,
+    folder: string,
+    settings: VimPartialSettings
+  ) {
+    const vimSettings = getFullSettings(settings)
+    /*
+
+    const buffer = new RemoteBuffer(vimPath, vimSettings.loghttp)
+
+    const bfast = new BFast(buffer)
+    const doc = await VimDocument.createFromBfast(bfast, vimSettings.noStrings)
+
+    const [header, instanceToElement, elementIds] = await Promise.all([
+      vimSettings.noHeader ? undefined : VimBuilder.requestHeader(bfast),
+      vimSettings.noMap ? undefined : doc.node.getAllElementIndex(),
+      vimSettings.noMap ? undefined : doc.element.getAllId()
+    ])
+    */
+
+    const index = await G3dMeshIndex.createFromPath(`${folder}_index.g3d`)
+    console.log
+
+    const opaqueMesh = InsertableMesh.fromIndex(
+      index,
+      [...new Array(index.getMeshCount()).keys()],
+      // [0, 1, 2, 3, 4],
+      // [958],
+      'opaque',
+      false
+    )
+    console.log(opaqueMesh)
+
+    opaqueMesh.mesh.applyMatrix4(vimSettings.matrix)
+    opaqueMesh.mesh.frustumCulled = false
+    this.renderer.add(opaqueMesh.mesh)
+
+    const transparentMesh = InsertableMesh.fromIndex(
+      index,
+      [...new Array(index.getMeshCount()).keys()],
+      // [362],
+      'transparent',
+      true
+    )
+
+    transparentMesh.mesh.applyMatrix4(vimSettings.matrix)
+    transparentMesh.mesh.frustumCulled = false
+    this.renderer.add(transparentMesh.mesh)
+
+    let lastUpdate = Date.now()
+
+    const update = () => {
+      transparentMesh.update()
+      opaqueMesh.update()
+
+      this.camera
+        .lerp(1)
+        .frame(
+          opaqueMesh.geometry.boundingBox
+            .clone()
+            .applyMatrix4(transparentMesh.mesh.matrix)
+        )
+    }
+
+    const transparents = []
+    for (let i = 0; i < transparentMesh.meshes.length; i++) {
+      const m = transparentMesh.meshes[i]
+      const g = await G3dMesh.createFromPath(`${folder}_mesh_${m}.g3d`)
+
+      transparentMesh.insertAllMesh2(g, i)
+      opaqueMesh.insertAllMesh2(g, i)
+
+      if (Date.now() > lastUpdate + 400) {
+        lastUpdate = Date.now()
+        update()
+      }
+    }
+    update()
+    console.log(transparents)
   }
 
   /**

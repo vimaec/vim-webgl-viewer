@@ -1,12 +1,11 @@
+import { BFast, G3d } from 'vim-format'
 import * as VIM from './vim'
 import * as THREE from 'three'
 
 // Parse URL for source file
 const params = new URLSearchParams(window.location.search)
 // Edge server doesn't serve http ranges properly
-const url = params.has('vim')
-  ? params.get('vim')
-  : 'https://vimdevelopment01storage.blob.core.windows.net/samples/residence_nozip.vim'
+const url = params.has('vim') ? params.get('vim') : './residence_nozip.vim'
 // : 'https://vimdevelopment01storage.blob.core.windows.net/samples/TowerS-ARCHITECTURE-ALL.v1.2.50.vim'
 
 // Parse URL for transparency mode
@@ -38,22 +37,74 @@ if (params.has('selection')) {
   selection = p?.split('+').map((s) => Number.parseInt(s))
 }
 
-const viewer = new VIM.Viewer()
+const viewer = new VIM.Viewer({
+  camera: {}
+})
 
 async function load (source: string | ArrayBuffer) {
   const loader = new VIM.Loader()
-  const request = loader.createRequest(source, {
+  const settings = {
+    noHeader: true,
+    // noMap: true,
+    noStrings: true,
     rotation: new THREE.Vector3(270, 0, 0),
-    transparency
-  })
+    streamGeometry: true,
+    streamBim: true,
+    // instances: [...new Array<number>(100).keys()],
+    // instances: airTerminals,
+    loadRooms: true,
+    // folder:
+    // 'https://vimdevelopment01storage.blob.core.windows.net/split-mesh/residence/residence'
+    // 'https://vimdevelopment01storage.blob.core.windows.net/split-mesh/tower/tower'
+    folder: './residence/residence'
+  } as Partial<VIM.VimSettings>
+  let time: number
+  const request = loader.createRequest(source, settings)
+  globalThis.request = request
   request.onProgress.sub((progress) => {
     console.log(`Loading : ${progress.loaded} / ${progress.total}`)
   })
+  request.onLoaded.sub(() => {
+    console.log(
+      `Finished Loading in ${((Date.now() - time) / 1000).toFixed(2)} seconds`
+    )
+  })
+
+  time = Date.now()
   const vim = await request.send()
+
+  time = Date.now()
+  console.log(
+    `Finished Filter in ${((Date.now() - time) / 1000).toFixed(2)} seconds`
+  )
 
   viewer.add(vim)
 }
-load(url)
+/*
+load(
+  // './tower.vim'
+  // 'https://vimdevelopment01storage.blob.core.windows.net/samples/TowerS-ARCHITECTURE-ALL.v1.2.50.vim'
+  'https://vimdevelopment01storage.blob.core.windows.net/samples/residence_nozip.vim'
+  // 'https://vimdevelopment01storage.blob.core.windows.net/samples/residence.vim'
+  // './skanska.nozip.vim'
+  // 'residence_nozip.vim'
+)
+*/
+
+await viewer.createProgressiveVim3(
+  // 'https://vimdevelopment01storage.blob.core.windows.net/samples/TowerS-ARCHITECTURE-ALL.v1.2.50.vim',
+  // 'https://vimdevelopment01storage.blob.core.windows.net/split-mesh/tower/tower',
+
+  'https://vimdevelopment01storage.blob.core.windows.net/samples/residence_nozip.vim',
+  './residence/residence',
+  // 'https://vimdevelopment01storage.blob.core.windows.net/split-mesh/residence/residence',
+  {
+    loadRooms: false,
+    streamBim: true,
+    noMap: true,
+    rotation: new THREE.Vector3(270, 0, 0)
+  }
+)
 
 const input = document.createElement('input')
 input.type = 'file'

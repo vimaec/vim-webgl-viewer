@@ -3,7 +3,14 @@
  */
 
 import * as THREE from 'three'
-import { G3d, MeshSection } from 'vim-format'
+import {
+  G3d,
+  G3dMesh,
+  G3dMeshIndex,
+  G3dMeshOffsets,
+  MeshSection
+} from 'vim-format'
+import { VimMaterials } from '../vim'
 
 export type MergeArgs = {
   section: MeshSection
@@ -82,6 +89,8 @@ export namespace Geometry {
     useAlpha: boolean
   ): Float32Array {
     const colorSize = useAlpha ? 4 : 3
+    console.log(mesh)
+    console.log(g3d.getMeshVertexCount(mesh))
     const result = new Float32Array(g3d.getMeshVertexCount(mesh) * colorSize)
 
     const subStart = g3d.getMeshSubmeshStart(mesh)
@@ -176,6 +185,15 @@ export namespace Geometry {
     return merge(g3d, info)
   }
 
+  export function mergeUniqueMeshesFromFiles (
+    g3d: G3dMeshIndex,
+    args: MergeArgs
+  ) {
+    const info = getUniqueMeshMergeInfoFromFiles(g3d, args)
+    if (info.instances.length === 0 || info.indexCount === 0) return
+    // return merge(g3d, info)
+  }
+
   /**
    * Returns merged geometry and meta data for picking.
    */
@@ -221,6 +239,34 @@ export namespace Geometry {
       instances,
       indexCount,
       vertexCount
+    )
+  }
+
+  /**
+   * Precomputes array sizes required to merge all unique meshes
+   */
+  function getUniqueMeshMergeInfoFromFiles (
+    index: G3dMeshIndex,
+    args: MergeArgs
+  ) {
+    const uniqueMeshes = new Array<number>()
+    const instances = new Array<number>()
+    const seen = new Set<number>()
+    index.instanceFiles.forEach((f) => {
+      if (!seen.has(f)) {
+        uniqueMeshes.push(f)
+        seen.add(f)
+        instances.push(f)
+      }
+    })
+    const counts = index.getAttributeCounts(uniqueMeshes)
+
+    return new MergeInfo(
+      args.section,
+      args.transparent,
+      instances,
+      counts.indexCount,
+      counts.vertexCount
     )
   }
 
@@ -407,5 +453,377 @@ export namespace Geometry {
       this.submeshes = submeshes
       this.boxes = boxes
     }
+  }
+}
+
+export class InsertableMesh {
+  mesh: THREE.Mesh
+  geometry: THREE.BufferGeometry
+
+  indexCount = 0
+  vertexCount = 0
+  colorSize: number
+  section: MeshSection
+  transparent: boolean
+
+  indexAttribute: THREE.Uint32BufferAttribute
+  vertexAttribute: THREE.BufferAttribute
+  colorAttribute: THREE.BufferAttribute
+
+  meshes: number[]
+  offsets: G3dMeshOffsets
+
+  getMeshCount () {
+    return this.offsets.indexOffsets.length
+  }
+
+  constructor (
+    indexCapacity: number,
+    vertexCapacity: number,
+    transparent: boolean,
+    meshes: number[],
+    offsets: G3dMeshOffsets,
+    section: MeshSection
+  ) {
+    this.offsets = offsets
+    this.meshes = meshes
+    this.section = section
+
+    this.transparent = transparent
+    this.colorSize = transparent ? 4 : 3
+
+    this.indexAttribute = new THREE.Uint32BufferAttribute(indexCapacity, 1)
+    this.vertexAttribute = new THREE.Float32BufferAttribute(
+      vertexCapacity * G3d.POSITION_SIZE,
+      G3d.POSITION_SIZE
+    )
+    this.colorAttribute = new THREE.Float32BufferAttribute(
+      vertexCapacity * this.colorSize,
+      this.colorSize
+    )
+
+    this.indexAttribute.count = 0
+    this.vertexAttribute.count = 0
+    this.colorAttribute.count = 0
+
+    this.geometry = new THREE.BufferGeometry()
+    this.geometry.setIndex(this.indexAttribute)
+    this.geometry.setAttribute('position', this.vertexAttribute)
+    this.geometry.setAttribute('color', this.colorAttribute)
+
+    const material = transparent
+      ? VimMaterials.getInstance().transparent.material
+      : VimMaterials.getInstance().opaque.material
+    this.mesh = new THREE.Mesh(this.geometry, material)
+  }
+
+  static fromIndex (
+    index: G3dMeshIndex,
+    meshes: number[],
+    section: MeshSection,
+    transparent: boolean
+  ) {
+    const counts = index.getAttributeCounts(meshes, section, true)
+    const offsets = index.getMergedMeshOffsets(meshes, section)
+    return new InsertableMesh(
+      counts.indexCount,
+      counts.vertexCount,
+      transparent,
+      meshes,
+      offsets,
+      section
+    )
+  }
+
+  append (g3d: G3d) {
+    for (let i = 0; i < g3d.getIndexCount(); i++) {
+      this.indexAttribute.setX(
+        this.indexCount + i,
+        g3d.indices[i] + this.vertexCount
+      )
+    }
+    console.log(this.indexAttribute)
+
+    const vector = new THREE.Vector3()
+    const matrix = new THREE.Matrix4().fromArray(g3d.getInstanceMatrix(0))
+
+    for (let i = 0; i < g3d.getVertexCount(); i++) {
+      vector.fromArray(g3d.positions, i * G3d.POSITION_SIZE)
+      vector.applyMatrix4(matrix)
+
+      this.vertexAttribute.setXYZ(
+        this.vertexCount + i,
+        vector.x,
+        vector.y,
+        vector.z
+      )
+
+      if (this.colorSize === 3) {
+        this.colorAttribute.setXYZ(this.vertexCount + i, 1, 1, 1)
+      } else {
+        this.colorAttribute.setXYZW(this.vertexCount + i, 1, 1, 1, 1)
+      }
+    }
+
+    this.indexCount += g3d.getIndexCount()
+    this.vertexCount += g3d.getVertexCount()
+
+    this.indexAttribute.count = this.indexCount
+    this.vertexAttribute.count = this.vertexCount
+    this.colorAttribute.count = this.vertexCount
+
+    this.indexAttribute.needsUpdate = true
+    this.vertexAttribute.needsUpdate = true
+    this.colorAttribute.needsUpdate = true
+
+    this.geometry.computeBoundingBox()
+  }
+
+  appendMesh (g3d: G3dMesh) {
+    for (let i = 0; i < g3d.getIndexCount(); i++) {
+      this.indexAttribute.setX(
+        this.indexCount + i,
+        g3d.indices[i] + this.vertexCount
+      )
+    }
+    console.log(this.indexAttribute)
+
+    const vector = new THREE.Vector3()
+    const matrix = new THREE.Matrix4().fromArray(g3d.getInstanceMatrix(0))
+
+    for (let i = 0; i < g3d.getVertexCount(); i++) {
+      vector.fromArray(g3d.positions, i * G3d.POSITION_SIZE)
+      vector.applyMatrix4(matrix)
+
+      this.vertexAttribute.setXYZ(
+        this.vertexCount + i,
+        vector.x,
+        vector.y,
+        vector.z
+      )
+
+      if (this.colorSize === 3) {
+        this.colorAttribute.setXYZ(this.vertexCount + i, 1, 1, 1)
+      } else {
+        this.colorAttribute.setXYZW(this.vertexCount + i, 1, 1, 1, 1)
+      }
+    }
+
+    this.indexCount += g3d.getIndexCount()
+    this.vertexCount += g3d.getVertexCount()
+
+    this.indexAttribute.count = this.indexCount
+    this.vertexAttribute.count = this.vertexCount
+    this.colorAttribute.count = this.vertexCount
+
+    this.geometry.computeBoundingBox()
+  }
+
+  insertMesh (g3d: G3dMesh, mesh: number) {
+    const indexOffset = this.offsets.indexOffsets[mesh]
+    const vertexOffset = this.offsets.vertexOffsets[mesh]
+
+    for (let i = 0; i < g3d.getIndexCount(); i++) {
+      this.indexAttribute.setX(indexOffset + i, g3d.indices[i] + vertexOffset)
+    }
+    console.log(this.indexAttribute)
+
+    const vector = new THREE.Vector3()
+    const matrix = new THREE.Matrix4().fromArray(g3d.getInstanceMatrix(0))
+
+    for (let i = 0; i < g3d.getVertexCount(); i++) {
+      vector.fromArray(g3d.positions, i * G3d.POSITION_SIZE)
+      vector.applyMatrix4(matrix)
+
+      this.vertexAttribute.setXYZ(
+        vertexOffset + i,
+        vector.x,
+        vector.y,
+        vector.z
+      )
+
+      if (this.colorSize === 3) {
+        this.colorAttribute.setXYZ(vertexOffset + i, 1, 1, 1)
+      } else {
+        this.colorAttribute.setXYZW(vertexOffset + i, 1, 1, 1, 1)
+      }
+    }
+
+    this.indexCount = Math.max(
+      indexOffset + g3d.getIndexCount(),
+      this.indexCount
+    )
+    this.vertexCount = Math.max(
+      vertexOffset + g3d.getVertexCount(),
+      this.vertexCount
+    )
+
+    this.indexAttribute.count = this.indexCount
+    this.vertexAttribute.count = this.vertexCount
+    this.colorAttribute.count = this.vertexCount
+
+    this.geometry.computeBoundingBox()
+  }
+
+  insertAllMesh (g3d: G3dMesh, mesh: number) {
+    const indexStart = this.offsets.indexOffsets[mesh]
+    const vertexStart = this.offsets.vertexOffsets[mesh]
+
+    for (let instance = 0; instance < g3d.getInstanceCount(); instance++) {
+      const indexCount = g3d.getIndexCount()
+      const vertexCount = g3d.getVertexCount()
+      const indexOffset = indexCount * instance
+      const vertexOffset = vertexCount * instance
+
+      for (let i = 0; i < indexCount; i++) {
+        this.indexAttribute.setX(
+          indexStart + indexOffset + i,
+          g3d.indices[i] + vertexStart + vertexOffset
+        )
+      }
+
+      const matrix = new THREE.Matrix4().fromArray(
+        g3d.getInstanceMatrix(instance)
+      )
+      const vector = new THREE.Vector3()
+
+      for (let v = 0; v < vertexCount; v++) {
+        vector.fromArray(g3d.positions, v * G3d.POSITION_SIZE)
+        vector.applyMatrix4(matrix)
+
+        this.vertexAttribute.setXYZ(
+          vertexStart + vertexOffset + v,
+          vector.x,
+          vector.y,
+          vector.z
+        )
+      }
+
+      for (let sub = 0; sub < g3d.submeshIndexOffset.length; sub++) {
+        const start = g3d.submeshIndexOffset[sub]
+        const end =
+          sub + 1 < g3d.submeshIndexOffset.length
+            ? g3d.submeshIndexOffset[sub + 1]
+            : g3d.indices.length
+        const mat = g3d.submeshMaterial[sub]
+        const r = g3d.materialColors[mat * G3d.COLOR_SIZE]
+        const g = g3d.materialColors[mat * G3d.COLOR_SIZE + 1]
+        const b = g3d.materialColors[mat * G3d.COLOR_SIZE + 2]
+        const a = g3d.materialColors[mat * G3d.COLOR_SIZE + 3]
+
+        const transparentColor = a < 1
+        const reject = this.transparent !== transparentColor
+
+        for (let i = start; i < end; i++) {
+          const v = g3d.indices[i]
+          const vertex = vertexStart + vertexOffset + v
+          if (this.colorSize === 3) {
+            this.colorAttribute.setXYZ(vertex, r, g, b)
+          } else {
+            this.colorAttribute.setXYZW(vertex, r, g, b, a)
+          }
+          if (reject) {
+            this.indexAttribute.setX(indexStart + indexOffset + i, 0)
+            this.vertexAttribute.setXYZ(vertex, 0, 0, 0)
+          }
+        }
+      }
+    }
+
+    this.indexCount = Math.max(
+      indexStart + g3d.getIndexCount() * g3d.getInstanceCount(),
+      this.indexCount
+    )
+
+    this.vertexCount = Math.max(
+      vertexStart + g3d.getVertexCount() * g3d.getInstanceCount(),
+      this.vertexCount
+    )
+
+    this.indexAttribute.count = this.indexCount
+    this.vertexAttribute.count = this.vertexCount
+    this.colorAttribute.count = this.vertexCount
+
+    this.geometry.computeBoundingBox()
+  }
+
+  insertAllMesh2 (g3d: G3dMesh, mesh: number) {
+    const vector = new THREE.Vector3()
+    const matrix = new THREE.Matrix4()
+
+    const indexOffset = this.offsets.indexOffsets[mesh]
+    const vertexOffset = this.offsets.vertexOffsets[mesh]
+    let i = 0
+    let v = 0
+    for (let instance = 0; instance < g3d.getInstanceCount(); instance++) {
+      const indexStart = g3d.getIndexStart(this.section)
+      const indexEnd = g3d.getIndexEnd(this.section)
+
+      const vertexStart = g3d.getVertexStart(this.section)
+      const vertexEnd = g3d.getVertexEnd(this.section)
+      const vertexCount = vertexEnd - vertexStart
+      const vertexMergeOffset = vertexCount * instance
+
+      // console.log('indexCount : ' + indexCount)
+      // console.log('instance : ' + instance)
+      const sectionOffset = g3d.getVertexStart(this.section)
+
+      for (let index = indexStart; index < indexEnd; index++) {
+        this.indexAttribute.setX(
+          indexOffset + i,
+          vertexOffset + vertexMergeOffset + g3d.indices[index] - sectionOffset
+        )
+        /*
+        console.log(
+          `[${indexOffset + i}] = ${
+            vertexOffset + indexMergeOffset + g3d.indices[index] - sectionOffset
+          }`
+        )
+
+        console.log('i : ' + i)
+        console.log('indexStart : ' + indexStart)
+        console.log('indexOffset : ' + indexOffset)
+        console.log('vertexOffset : ' + vertexOffset)
+        console.log('indexMergeOffset : ' + indexMergeOffset)
+        console.log('g3d.indices[index]  : ' + g3d.indices[index])
+        console.log('sectionOffset : ' + sectionOffset)
+*/
+        i++
+      }
+
+      // console.log('vertexStart' + vertexStart)
+      // console.log('vertexEnd' + vertexEnd)
+      matrix.fromArray(g3d.getInstanceMatrix(instance))
+      for (let vertex = vertexStart; vertex < vertexEnd; vertex++) {
+        vector.fromArray(g3d.positions, vertex * G3d.POSITION_SIZE)
+        // console.log('v:' + v)
+        // console.log(vector.clone())
+        vector.applyMatrix4(matrix)
+        this.vertexAttribute.setXYZ(
+          vertexOffset + v,
+          vector.x,
+          vector.y,
+          vector.z
+        )
+
+        this.colorAttribute.setXYZW(vertexOffset + v, 1, 1, 1, 0.5)
+        v++
+      }
+
+      this.indexAttribute.count = Math.max(indexOffset + i)
+      const vCount = vertexOffset + v
+      const max = Math.max(vCount, this.vertexAttribute.count)
+      this.vertexAttribute.count = max
+      this.colorAttribute.count = max
+      // console.log(this.indexAttribute.count)
+    }
+  }
+
+  update () {
+    this.geometry.computeBoundingSphere()
+    this.geometry.computeBoundingBox()
+    this.indexAttribute.needsUpdate = true
+    this.vertexAttribute.needsUpdate = true
+    this.colorAttribute.needsUpdate = true
   }
 }

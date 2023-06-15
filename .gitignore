@@ -5,6 +5,12 @@
 !.eslintrc.json
 !.prettierrc.json
 
+#ignore test files
+*.g3d
+*.vim
+*.gz
+
+
 #ignore build
 dist/*
 

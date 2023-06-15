@@ -12,7 +12,8 @@ import {
   VimDocument,
   VimHeader,
   requestHeader,
-  Requester
+  Requester,
+  G3dMesh
 } from 'vim-format'
 import { VimSettings } from './vimSettings'
 import { VimMaterials } from './materials/materials'
@@ -115,7 +116,6 @@ export class VimBuilder {
     })
     const bytes = await response.arrayBuffer()
     const g3d = await G3d.createFromBfast(new BFast(bytes))
-    console.log(g3d)
 
     // Filtering already occured so we don't pass it to the builder.
     const copy = { ...settings, instances: undefined } as VimSettings
@@ -152,6 +152,8 @@ export class VimBuilder {
       settings.noMap ? undefined : doc.element.getAllId()
     ])
 
+    console.log(g3d)
+
     const mapping = settings.noMap
       ? undefined
       : new ElementMapping(
@@ -182,9 +184,30 @@ export class VimBuilder {
     path: string,
     settings: VimSettings
   ) {
-    const index = await G3dMeshIndex.createFromPath(`${path}_index.gz`)
+    const index = await G3dMeshIndex.createFromPath(`${path}_index.g3d`)
     const builder = G3dBuilder.fromIndexInstances(index, settings.instances)
-    await builder.all((m) => `${path}_mesh_${m}.gz`, requester)
+    await builder.all((m) => `${path}_mesh_${m}.g3d`, requester)
+    return builder.ToG3d()
+  }
+
+  private async getGeometryOne (
+    requester: Requester,
+    path: string,
+    settings: VimSettings
+  ) {
+    console.log('ONE')
+    const index = await G3dMeshIndex.createFromPath(`${path}_index.g3d`)
+    const builder = G3dBuilder.fromIndexMeshes(index, [396, 397])
+    for (let i = 0; i < builder.meshes.length; i++) {
+      const m = builder.meshes[i]
+      const buffer = await requester.http(`${path}_mesh_${m}.g3d`)
+      const mesh = await G3dMesh.createFromBuffer(buffer)
+      const g = mesh.toG3d()
+      builder.insert(g, i)
+      console.log(mesh)
+      console.log(g)
+    }
+
     return builder.ToG3d()
   }
 
