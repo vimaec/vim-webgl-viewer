@@ -31,13 +31,13 @@ export class ElementNoMapping {
 export class ElementMapping {
   private _instanceToElement: Map<number, number>
   private _elementToInstances: Map<number, number[]>
-  private _elementIds: number[]
-  private _elementIdToElements: Map<number, number[]>
+  private _elementIds: BigInt64Array
+  private _elementIdToElements: Map<BigInt, number[]>
 
   constructor (
     instances: number[],
     instanceToElement: number[],
-    elementIds: number[]
+    elementIds: BigInt64Array
   ) {
     this._instanceToElement = new Map<number, number>()
     instances.forEach((i) =>
@@ -54,8 +54,8 @@ export class ElementMapping {
    * Returns element indices associated with element id
    * @param id element id
    */
-  getElementsFromElementId (id: number) {
-    return this._elementIdToElements.get(id)
+  getElementsFromElementId (id: number | bigint) {
+    return this._elementIdToElements.get(BigInt(id))
   }
 
   /**
@@ -101,8 +101,8 @@ export class ElementMapping {
   /**
    * Returns a map where data[i] -> i
    */
-  private static invertArray (data: number[]) {
-    const result = new Map<number, number[]>()
+  private static invertArray (data: BigInt64Array) {
+    const result = new Map<BigInt, number[]>()
     for (let i = 0; i < data.length; i++) {
       const value = data[i]
       const list = result.get(value)
