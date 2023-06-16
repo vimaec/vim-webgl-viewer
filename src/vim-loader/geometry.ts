@@ -89,8 +89,6 @@ export namespace Geometry {
     useAlpha: boolean
   ): Float32Array {
     const colorSize = useAlpha ? 4 : 3
-    console.log(mesh)
-    console.log(g3d.getMeshVertexCount(mesh))
     const result = new Float32Array(g3d.getMeshVertexCount(mesh) * colorSize)
 
     const subStart = g3d.getMeshSubmeshStart(mesh)
@@ -755,6 +753,7 @@ export class InsertableMesh {
     const vertexOffset = this.offsets.vertexOffsets[mesh]
     let i = 0
     let v = 0
+    let c = 0
     for (let instance = 0; instance < g3d.getInstanceCount(); instance++) {
       const indexStart = g3d.getIndexStart(this.section)
       const indexEnd = g3d.getIndexEnd(this.section)
@@ -808,6 +807,35 @@ export class InsertableMesh {
 
         this.colorAttribute.setXYZW(vertexOffset + v, 1, 1, 1, 0.5)
         v++
+      }
+
+      const subStart = g3d.getSubmeshStart(this.section)
+      const subEnd = g3d.getSubmeshEnd(this.section)
+      for (let sub = subStart; sub < subEnd; sub++) {
+        const color = g3d.getSubmeshColor(sub * G3d.COLOR_SIZE)
+        const vCount = g3d.getSubmeshVertexCount(sub)
+        console.log('color' + color)
+        console.log('c' + c)
+        for (let subV = 0; subV < vCount; subV++) {
+          console.log('c' + c)
+          if (this.colorSize === 3) {
+            this.colorAttribute.setXYZ(
+              vertexOffset + c,
+              color[0],
+              color[1],
+              color[2]
+            )
+          } else {
+            this.colorAttribute.setXYZW(
+              vertexOffset + c,
+              color[0],
+              color[1],
+              color[2],
+              color[3]
+            )
+          }
+          c++
+        }
       }
 
       this.indexAttribute.count = Math.max(indexOffset + i)

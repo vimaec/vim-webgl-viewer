@@ -444,9 +444,8 @@ export class Viewer {
 
     const opaqueMesh = InsertableMesh.fromIndex(
       index,
-      [...new Array(index.getMeshCount()).keys()],
-      // [0, 1, 2, 3, 4],
-      // [958],
+      // [...new Array(index.getMeshCount()).keys()],
+      [0, 1, 2, 3, 4],
       'opaque',
       false
     )
@@ -458,8 +457,8 @@ export class Viewer {
 
     const transparentMesh = InsertableMesh.fromIndex(
       index,
-      [...new Array(index.getMeshCount()).keys()],
-      // [362],
+      // [...new Array(index.getMeshCount()).keys()],
+      [0, 1, 2, 3, 4],
       'transparent',
       true
     )
@@ -483,7 +482,6 @@ export class Viewer {
         )
     }
 
-    const transparents = []
     for (let i = 0; i < transparentMesh.meshes.length; i++) {
       const m = transparentMesh.meshes[i]
       const g = await G3dMesh.createFromPath(`${folder}_mesh_${m}.g3d`)
@@ -497,7 +495,8 @@ export class Viewer {
       }
     }
     update()
-    console.log(transparents)
+    console.log(opaqueMesh)
+    console.log(transparentMesh)
   }
 
   /**
