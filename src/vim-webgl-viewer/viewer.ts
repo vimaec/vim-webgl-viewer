@@ -229,7 +229,7 @@ export class Viewer {
     return this._vims.size
   }
 
-  add (vim: Vim) {
+  add (vim: Vim, frameCamera = true) {
     if (this._vims.has(vim)) {
       throw new Error('Vim cannot be added again, unless removed first.')
     }
@@ -248,7 +248,12 @@ export class Viewer {
       this._environment.adaptToContent(box)
       this.sectionBox.fitBox(box)
     }
-    this._camera.do(true).frame('all', this._camera.defaultForward)
+
+    if (frameCamera) {
+      this._camera.do(true).frame('all', this._camera.defaultForward)
+      this._camera.save()
+    }
+
     this._onVimLoaded.dispatch()
   }
 
