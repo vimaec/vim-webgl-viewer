@@ -708,6 +708,7 @@ export class InsertableMesh {
         const g = g3d.materialColors[mat * G3d.COLOR_SIZE + 1]
         const b = g3d.materialColors[mat * G3d.COLOR_SIZE + 2]
         const a = g3d.materialColors[mat * G3d.COLOR_SIZE + 3]
+        console.log([r, g, b, a])
 
         const transparentColor = a < 1
         const reject = this.transparent !== transparentColor
@@ -812,12 +813,9 @@ export class InsertableMesh {
       const subStart = g3d.getSubmeshStart(this.section)
       const subEnd = g3d.getSubmeshEnd(this.section)
       for (let sub = subStart; sub < subEnd; sub++) {
-        const color = g3d.getSubmeshColor(sub * G3d.COLOR_SIZE)
+        const color = g3d.getSubmeshColor(sub)
         const vCount = g3d.getSubmeshVertexCount(sub)
-        console.log('color' + color)
-        console.log('c' + c)
         for (let subV = 0; subV < vCount; subV++) {
-          console.log('c' + c)
           if (this.colorSize === 3) {
             this.colorAttribute.setXYZ(
               vertexOffset + c,
@@ -831,7 +829,7 @@ export class InsertableMesh {
               color[0],
               color[1],
               color[2],
-              color[3]
+              0.25
             )
           }
           c++

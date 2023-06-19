@@ -440,12 +440,10 @@ export class Viewer {
     */
 
     const index = await G3dMeshIndex.createFromPath(`${folder}_index.g3d`)
-    console.log
 
     const opaqueMesh = InsertableMesh.fromIndex(
       index,
-      // [...new Array(index.getMeshCount()).keys()],
-      [0, 1, 2, 3, 4],
+      [...new Array(index.getMeshCount()).keys()],
       'opaque',
       false
     )
@@ -457,8 +455,7 @@ export class Viewer {
 
     const transparentMesh = InsertableMesh.fromIndex(
       index,
-      // [...new Array(index.getMeshCount()).keys()],
-      [0, 1, 2, 3, 4],
+      [...new Array(index.getMeshCount()).keys()],
       'transparent',
       true
     )
@@ -467,36 +464,41 @@ export class Viewer {
     transparentMesh.mesh.frustumCulled = false
     this.renderer.add(transparentMesh.mesh)
 
-    let lastUpdate = Date.now()
+    const requester = new Requester(false)
+
+    async function addOne (url: string, index: number) {
+      const buffer = await requester.http(url)
+      const mesh = await G3dMesh.createFromBuffer(buffer)
+      transparentMesh.insertAllMesh2(mesh, index)
+      opaqueMesh.insertAllMesh2(mesh, index)
+    }
 
     const update = () => {
       transparentMesh.update()
       opaqueMesh.update()
 
+      /*
       this.camera
-        .lerp(1)
+        .lerp(0)
         .frame(
           opaqueMesh.geometry.boundingBox
             .clone()
             .applyMatrix4(transparentMesh.mesh.matrix)
         )
+      */
+      this.renderer.needsUpdate = true
     }
 
-    for (let i = 0; i < transparentMesh.meshes.length; i++) {
-      const m = transparentMesh.meshes[i]
-      const g = await G3dMesh.createFromPath(`${folder}_mesh_${m}.g3d`)
+    let done = false
+    Promise.all(
+      transparentMesh.meshes.map((m, i) => addOne(`${folder}_mesh_${m}.g3d`, i))
+    ).finally(() => (done = true))
 
-      transparentMesh.insertAllMesh2(g, i)
-      opaqueMesh.insertAllMesh2(g, i)
-
-      if (Date.now() > lastUpdate + 400) {
-        lastUpdate = Date.now()
-        update()
-      }
+    while (!done) {
+      await new Promise((resolve) => setTimeout(resolve, 400))
+      update()
     }
     update()
-    console.log(opaqueMesh)
-    console.log(transparentMesh)
   }
 
   /**
