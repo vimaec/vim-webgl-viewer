@@ -188,7 +188,7 @@ const defaultConfig: Settings = {
       opacityAlways: 0.125
     }
   },
-  background: { color: new THREE.Color('#d8d8e6') },
+  background: { color: new THREE.Color('#96999f') },
   groundPlane: {
     visible: true,
     encoding: 'base64',
@@ -220,8 +220,8 @@ const defaultConfig: Settings = {
       opacity: 0.5
     },
     isolation: {
-      color: new THREE.Color(0, 0, 0),
-      opacity: 0.1
+      color: new THREE.Color('#4E525C'),
+      opacity: 0.08
     },
     section: {
       strokeWidth: 0.01,
