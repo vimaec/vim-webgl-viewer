@@ -53,7 +53,7 @@
     "ste-signals": "^3.0.9",
     "ste-simple-events": "^3.0.7",
     "three": "0.143.0",
-    "vim-format": "1.0.6-dev.2"
+    "vim-format": "1.0.6-dev.18"
   },
   "keywords": [
     "3d",

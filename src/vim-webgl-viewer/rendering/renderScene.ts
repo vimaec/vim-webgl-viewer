@@ -89,7 +89,7 @@ export class RenderScene {
   private addScene (scene: Scene) {
     this._scenes.push(scene)
     scene.meshes.forEach((m) => {
-      this.scene.add(m.three)
+      this.scene.add(m.mesh)
     })
 
     // Recompute bounding box
@@ -107,7 +107,7 @@ export class RenderScene {
 
     // Remove all meshes from three scene
     for (let i = 0; i < scene.meshes.length; i++) {
-      this.scene.remove(scene.meshes[i].three)
+      this.scene.remove(scene.meshes[i].mesh)
     }
 
     // Recompute bounding box

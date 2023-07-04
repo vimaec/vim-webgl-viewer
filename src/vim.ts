@@ -3,6 +3,7 @@ import './style.css'
 export * as THREE from 'three'
 export * as Format from 'vim-format'
 
+export * from './vim-webgl-viewer/progressiveVim'
 export * from './vim-webgl-viewer/viewer'
 export * from './vim-loader/vimRequest'
 export * from './vim-loader/geometry'
@@ -15,6 +16,7 @@ export {
   InputAction
 } from './vim-webgl-viewer/raycaster'
 
+export * from './vim-loader/insertableMesh'
 export * from './vim-loader/geometry'
 export * from './vim-loader/vimBuilder'
 export * from './vim-loader/loader'

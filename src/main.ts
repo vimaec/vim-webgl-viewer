@@ -52,11 +52,11 @@ async function load (source: string | ArrayBuffer) {
     streamBim: true,
     // instances: [...new Array<number>(100).keys()],
     // instances: airTerminals,
-    loadRooms: true,
+    loadRooms: true
     // folder:
     // 'https://vimdevelopment01storage.blob.core.windows.net/split-mesh/residence/residence'
     // 'https://vimdevelopment01storage.blob.core.windows.net/split-mesh/tower/tower'
-    folder: './residence/residence'
+    // folder: './residence/residence'
   } as Partial<VIM.VimSettings>
   let time: number
   const request = loader.createRequest(source, settings)
@@ -80,6 +80,7 @@ async function load (source: string | ArrayBuffer) {
 
   viewer.add(vim)
 }
+
 /*
 load(
   // './tower.vim'
@@ -89,22 +90,26 @@ load(
   // './skanska.nozip.vim'
   // 'residence_nozip.vim'
 )
+
 */
 
-await viewer.createProgressiveVim3(
-  // 'https://vimdevelopment01storage.blob.core.windows.net/samples/TowerS-ARCHITECTURE-ALL.v1.2.50.vim',
-  // 'https://vimdevelopment01storage.blob.core.windows.net/split-mesh/tower/tower',
-
-  'https://vimdevelopment01storage.blob.core.windows.net/samples/residence_nozip.vim',
-  './residence/residence',
-  // 'https://vimdevelopment01storage.blob.core.windows.net/split-mesh/residence/residence',
+const vim = await viewer.createProgressiveVim(
+  'https://vimdevelopment01storage.blob.core.windows.net/split-mesh/tower/tower',
+  './tower.vim',
   {
+    filter: [...new Array(1000).keys()].map((n) => n + 10000),
+    filterMode: 'instance',
+    gzipped: true,
     loadRooms: false,
     streamBim: true,
-    noMap: true,
-    rotation: new THREE.Vector3(270, 0, 0)
+    rotation: new THREE.Vector3(270, 0, -45),
+    position: new THREE.Vector3(0, 800, 0)
   }
 )
+console.log(vim.opaqueMesh)
+console.log(vim.transparentMesh)
+
+const request = vim.build()
 
 const input = document.createElement('input')
 input.type = 'file'

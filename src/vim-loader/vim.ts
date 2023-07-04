@@ -7,7 +7,11 @@ import { VimDocument, G3d, VimHeader } from 'vim-format'
 import { Scene } from './scene'
 import { VimSettings } from './vimSettings'
 import { Object } from './object'
-import { ElementMapping, ElementNoMapping } from './elementMapping'
+import {
+  ElementMapping,
+  ElementMapping2,
+  ElementNoMapping
+} from './elementMapping'
 import { Submesh } from './mesh'
 import { ISignal, SignalDispatcher } from 'ste-signals'
 
@@ -24,7 +28,7 @@ export class Vim {
 
   scene: Scene
   private _elementToObject: Map<number, Object> = new Map<number, Object>()
-  private _map: ElementMapping | ElementNoMapping
+  private _map: ElementMapping | ElementNoMapping | ElementMapping2
 
   private _onDispose = new SignalDispatcher()
   get onDispose () {
@@ -37,7 +41,7 @@ export class Vim {
     g3d: G3d | undefined,
     scene: Scene,
     settings: VimSettings,
-    map: ElementMapping | ElementNoMapping
+    map: ElementMapping | ElementNoMapping | ElementMapping2
   ) {
     this.header = header
     this.document = document

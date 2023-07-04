@@ -5,6 +5,7 @@
 import deepmerge from 'deepmerge'
 import { Transparency } from './geometry'
 import * as THREE from 'three'
+import { FilterMode } from 'vim-format'
 
 /**
  * Config object for loading a vim
@@ -45,15 +46,17 @@ export type VimSettings = {
 
   /**
    * Forces the viewer to download the whole data at once.
-   * Otherwise bim data will be requested on per need basis.
+   * Otherwise bim data will be requested only when needed.
    */
   streamBim: boolean
 
-  /** EXPERIMENTAL: Set url to get geometry from a split G3d Folder. */
-  folder: string
+  /** EXPERIMENTAL: Set to true if mesh files are zipped */
+  gzipped: boolean
+  /** EXPERIMENTAL: Only geometry satisfying filter will be loaded. */
+  filter: number[]
+  /** EXPERIMENTAL: Defines what property to use as the filter. */
+  filterMode: FilterMode
 
-  /** EXPERIMENTAL: Set to true to get geometry from a REST server. */
-  restApi: string
   /** EXPERIMENTAL: Set to true to stream geometry. Can be really slow on big models. */
   streamGeometry: boolean
   /** EXPERIMENTAL: Set to true to not download strings. */
@@ -73,8 +76,9 @@ export const defaultConfig: VimSettings = {
   matrix: new THREE.Matrix4(),
   transparency: 'all',
 
-  folder: undefined,
-  restApi: undefined,
+  gzipped: false,
+  filter: undefined,
+  filterMode: undefined,
   streamBim: false,
   streamGeometry: false,
   noStrings: false,

@@ -6,14 +6,10 @@ import { SceneBuilder } from './sceneBuilder'
 import {
   BFast,
   G3d,
-  G3dBuilder,
-  G3dMeshIndex,
   RemoteG3d,
   VimDocument,
   VimHeader,
-  requestHeader,
-  Requester,
-  G3dMesh
+  requestHeader
 } from 'vim-format'
 import { VimSettings } from './vimSettings'
 import { VimMaterials } from './materials/materials'
@@ -98,117 +94,6 @@ export class VimBuilder {
     const vim = new Vim(header, doc, g3d, scene, settings, mapping)
 
     return vim
-  }
-
-  async loadRemoteRest (bfast: BFast, settings: VimSettings) {
-    const doc = await VimDocument.createFromBfast(bfast, settings.noStrings)
-
-    const [header, instanceToElement, elementIds] = await Promise.all([
-      settings.noHeader ? undefined : VimBuilder.requestHeader(bfast),
-      settings.noMap ? undefined : doc.node.getAllElementIndex(),
-      settings.noMap ? undefined : doc.element.getAllId()
-    ])
-
-    const response = await fetch(settings.restApi, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify(settings.instances)
-    })
-    const bytes = await response.arrayBuffer()
-    const g3d = await G3d.createFromBfast(new BFast(bytes))
-
-    // Filtering already occured so we don't pass it to the builder.
-    const copy = { ...settings, instances: undefined } as VimSettings
-
-    const scene = g3d
-      ? this.sceneBuilder.createFromG3d(g3d, copy)
-      : new Scene(this.sceneBuilder)
-
-    const mapping = settings.noMap
-      ? undefined
-      : new ElementMapping(
-        Array.from(g3d.instanceNodes),
-          instanceToElement!,
-          elementIds!
-      )
-
-    const vim = new Vim(header, doc, g3d, scene, settings, mapping)
-
-    return vim
-  }
-
-  async loadFromFiles (
-    bfast: BFast,
-    requester: Requester,
-    path: string,
-    settings: VimSettings
-  ) {
-    const doc = await VimDocument.createFromBfast(bfast, settings.noStrings)
-
-    const [g3d, header, instanceToElement, elementIds] = await Promise.all([
-      this.getGeometry(requester, path, settings),
-      settings.noHeader ? undefined : VimBuilder.requestHeader(bfast),
-      settings.noMap ? undefined : doc.node.getAllElementIndex(),
-      settings.noMap ? undefined : doc.element.getAllId()
-    ])
-
-    console.log(g3d)
-
-    const mapping = settings.noMap
-      ? undefined
-      : new ElementMapping(
-        Array.from(g3d.instanceNodes),
-          instanceToElement!,
-          elementIds!
-      )
-
-    const instances = settings.instances
-      ? g3d.remapInstances(settings.instances)
-      : undefined
-
-    settings = instances
-      ? ({ ...settings, instances } as VimSettings)
-      : settings
-
-    const scene = g3d
-      ? this.sceneBuilder.createFromG3d(g3d, settings)
-      : new Scene(this.sceneBuilder)
-
-    const vim = new Vim(header, doc, g3d, scene, settings, mapping)
-
-    return vim
-  }
-
-  private async getGeometry (
-    requester: Requester,
-    path: string,
-    settings: VimSettings
-  ) {
-    const index = await G3dMeshIndex.createFromPath(`${path}_index.g3d`)
-    const builder = G3dBuilder.fromIndexInstances(index, settings.instances)
-    await builder.all((m) => `${path}_mesh_${m}.g3d`, requester)
-    return builder.ToG3d()
-  }
-
-  private async getGeometryOne (
-    requester: Requester,
-    path: string,
-    settings: VimSettings
-  ) {
-    console.log('ONE')
-    const index = await G3dMeshIndex.createFromPath(`${path}_index.g3d`)
-    const builder = G3dBuilder.fromIndexMeshes(index, [396, 397])
-    for (let i = 0; i < builder.meshes.length; i++) {
-      const m = builder.meshes[i]
-      const buffer = await requester.http(`${path}_mesh_${m}.g3d`)
-      const mesh = await G3dMesh.createFromBuffer(buffer)
-      const g = mesh.toG3d()
-      builder.insert(g, i)
-      console.log(mesh)
-      console.log(g)
-    }
-
-    return builder.ToG3d()
   }
 
   public static async requestHeader (bfast: BFast): Promise<VimHeader> {

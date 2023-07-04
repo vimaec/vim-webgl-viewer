@@ -5,6 +5,7 @@
 import * as THREE from 'three'
 import { G3d, MeshSection } from 'vim-format'
 import { Geometry, Transparency } from './geometry'
+import { InsertableMesh } from './insertableMesh'
 import { VimMaterials } from './materials/materials'
 import { Vim } from './vim'
 
@@ -17,7 +18,7 @@ export class Mesh {
   /**
    * the wrapped THREE mesh
    */
-  three: THREE.Mesh
+  mesh: THREE.Mesh
 
   /**
    * Vim file from which this mesh was created.
@@ -63,8 +64,8 @@ export class Mesh {
     instance: number[],
     boxes: THREE.Box3[]
   ) {
-    this.three = mesh
-    this.three.userData.vim = this
+    this.mesh = mesh
+    this.mesh.userData.vim = this
     this.instances = instance
     this.boxes = boxes
     this.boundingBox = this.unionAllBox(boxes)
@@ -101,12 +102,12 @@ export class Mesh {
 
     if (value) {
       if (!this._material) {
-        this._material = this.three.material
+        this._material = this.mesh.material
       }
-      this.three.material = value
+      this.mesh.material = value
     } else {
       if (this._material) {
-        this.three.material = this._material
+        this.mesh.material = this._material
         this._material = undefined
       }
     }
@@ -168,10 +169,10 @@ export class Mesh {
  * Represents one specific VIM instance as it is part of a Mesh.
  */
 export class Submesh {
-  mesh: Mesh
+  mesh: Mesh | InsertableMesh
   index: number
 
-  constructor (mesh: Mesh, index: number) {
+  constructor (mesh: Mesh | InsertableMesh, index: number) {
     this.mesh = mesh
     this.index = index
   }
@@ -180,7 +181,7 @@ export class Submesh {
    * Returns parent three mesh.
    */
   get three () {
-    return this.mesh.three
+    return this.mesh.mesh
   }
 
   /**
@@ -194,30 +195,42 @@ export class Submesh {
    * Returns vim instance associated with this submesh.
    */
   get instance () {
-    return this.mesh.instances[this.index]
+    return this.index
   }
 
   /**
    * Returns bounding box for this submesh.
    */
   get boundingBox () {
-    return this.mesh.boxes[this.index]
+    if (this.mesh instanceof Mesh) {
+      return this.mesh.boxes[this.index]
+    }
+
+    return this.mesh.geometry.submeshes.get(this.index).boundingBox
   }
 
   /**
    * Returns starting position in parent mesh for merged mesh.
    */
   get meshStart () {
-    return this.mesh.submeshes[this.index]
+    if (this.mesh instanceof Mesh) {
+      return this.mesh.submeshes[this.index]
+    }
+
+    return this.mesh.geometry.submeshes.get(this.index).start
   }
 
   /**
    * Returns ending position in parent mesh for merged mesh.
    */
   get meshEnd () {
-    return this.index + 1 < this.mesh.submeshes.length
-      ? this.mesh.submeshes[this.index + 1]
-      : this.three.geometry.index!.count
+    if (this.mesh instanceof Mesh) {
+      return this.index + 1 < this.mesh.submeshes.length
+        ? this.mesh.submeshes[this.index + 1]
+        : this.three.geometry.index!.count
+    }
+
+    return this.mesh.geometry.submeshes.get(this.index).end
   }
 
   /**

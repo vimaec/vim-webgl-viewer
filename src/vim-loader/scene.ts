@@ -7,6 +7,7 @@ import { Mesh, Submesh } from './mesh'
 import { SceneBuilder } from './sceneBuilder'
 import { Vim } from './vim'
 import { estimateBytesUsed } from 'three/examples/jsm/utils/BufferGeometryUtils'
+import { InsertableMesh } from './insertableMesh'
 
 /**
  * A Scene regroups many Meshes
@@ -18,7 +19,7 @@ export class Scene {
   readonly builder: SceneBuilder
 
   // State
-  meshes: Mesh[] = []
+  meshes: (Mesh | InsertableMesh)[] = []
   private _vim: Vim | undefined
   private _updated: boolean = false
   private _outlineCount: number = 0
@@ -27,7 +28,7 @@ export class Scene {
   private _instanceToMeshes: Map<number, Submesh[]> = new Map()
   private _material: THREE.Material | undefined
 
-  constructor (builder: SceneBuilder) {
+  constructor (builder: SceneBuilder | undefined) {
     this.builder = builder
   }
 
@@ -66,7 +67,7 @@ export class Scene {
 
   getMemory () {
     return this.meshes
-      .map((m) => estimateBytesUsed(m.three.geometry))
+      .map((m) => estimateBytesUsed(m.mesh.geometry))
       .reduce((n1, n2) => n1 + n2, 0)
   }
 
@@ -76,6 +77,20 @@ export class Scene {
    * For instanced mesh, index refers to instance index.
    */
   getMeshFromInstance (instance: number) {
+    // TODO: Clean up this path fork.
+    const result = new Array<Submesh>()
+    for (const mesh of this.meshes) {
+      if (mesh instanceof InsertableMesh) {
+        const s = mesh.geometry.submeshes.get(instance)
+        if (s !== undefined) {
+          result.push(new Submesh(mesh, s.instance))
+        }
+      }
+    }
+    if (result.length > 0) {
+      return result
+    }
+
     return this._instanceToMeshes.get(instance)
   }
 
@@ -84,8 +99,8 @@ export class Scene {
    */
   applyMatrix4 (matrix: THREE.Matrix4) {
     for (let m = 0; m < this.meshes.length; m++) {
-      this.meshes[m].three.matrixAutoUpdate = false
-      this.meshes[m].three.matrix.copy(matrix)
+      this.meshes[m].mesh.matrixAutoUpdate = false
+      this.meshes[m].mesh.matrix.copy(matrix)
     }
     this._boundingBox.applyMatrix4(matrix)
   }
@@ -108,7 +123,7 @@ export class Scene {
    * userData.instances = number[] (indices of the g3d instances that went into creating the mesh)
    * userData.boxes = THREE.Box3[] (bounding box of each instance)
    */
-  addMesh (mesh: Mesh) {
+  addMesh (mesh: Mesh | InsertableMesh) {
     const subs = mesh.getSubmeshes()
     subs.forEach((s) => {
       const set = this._instanceToMeshes.get(s.instance) ?? []
@@ -116,8 +131,19 @@ export class Scene {
       this._instanceToMeshes.set(s.instance, set)
     })
 
-    this._boundingBox =
-      this._boundingBox?.union(mesh.boundingBox) ?? mesh.boundingBox.clone()
+    const updateBox = () => {
+      if (mesh.boundingBox !== undefined) {
+        this._boundingBox =
+          this._boundingBox?.union(mesh.boundingBox) ?? mesh.boundingBox.clone()
+      }
+    }
+
+    if (mesh.boundingBox) {
+      updateBox()
+    }
+    if (mesh instanceof InsertableMesh) {
+      mesh.onUpdate = updateBox
+    }
 
     this.meshes.push(mesh)
     this.updated = true
@@ -164,7 +190,7 @@ export class Scene {
    */
   dispose () {
     for (let i = 0; i < this.meshes.length; i++) {
-      this.meshes[i].three.geometry.dispose()
+      this.meshes[i].mesh.geometry.dispose()
     }
     this.meshes.length = 0
     this._instanceToMeshes.clear()
