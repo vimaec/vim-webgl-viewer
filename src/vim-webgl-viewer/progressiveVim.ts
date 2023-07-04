@@ -149,6 +149,14 @@ export class ProgressiveVim {
     this.updateMeshes()
   }
 
+  abort () {
+    this.requester.abort()
+  }
+
+  remove () {
+    this.renderer.remove(this.scene)
+  }
+
   private async wait () {
     return new Promise((resolve) => setTimeout(resolve, 1000))
   }
@@ -196,5 +204,9 @@ class MeshRequester {
     const url = this.getMeshPath(mesh)
     const buffer = await this.requester.http(url)
     return await G3dMesh.createFromBuffer(buffer)
+  }
+
+  abort () {
+    this.requester.abort()
   }
 }

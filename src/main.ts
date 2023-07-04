@@ -97,7 +97,7 @@ const vim = await viewer.createProgressiveVim(
   'https://vimdevelopment01storage.blob.core.windows.net/split-mesh/tower/tower',
   './tower.vim',
   {
-    filter: [...new Array(1000).keys()].map((n) => n + 10000),
+    // filter: [...new Array(1000).keys()].map((n) => n + 10000),
     filterMode: 'instance',
     gzipped: true,
     loadRooms: false,
@@ -109,7 +109,8 @@ const vim = await viewer.createProgressiveVim(
 console.log(vim.opaqueMesh)
 console.log(vim.transparentMesh)
 
-const request = vim.build()
+vim.build()
+globalThis.vim = vim
 
 const input = document.createElement('input')
 input.type = 'file'
