@@ -107,8 +107,6 @@ const vim = await viewer.createProgressiveVim(
     position: new THREE.Vector3(0, 0, 0)
   }
 )
-console.log(vim.opaqueMesh)
-console.log(vim.transparentMesh)
 
 vim.onUpdate.subscribe(() => {
   viewer.camera.lerp(1).frame('all')

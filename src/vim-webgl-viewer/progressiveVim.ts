@@ -186,7 +186,6 @@ export class ProgressiveVim {
     if (this.renderer) {
       this.renderer.needsUpdate = true
     }
-    console.log('update')
     this._onUpdate.dispatch()
   }
 }

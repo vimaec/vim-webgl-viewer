@@ -72,13 +72,11 @@ export abstract class CameraMovement {
     target: Object | THREE.Sphere | THREE.Box3 | 'all' | undefined,
     forward?: THREE.Vector3
   ): void {
-    console.log('FRAME')
     if (target instanceof Object) {
       target = target.getBoundingBox()
     }
     if (target === 'all') {
       target = this._camera._scene.getBoundingBox()
-      console.log(target)
     }
     if (target instanceof THREE.Box3) {
       target = target.getBoundingSphere(new THREE.Sphere())
