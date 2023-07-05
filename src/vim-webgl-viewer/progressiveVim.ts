@@ -13,6 +13,8 @@ import {
   G3dMesh,
   VimDocument
 } from 'vim-format'
+import { SimpleEventDispatcher } from 'ste-simple-events'
+import { ISignalHandler, SignalDispatcher } from 'ste-signals'
 
 export class ProgressiveVim {
   settings: VimSettings
@@ -31,6 +33,11 @@ export class ProgressiveVim {
   vim: Vim
 
   requester: MeshRequester
+
+  private _onUpdate = new SignalDispatcher()
+  get onUpdate () {
+    return this._onUpdate.asEvent()
+  }
 
   constructor (
     settings: VimSettings,
@@ -179,6 +186,8 @@ export class ProgressiveVim {
     if (this.renderer) {
       this.renderer.needsUpdate = true
     }
+    console.log('update')
+    this._onUpdate.dispatch()
   }
 }
 

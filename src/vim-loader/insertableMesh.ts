@@ -2,13 +2,17 @@ import { Submesh } from './mesh'
 import * as THREE from 'three'
 import { G3d, G3dMesh, G3dMeshOffsets } from 'vim-format'
 import { Vim, VimMaterials } from '../vim'
+import { SignalDispatcher } from 'ste-signals'
 
 export class InsertableMesh {
   offsets: G3dMeshOffsets
   mesh: THREE.Mesh
   vim: Vim
 
-  onUpdate: () => void
+  private _onUpdate = new SignalDispatcher()
+  get onUpdate () {
+    return this._onUpdate.asEvent()
+  }
 
   /**
    * Wether the mesh is merged or not.
@@ -59,12 +63,12 @@ export class InsertableMesh {
   }
 
   insertAllMesh (g3d: G3dMesh, mesh: number) {
-    this.geometry.insertAllMesh(g3d, mesh)
+    this.geometry.insert(g3d, mesh)
   }
 
   update () {
     this.geometry.update()
-    this.onUpdate?.()
+    this._onUpdate.dispatch()
   }
 
   /**
@@ -163,7 +167,7 @@ class InsertableGeometry {
   }
 
   // TODO: remove the need for mesh argument.
-  insertAllMesh (g3d: G3dMesh, mesh: number) {
+  insert (g3d: G3dMesh, mesh: number) {
     const section = this.offsets.section
     const indexStart = g3d.getIndexStart(section)
     const indexEnd = g3d.getIndexEnd(section)
@@ -185,7 +189,6 @@ class InsertableGeometry {
     let c = 0
 
     // Sets the first point of the bounding boxes to avoid including (0,0,0)
-    // TODO: THERE IS A BUG HERE
     this.vector.fromArray(g3d.positions, vertexStart * G3d.POSITION_SIZE)
     this.vector.applyMatrix4(this.matrix)
     const box = new THREE.Box3().set(this.vector, this.vector)
@@ -230,6 +233,7 @@ class InsertableGeometry {
           this.vector.z
         )
         box.expandByPoint(this.vector)
+        this.boundingBox.expandByPoint(this.vector)
         v++
       }
 

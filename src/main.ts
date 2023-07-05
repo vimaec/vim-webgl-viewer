@@ -94,23 +94,26 @@ load(
 */
 
 const vim = await viewer.createProgressiveVim(
-  'https://vimdevelopment01storage.blob.core.windows.net/split-mesh/tower/tower',
+  // 'https://vimdevelopment01storage.blob.core.windows.net/split-mesh/tower/tower',
+  './residence/residence',
   './tower.vim',
   {
     // filter: [...new Array(1000).keys()].map((n) => n + 10000),
-    filterMode: 'instance',
-    gzipped: true,
+    // filterMode: 'instance',
+    gzipped: false,
     loadRooms: false,
     streamBim: true,
     rotation: new THREE.Vector3(270, 0, -45),
-    position: new THREE.Vector3(0, 800, 0)
+    position: new THREE.Vector3(0, 0, 0)
   }
 )
 console.log(vim.opaqueMesh)
 console.log(vim.transparentMesh)
 
+vim.onUpdate.subscribe(() => {
+  viewer.camera.lerp(1).frame('all')
+})
 vim.build()
-globalThis.vim = vim
 
 const input = document.createElement('input')
 input.type = 'file'

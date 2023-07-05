@@ -8,6 +8,7 @@ import { SceneBuilder } from './sceneBuilder'
 import { Vim } from './vim'
 import { estimateBytesUsed } from 'three/examples/jsm/utils/BufferGeometryUtils'
 import { InsertableMesh } from './insertableMesh'
+import { SignalDispatcher } from 'ste-signals'
 
 /**
  * A Scene regroups many Meshes
@@ -21,12 +22,18 @@ export class Scene {
   // State
   meshes: (Mesh | InsertableMesh)[] = []
   private _vim: Vim | undefined
+  private _matrix: THREE.Matrix4
   private _updated: boolean = false
   private _outlineCount: number = 0
 
   private _boundingBox: THREE.Box3 = new THREE.Box3()
   private _instanceToMeshes: Map<number, Submesh[]> = new Map()
   private _material: THREE.Material | undefined
+
+  private _onUpdate = new SignalDispatcher()
+  get onUpdate () {
+    return this._onUpdate.asEvent()
+  }
 
   constructor (builder: SceneBuilder | undefined) {
     this.builder = builder
@@ -61,6 +68,7 @@ export class Scene {
   /**
    * Returns the scene bounding box.
    */
+  // TODO: Should not return 0,0,0 if no bounding box.
   getBoundingBox (target: THREE.Box3 = new THREE.Box3()) {
     return target.copy(this._boundingBox)
   }
@@ -103,6 +111,7 @@ export class Scene {
       this.meshes[m].mesh.matrix.copy(matrix)
     }
     this._boundingBox.applyMatrix4(matrix)
+    this._matrix = matrix
   }
 
   get vim () {
@@ -131,23 +140,22 @@ export class Scene {
       this._instanceToMeshes.set(s.instance, set)
     })
 
-    const updateBox = () => {
-      if (mesh.boundingBox !== undefined) {
-        this._boundingBox =
-          this._boundingBox?.union(mesh.boundingBox) ?? mesh.boundingBox.clone()
-      }
-    }
-
-    if (mesh.boundingBox) {
-      updateBox()
-    }
+    this.updateBox(mesh.boundingBox)
     if (mesh instanceof InsertableMesh) {
-      mesh.onUpdate = updateBox
+      mesh.onUpdate.sub(() => this.updateBox(mesh.boundingBox))
     }
 
     this.meshes.push(mesh)
     this.updated = true
     return this
+  }
+
+  private updateBox (box: THREE.Box3) {
+    if (box !== undefined) {
+      const b = box.clone().applyMatrix4(this._matrix)
+      this._boundingBox = this._boundingBox?.union(b) ?? box
+    }
+    this._onUpdate.dispatch()
   }
 
   /**

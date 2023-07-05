@@ -92,13 +92,15 @@ export class RenderScene {
       this.scene.add(m.mesh)
     })
 
-    // Recompute bounding box
-    this._boundingBox = this._boundingBox
-      ? this._boundingBox.union(scene.getBoundingBox())
-      : scene.getBoundingBox()
+    this.updateBox(scene.getBoundingBox())
+    scene.onUpdate.sub(() => this.updateBox(scene.getBoundingBox()))
 
     // Memory
     this._memory += scene.getMemory()
+  }
+
+  private updateBox (box: THREE.Box3) {
+    this._boundingBox = this._boundingBox ? this._boundingBox.union(box) : box
   }
 
   private removeScene (scene: Scene) {
