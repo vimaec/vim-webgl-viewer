@@ -81,7 +81,6 @@ async function load (source: string | ArrayBuffer) {
   viewer.add(vim)
 }
 
-/*
 load(
   // './tower.vim'
   // 'https://vimdevelopment01storage.blob.core.windows.net/samples/TowerS-ARCHITECTURE-ALL.v1.2.50.vim'
@@ -91,16 +90,15 @@ load(
   // 'residence_nozip.vim'
 )
 
-*/
-
+/*
 const vim = await viewer.createProgressiveVim(
-  // 'https://vimdevelopment01storage.blob.core.windows.net/split-mesh/tower/tower',
-  './residence/residence',
+  'https://vimdevelopment01storage.blob.core.windows.net/split-mesh/tower/tower',
+  // './residence/residence',
   './tower.vim',
   {
-    // filter: [...new Array(1000).keys()].map((n) => n + 10000),
-    // filterMode: 'instance',
-    gzipped: false,
+    filter: instances,
+    filterMode: 'instance',
+    gzipped: true,
     loadRooms: false,
     streamBim: true,
     rotation: new THREE.Vector3(270, 0, -45),
@@ -113,6 +111,7 @@ vim.onUpdate.subscribe(() => {
 })
 vim.build()
 
+*/
 const input = document.createElement('input')
 input.type = 'file'
 document.body.prepend(input)

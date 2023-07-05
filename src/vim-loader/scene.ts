@@ -22,7 +22,7 @@ export class Scene {
   // State
   meshes: (Mesh | InsertableMesh)[] = []
   private _vim: Vim | undefined
-  private _matrix: THREE.Matrix4
+  private _matrix = new THREE.Matrix4()
   private _updated: boolean = false
   private _outlineCount: number = 0
 
@@ -111,7 +111,7 @@ export class Scene {
       this.meshes[m].mesh.matrix.copy(matrix)
     }
     this._boundingBox.applyMatrix4(matrix)
-    this._matrix = matrix
+    this._matrix.copy(matrix)
   }
 
   get vim () {

@@ -230,7 +230,7 @@ export class Viewer {
     }
 
     if (frameCamera) {
-      // this._camera.do(true).frame('all', this._camera.defaultForward)
+      this._camera.do(true).frame('all', this._camera.defaultForward)
       this._camera.save()
     }
 
