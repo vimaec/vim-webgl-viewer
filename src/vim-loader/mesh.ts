@@ -195,6 +195,10 @@ export class Submesh {
    * Returns vim instance associated with this submesh.
    */
   get instance () {
+    if (this.mesh instanceof Mesh) {
+      return this.mesh.instances[this.index]
+    }
+
     return this.index
   }
 
