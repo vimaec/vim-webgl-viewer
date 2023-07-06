@@ -7,7 +7,7 @@ import { Mesh, Submesh } from './mesh'
 import { SceneBuilder } from './sceneBuilder'
 import { Vim } from './vim'
 import { estimateBytesUsed } from 'three/examples/jsm/utils/BufferGeometryUtils'
-import { InsertableMesh } from './insertableMesh'
+import { InsertableMesh, InsertableSubmesh } from './insertableMesh'
 import { SignalDispatcher } from 'ste-signals'
 
 /**
@@ -91,7 +91,7 @@ export class Scene {
       if (mesh instanceof InsertableMesh) {
         const s = mesh.geometry.submeshes.get(instance)
         if (s !== undefined) {
-          result.push(new Submesh(mesh, s.instance))
+          result.push(new InsertableSubmesh(mesh, s.instance))
         }
       }
     }

@@ -1,4 +1,3 @@
-import { Submesh } from './mesh'
 import * as THREE from 'three'
 import { G3d, G3dMesh, G3dMeshOffsets } from 'vim-format'
 import { Vim, VimMaterials } from '../vim'
@@ -79,7 +78,7 @@ export class InsertableMesh {
     const hitIndex = faceIndex * 3
     for (const [instance, submesh] of this.geometry.submeshes.entries()) {
       if (hitIndex >= submesh.start && hitIndex < submesh.end) {
-        return new Submesh(this, instance)
+        return new InsertableSubmesh(this, instance)
       }
     }
   }
@@ -89,7 +88,19 @@ export class InsertableMesh {
    * @returns Returns all submeshes
    */
   getSubmeshes () {
-    return [...this.geometry.submeshes.keys()].map((i) => new Submesh(this, i))
+    return [...this.geometry.submeshes.keys()].map(
+      (i) => new InsertableSubmesh(this, i)
+    )
+  }
+
+  /**
+   *
+   * @returns Returns all submeshes
+   */
+  getSubmesh (index: number) {
+    return [...this.geometry.submeshes.keys()].map(
+      (i) => new InsertableSubmesh(this, i)
+    )
   }
 
   /**
@@ -276,5 +287,64 @@ class InsertableGeometry {
     this.indexAttribute.needsUpdate = true
     this.vertexAttribute.needsUpdate = true
     this.colorAttribute.needsUpdate = true
+  }
+}
+
+export class InsertableSubmesh {
+  mesh: InsertableMesh
+  index: number
+
+  constructor (mesh: InsertableMesh, index: number) {
+    this.mesh = mesh
+    this.index = index
+  }
+
+  /**
+   * Returns parent three mesh.
+   */
+  get three () {
+    return this.mesh.mesh
+  }
+
+  /**
+   * True if parent mesh is merged.
+   */
+  get merged () {
+    return this.mesh.merged
+  }
+
+  /**
+   * Returns vim instance associated with this submesh.
+   */
+  get instance () {
+    return this.index
+  }
+
+  /**
+   * Returns bounding box for this submesh.
+   */
+  get boundingBox () {
+    return this.mesh.geometry.submeshes.get(this.index).boundingBox
+  }
+
+  /**
+   * Returns starting position in parent mesh for merged mesh.
+   */
+  get meshStart () {
+    return this.mesh.geometry.submeshes.get(this.index).start
+  }
+
+  /**
+   * Returns ending position in parent mesh for merged mesh.
+   */
+  get meshEnd () {
+    return this.mesh.geometry.submeshes.get(this.index).end
+  }
+
+  /**
+   * Returns vim object for this submesh.
+   */
+  get object () {
+    return this.mesh.vim.getObjectFromInstance(this.instance)
   }
 }
