@@ -39,6 +39,11 @@ export class ProgressiveVim {
     return this._onUpdate.asEvent()
   }
 
+  private _onCompleted = new SignalDispatcher()
+  get onCompleted () {
+    return this._onCompleted.asEvent()
+  }
+
   constructor (
     settings: VimSettings,
     g3dPath: string,
@@ -154,6 +159,7 @@ export class ProgressiveVim {
       this.updateMeshes()
     }
     this.updateMeshes()
+    this._onCompleted.dispatch()
   }
 
   abort () {
@@ -162,6 +168,8 @@ export class ProgressiveVim {
 
   remove () {
     this.renderer.remove(this.scene)
+    this._onUpdate.clear()
+    this._onCompleted.clear()
   }
 
   private async wait () {
