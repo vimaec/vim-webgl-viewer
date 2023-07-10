@@ -199,14 +199,6 @@ class InsertableGeometry {
     let v = 0
     let c = 0
 
-    // Sets the first point of the bounding boxes to avoid including (0,0,0)
-    this.vector.fromArray(g3d.positions, vertexStart * G3d.POSITION_SIZE)
-    this.vector.applyMatrix4(this.matrix)
-    const box = new THREE.Box3().set(this.vector, this.vector)
-    if (!this.boundingBox) {
-      this.boundingBox = box.clone()
-    }
-
     // TODO : Improve this when mesh param is removed
     const meshIndex = this.offsets.meshes[mesh]
     const instanceCount = this.offsets.instances
@@ -214,7 +206,14 @@ class InsertableGeometry {
       : g3d.getInstanceCount()
 
     for (let instance = 0; instance < instanceCount; instance++) {
+      this.matrix.fromArray(g3d.getInstanceMatrix(instance))
       const submesh = new GeometrySubmesh()
+
+      // Sets the first point of the bounding boxes to avoid including (0,0,0)
+      this.vector.fromArray(g3d.positions, vertexStart * G3d.POSITION_SIZE)
+      this.vector.applyMatrix4(this.matrix)
+      const box = new THREE.Box3().set(this.vector, this.vector)
+
       const index = this.offsets.instances
         ? this.offsets.instances.get(meshIndex)[instance]
         : instance
@@ -233,7 +232,6 @@ class InsertableGeometry {
       submesh.end = indexOffset + i
 
       // Append vertices
-      this.matrix.fromArray(g3d.getInstanceMatrix(instance))
       for (let vertex = vertexStart; vertex < vertexEnd; vertex++) {
         this.vector.fromArray(g3d.positions, vertex * G3d.POSITION_SIZE)
         this.vector.applyMatrix4(this.matrix)
@@ -244,7 +242,6 @@ class InsertableGeometry {
           this.vector.z
         )
         box.expandByPoint(this.vector)
-        this.boundingBox.expandByPoint(this.vector)
         v++
       }
 
@@ -268,8 +265,8 @@ class InsertableGeometry {
       }
       this.updateCount(indexOffset + i, vertexOffset + v)
 
-      // Bounding box is wrong
       submesh.boundingBox = box
+      this.boundingBox = this.boundingBox?.union(box) ?? box.clone()
       this.submeshes.set(submesh.instance, submesh)
     }
   }

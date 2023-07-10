@@ -26,7 +26,7 @@ export class Scene {
   private _updated: boolean = false
   private _outlineCount: number = 0
 
-  private _boundingBox: THREE.Box3 = new THREE.Box3()
+  private _boundingBox: THREE.Box3
   private _instanceToMeshes: Map<number, Submesh[]> = new Map()
   private _material: THREE.Material | undefined
 
@@ -66,11 +66,10 @@ export class Scene {
   }
 
   /**
-   * Returns the scene bounding box.
+   * Returns the scene bounding box. Returns undefined if scene is empty.
    */
-  // TODO: Should not return 0,0,0 if no bounding box.
   getBoundingBox (target: THREE.Box3 = new THREE.Box3()) {
-    return target.copy(this._boundingBox)
+    return this._boundingBox ? target.copy(this._boundingBox) : undefined
   }
 
   getMemory () {
@@ -110,8 +109,11 @@ export class Scene {
       this.meshes[m].mesh.matrixAutoUpdate = false
       this.meshes[m].mesh.matrix.copy(matrix)
     }
-    this._boundingBox.applyMatrix4(matrix)
+
+    // Revert previous matrix
+    this._boundingBox?.applyMatrix4(this._matrix.invert())
     this._matrix.copy(matrix)
+    this._boundingBox?.applyMatrix4(this._matrix)
   }
 
   get vim () {
@@ -153,7 +155,7 @@ export class Scene {
   private updateBox (box: THREE.Box3) {
     if (box !== undefined) {
       const b = box.clone().applyMatrix4(this._matrix)
-      this._boundingBox = this._boundingBox?.union(b) ?? box
+      this._boundingBox = this._boundingBox?.union(b) ?? b
     }
     this._onUpdate.dispatch()
   }
