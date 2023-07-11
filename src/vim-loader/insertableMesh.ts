@@ -95,12 +95,10 @@ export class InsertableMesh {
 
   /**
    *
-   * @returns Returns all submeshes
+   * @returns Returns submesh for given index.
    */
   getSubmesh (index: number) {
-    return [...this.geometry.submeshes.keys()].map(
-      (i) => new InsertableSubmesh(this, i)
-    )
+    return new InsertableSubmesh(this, index)
   }
 
   /**
@@ -135,46 +133,48 @@ class GeometrySubmesh {
 
 class InsertableGeometry {
   offsets: G3dMeshOffsets
-
   geometry: THREE.BufferGeometry
-  indexAttribute: THREE.Uint32BufferAttribute
-  vertexAttribute: THREE.BufferAttribute
-  colorAttribute: THREE.BufferAttribute
-
   submeshes = new Map<number, GeometrySubmesh>()
   boundingBox: THREE.Box3
 
+  private _indexAttribute: THREE.Uint32BufferAttribute
+  private _vertexAttribute: THREE.BufferAttribute
+  private _colorAttribute: THREE.BufferAttribute
+
+  private _updatedMeshes = 0
+  private _meshToUpdate = new Set<number>()
+
   // reusable objects to avoid allocs
-  vector = new THREE.Vector3()
-  matrix = new THREE.Matrix4()
+  private _vector = new THREE.Vector3()
+  private _matrix = new THREE.Matrix4()
 
   constructor (offsets: G3dMeshOffsets, transparent: boolean) {
     this.offsets = offsets
 
-    this.indexAttribute = new THREE.Uint32BufferAttribute(
+    this._indexAttribute = new THREE.Uint32BufferAttribute(
       offsets.counts.indices,
       1
     )
 
-    this.vertexAttribute = new THREE.Float32BufferAttribute(
+    this._vertexAttribute = new THREE.Float32BufferAttribute(
       offsets.counts.vertices * G3d.POSITION_SIZE,
       G3d.POSITION_SIZE
     )
 
     const colorSize = transparent ? 4 : 3
-    this.colorAttribute = new THREE.Float32BufferAttribute(
+    this._colorAttribute = new THREE.Float32BufferAttribute(
       offsets.counts.vertices * colorSize,
       colorSize
     )
 
-    this.indexAttribute.count = 0
-    this.vertexAttribute.count = 0
-    this.colorAttribute.count = 0
+    this._indexAttribute.count = 0
+    this._vertexAttribute.count = 0
+    this._colorAttribute.count = 0
 
     this.geometry = new THREE.BufferGeometry()
-    this.geometry.setIndex(this.indexAttribute)
-    this.geometry.setAttribute('position', this.vertexAttribute)
-    this.geometry.setAttribute('color', this.colorAttribute)
+    this.geometry.setIndex(this._indexAttribute)
+    this.geometry.setAttribute('position', this._vertexAttribute)
+    this.geometry.setAttribute('color', this._colorAttribute)
   }
 
   // TODO: remove the need for mesh argument.
@@ -182,7 +182,10 @@ class InsertableGeometry {
     const section = this.offsets.section
     const indexStart = g3d.getIndexStart(section)
     const indexEnd = g3d.getIndexEnd(section)
-    if (indexStart === indexEnd) return
+    if (indexStart === indexEnd) {
+      this._meshToUpdate.add(mesh)
+      return
+    }
 
     const vertexStart = g3d.getVertexStart(section)
     const vertexEnd = g3d.getVertexEnd(section)
@@ -206,13 +209,13 @@ class InsertableGeometry {
       : g3d.getInstanceCount()
 
     for (let instance = 0; instance < instanceCount; instance++) {
-      this.matrix.fromArray(g3d.getInstanceMatrix(instance))
+      this._matrix.fromArray(g3d.getInstanceMatrix(instance))
       const submesh = new GeometrySubmesh()
 
       // Sets the first point of the bounding boxes to avoid including (0,0,0)
-      this.vector.fromArray(g3d.positions, vertexStart * G3d.POSITION_SIZE)
-      this.vector.applyMatrix4(this.matrix)
-      const box = new THREE.Box3().set(this.vector, this.vector)
+      this._vector.fromArray(g3d.positions, vertexStart * G3d.POSITION_SIZE)
+      this._vector.applyMatrix4(this._matrix)
+      const box = new THREE.Box3().set(this._vector, this._vector)
 
       const index = this.offsets.instances
         ? this.offsets.instances.get(meshIndex)[instance]
@@ -223,7 +226,7 @@ class InsertableGeometry {
       submesh.start = indexOffset + i
       const vertexMergeOffset = vertexCount * instance
       for (let index = indexStart; index < indexEnd; index++) {
-        this.indexAttribute.setX(
+        this._indexAttribute.setX(
           indexOffset + i,
           vertexOffset + vertexMergeOffset + g3d.indices[index] - sectionOffset
         )
@@ -233,15 +236,15 @@ class InsertableGeometry {
 
       // Append vertices
       for (let vertex = vertexStart; vertex < vertexEnd; vertex++) {
-        this.vector.fromArray(g3d.positions, vertex * G3d.POSITION_SIZE)
-        this.vector.applyMatrix4(this.matrix)
-        this.vertexAttribute.setXYZ(
+        this._vector.fromArray(g3d.positions, vertex * G3d.POSITION_SIZE)
+        this._vector.applyMatrix4(this._matrix)
+        this._vertexAttribute.setXYZ(
           vertexOffset + v,
-          this.vector.x,
-          this.vector.y,
-          this.vector.z
+          this._vector.x,
+          this._vector.y,
+          this._vector.z
         )
-        box.expandByPoint(this.vector)
+        box.expandByPoint(this._vector)
         v++
       }
 
@@ -250,40 +253,81 @@ class InsertableGeometry {
         const color = g3d.getSubmeshColor(sub)
         const vCount = g3d.getSubmeshVertexCount(sub)
         for (let subV = 0; subV < vCount; subV++) {
-          this.colorAttribute.setXYZ(
+          this._colorAttribute.setXYZ(
             vertexOffset + c,
             color[0],
             color[1],
             color[2]
           )
 
-          if (this.colorAttribute.itemSize === 4) {
-            this.colorAttribute.setW(vertexOffset + c, 0.25)
+          if (this._colorAttribute.itemSize === 4) {
+            this._colorAttribute.setW(vertexOffset + c, 0.25)
           }
           c++
         }
       }
-      this.updateCount(indexOffset + i, vertexOffset + v)
 
       submesh.boundingBox = box
       this.boundingBox = this.boundingBox?.union(box) ?? box.clone()
       this.submeshes.set(submesh.instance, submesh)
+      this._meshToUpdate.add(mesh)
     }
   }
 
-  private updateCount (index: number, vertex: number) {
-    this.indexAttribute.count = Math.max(this.indexAttribute.count, index)
-    const max = Math.max(vertex, this.vertexAttribute.count)
-    this.vertexAttribute.count = max
-    this.colorAttribute.count = max
-  }
-
   update () {
+    // Compute mesh update range
+    let meshEnd = this._updatedMeshes
+    while (this._meshToUpdate.has(meshEnd)) {
+      this._meshToUpdate.delete(meshEnd)
+      meshEnd++
+    }
+    if (meshEnd === this._updatedMeshes) return
+
+    // Compute index update range
+    const indexStart = this.offsets.indexOffsets[this._updatedMeshes]
+    const indexEnd =
+      meshEnd < this.offsets.counts.meshes
+        ? this.offsets.indexOffsets[meshEnd]
+        : this.offsets.counts.indices
+
+    // updated indices
+
+    this._indexAttribute.updateRange.offset = indexStart
+    this._indexAttribute.updateRange.count = indexEnd - indexStart
+
+    this._indexAttribute.count = indexEnd
+    this._indexAttribute.needsUpdate = true
+
+    // Compute vertex update range
+    const vertexStart = this.offsets.vertexOffsets[this._updatedMeshes]
+    const vertexEnd =
+      meshEnd < this.offsets.counts.meshes
+        ? this.offsets.vertexOffsets[meshEnd]
+        : this.offsets.counts.vertices
+
+    // update vertices
+
+    this._vertexAttribute.updateRange.offset =
+      vertexStart * this._vertexAttribute.itemSize
+    this._vertexAttribute.updateRange.count =
+      (vertexEnd - vertexStart) * this._vertexAttribute.itemSize
+
+    this._vertexAttribute.count = vertexEnd
+    this._vertexAttribute.needsUpdate = true
+
+    // update colors
+
+    this._colorAttribute.updateRange.offset =
+      vertexStart * this._colorAttribute.itemSize
+    this._colorAttribute.updateRange.count =
+      (vertexEnd - vertexStart) * this._colorAttribute.itemSize
+
+    this._colorAttribute.count = vertexEnd
+    this._colorAttribute.needsUpdate = true
+
+    this._updatedMeshes = meshEnd
     this.geometry.computeBoundingBox()
     this.geometry.computeBoundingSphere()
-    this.indexAttribute.needsUpdate = true
-    this.vertexAttribute.needsUpdate = true
-    this.colorAttribute.needsUpdate = true
   }
 }
 

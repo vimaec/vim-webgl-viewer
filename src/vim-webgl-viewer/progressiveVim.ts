@@ -109,9 +109,6 @@ export class ProgressiveVim {
   }
 
   private static async createScene (index: G3dMeshIndex, settings: VimSettings) {
-    // TODO: Bubble up mesh selection
-    // TODO: Make this better [...new Array(index.getMeshCount()).keys()],
-
     const opaqueOffsets = index.getOffsets(
       settings.filter,
       settings.filterMode,
@@ -150,12 +147,12 @@ export class ProgressiveVim {
     this.renderer = renderer
   }
 
-  async build () {
+  async build (refreshRate: number = 1000) {
     let done = false
     this.loadAllMeshes().finally(() => (done = true))
 
     while (!done) {
-      await this.wait()
+      await this.wait(refreshRate)
       this.updateMeshes()
     }
     this.updateMeshes()
@@ -172,8 +169,8 @@ export class ProgressiveVim {
     this._onCompleted.clear()
   }
 
-  private async wait () {
-    return new Promise((resolve) => setTimeout(resolve, 1000))
+  private async wait (delay: number) {
+    return new Promise((resolve) => setTimeout(resolve, delay))
   }
 
   private async loadAllMeshes () {
