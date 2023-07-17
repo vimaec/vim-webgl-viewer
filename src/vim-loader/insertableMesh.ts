@@ -392,6 +392,7 @@ export class InsertableSubmesh {
   }
 
   saveColors (colors: Float32Array) {
+    if (this._colors) return
     this._colors = colors
   }
 
