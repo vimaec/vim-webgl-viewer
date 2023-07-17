@@ -2,6 +2,7 @@ import * as THREE from 'three'
 import { G3d, G3dMesh, G3dMeshOffsets } from 'vim-format'
 import { Vim, VimMaterials } from '../vim'
 import { SignalDispatcher } from 'ste-signals'
+import { ColorAttribute } from './objectAttributes'
 
 export class InsertableMesh {
   offsets: G3dMeshOffsets
@@ -334,6 +335,7 @@ class InsertableGeometry {
 export class InsertableSubmesh {
   mesh: InsertableMesh
   index: number
+  private _colors: Float32Array
 
   constructor (mesh: InsertableMesh, index: number) {
     this.mesh = mesh
@@ -387,5 +389,15 @@ export class InsertableSubmesh {
    */
   get object () {
     return this.mesh.vim.getObjectFromInstance(this.instance)
+  }
+
+  saveColors (colors: Float32Array) {
+    this._colors = colors
+  }
+
+  popColors () {
+    const result = this._colors
+    this._colors = undefined
+    return result
   }
 }

@@ -4,8 +4,9 @@
 
 // external
 import * as THREE from 'three'
-import { Mesh, Submesh } from './mesh'
+import { Submesh } from './mesh'
 import { Vim } from './vim'
+import { InsertableSubmesh } from './insertableMesh'
 
 export class ObjectAttribute<T> {
   value: T
@@ -46,26 +47,36 @@ export class ObjectAttribute<T> {
   }
 
   private applyInstanced (sub: Submesh, number: number) {
-    const three = sub.three as THREE.InstancedMesh
-    let attribute = three.geometry.getAttribute(this.instanceAttribute)
+    const mesh = sub.three as THREE.InstancedMesh
+    const geometry = mesh.geometry
+    let attribute = geometry.getAttribute(
+      this.instanceAttribute
+    ) as THREE.BufferAttribute
+
     if (!attribute) {
-      attribute = new THREE.InstancedBufferAttribute(
-        new Float32Array(three.count),
-        1
-      )
-      three.geometry.setAttribute(this.instanceAttribute, attribute)
+      const array = new Float32Array(mesh.count)
+      attribute = new THREE.InstancedBufferAttribute(array, 1)
+      geometry.setAttribute(this.instanceAttribute, attribute)
     }
     attribute.setX(sub.index, number)
     attribute.needsUpdate = true
+    attribute.updateRange.offset = 0
+    attribute.updateRange.count = -1
   }
 
   private applyMerged (sub: Submesh, number: number) {
-    const three = sub.three
-    const positions = three.geometry.getAttribute('position')
-    const attribute =
-      three.geometry.getAttribute(this.vertexAttribute) ??
-      new THREE.Float32BufferAttribute(new Float32Array(positions.count), 1)
-    three.geometry.setAttribute(this.vertexAttribute, attribute)
+    const geometry = sub.three.geometry
+    const positions = geometry.getAttribute('position')
+
+    let attribute = geometry.getAttribute(
+      this.vertexAttribute
+    ) as THREE.BufferAttribute
+
+    if (!attribute) {
+      const array = new Float32Array(positions.count)
+      attribute = new THREE.Float32BufferAttribute(array, 1)
+      geometry.setAttribute(this.vertexAttribute, attribute)
+    }
 
     const start = sub.meshStart
     const end = sub.meshEnd
@@ -76,6 +87,8 @@ export class ObjectAttribute<T> {
       attribute.setX(v, number)
     }
     attribute.needsUpdate = true
+    attribute.updateRange.offset = 0
+    attribute.updateRange.count = -1
   }
 }
 
@@ -120,8 +133,24 @@ export class ColorAttribute {
     const start = sub.meshStart
     const end = sub.meshEnd
 
-    const colors = sub.three.geometry.getAttribute('color')
+    const colors = sub.three.geometry.getAttribute(
+      'color'
+    ) as THREE.BufferAttribute
+
     const indices = sub.three.geometry.index!
+
+    // Save colors to be able to reset.
+    if (sub instanceof InsertableSubmesh) {
+      let c = 0
+      const previous = new Float32Array((end - start) * 3)
+      for (let i = start; i < end; i++) {
+        const v = indices.getX(i)
+        previous[c++] = colors.getX(v)
+        previous[c++] = colors.getY(v)
+        previous[c++] = colors.getZ(v)
+      }
+      sub.saveColors(previous)
+    }
 
     for (let i = start; i < end; i++) {
       const v = indices.getX(i)
@@ -129,6 +158,8 @@ export class ColorAttribute {
       colors.setXYZ(v, color.r, color.g, color.b)
     }
     colors.needsUpdate = true
+    colors.updateRange.offset = 0
+    colors.updateRange.count = -1
   }
 
   /**
@@ -137,7 +168,14 @@ export class ColorAttribute {
    */
   private resetMergedColor (sub: Submesh) {
     if (!this.vim) return
-    const colors = sub.three.geometry.getAttribute('color')
+    if (sub instanceof InsertableSubmesh) {
+      this.resetMergedInsertableColor(sub)
+      return
+    }
+
+    const colors = sub.three.geometry.getAttribute(
+      'color'
+    ) as THREE.BufferAttribute
 
     const indices = sub.three.geometry.index!
     let mergedIndex = sub.meshStart
@@ -158,6 +196,29 @@ export class ColorAttribute {
       }
     }
     colors.needsUpdate = true
+    colors.updateRange.offset = 0
+    colors.updateRange.count = -1
+  }
+
+  private resetMergedInsertableColor (sub: InsertableSubmesh) {
+    const colors = sub.three.geometry.getAttribute(
+      'color'
+    ) as THREE.BufferAttribute
+
+    const indices = sub.three.geometry.index!
+
+    const previous = sub.popColors()
+    // restored previous colors
+    let c = 0
+    for (let i = sub.meshStart; i < sub.meshEnd; i++) {
+      const v = indices.getX(i)
+      colors.setXYZ(v, previous[c], previous[c + 1], previous[c + 2])
+      c += 3
+    }
+
+    colors.needsUpdate = true
+    colors.updateRange.offset = 0
+    colors.updateRange.count = -1
   }
 
   /**
@@ -174,6 +235,8 @@ export class ColorAttribute {
       colors.setXYZ(sub.index, color.r, color.g, color.b)
       // Set attributes dirty
       colors.needsUpdate = true
+      colors.updateRange.offset = 0
+      colors.updateRange.count = -1
     }
   }
 
