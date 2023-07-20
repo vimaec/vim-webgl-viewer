@@ -172,8 +172,12 @@ export class Scene {
       this._instanceToMeshes.set(instance, set)
     })
 
-    this._boundingBox =
-      this._boundingBox?.union(other._boundingBox) ?? other._boundingBox.clone()
+    if (other._boundingBox) {
+      this._boundingBox =
+        this._boundingBox?.union(other._boundingBox) ??
+        other._boundingBox.clone()
+    }
+
     this.updated = true
     return this
   }
