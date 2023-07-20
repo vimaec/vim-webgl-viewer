@@ -11,10 +11,19 @@ import {
   Requester,
   G3dMeshIndex,
   G3dMesh,
-  VimDocument
+  VimDocument,
+  G3dMeshIndexSubset,
+  G3dMaterial
 } from 'vim-format'
 import { SimpleEventDispatcher } from 'ste-simple-events'
 import { ISignalHandler, SignalDispatcher } from 'ste-signals'
+
+type ProgressiveScene = {
+  scene: Scene
+  subset: G3dMeshIndexSubset
+  opaqueMesh: InsertableMesh
+  transparentMesh: InsertableMesh
+}
 
 export class ProgressiveVim {
   settings: VimSettings
@@ -26,6 +35,7 @@ export class ProgressiveVim {
   renderer: Renderer
 
   // TODO: Put these two meshes into a Scene class
+  subset: G3dMeshIndexSubset
   opaqueMesh: InsertableMesh
   transparentMesh: InsertableMesh
 
@@ -48,20 +58,29 @@ export class ProgressiveVim {
     settings: VimSettings,
     g3dPath: string,
     bim: VimDocument | undefined,
-    scene: Scene,
-    opaqueMesh: InsertableMesh,
-    transparentMesh: InsertableMesh,
+    scene: ProgressiveScene,
     mapping: ElementMapping2 | ElementNoMapping
   ) {
     this.settings = getFullSettings(settings)
     this.g3dPath = g3dPath
     this.bim = bim
-    this.scene = scene
-    this.opaqueMesh = opaqueMesh
-    this.transparentMesh = transparentMesh
+
+    this.scene = scene.scene
+    this.subset = scene.subset
+    this.opaqueMesh = scene.opaqueMesh
+    this.transparentMesh = scene.transparentMesh
+
     this.mapping = mapping
 
-    this.vim = new Vim(undefined, bim, undefined, scene, settings, mapping)
+    this.vim = new Vim(
+      undefined,
+      bim,
+      undefined,
+      scene.scene,
+      settings,
+      mapping
+    )
+
     this.opaqueMesh.vim = this.vim
     this.transparentMesh.vim = this.vim
 
@@ -82,24 +101,17 @@ export class ProgressiveVim {
     const index = await G3dMeshIndex.createFromPath(
       `${g3dPath}_index.${extension}`
     )
-    const [scene, opaque, transparent] = await ProgressiveVim.createScene(
-      index,
-      settings
+    const materials = await G3dMaterial.createFromPath(
+      `${g3dPath}_materials.${extension}`
     )
+
+    const scene = await ProgressiveVim.createScene(index, materials, settings)
 
     const mapping = settings.noMap
       ? new ElementNoMapping()
       : new ElementMapping2(index)
 
-    return new ProgressiveVim(
-      settings,
-      g3dPath,
-      bim,
-      scene,
-      opaque,
-      transparent,
-      mapping
-    )
+    return new ProgressiveVim(settings, g3dPath, bim, scene, mapping)
   }
 
   private static async createBim (path: string, settings: VimSettings) {
@@ -108,37 +120,34 @@ export class ProgressiveVim {
     return VimDocument.createFromBfast(bfast, settings.noStrings)
   }
 
-  private static async createScene (index: G3dMeshIndex, settings: VimSettings) {
-    const opaqueOffsets = index.getOffsets(
-      settings.filter,
-      settings.filterMode,
-      'opaque',
+  private static async createScene (
+    index: G3dMeshIndex,
+    materials: G3dMaterial,
+    settings: VimSettings
+  ) {
+    const subset = index.filter(settings.filterMode, settings.filter)
+
+    const opaqueOffsets = subset.getOffsets('opaque', true)
+    const opaqueMesh = new InsertableMesh(opaqueOffsets, materials, false)
+    opaqueMesh.applySettings(settings)
+
+    const transparentOffsets = subset.getOffsets('transparent', true)
+    const transparentMesh = new InsertableMesh(
+      transparentOffsets,
+      materials,
       true
     )
-    const opaqueMesh = new InsertableMesh(opaqueOffsets, false)
-
-    const transparentOffsets = index.getOffsets(
-      settings.filter,
-      settings.filterMode,
-      'transparent',
-      true
-    )
-    const transparentMesh = new InsertableMesh(transparentOffsets, true)
-
-    opaqueMesh.mesh.applyMatrix4(settings.matrix)
-    transparentMesh.mesh.applyMatrix4(settings.matrix)
-
-    opaqueMesh.mesh.frustumCulled = false
-    transparentMesh.mesh.frustumCulled = false
+    transparentMesh.applySettings(settings)
 
     const scene = new Scene(undefined)
     scene.addMesh(transparentMesh)
     scene.addMesh(opaqueMesh)
-    return [scene, opaqueMesh, transparentMesh] as [
-      Scene,
-      InsertableMesh,
-      InsertableMesh
-    ]
+    return {
+      subset,
+      scene,
+      opaqueMesh,
+      transparentMesh
+    } as ProgressiveScene
   }
 
   // TODO Remove this ?
@@ -174,9 +183,7 @@ export class ProgressiveVim {
   }
 
   private async loadAllMeshes () {
-    return Promise.all(
-      this.transparentMesh.meshes.map((m, i) => this.addMesh(m, i))
-    )
+    return Promise.all(this.subset.meshes.map((m, i) => this.addMesh(m, i)))
   }
 
   private async addMesh (mesh: number, index: number) {

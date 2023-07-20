@@ -1,8 +1,7 @@
 import * as THREE from 'three'
-import { G3d, G3dMesh, G3dMeshOffsets } from 'vim-format'
-import { Vim, VimMaterials } from '../vim'
+import { G3d, G3dMesh, G3dMeshOffsets, G3dMaterial } from 'vim-format'
+import { Vim, VimMaterials, VimSettings } from '../vim'
 import { SignalDispatcher } from 'ste-signals'
-import { ColorAttribute } from './objectAttributes'
 
 export class InsertableMesh {
   offsets: G3dMeshOffsets
@@ -24,10 +23,6 @@ export class InsertableMesh {
    */
   transparent: boolean
 
-  get meshes () {
-    return this.offsets.meshes
-  }
-
   /**
    * Total bounding box for this mesh.
    */
@@ -47,12 +42,16 @@ export class InsertableMesh {
 
   geometry: InsertableGeometry
 
-  constructor (offsets: G3dMeshOffsets, transparent: boolean) {
+  constructor (
+    offsets: G3dMeshOffsets,
+    materials: G3dMaterial,
+    transparent: boolean
+  ) {
     this.offsets = offsets
     this.transparent = transparent
     this.merged = true
 
-    this.geometry = new InsertableGeometry(offsets, transparent)
+    this.geometry = new InsertableGeometry(offsets, materials, transparent)
 
     this._material = transparent
       ? VimMaterials.getInstance().transparent.material
@@ -60,6 +59,11 @@ export class InsertableMesh {
 
     this.mesh = new THREE.Mesh(this.geometry.geometry, this._material)
     this.mesh.userData.vim = this
+  }
+
+  applySettings (settings: VimSettings) {
+    this.mesh.matrix.identity()
+    this.mesh.applyMatrix4(settings.matrix)
   }
 
   insertAllMesh (g3d: G3dMesh, mesh: number) {
@@ -133,6 +137,7 @@ class GeometrySubmesh {
 }
 
 class InsertableGeometry {
+  materials: G3dMaterial
   offsets: G3dMeshOffsets
   geometry: THREE.BufferGeometry
   submeshes = new Map<number, GeometrySubmesh>()
@@ -149,8 +154,13 @@ class InsertableGeometry {
   private _vector = new THREE.Vector3()
   private _matrix = new THREE.Matrix4()
 
-  constructor (offsets: G3dMeshOffsets, transparent: boolean) {
+  constructor (
+    offsets: G3dMeshOffsets,
+    materials: G3dMaterial,
+    transparent: boolean
+  ) {
     this.offsets = offsets
+    this.materials = materials
 
     this._indexAttribute = new THREE.Uint32BufferAttribute(
       offsets.counts.indices,
@@ -199,33 +209,29 @@ class InsertableGeometry {
     const indexOffset = this.offsets.indexOffsets[mesh]
     const vertexOffset = this.offsets.vertexOffsets[mesh]
 
-    let i = 0
+    const i = 0
     let v = 0
     let c = 0
 
     // TODO : Improve this when mesh param is removed
-    const meshIndex = this.offsets.meshes[mesh]
-    const instanceCount = this.offsets.instances
-      ? this.offsets.instances.get(meshIndex).length
-      : g3d.getInstanceCount()
+    const meshIndex = this.offsets.getMesh(mesh)
+    const instanceCount = this.offsets.getInstanceCount(meshIndex)
 
-    for (let instance = 0; instance < instanceCount; instance++) {
-      this._matrix.fromArray(g3d.getInstanceMatrix(instance))
-      const submesh = new GeometrySubmesh()
+    for (let i = 0; i < instanceCount; i++) {
+      const index = this.offsets.getInstance(meshIndex, i)
+      this._matrix.fromArray(g3d.getInstanceMatrix(index))
 
       // Sets the first point of the bounding boxes to avoid including (0,0,0)
       this._vector.fromArray(g3d.positions, vertexStart * G3d.POSITION_SIZE)
       this._vector.applyMatrix4(this._matrix)
       const box = new THREE.Box3().set(this._vector, this._vector)
 
-      const index = this.offsets.instances
-        ? this.offsets.instances.get(meshIndex)[instance]
-        : instance
+      const submesh = new GeometrySubmesh()
       submesh.instance = g3d.instanceNodes[index]
 
       // Append indices
       submesh.start = indexOffset + i
-      const vertexMergeOffset = vertexCount * instance
+      const vertexMergeOffset = vertexCount * i
       for (let index = indexStart; index < indexEnd; index++) {
         this._indexAttribute.setX(
           indexOffset + i,
@@ -251,7 +257,7 @@ class InsertableGeometry {
 
       // Append Colors
       for (let sub = subStart; sub < subEnd; sub++) {
-        const color = g3d.getSubmeshColor(sub)
+        const color = this.materials.getMaterialColor(g3d.submeshMaterial[sub])
         const vCount = g3d.getSubmeshVertexCount(sub)
         for (let subV = 0; subV < vCount; subV++) {
           this._colorAttribute.setXYZ(

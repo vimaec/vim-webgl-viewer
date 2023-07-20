@@ -237,6 +237,19 @@ export class Viewer {
     this._onVimLoaded.dispatch()
   }
 
+  addProgressive (vim: ProgressiveVim) {
+    vim.addToRenderer(this.renderer)
+    vim.onUpdate.subscribe((v) => {
+      const box = this.renderer.getBoundingBox()
+      if (box) {
+        this._environment.adaptToContent(box)
+        this.sectionBox.fitBox(box)
+      }
+    })
+
+    vim.onCompleted.sub(() => this._onVimLoaded.dispatch())
+  }
+
   /**
    * Unload given vim from viewer.
    */
@@ -271,18 +284,7 @@ export class Viewer {
       bimPath,
       getFullSettings(settings)
     )
-    vim.addToRenderer(this.renderer)
-    vim.onUpdate.subscribe((v) => {
-      const box = this.renderer.getBoundingBox()
-      if (box) {
-        this._environment.adaptToContent(box)
-        this.sectionBox.fitBox(box)
-      }
-    })
-
-    vim.onCompleted.sub(() => this._onVimLoaded.dispatch())
-    this._onVimLoaded.dispatch()
-
+    this.addProgressive(vim)
     return vim
   }
 
