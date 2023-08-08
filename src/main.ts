@@ -5,7 +5,10 @@ import * as THREE from 'three'
 // Parse URL for source file
 const params = new URLSearchParams(window.location.search)
 // Edge server doesn't serve http ranges properly
-const url = params.has('vim') ? params.get('vim') : './test_vim.vim'
+const url = params.has('vim')
+  ? params.get('vim') // : './test_vim.vim.gz'
+  : 'https://vimdevelopment01storage.blob.core.windows.net/samples/test_vim.vim.gz'
+// 'https://vim.azureedge.net/samples/test_vim.vim.gz'
 // : 'https://vimdevelopment01storage.blob.core.windows.net/samples/TowerS-ARCHITECTURE-ALL.v1.2.50.vim'
 
 // Parse URL for transparency mode
@@ -91,8 +94,8 @@ try {
   console.error(e)
 }
 */
-// const vim = await load(url)
-
+const vim = await load(url)
+/*
 const time = Date.now()
 const vim = await viewer.createProgressiveVim(
   // 'https://vimdevelopment01storage.blob.core.windows.net/split-mesh/tower/tower',
@@ -135,6 +138,7 @@ const connection = vim.onUpdate.subscribe(() => {
 await vim.start()
 
 globalThis.vim = vim
+*/
 
 const input = document.createElement('input')
 input.type = 'file'
