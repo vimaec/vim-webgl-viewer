@@ -1,48 +1,54 @@
 // loader
 import { getFullSettings, VimSettings } from '../vim-loader/vimSettings'
 import { Vim } from '../vim-loader/vim'
-import { InsertableMesh, Scene } from '../vim'
+import { InsertableMesh } from '../vim-loader/progressive/insertableMesh'
+import { InstancedMeshFactory } from '../vim-loader/progressive/instancedMeshFactory'
+import { Scene } from '../vim'
 
 import { ElementMapping2, ElementNoMapping } from '../vim-loader/elementMapping'
 import { Renderer } from './rendering/renderer'
 import {
   BFast,
   RemoteBuffer,
-  Requester,
   G3dMeshIndex,
-  G3dMesh,
   VimDocument,
   G3dMeshIndexSubset,
-  G3dMaterial
+  G3dMaterial,
+  RemoteGeometry,
+  G3dMesh
 } from 'vim-format'
-import { SimpleEventDispatcher } from 'ste-simple-events'
-import { ISignalHandler, SignalDispatcher } from 'ste-signals'
+import { SignalDispatcher } from 'ste-signals'
+import { InstancedMesh } from '../vim-loader/progressive/instancedMesh'
 
 type ProgressiveScene = {
   scene: Scene
-  subset: G3dMeshIndexSubset
+  uniques: G3dMeshIndexSubset
+  nonUniques: G3dMeshIndexSubset
   opaqueMesh: InsertableMesh
   transparentMesh: InsertableMesh
 }
 
 export class ProgressiveVim {
   settings: VimSettings
-  g3dPath: string
+  geometry: RemoteGeometry
+  materials: G3dMaterial
   bim: VimDocument | undefined
   scene: Scene
   mapping: ElementMapping2 | ElementNoMapping
 
   renderer: Renderer
+  meshFactory: InstancedMeshFactory
+  meshQueue = new Array<InstancedMesh>()
 
   // TODO: Put these two meshes into a Scene class
-  subset: G3dMeshIndexSubset
+  uniques: G3dMeshIndexSubset
+  nonUniques: G3dMeshIndexSubset
   opaqueMesh: InsertableMesh
   transparentMesh: InsertableMesh
+  synchronizer: LoadingSynchronizer
 
   // Vim instance here is only for transition.
   vim: Vim
-
-  requester: MeshRequester
 
   private _onUpdate = new SignalDispatcher()
   get onUpdate () {
@@ -56,17 +62,20 @@ export class ProgressiveVim {
 
   constructor (
     settings: VimSettings,
-    g3dPath: string,
+    geometry: RemoteGeometry,
+    materials: G3dMaterial,
     bim: VimDocument | undefined,
     scene: ProgressiveScene,
     mapping: ElementMapping2 | ElementNoMapping
   ) {
     this.settings = getFullSettings(settings)
-    this.g3dPath = g3dPath
+    this.geometry = geometry
     this.bim = bim
+    this.materials = materials
 
     this.scene = scene.scene
-    this.subset = scene.subset
+    this.uniques = scene.uniques
+    this.nonUniques = scene.nonUniques
     this.opaqueMesh = scene.opaqueMesh
     this.transparentMesh = scene.transparentMesh
 
@@ -81,13 +90,18 @@ export class ProgressiveVim {
       mapping
     )
 
+    this.meshFactory = new InstancedMeshFactory(this.vim, materials)
+
     this.opaqueMesh.vim = this.vim
     this.transparentMesh.vim = this.vim
 
-    this.requester = new MeshRequester(
-      g3dPath,
-      settings.gzipped,
-      settings.loghttp
+    this.synchronizer = new LoadingSynchronizer(
+      this.uniques,
+      this.nonUniques,
+      this.geometry,
+      (mesh, index) => this.merge(mesh, index),
+      (mesh, index) =>
+        this.instance(mesh, this.nonUniques.getMeshInstances(index))
     )
   }
 
@@ -96,22 +110,32 @@ export class ProgressiveVim {
     bimPath: string,
     settings: VimSettings
   ) {
-    const extension = settings.gzipped ? 'gz' : 'g3d'
+    let time = Date.now()
     const bim = await ProgressiveVim.createBim(bimPath, settings)
-    const index = await G3dMeshIndex.createFromPath(
-      `${g3dPath}_index.${extension}`
-    )
-    const materials = await G3dMaterial.createFromPath(
-      `${g3dPath}_materials.${extension}`
-    )
+    const geometry = await RemoteGeometry.fromPath(g3dPath)
+    const index = await geometry.getIndex()
+    const materials = await geometry.getMaterials()
+    console.log(`Other downloads: ${(Date.now() - time) / 1000} seconds`)
 
+    time = Date.now()
     const scene = await ProgressiveVim.createScene(index, materials, settings)
+    console.log(`createScene: ${(Date.now() - time) / 1000} seconds`)
 
     const mapping = settings.noMap
       ? new ElementNoMapping()
       : new ElementMapping2(index)
 
-    return new ProgressiveVim(settings, g3dPath, bim, scene, mapping)
+    time = Date.now()
+    console.log(`Main download: ${(Date.now() - time) / 1000} seconds`)
+
+    return new ProgressiveVim(
+      settings,
+      geometry,
+      materials,
+      bim,
+      scene,
+      mapping
+    )
   }
 
   private static async createBim (path: string, settings: VimSettings) {
@@ -125,13 +149,17 @@ export class ProgressiveVim {
     materials: G3dMaterial,
     settings: VimSettings
   ) {
+    console.log('createScene')
     const subset = index.filter(settings.filterMode, settings.filter)
+    console.log('createScene done')
+    const uniques = subset.filterUniqueMeshes()
+    const nonUniques = subset.filterNonUniqueMeshes()
 
-    const opaqueOffsets = subset.getOffsets('opaque', true)
+    const opaqueOffsets = uniques.getOffsets('opaque')
     const opaqueMesh = new InsertableMesh(opaqueOffsets, materials, false)
     opaqueMesh.applySettings(settings)
 
-    const transparentOffsets = subset.getOffsets('transparent', true)
+    const transparentOffsets = uniques.getOffsets('transparent')
     const transparentMesh = new InsertableMesh(
       transparentOffsets,
       materials,
@@ -143,8 +171,9 @@ export class ProgressiveVim {
     scene.addMesh(transparentMesh)
     scene.addMesh(opaqueMesh)
     return {
-      subset,
       scene,
+      uniques,
+      nonUniques,
       opaqueMesh,
       transparentMesh
     } as ProgressiveScene
@@ -156,12 +185,11 @@ export class ProgressiveVim {
     this.renderer = renderer
   }
 
-  async build (refreshRate: number = 1000) {
-    let done = false
-    this.loadAllMeshes().finally(() => (done = true))
+  async start () {
+    this.synchronizer.loadAll(this.settings.batchSize)
 
-    while (!done) {
-      await this.wait(refreshRate)
+    while (!this.synchronizer.isDone) {
+      await this.wait(this.settings.refreshInterval)
       this.updateMeshes()
     }
     this.updateMeshes()
@@ -169,7 +197,7 @@ export class ProgressiveVim {
   }
 
   abort () {
-    this.requester.abort()
+    // TODO
   }
 
   remove () {
@@ -178,23 +206,40 @@ export class ProgressiveVim {
     this._onCompleted.clear()
   }
 
-  private async wait (delay: number) {
+  private async wait (delay: number = 0) {
     return new Promise((resolve) => setTimeout(resolve, delay))
   }
 
-  private async loadAllMeshes () {
-    return Promise.all(this.subset.meshes.map((m, i) => this.addMesh(m, i)))
+  private async merge (g3dMesh: G3dMesh, index: number) {
+    this.transparentMesh.insert(g3dMesh, index)
+    this.opaqueMesh.insert(g3dMesh, index)
   }
 
-  private async addMesh (mesh: number, index: number) {
-    const g3dMesh = await this.requester.download(mesh)
-    this.transparentMesh.insertAllMesh(g3dMesh, index)
-    this.opaqueMesh.insertAllMesh(g3dMesh, index)
+  private async instance (g3dMesh: G3dMesh, instances: number[]) {
+    const opaque = this.meshFactory.createOpaque(g3dMesh, instances)
+    const transparent = this.meshFactory.createTransparent(g3dMesh, instances)
+
+    if (opaque) {
+      this.meshQueue.push(opaque)
+    }
+    if (transparent) {
+      this.meshQueue.push(transparent)
+    }
   }
 
   private async updateMeshes () {
+    // Update Instanced meshes
+    while (this.meshQueue.length > 0) {
+      const mesh = this.meshQueue.pop()
+      this.scene.addMesh(mesh)
+      this.renderer.add(mesh.mesh)
+    }
+
+    // Update Merged meshes
     this.transparentMesh.update()
     this.opaqueMesh.update()
+
+    // Notify Update
     if (this.renderer) {
       this.renderer.needsUpdate = true
     }
@@ -202,31 +247,79 @@ export class ProgressiveVim {
   }
 }
 
-class MeshRequester {
-  private requester: Requester
-
-  path: string
-  extension: string
-  indexPath: string
-
-  constructor (path: string, gzipped: boolean, verbose: boolean) {
-    this.path = path
-    this.extension = gzipped ? 'gz' : 'g3d'
-    this.requester = new Requester(verbose)
-    this.indexPath = `${path}_index.${this.extension}`
+class LoadingSynchronizer {
+  private _merged: LoadingBatcher
+  private _instanced: LoadingBatcher
+  get isDone () {
+    return this._merged.isDone && this._instanced.isDone
   }
 
-  getMeshPath (mesh: number) {
-    return `${this.path}_mesh_${mesh}.${this.extension}`
+  constructor (
+    uniques: G3dMeshIndexSubset,
+    nonUniques: G3dMeshIndexSubset,
+    geometry: RemoteGeometry,
+    mergeAction: (mesh: G3dMesh, index: number) => void,
+    instanceAction: (mesh: G3dMesh, index: number) => void
+  ) {
+    this._merged = new LoadingBatcher(uniques, geometry, mergeAction)
+    this._instanced = new LoadingBatcher(nonUniques, geometry, instanceAction)
   }
 
-  async download (mesh: number) {
-    const url = this.getMeshPath(mesh)
-    const buffer = await this.requester.http(url)
-    return await G3dMesh.createFromBuffer(buffer)
+  async loadAll (batchSize: number) {
+    while (!this._merged.isDone || !this._instanced.isDone) {
+      await this.load(batchSize)
+    }
   }
 
-  abort () {
-    this.requester.abort()
+  async load (batchSize: number) {
+    await Promise.all([
+      this._merged.load(batchSize),
+      this._instanced.load(batchSize)
+    ])
+  }
+}
+
+class LoadingBatcher {
+  private _subset: G3dMeshIndexSubset
+  private _geometry: RemoteGeometry
+  private _onLoad: (mesh: G3dMesh, index: number) => void
+
+  private _index: number = 0
+  private _maxMesh: number = 0
+
+  constructor (
+    subset: G3dMeshIndexSubset,
+    geometry: RemoteGeometry,
+    onLoad: (mesh: G3dMesh, index: number) => void
+  ) {
+    this._subset = subset
+    this._geometry = geometry
+    this._onLoad = onLoad
+  }
+
+  get isDone () {
+    return this._index >= this._subset.meshes.length
+  }
+
+  async load (batch: number) {
+    if (this.isDone) {
+      return Promise.resolve()
+    }
+
+    const promises = new Array<Promise<void>>()
+    this._maxMesh += batch
+    for (; this._index < this._subset.meshes.length; this._index++) {
+      const mesh = this._subset.getMesh(this._index)
+      if (mesh >= this._maxMesh) break
+      promises.push(this.fetch(mesh, this._index))
+    }
+    return Promise.all(promises)
+  }
+
+  private async fetch (mesh: number, index: number) {
+    if (this._onLoad) {
+      const g3dMesh = await this._geometry.getMesh(mesh)
+      this._onLoad(g3dMesh, index)
+    }
   }
 }

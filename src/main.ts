@@ -5,7 +5,7 @@ import * as THREE from 'three'
 // Parse URL for source file
 const params = new URLSearchParams(window.location.search)
 // Edge server doesn't serve http ranges properly
-const url = params.has('vim') ? params.get('vim') : './residence_nozip.vim'
+const url = params.has('vim') ? params.get('vim') : './test_vim.vim'
 // : 'https://vimdevelopment01storage.blob.core.windows.net/samples/TowerS-ARCHITECTURE-ALL.v1.2.50.vim'
 
 // Parse URL for transparency mode
@@ -44,11 +44,12 @@ const viewer = new VIM.Viewer({
 async function load (source: string | ArrayBuffer) {
   const loader = new VIM.Loader()
   const settings = {
+    // instances: [1],
     noHeader: true,
     // noMap: true,
     noStrings: true,
     rotation: new THREE.Vector3(270, 0, 0),
-    streamGeometry: true,
+    streamGeometry: false,
     streamBim: true,
     // instances: [...new Array<number>(100).keys()],
     // instances: airTerminals,
@@ -79,39 +80,62 @@ async function load (source: string | ArrayBuffer) {
   )
 
   viewer.add(vim)
+  return vim
 }
-
-load(
-  // './tower.vim'
-  // 'https://vimdevelopment01storage.blob.core.windows.net/samples/TowerS-ARCHITECTURE-ALL.v1.2.50.vim'
-  'https://vimdevelopment01storage.blob.core.windows.net/samples/residence_nozip.vim'
-  // 'https://vimdevelopment01storage.blob.core.windows.net/samples/residence.vim'
-  // './skanska.nozip.vim'
-  // 'residence_nozip.vim'
-)
-
 /*
+try {
+  await viewer.vimToInserable('./residence.vim', {
+    rotation: new VIM.THREE.Vector3(270, 0, 0)
+  })
+} catch (e) {
+  console.error(e)
+}
+*/
+// const vim = await load(url)
+
+const time = Date.now()
 const vim = await viewer.createProgressiveVim(
-  'https://vimdevelopment01storage.blob.core.windows.net/split-mesh/tower/tower',
-  // './residence/residence',
-  './tower.vim',
+  // 'https://vimdevelopment01storage.blob.core.windows.net/split-mesh/tower/tower',
+  // 'https://vimdevelopment01storage.blob.core.windows.net/split-mesh/residence_test.vim',
+  // 'https://vimdevelopment01storage.blob.core.windows.net/split-mesh/residence_test_sort.zg3d',
+  'https://vimdevelopment01storage.blob.core.windows.net/split-mesh/tower_test.vim',
+  // './residence_test_sort.zg3d',
+  // './kahua_test.vim',
+  // './kahua_test.vim',
+  // './skanska.nozip_test.vim',
+  // './tower/tower',
+  // './tower.vim',
+  './residence.vim',
   {
-    filter: instances,
-    filterMode: 'instance',
+    // filter: [...new Array(10000).keys()],
+    // filter: [6, 7],
+    // filter: [425, 1733],
+    filterMode: 'mesh',
     gzipped: true,
-    loadRooms: false,
+    batchSize: 100,
+    refreshInterval: 1000,
+    loadRooms: true,
+    rotation: new VIM.THREE.Vector3(270, 0, 0),
+    // streamGeometry: instances !== undefined,
     streamBim: true,
-    rotation: new THREE.Vector3(270, 0, -45),
-    position: new THREE.Vector3(0, 0, 0)
+    noStrings: true,
+    // noMap: instances?.length === 1 ?? true,
+    noHeader: true
   }
 )
 
-vim.onUpdate.subscribe(() => {
-  viewer.camera.lerp(1).frame('all')
-})
-vim.build()
+vim.onCompleted.subscribe(() =>
+  console.log(`loaded in ${(Date.now() - time) / 1000} seconds`)
+)
 
-*/
+const connection = vim.onUpdate.subscribe(() => {
+  viewer.camera.lerp(1).frame(vim.scene.getBoundingBox())
+  connection()
+})
+await vim.start()
+
+globalThis.vim = vim
+
 const input = document.createElement('input')
 input.type = 'file'
 document.body.prepend(input)

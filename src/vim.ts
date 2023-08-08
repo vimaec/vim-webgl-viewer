@@ -16,7 +16,7 @@ export {
   InputAction
 } from './vim-webgl-viewer/raycaster'
 
-export * from './vim-loader/insertableMesh'
+export * from './vim-loader/progressive/insertableMesh'
 export * from './vim-loader/geometry'
 export * from './vim-loader/vimBuilder'
 export * from './vim-loader/loader'

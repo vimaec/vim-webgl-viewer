@@ -56,6 +56,15 @@ export type VimSettings = {
   filter: number[]
   /** EXPERIMENTAL: Defines what property to use as the filter. */
   filterMode: FilterMode
+  /** EXPERIMENTAL: Defines how closely the mesh order is respected.
+   * Lower values will more closely match the order provided by the index
+   * at the cost of more waiting for synchronization thus a longer load time.
+   */
+  batchSize: number
+  /**
+   * EXPERIMENTAL: Defines the time in miliseconds between each scene refresh in progressive loading.
+   */
+  refreshInterval: number
 
   /** EXPERIMENTAL: Set to true to stream geometry. Can be really slow on big models. */
   streamGeometry: boolean
@@ -79,6 +88,9 @@ export const defaultConfig: VimSettings = {
   gzipped: false,
   filter: undefined,
   filterMode: undefined,
+  batchSize: 100,
+  refreshInterval: 1000,
+
   streamBim: false,
   streamGeometry: false,
   noStrings: false,

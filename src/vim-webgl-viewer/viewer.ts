@@ -20,16 +20,35 @@ import { Measure, IMeasure } from './gizmos/measure/measure'
 import { GizmoRectangle } from './gizmos/gizmoRectangle'
 import { ProgressiveVim } from './progressiveVim'
 
+import { ISimpleEvent, SimpleEventDispatcher } from 'ste-simple-events'
+import {
+  BFast,
+  IProgressLogs,
+  RemoteBuffer,
+  Requester,
+  G3d,
+  G3dMeshOffsetsVim,
+  G3dMaterial,
+  VimDocument
+} from 'vim-format'
+import {
+  VimBuilder,
+  Vim,
+  GizmoGrid,
+  InsertableMesh,
+  VimMaterials,
+  Scene
+} from '../vim'
+
 // loader
 import {
   getFullSettings,
   VimPartialSettings,
   VimSettings
 } from '../vim-loader/vimSettings'
-import { Vim } from '../vim-loader/vim'
 import { Renderer } from './rendering/renderer'
-import { GizmoGrid, VimMaterials } from '../vim'
 import { SignalDispatcher } from 'ste-signals'
+import { ElementMapping } from '../vim-loader/elementMapping'
 
 /**
  * Viewer and loader for vim files.
@@ -286,6 +305,55 @@ export class Viewer {
     )
     this.addProgressive(vim)
     return vim
+  }
+
+  async vimToInserable (vimPath: string, settings: VimPartialSettings) {
+    const fullSettings = getFullSettings(settings)
+    const buffer = new RemoteBuffer(vimPath)
+    const bfast = new BFast(buffer)
+    const doc = await VimDocument.createFromBfast(bfast)
+    const geo = await bfast.getBfast('geometry')
+    const g3d = await G3d.createFromBfast(geo)
+
+    const offsetsOpaque = G3dMeshOffsetsVim.fromG3d(g3d, true, 'opaque')
+    const offsetTransparent = G3dMeshOffsetsVim.fromG3d(
+      g3d,
+      true,
+      'transparent'
+    )
+
+    const materials = new G3dMaterial(g3d.materialColors)
+    const opaque = new InsertableMesh(offsetsOpaque, materials, false)
+    const transparent = new InsertableMesh(offsetTransparent, materials, true)
+
+    for (let m = 0; m < g3d.getMeshCount(); m++) {
+      opaque.insertFromVim(g3d, m)
+      transparent.insertFromVim(g3d, m)
+    }
+
+    opaque.applySettings(fullSettings)
+    transparent.applySettings(fullSettings)
+
+    opaque.update()
+    transparent.update()
+
+    const scene = new Scene(undefined)
+    scene.addMesh(opaque)
+    scene.addMesh(transparent)
+    this.renderer.add(scene)
+
+    const instanceToElement = await doc.node.getAllElementIndex()
+    const elementIds = await doc.element.getAllId()
+
+    const mapping = new ElementMapping(
+      Array.from(g3d.instanceNodes),
+      instanceToElement!,
+      elementIds!
+    )
+
+    const vim = new Vim(undefined, doc, g3d, scene, fullSettings, mapping)
+    opaque.vim = vim
+    transparent.vim = vim
   }
 
   /**

@@ -7,8 +7,10 @@ import { Mesh, Submesh } from './mesh'
 import { SceneBuilder } from './sceneBuilder'
 import { Vim } from './vim'
 import { estimateBytesUsed } from 'three/examples/jsm/utils/BufferGeometryUtils'
-import { InsertableMesh, InsertableSubmesh } from './insertableMesh'
+import { InsertableMesh } from './progressive/insertableMesh'
+import { InsertableSubmesh } from './progressive/insertableSubmesh'
 import { SignalDispatcher } from 'ste-signals'
+import { InstancedMesh } from './progressive/instancedMesh'
 
 /**
  * A Scene regroups many Meshes
@@ -20,7 +22,7 @@ export class Scene {
   readonly builder: SceneBuilder
 
   // State
-  meshes: (Mesh | InsertableMesh)[] = []
+  meshes: (Mesh | InsertableMesh | InstancedMesh)[] = []
   private _vim: Vim | undefined
   private _matrix = new THREE.Matrix4()
   private _updated: boolean = false
@@ -105,6 +107,7 @@ export class Scene {
    * Applies given transform matrix to all Meshes and bounding box.
    */
   applyMatrix4 (matrix: THREE.Matrix4) {
+    console.log('applyMatrix')
     for (let m = 0; m < this.meshes.length; m++) {
       this.meshes[m].mesh.matrixAutoUpdate = false
       this.meshes[m].mesh.matrix.copy(matrix)
@@ -134,7 +137,7 @@ export class Scene {
    * userData.instances = number[] (indices of the g3d instances that went into creating the mesh)
    * userData.boxes = THREE.Box3[] (bounding box of each instance)
    */
-  addMesh (mesh: Mesh | InsertableMesh) {
+  addMesh (mesh: Mesh | InsertableMesh | InstancedMesh) {
     const subs = mesh.getSubmeshes()
     subs.forEach((s) => {
       const set = this._instanceToMeshes.get(s.instance) ?? []
@@ -156,8 +159,11 @@ export class Scene {
     if (box !== undefined) {
       const b = box.clone().applyMatrix4(this._matrix)
       this._boundingBox = this._boundingBox?.union(b) ?? b
+      this._onUpdate.dispatch()
+      if (Number.isNaN(this._boundingBox.min.x)) {
+        console.log('NAN')
+      }
     }
-    this._onUpdate.dispatch()
   }
 
   /**

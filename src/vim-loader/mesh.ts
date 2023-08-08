@@ -5,7 +5,9 @@
 import * as THREE from 'three'
 import { G3d, MeshSection } from 'vim-format'
 import { Geometry, Transparency } from './geometry'
-import { InsertableMesh, InsertableSubmesh } from './insertableMesh'
+import { InsertableGeometry } from './progressive/insertableGeometry'
+import { InsertableSubmesh } from './progressive/insertableSubmesh'
+import { InstancedMesh } from './progressive/instancedMesh'
 import { VimMaterials } from './materials/materials'
 import { Vim } from './vim'
 
@@ -227,3 +229,4 @@ export class StandardSubmesh {
     return this.mesh.vim.getObjectFromInstance(this.instance)
   }
 }
+

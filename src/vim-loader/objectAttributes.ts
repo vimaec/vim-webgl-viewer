@@ -6,7 +6,7 @@
 import * as THREE from 'three'
 import { Submesh } from './mesh'
 import { Vim } from './vim'
-import { InsertableSubmesh } from './insertableMesh'
+import { InsertableSubmesh } from './progressive/insertableSubmesh'
 
 export class ObjectAttribute<T> {
   value: T
