@@ -290,9 +290,10 @@ export class GizmoAxes {
     const drag = new THREE.Vector2(x, y).sub(this.dragLast)
     this.dragLast.set(x, y)
 
-    const rotX = drag.x / this.canvas.width
-    const rotY = drag.y / this.canvas.height
-    this.camera.do().rotate(new THREE.Vector2(rotX, rotY))
+    const rotX = drag.y / this.canvas.height
+    const rotY = drag.x / this.canvas.width
+
+    this.camera.do().rotate(new THREE.Vector2(rotX * -180, rotY * -180))
   }
 
   endDrag () {
