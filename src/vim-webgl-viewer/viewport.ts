@@ -22,7 +22,7 @@ export class Viewport {
   }
 
   constructor (settings: Settings) {
-    const [canvas, owned] = Viewport.getOrCreateCanvas(settings.canvas.id)
+    const { canvas, owned } = Viewport.getOrCreateCanvas(settings.canvas.id)
     this.canvas = canvas
     this._ownedCanvas = owned
     this.watchResize(settings.canvas.resizeDelay)
@@ -31,22 +31,23 @@ export class Viewport {
   /**
    * Either returns html canvas at provided Id or creates a canvas at root level
    */
-  private static getOrCreateCanvas (
-    canvasId?: string
-  ): [HTMLCanvasElement, boolean] {
-    let canvas = canvasId
+  private static getOrCreateCanvas (canvasId?: string) {
+    const canvas = canvasId
       ? (document.getElementById(canvasId) as HTMLCanvasElement)
       : undefined
 
-    if (canvas) return [canvas, false]
+    return canvas
+      ? { canvas, owned: false }
+      : { canvas: this.createCanvas(), owned: true }
+  }
 
-    canvas = document.createElement('canvas')
+  private static createCanvas () {
+    const canvas = document.createElement('canvas')
     canvas.className = 'vim-canvas'
     canvas.tabIndex = 0
     canvas.style.backgroundColor = 'black'
     document.body.appendChild(canvas)
-
-    return [canvas, true]
+    return canvas
   }
 
   /** Returns a text renderer that will render html in an html element sibbling to canvas */
