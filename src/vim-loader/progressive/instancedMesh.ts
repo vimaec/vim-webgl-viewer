@@ -28,14 +28,6 @@ export class InstancedMesh {
   }
 
   /**
-   * Sets common matrix for all instances.
-   */
-  setMatrix (matrix: THREE.Matrix4) {
-    this.mesh.matrixAutoUpdate = false
-    this.mesh.matrix.copy(matrix)
-  }
-
-  /**
    * Returns submesh for given index.
    */
   getSubMesh (index: number) {

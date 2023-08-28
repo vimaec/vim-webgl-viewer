@@ -3,7 +3,7 @@
  */
 
 import * as THREE from 'three'
-import { Mesh, Submesh } from './mesh'
+import { Mesh, StandardSubmesh, Submesh } from './mesh'
 import { SceneBuilder } from './sceneBuilder'
 import { Vim } from './vim'
 import { estimateBytesUsed } from 'three/examples/jsm/utils/BufferGeometryUtils'
@@ -11,6 +11,7 @@ import { InsertableMesh } from './progressive/insertableMesh'
 import { InsertableSubmesh } from './progressive/insertableSubmesh'
 import { SignalDispatcher } from 'ste-signals'
 import { InstancedMesh } from './progressive/instancedMesh'
+import { Renderer } from '../vim-webgl-viewer/rendering/renderer'
 
 /**
  * A Scene regroups many Meshes
@@ -24,6 +25,7 @@ export class Scene {
   // State
   meshes: (Mesh | InsertableMesh | InstancedMesh)[] = []
   private _vim: Vim | undefined
+  private _renderer: Renderer
   private _matrix = new THREE.Matrix4()
   private _updated: boolean = false
   private _outlineCount: number = 0
@@ -86,20 +88,6 @@ export class Scene {
    * For instanced mesh, index refers to instance index.
    */
   getMeshFromInstance (instance: number) {
-    // TODO: Clean up this path fork.
-    const result = new Array<Submesh>()
-    for (const mesh of this.meshes) {
-      if (mesh instanceof InsertableMesh) {
-        const s = mesh.geometry.submeshes.get(instance)
-        if (s !== undefined) {
-          result.push(new InsertableSubmesh(mesh, s.instance))
-        }
-      }
-    }
-    if (result.length > 0) {
-      return result
-    }
-
     return this._instanceToMeshes.get(instance)
   }
 
@@ -107,7 +95,6 @@ export class Scene {
    * Applies given transform matrix to all Meshes and bounding box.
    */
   applyMatrix4 (matrix: THREE.Matrix4) {
-    console.log('applyMatrix')
     for (let m = 0; m < this.meshes.length; m++) {
       this.meshes[m].mesh.matrixAutoUpdate = false
       this.meshes[m].mesh.matrix.copy(matrix)
@@ -117,6 +104,14 @@ export class Scene {
     this._boundingBox?.applyMatrix4(this._matrix.invert())
     this._matrix.copy(matrix)
     this._boundingBox?.applyMatrix4(this._matrix)
+  }
+
+  get renderer () {
+    return this._renderer
+  }
+
+  set renderer (value: Renderer) {
+    this._renderer = value
   }
 
   get vim () {
@@ -131,6 +126,12 @@ export class Scene {
     this.meshes.forEach((m) => (m.vim = value))
   }
 
+  addSubmesh (submesh: Submesh) {
+    const set = this._instanceToMeshes.get(submesh.instance) ?? []
+    set.push(submesh)
+    this._instanceToMeshes.set(submesh.instance, set)
+  }
+
   /**
    * Add an instanced mesh to the Scene and recomputes fields as needed.
    * @param mesh Is expected to have:
@@ -138,15 +139,17 @@ export class Scene {
    * userData.boxes = THREE.Box3[] (bounding box of each instance)
    */
   addMesh (mesh: Mesh | InsertableMesh | InstancedMesh) {
-    const subs = mesh.getSubmeshes()
-    subs.forEach((s) => {
-      const set = this._instanceToMeshes.get(s.instance) ?? []
-      set.push(s)
-      this._instanceToMeshes.set(s.instance, set)
-    })
+    this.renderer?.add(mesh.mesh)
+    mesh.vim = this.vim
 
+    mesh.mesh.matrixAutoUpdate = false
+    mesh.mesh.matrix.copy(this._matrix)
+
+    mesh.getSubmeshes().forEach((s) => this.addSubmesh(s))
     this.updateBox(mesh.boundingBox)
+
     if (mesh instanceof InsertableMesh) {
+      mesh.onSubmeshAdded = (submesh) => this.addSubmesh(submesh)
       mesh.onUpdate.sub(() => this.updateBox(mesh.boundingBox))
     }
 

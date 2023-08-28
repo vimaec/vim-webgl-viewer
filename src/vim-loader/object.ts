@@ -166,21 +166,21 @@ export class Object {
    * Returns undefined if no associated bim
    */
   getBimElement (): Promise<IElement> {
-    return this.vim.document.element.get(this.element)
+    return this.vim.bim.element.get(this.element)
   }
 
   /**
    * Returns Bim data for the element associated with this object.
    */
   getBimParameters (): Promise<VimHelpers.ElementParameter[]> {
-    return VimHelpers.getElementParameters(this.vim.document, this.element)
+    return VimHelpers.getElementParameters(this.vim.bim, this.element)
   }
 
   /**
    * Returns the element id of the element associated with this object
    */
   get elementId () {
-    return this.vim.getElementId(this.element)
+    return this.vim.map.getElementId(this.element)
   }
 
   /**

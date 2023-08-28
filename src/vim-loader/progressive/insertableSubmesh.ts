@@ -25,32 +25,36 @@ export class InsertableSubmesh {
     return this.mesh.merged
   }
 
+  private get submesh () {
+    return this.mesh.geometry.submeshes[this.index]
+  }
+
   /**
    * Returns vim instance associated with this submesh.
    */
   get instance () {
-    return this.index
+    return this.submesh.instance
   }
 
   /**
    * Returns bounding box for this submesh.
    */
   get boundingBox () {
-    return this.mesh.geometry.submeshes.get(this.index).boundingBox
+    return this.submesh.boundingBox
   }
 
   /**
    * Returns starting position in parent mesh for merged mesh.
    */
   get meshStart () {
-    return this.mesh.geometry.submeshes.get(this.index).start
+    return this.submesh.start
   }
 
   /**
    * Returns ending position in parent mesh for merged mesh.
    */
   get meshEnd () {
-    return this.mesh.geometry.submeshes.get(this.index).end
+    return this.submesh.end
   }
 
   /**

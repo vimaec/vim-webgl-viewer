@@ -1,4 +1,3 @@
-import { BFast, G3d } from 'vim-format'
 import * as VIM from './vim'
 import * as THREE from 'three'
 
@@ -40,106 +39,59 @@ if (params.has('selection')) {
   selection = p?.split('+').map((s) => Number.parseInt(s))
 }
 
-const viewer = new VIM.Viewer({
-  camera: {}
-})
+const viewer = new VIM.Viewer()
 
-async function load (source: string | ArrayBuffer) {
-  const loader = new VIM.Loader()
-  const settings = {
-    // instances: [1],
-    noHeader: true,
-    // noMap: true,
-    noStrings: true,
-    rotation: new THREE.Vector3(270, 0, 0),
-    streamGeometry: false,
-    streamBim: true,
-    // instances: [...new Array<number>(100).keys()],
-    // instances: airTerminals,
-    loadRooms: true
-    // folder:
-    // 'https://vimdevelopment01storage.blob.core.windows.net/split-mesh/residence/residence'
-    // 'https://vimdevelopment01storage.blob.core.windows.net/split-mesh/tower/tower'
-    // folder: './residence/residence'
-  } as Partial<VIM.VimSettings>
-  let time: number
-  const request = loader.createRequest(source, settings)
-  globalThis.request = request
-  request.onProgress.sub((progress) => {
-    console.log(`Loading : ${progress.loaded} / ${progress.total}`)
-  })
-  request.onLoaded.sub(() => {
-    console.log(
-      `Finished Loading in ${((Date.now() - time) / 1000).toFixed(2)} seconds`
-    )
-  })
-
-  time = Date.now()
-  const vim = await request.send()
-
-  time = Date.now()
-  console.log(
-    `Finished Filter in ${((Date.now() - time) / 1000).toFixed(2)} seconds`
-  )
-
-  viewer.add(vim)
-  return vim
-}
-/*
-try {
-  await viewer.vimToInserable('./residence.vim', {
-    rotation: new VIM.THREE.Vector3(270, 0, 0)
-  })
-} catch (e) {
-  console.error(e)
-}
-*/
-const vim = await load(url)
-/*
 const time = Date.now()
-const vim = await viewer.createProgressiveVim(
+
+console.log('loadAny')
+const vim = await VIM.VimX.loadAny(
   // 'https://vimdevelopment01storage.blob.core.windows.net/split-mesh/tower/tower',
   // 'https://vimdevelopment01storage.blob.core.windows.net/split-mesh/residence_test.vim',
   // 'https://vimdevelopment01storage.blob.core.windows.net/split-mesh/residence_test_sort.zg3d',
-  'https://vimdevelopment01storage.blob.core.windows.net/split-mesh/tower_test.vim',
   // './residence_test_sort.zg3d',
   // './kahua_test.vim',
   // './kahua_test.vim',
   // './skanska.nozip_test.vim',
   // './tower/tower',
   // './tower.vim',
-  './residence.vim',
+  // 'https://vimdevelopment01storage.blob.core.windows.net/samples/_MAIN-AEI_HSIB-R20.v1.2.73.vim',
+  ' ./residence.vim',
+  // './residence.vim',
   {
-    // filter: [...new Array(10000).keys()],
+    // filter: [...new Array(10000).keys()], // .map((i) => i + 3500000),
     // filter: [6, 7],
-    // filter: [425, 1733],
-    filterMode: 'mesh',
-    gzipped: true,
+    // filter: [363],
+    filterMode: 'instance',
+    progressive: true,
+    legacy: false,
+    // vimx: './skanska12_test.vim',
+    // vimx: 'https://vimdevelopment01storage.blob.core.windows.net/samples/skanska12_test.vim',
+    // vimx: 'https://vimdevelopment01storage.blob.core.windows.net/split-mesh/residence_test.vim',
     batchSize: 100,
     refreshInterval: 1000,
     loadRooms: true,
     rotation: new VIM.THREE.Vector3(270, 0, 0),
-    // streamGeometry: instances !== undefined,
     streamBim: true,
     noStrings: true,
-    // noMap: instances?.length === 1 ?? true,
     noHeader: true
   }
 )
+viewer.add(vim)
+if (vim instanceof VIM.VimX) {
+  vim.onCompleted.subscribe(() =>
+    console.log(`loaded in ${(Date.now() - time) / 1000} seconds`)
+  )
 
-vim.onCompleted.subscribe(() =>
-  console.log(`loaded in ${(Date.now() - time) / 1000} seconds`)
-)
-
-const connection = vim.onUpdate.subscribe(() => {
-  viewer.camera.lerp(1).frame(vim.scene.getBoundingBox())
-  connection()
-})
-await vim.start()
-
+  const connection = vim.onUpdate.subscribe(() => {
+    console.log(vim.sceneLegacy.getBoundingBox())
+    viewer.camera.lerp(1).frame(vim.sceneLegacy.getBoundingBox())
+    connection()
+  })
+  await vim.scene.start()
+}
 globalThis.vim = vim
-*/
 
+/*
 const input = document.createElement('input')
 input.type = 'file'
 document.body.prepend(input)
@@ -159,6 +111,7 @@ input.onchange = (e: any) => {
     if (content) load(content)
   }
 }
+*/
 
 globalThis.viewer = viewer
 globalThis.THREE = THREE

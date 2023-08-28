@@ -1,15 +1,16 @@
 import * as THREE from 'three'
-import { G3d, G3dMesh, G3dMaterial, MeshOffsets } from 'vim-format'
+import { G3d, G3dMesh, G3dMaterial, G3dMeshOffsets } from 'vim-format'
 import { Vim, VimMaterials, VimSettings } from '../../vim'
 import { SignalDispatcher } from 'ste-signals'
 import { InsertableGeometry } from './insertableGeometry'
 import { InsertableSubmesh } from './insertableSubmesh'
 
 export class InsertableMesh {
-  offsets: MeshOffsets
+  offsets: G3dMeshOffsets
   mesh: THREE.Mesh
   vim: Vim
 
+  onSubmeshAdded: (submesh: InsertableSubmesh) => void
   private _onUpdate = new SignalDispatcher()
   get onUpdate () {
     return this._onUpdate.asEvent()
@@ -45,7 +46,7 @@ export class InsertableMesh {
   geometry: InsertableGeometry
 
   constructor (
-    offsets: MeshOffsets,
+    offsets: G3dMeshOffsets,
     materials: G3dMaterial,
     transparent: boolean
   ) {
@@ -54,6 +55,9 @@ export class InsertableMesh {
     this.merged = true
 
     this.geometry = new InsertableGeometry(offsets, materials, transparent)
+    this.geometry.onSubmeshAdded = (submesh, index) => {
+      this.onSubmeshAdded?.(new InsertableSubmesh(this, index))
+    }
 
     this._material = transparent
       ? VimMaterials.getInstance().transparent.material
@@ -61,11 +65,6 @@ export class InsertableMesh {
 
     this.mesh = new THREE.Mesh(this.geometry.geometry, this._material)
     this.mesh.userData.vim = this
-  }
-
-  applySettings (settings: VimSettings) {
-    this.mesh.matrix.identity()
-    this.mesh.applyMatrix4(settings.matrix)
   }
 
   get progress () {
@@ -77,7 +76,7 @@ export class InsertableMesh {
   }
 
   insertFromVim (g3d: G3d, mesh: number) {
-    this.geometry.insertFromVim(g3d, mesh)
+    this.geometry.insertFromG3d(g3d, mesh)
   }
 
   update () {
@@ -103,9 +102,13 @@ export class InsertableMesh {
    * @returns Returns all submeshes
    */
   getSubmeshes () {
-    return [...this.geometry.submeshes.keys()].map(
-      (i) => new InsertableSubmesh(this, i)
+    const submeshes = new Array<InsertableSubmesh>(
+      this.geometry.submeshes.length
     )
+    for (let i = 0; i < submeshes.length; i++) {
+      submeshes[i] = new InsertableSubmesh(this, i)
+    }
+    return submeshes
   }
 
   /**
@@ -113,7 +116,9 @@ export class InsertableMesh {
    * @returns Returns submesh for given index.
    */
   getSubmesh (index: number) {
+    // if (this.geometry.submeshes.has(index)) {
     return new InsertableSubmesh(this, index)
+    // }
   }
 
   /**

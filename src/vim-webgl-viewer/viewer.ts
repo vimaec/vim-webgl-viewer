@@ -18,37 +18,13 @@ import { GizmoAxes } from './gizmos/gizmoAxes'
 import { SectionBox } from './gizmos/sectionBox/sectionBox'
 import { Measure, IMeasure } from './gizmos/measure/measure'
 import { GizmoRectangle } from './gizmos/gizmoRectangle'
-import { ProgressiveVim } from './progressiveVim'
+import { VimX } from '../vim-loader/progressive/vimx'
 
-import { ISimpleEvent, SimpleEventDispatcher } from 'ste-simple-events'
-import {
-  BFast,
-  IProgressLogs,
-  RemoteBuffer,
-  Requester,
-  G3d,
-  G3dMeshOffsetsVim,
-  G3dMaterial,
-  VimDocument
-} from 'vim-format'
-import {
-  VimBuilder,
-  Vim,
-  GizmoGrid,
-  InsertableMesh,
-  VimMaterials,
-  Scene
-} from '../vim'
+import { Vim, GizmoGrid, VimMaterials } from '../vim'
 
 // loader
-import {
-  getFullSettings,
-  VimPartialSettings,
-  VimSettings
-} from '../vim-loader/vimSettings'
 import { Renderer } from './rendering/renderer'
 import { SignalDispatcher } from 'ste-signals'
-import { ElementMapping } from '../vim-loader/elementMapping'
 
 /**
  * Viewer and loader for vim files.
@@ -145,7 +121,7 @@ export class Viewer {
   private _gizmoOrbit: GizmoOrbit
 
   // State
-  private _vims = new Set<Vim>()
+  private _vims = new Set<Vim | VimX>()
   private _onVimLoaded = new SignalDispatcher()
   private _updateId: number
 
@@ -228,7 +204,7 @@ export class Viewer {
     return this._vims.size
   }
 
-  add (vim: Vim, frameCamera = true) {
+  add (vim: Vim | VimX, frameCamera = true) {
     if (this._vims.has(vim)) {
       throw new Error('Vim cannot be added again, unless removed first.')
     }
@@ -241,12 +217,7 @@ export class Viewer {
       )
     }
     this._vims.add(vim)
-
-    const box = this.renderer.getBoundingBox()
-    if (box) {
-      this._environment.adaptToContent(box)
-      this.sectionBox.fitBox(box)
-    }
+    this.fitBox(vim)
 
     if (frameCamera) {
       this._camera.do(true).frame('all', this._camera.defaultForward)
@@ -256,23 +227,26 @@ export class Viewer {
     this._onVimLoaded.dispatch()
   }
 
-  addProgressive (vim: ProgressiveVim) {
-    vim.addToRenderer(this.renderer)
-    vim.onUpdate.subscribe((v) => {
+  private fitBox (vim: Vim | VimX) {
+    const fit = () => {
       const box = this.renderer.getBoundingBox()
       if (box) {
         this._environment.adaptToContent(box)
         this.sectionBox.fitBox(box)
       }
-    })
-
-    vim.onCompleted.sub(() => this._onVimLoaded.dispatch())
+    }
+    if (vim instanceof VimX) {
+      vim.onUpdate.subscribe((v) => fit())
+      vim.onCompleted.subscribe(() => this._onVimLoaded.dispatch())
+    } else {
+      fit()
+    }
   }
 
   /**
    * Unload given vim from viewer.
    */
-  remove (vim: Vim) {
+  remove (vim: Vim | VimX) {
     if (!this._vims.has(vim)) {
       throw new Error('Cannot remove missing vim from viewer.')
     }
@@ -291,69 +265,6 @@ export class Viewer {
    */
   clear () {
     this.vims.forEach((v) => this.remove(v))
-  }
-
-  async createProgressiveVim (
-    g3dPath: string,
-    bimPath: string,
-    settings: VimPartialSettings
-  ) {
-    const vim = await ProgressiveVim.fromPath(
-      g3dPath,
-      bimPath,
-      getFullSettings(settings)
-    )
-    this.addProgressive(vim)
-    return vim
-  }
-
-  async vimToInserable (vimPath: string, settings: VimPartialSettings) {
-    const fullSettings = getFullSettings(settings)
-    const buffer = new RemoteBuffer(vimPath)
-    const bfast = new BFast(buffer)
-    const doc = await VimDocument.createFromBfast(bfast)
-    const geo = await bfast.getBfast('geometry')
-    const g3d = await G3d.createFromBfast(geo)
-
-    const offsetsOpaque = G3dMeshOffsetsVim.fromG3d(g3d, true, 'opaque')
-    const offsetTransparent = G3dMeshOffsetsVim.fromG3d(
-      g3d,
-      true,
-      'transparent'
-    )
-
-    const materials = new G3dMaterial(g3d.materialColors)
-    const opaque = new InsertableMesh(offsetsOpaque, materials, false)
-    const transparent = new InsertableMesh(offsetTransparent, materials, true)
-
-    for (let m = 0; m < g3d.getMeshCount(); m++) {
-      opaque.insertFromVim(g3d, m)
-      transparent.insertFromVim(g3d, m)
-    }
-
-    opaque.applySettings(fullSettings)
-    transparent.applySettings(fullSettings)
-
-    opaque.update()
-    transparent.update()
-
-    const scene = new Scene(undefined)
-    scene.addMesh(opaque)
-    scene.addMesh(transparent)
-    this.renderer.add(scene)
-
-    const instanceToElement = await doc.node.getAllElementIndex()
-    const elementIds = await doc.element.getAllId()
-
-    const mapping = new ElementMapping(
-      Array.from(g3d.instanceNodes),
-      instanceToElement!,
-      elementIds!
-    )
-
-    const vim = new Vim(undefined, doc, g3d, scene, fullSettings, mapping)
-    opaque.vim = vim
-    transparent.vim = vim
   }
 
   /**

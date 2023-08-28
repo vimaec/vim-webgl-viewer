@@ -50,8 +50,12 @@ export type VimSettings = {
    */
   streamBim: boolean
 
-  /** EXPERIMENTAL: Set to true if mesh files are zipped */
-  gzipped: boolean
+  /** EXPERIMENTAL: Set to true to use legacy loading pipeline. */
+  legacy: boolean
+  /** EXPERIMENTAL: Set to true to stream geometry to the scene. */
+  progressive: boolean
+  /** EXPERIMENTAL: URL of streamable geometry */
+  vimx: string
   /** EXPERIMENTAL: Only geometry satisfying filter will be loaded. */
   filter: number[]
   /** EXPERIMENTAL: Defines what property to use as the filter. */
@@ -85,7 +89,10 @@ export const defaultConfig: VimSettings = {
   matrix: new THREE.Matrix4(),
   transparency: 'all',
 
-  gzipped: false,
+  // progressive
+  legacy: false,
+  progressive: false,
+  vimx: undefined,
   filter: undefined,
   filterMode: undefined,
   batchSize: 100,

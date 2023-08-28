@@ -2,6 +2,7 @@ import { setRemoteBufferMaxConcurency } from 'vim-format'
 import { VimSettings, getFullSettings, VimPartialSettings } from './vimSettings'
 import { VimRequest } from './vimRequest'
 import { VimBuilder } from './vimBuilder'
+import { VimX } from './progressive/vimx'
 
 setRemoteBufferMaxConcurency(20)
 

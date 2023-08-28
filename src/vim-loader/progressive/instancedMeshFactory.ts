@@ -1,15 +1,15 @@
 import * as THREE from 'three'
 import { G3d, G3dMesh, G3dMaterial, MeshSection } from 'vim-format'
-import { Vim, VimMaterials, VimSettings } from '../../vim'
+import { Settings, Vim, VimMaterials, VimSettings } from '../../vim'
 import { InstancedMesh } from './instancedMesh'
 
 export class InstancedMeshFactory {
-  vim: Vim
+  settings: VimSettings
   materials: G3dMaterial
 
-  constructor (vim: Vim, materials: G3dMaterial) {
+  constructor (settings: VimSettings, materials: G3dMaterial) {
     this.materials = materials
-    this.vim = vim
+    this.settings = settings
   }
 
   createTransparent (mesh: G3dMesh, instances: number[]) {
@@ -46,13 +46,11 @@ export class InstancedMeshFactory {
       instances?.length ?? mesh.instanceNodes.length
     )
 
-    this.initMatrices(threeMesh, mesh, instances)
+    this.setMatrices(threeMesh, mesh, instances)
     const result = new InstancedMesh(
       threeMesh,
       pick(mesh.instanceNodes, instances)
     )
-    result.vim = this.vim
-    result.setMatrix(this.vim.settings.matrix)
     return result
   }
 
@@ -117,7 +115,7 @@ export class InstancedMeshFactory {
     return new THREE.Float32BufferAttribute(colors, colorSize)
   }
 
-  private initMatrices (
+  private setMatrices (
     three: THREE.InstancedMesh,
     mesh: G3dMesh,
     instances: number[] | undefined
