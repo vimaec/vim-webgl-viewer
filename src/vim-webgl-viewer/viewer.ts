@@ -194,7 +194,14 @@ export class Viewer {
    * Returns an array with all loaded vims.
    */
   get vims () {
-    return Array.from(this._vims).map((v) => (v instanceof VimX ? v.vim : v))
+    return this.vimxs.map((v) => (v instanceof VimX ? v.vim : v))
+  }
+
+  /**
+   * Returns an array with all loaded vims or vimxs.
+   */
+  get vimxs () {
+    return Array.from(this._vims)
   }
 
   /**
