@@ -165,6 +165,7 @@ export class VimX {
   }
 
   dispose () {
+    this.geometry.abort()
     this.scene.dispose()
   }
 }

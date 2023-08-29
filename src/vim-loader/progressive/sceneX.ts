@@ -28,6 +28,8 @@ export class SceneX {
   _meshFactory: InstancedMeshFactory
   _meshQueue = new Array<InstancedMesh>()
 
+  _disposed: boolean = false
+  _started: boolean = false
   scene: Scene
   get vim () {
     return this.scene.vim
@@ -46,8 +48,6 @@ export class SceneX {
   get onCompleted () {
     return this._onCompleted.asEvent()
   }
-
-  constructor () {}
 
   static async create (
     geometry: RemoteGeometry,
@@ -91,18 +91,34 @@ export class SceneX {
   }
 
   dispose () {
-    this._onUpdate.clear()
-    this._onCompleted.clear()
-    this.scene.dispose()
+    if (!this._disposed) {
+      this._disposed = true
+      this._synchronizer.abort()
+      this._onUpdate.clear()
+      this._onCompleted.clear()
+      this.scene.dispose()
+    }
   }
 
   async start () {
+    if (this._started) {
+      return
+    }
+    this._started = true
+
+    // Loading and updates are independants
     this._synchronizer.loadAll(this.settings.batchSize)
 
+    // Loop until done or disposed.
     while (!this._synchronizer.isDone) {
       await this.wait(this.settings.refreshInterval)
+      if (this._disposed) {
+        return
+      }
       this.updateMeshes()
     }
+
+    // Completed
     this.updateMeshes()
     this._onCompleted.dispatch()
   }

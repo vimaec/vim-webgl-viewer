@@ -224,6 +224,7 @@ export class Renderer {
   remove (target: SceneX | Scene | THREE.Object3D) {
     if (target instanceof SceneX) {
       target = target.scene
+      target.renderer = undefined
     }
     this._scene.remove(target)
     this._needsUpdate = true

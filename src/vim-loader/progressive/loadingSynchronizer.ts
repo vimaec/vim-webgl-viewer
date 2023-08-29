@@ -8,8 +8,10 @@ import { G3dSubset, RemoteGeometry, G3dMesh } from 'vim-format'
 export class LoadingSynchronizer {
   private _merged: LoadingBatcher
   private _instanced: LoadingBatcher
+  private _aborted = false
+
   get isDone () {
-    return this._merged.isDone && this._instanced.isDone
+    return (this._merged.isDone && this._instanced.isDone) || this._aborted
   }
 
   constructor (
@@ -23,9 +25,13 @@ export class LoadingSynchronizer {
     this._instanced = new LoadingBatcher(nonUniques, geometry, instanceAction)
   }
 
+  abort () {
+    this._aborted = true
+  }
+
   // Loads batches until the all meshes are loaded
   async loadAll (batchSize: number) {
-    while (!this._merged.isDone || !this._instanced.isDone) {
+    while (!this.isDone) {
       await this.load(batchSize)
     }
   }

@@ -257,10 +257,8 @@ export class Viewer {
     if (!this._vims.has(vim)) {
       throw new Error('Cannot remove missing vim from viewer.')
     }
-
-    this._vims.add(vim)
+    this._vims.delete(vim)
     this.renderer.remove(vim.scene)
-    vim.dispose()
     if (this.selection.vim === vim) {
       this.selection.clear()
     }
