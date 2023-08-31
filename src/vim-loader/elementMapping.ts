@@ -2,7 +2,7 @@
  * @module vim-loader
  */
 
-import { G3dMeshIndex } from 'vim-format'
+import { G3d, G3dMeshIndex, VimDocument } from 'vim-format'
 
 export class ElementNoMapping {
   getElementsFromElementId (id: number) {
@@ -50,6 +50,17 @@ export class ElementMapping {
     )
     this._elementIds = elementIds
     this._elementIdToElements = ElementMapping.invertArray(elementIds!)
+  }
+
+  static async fromG3d (g3d: G3d, bim: VimDocument) {
+    const instanceToElement = await bim.node.getAllElementIndex()
+    const elementIds = await bim.element.getAllId()
+
+    return new ElementMapping(
+      Array.from(g3d.instanceNodes),
+      instanceToElement!,
+      elementIds!
+    )
   }
 
   /**

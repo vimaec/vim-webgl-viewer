@@ -16,21 +16,29 @@ import { SignalDispatcher } from 'ste-signals'
 import { InstancedMesh } from './instancedMesh'
 import { LoadingSynchronizer } from './loadingSynchronizer'
 
-export class SceneX {
-  settings: VimSettings
+/**
+ * Manages geometry downloads and loads it into a scene for rendering.
+ */
+export class SceneManager {
+  private settings: VimSettings
 
-  _uniques: G3dSubset
-  _nonUniques: G3dSubset
-  _opaqueMesh: InsertableMesh
-  _transparentMesh: InsertableMesh
+  private _uniques: G3dSubset
+  private _nonUniques: G3dSubset
+  private _opaqueMesh: InsertableMesh
+  private _transparentMesh: InsertableMesh
 
-  _synchronizer: LoadingSynchronizer
-  _meshFactory: InstancedMeshFactory
-  _meshQueue = new Array<InstancedMesh>()
+  private _synchronizer: LoadingSynchronizer
+  private _meshFactory: InstancedMeshFactory
+  private _meshQueue = new Array<InstancedMesh>()
 
-  _disposed: boolean = false
-  _started: boolean = false
+  private _disposed: boolean = false
+  private _started: boolean = false
+
   scene: Scene
+
+  /**
+   * Vim associated with this scene
+   */
   get vim () {
     return this.scene.vim
   }
@@ -40,6 +48,9 @@ export class SceneX {
   }
 
   private _onUpdate = new SignalDispatcher()
+  /**
+   * Event sent whenever new
+   */
   get onUpdate () {
     return this._onUpdate.asEvent()
   }
@@ -55,7 +66,7 @@ export class SceneX {
     materials: G3dMaterial,
     settings: VimSettings
   ) {
-    const self = new SceneX()
+    const self = new SceneManager()
     self.settings = settings
 
     const subset = index.filter(settings.filterMode, settings.filter)
@@ -155,6 +166,7 @@ export class SceneX {
     this._transparentMesh.update()
     this._opaqueMesh.update()
 
+    // Notify observer
     this._onUpdate.dispatch()
   }
 }

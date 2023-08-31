@@ -1,6 +1,6 @@
 import * as THREE from 'three'
 import { G3d, G3dMesh, G3dMaterial, MeshSection } from 'vim-format'
-import { Settings, Vim, VimMaterials, VimSettings } from '../../vim'
+import { Geometry, Settings, Vim, VimMaterials, VimSettings } from '../../vim'
 import { InstancedMesh } from './instancedMesh'
 
 export class InstancedMeshFactory {
@@ -13,14 +13,22 @@ export class InstancedMeshFactory {
   }
 
   createTransparent (mesh: G3dMesh, instances: number[]) {
-    return this.create(mesh, instances, 'transparent', true)
+    return this.createFromVimx(mesh, instances, 'transparent', true)
   }
 
   createOpaque (mesh: G3dMesh, instances: number[]) {
-    return this.create(mesh, instances, 'opaque', false)
+    return this.createFromVimx(mesh, instances, 'opaque', false)
   }
 
-  create (
+  createOpaqueFromVim (g3d: G3d, mesh: number, instances: number[]) {
+    return this.createFromVim(g3d, mesh, instances, 'opaque', false)
+  }
+
+  createTransparentFromVim (g3d: G3d, mesh: number, instances: number[]) {
+    return this.createFromVim(g3d, mesh, instances, 'transparent', true)
+  }
+
+  createFromVimx (
     mesh: G3dMesh,
     instances: number[] | undefined,
     section: MeshSection,
@@ -46,11 +54,39 @@ export class InstancedMeshFactory {
       instances?.length ?? mesh.instanceNodes.length
     )
 
-    this.setMatrices(threeMesh, mesh, instances)
+    this.setMatricesFromVimx(threeMesh, mesh, instances)
     const result = new InstancedMesh(
       threeMesh,
       pick(mesh.instanceNodes, instances)
     )
+    return result
+  }
+
+  createFromVim (
+    g3d: G3d,
+    mesh: number,
+    instances: number[] | undefined,
+    section: MeshSection,
+    transparent: boolean
+  ) {
+    const geometry = Geometry.createGeometryFromMesh(
+      g3d,
+      mesh,
+      section,
+      transparent
+    )
+    const material = transparent
+      ? VimMaterials.getInstance().transparent
+      : VimMaterials.getInstance().opaque
+
+    const threeMesh = new THREE.InstancedMesh(
+      geometry,
+      material.material,
+      instances?.length ?? g3d.getMeshInstanceCount(mesh)
+    )
+
+    this.setMatricesFromVimx(threeMesh, g3d, instances)
+    const result = new InstancedMesh(threeMesh, instances)
     return result
   }
 
@@ -115,21 +151,21 @@ export class InstancedMeshFactory {
     return new THREE.Float32BufferAttribute(colors, colorSize)
   }
 
-  private setMatrices (
+  private setMatricesFromVimx (
     three: THREE.InstancedMesh,
-    mesh: G3dMesh,
+    source: G3dMesh | G3d,
     instances: number[] | undefined
   ) {
     const matrix = new THREE.Matrix4()
-    const addMesh = (instance: number, at: number) => {
-      const array = mesh.getInstanceMatrix(instance)
+    const setMatrix = (instance: number, at: number) => {
+      const array = source.getInstanceMatrix(instance)
       matrix.fromArray(array)
       three.setMatrixAt(at, matrix)
     }
     if (instances) {
-      instances.forEach((instance, i) => addMesh(instance, i))
+      instances.forEach((instance, i) => setMatrix(instance, i))
     } else {
-      mesh.instanceNodes.forEach((n, i) => addMesh(i, i))
+      source.instanceNodes.forEach((n, i) => setMatrix(i, i))
     }
   }
 }

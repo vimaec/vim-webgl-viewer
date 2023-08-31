@@ -5,15 +5,14 @@ import {
   VimSettings
 } from '../vimSettings'
 import { Vim } from '../vim'
-import { InsertableMesh } from './insertableMesh'
 import { Loader, Scene } from '../../vim'
+import { LegacyMeshFactory } from './legacyMeshFactory'
 
 import {
   ElementMapping,
   ElementMapping2,
   ElementNoMapping
 } from '../elementMapping'
-import { Renderer } from '../../vim-webgl-viewer/rendering/renderer'
 import {
   BFast,
   RemoteBuffer,
@@ -22,25 +21,16 @@ import {
   RemoteGeometry,
   G3d
 } from 'vim-format'
-import { SignalDispatcher } from 'ste-signals'
-import { SceneX } from './sceneX'
+import { SceneManager } from './sceneManager'
 
 export class VimX {
   settings: VimSettings
   geometry: RemoteGeometry
   materials: G3dMaterial
   bim: VimDocument | undefined
-  scene: SceneX
+  scene: SceneManager
   sceneLegacy: Scene // TODO : Remove
   mapping: ElementMapping2 | ElementNoMapping
-
-  // TODO Remove
-  renderer: Renderer
-
-  // TODO: Put these two meshes into a Scene class
-  // synchronizer: LoadingSynchronizer
-  // meshFactory: InstancedMeshFactory
-  // meshQueue = new Array<InstancedMesh>()
 
   // Vim instance here is only for transition.
   vim: Vim
@@ -58,7 +48,7 @@ export class VimX {
     geometry: RemoteGeometry,
     materials: G3dMaterial,
     bim: VimDocument | undefined,
-    scene: SceneX,
+    scene: SceneManager,
     mapping: ElementMapping2 | ElementNoMapping
   ) {
     this.scene = scene
@@ -80,7 +70,10 @@ export class VimX {
     )
   }
 
-  static async loadAny (vimPath: string, settings: VimPartialSettings) {
+  /**
+   * Loads given vim or vimx file using progressive pipeline unless the legacy flag is true.
+   */
+  static async load (vimPath: string, settings: VimPartialSettings) {
     const fullSettings = getFullSettings(settings)
     if (settings.legacy) {
       return new Loader().load(vimPath, fullSettings)
@@ -92,15 +85,29 @@ export class VimX {
     }
   }
 
+  /**
+   * Creates a VimX object from given path to a vimx file
+   */
   static async fromVimx (bimPath: string, settings: VimSettings) {
+    // Fetch bim data
     const bim = await VimX.createBim(bimPath, settings)
+
+    // Fetch geometry data
     const geometry = await RemoteGeometry.fromPath(settings.vimx)
     if (!settings.progressive) {
       await geometry.bfast.forceDownload()
     }
+
     const index = await geometry.getIndex()
     const materials = await geometry.getMaterials()
-    const scene = await SceneX.create(geometry, index, materials, settings)
+
+    // Create scene
+    const scene = await SceneManager.create(
+      geometry,
+      index,
+      materials,
+      settings
+    )
 
     const mapping = settings.noMap
       ? new ElementNoMapping()
@@ -109,55 +116,39 @@ export class VimX {
     return new VimX(settings, geometry, materials, bim, scene, mapping)
   }
 
-  static async fromVim (vimPath: string, settings: VimSettings) {
-    const fullSettings = getFullSettings(settings)
-    const buffer = new RemoteBuffer(vimPath)
-    const bfast = new BFast(buffer)
-    const doc = await VimDocument.createFromBfast(bfast)
-    const geo = await bfast.getBfast('geometry')
-    const g3d = await G3d.createFromBfast(geo)
-
-    const subset = g3d.filter(settings.filterMode, settings.filter)
-
-    const offsetsOpaque = subset.getOffsets('opaque')
-    const offsetTransparent = subset.getOffsets('transparent')
-
-    const materials = new G3dMaterial(g3d.materialColors)
-    const opaque = new InsertableMesh(offsetsOpaque, materials, false)
-    const transparent = new InsertableMesh(offsetTransparent, materials, true)
-
-    const count = subset.getMeshCount()
-    for (let m = 0; m < count; m++) {
-      opaque.insertFromVim(g3d, m)
-      transparent.insertFromVim(g3d, m)
-    }
-
-    opaque.update()
-    transparent.update()
-
-    const scene = new Scene(undefined)
-    scene.addMesh(opaque)
-    scene.addMesh(transparent)
-
-    const instanceToElement = await doc.node.getAllElementIndex()
-    const elementIds = await doc.element.getAllId()
-
-    const mapping = new ElementMapping(
-      Array.from(g3d.instanceNodes),
-      instanceToElement!,
-      elementIds!
-    )
-
-    const vim = new Vim(undefined, doc, g3d, scene, fullSettings, mapping)
-    opaque.vim = vim
-    transparent.vim = vim
-    return vim
-  }
-
+  /**
+   * Fetches bim document from path
+   */
   private static async createBim (path: string, settings: VimSettings) {
     const buffer = new RemoteBuffer(path, settings.loghttp)
     const bfast = new BFast(buffer)
     return VimDocument.createFromBfast(bfast, settings.noStrings)
+  }
+
+  /**
+   * Creates a legacy vim object from given path to a vim file
+   */
+  static async fromVim (vimPath: string, settings: VimSettings) {
+    const fullSettings = getFullSettings(settings)
+    const buffer = new RemoteBuffer(vimPath)
+    const bfast = new BFast(buffer)
+
+    // Fetch g3d data
+    const geometry = await bfast.getBfast('geometry')
+    const g3d = await G3d.createFromBfast(geometry)
+    const materials = new G3dMaterial(g3d.materialColors)
+
+    // Create scene
+    const factory = new LegacyMeshFactory(g3d, materials, settings)
+    const scene = factory.createScene()
+
+    // Create legacy mapping
+    const doc = await VimDocument.createFromBfast(bfast)
+    const mapping = await ElementMapping.fromG3d(g3d, doc)
+
+    // Return legacy vim
+    const vim = new Vim(undefined, doc, g3d, scene, fullSettings, mapping)
+    return vim
   }
 
   abort () {

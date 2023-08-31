@@ -163,9 +163,6 @@ export class Scene {
       const b = box.clone().applyMatrix4(this._matrix)
       this._boundingBox = this._boundingBox?.union(b) ?? b
       this._onUpdate.dispatch()
-      if (Number.isNaN(this._boundingBox.min.x)) {
-        console.log('NAN')
-      }
     }
   }
 

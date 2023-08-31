@@ -44,7 +44,7 @@ const viewer = new VIM.Viewer()
 const time = Date.now()
 
 console.log('loadAny')
-const vim = await VIM.VimX.loadAny(
+const vim = await VIM.VimX.load(
   // 'https://vimdevelopment01storage.blob.core.windows.net/split-mesh/tower/tower',
   // 'https://vimdevelopment01storage.blob.core.windows.net/split-mesh/residence_test.vim',
   // 'https://vimdevelopment01storage.blob.core.windows.net/split-mesh/residence_test_sort.zg3d',
@@ -55,10 +55,11 @@ const vim = await VIM.VimX.loadAny(
   // './tower/tower',
   // './tower.vim',
   // 'https://vimdevelopment01storage.blob.core.windows.net/samples/_MAIN-AEI_HSIB-R20.v1.2.73.vim',
-  ' ./residence.vim',
+  // ' ./residence.vim',
+  'https://vim.azureedge.net/samples/residence.v1.2.75.vim',
   // './residence.vim',
   {
-    // filter: [...new Array(10000).keys()], // .map((i) => i + 3500000),
+    // filter: [...new Array(1000).keys()], // .map((i) => i + 3500000),
     // filter: [6, 7],
     // filter: [363],
     filterMode: 'instance',
@@ -87,8 +88,9 @@ if (vim instanceof VIM.VimX) {
     viewer.camera.lerp(1).frame(vim.sceneLegacy.getBoundingBox())
     connection()
   })
-  await vim.scene.start()
+  vim.scene.start()
 }
+
 globalThis.vim = vim
 
 /*
