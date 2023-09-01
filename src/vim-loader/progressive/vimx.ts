@@ -73,13 +73,16 @@ export class VimX {
   /**
    * Loads given vim or vimx file using progressive pipeline unless the legacy flag is true.
    */
-  static async load (vimPath: string, settings: VimPartialSettings) {
+  static async load (
+    vimPath: string | ArrayBuffer,
+    settings: VimPartialSettings
+  ) {
     const fullSettings = getFullSettings(settings)
-    if (settings.legacy) {
-      return new Loader().load(vimPath, fullSettings)
+    if (settings.legacy || vimPath instanceof ArrayBuffer) {
+      return new Loader().createRequest(vimPath, fullSettings)
     }
     if (settings.vimx) {
-      return VimX.fromVimx(vimPath, fullSettings)
+      return VimX.fromVimX(vimPath, fullSettings)
     } else {
       return VimX.fromVim(vimPath, fullSettings)
     }
@@ -88,7 +91,7 @@ export class VimX {
   /**
    * Creates a VimX object from given path to a vimx file
    */
-  static async fromVimx (bimPath: string, settings: VimSettings) {
+  static async fromVimX (bimPath: string, settings: VimSettings) {
     // Fetch bim data
     const bim = await VimX.createBim(bimPath, settings)
 
