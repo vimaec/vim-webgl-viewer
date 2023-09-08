@@ -1,6 +1,7 @@
 import * as THREE from 'three'
-import { G3d, G3dMesh, G3dMaterial, G3dMeshOffsets } from 'vim-format'
+import { G3d, G3dMesh, G3dMaterial } from 'vim-format'
 import { Scene } from '../scene'
+import { G3dMeshOffsets } from './g3dOffsets'
 
 // TODO Merge both submeshes class.
 export class GeometrySubmesh {
@@ -42,6 +43,8 @@ export class InsertableGeometry {
     this.offsets = offsets
     this.materials = materials
 
+    this.boundingBox = offsets.subset.getBoundingBox()
+
     this._indexAttribute = new THREE.Uint32BufferAttribute(
       offsets.counts.indices,
       1
@@ -66,6 +69,10 @@ export class InsertableGeometry {
     this.geometry.setIndex(this._indexAttribute)
     this.geometry.setAttribute('position', this._vertexAttribute)
     this.geometry.setAttribute('color', this._colorAttribute)
+
+    this.geometry.boundingBox = this.boundingBox
+    this.geometry.boundingSphere = new THREE.Sphere()
+    this.boundingBox.getBoundingSphere(this.geometry.boundingSphere)
   }
 
   get progress () {
@@ -201,7 +208,7 @@ export class InsertableGeometry {
         }
       }
 
-      // Transorm and merge vertices
+      // Transform and merge vertices
       for (let vertex = vertexStart; vertex < vertexEnd; vertex++) {
         vector.fromArray(g3d.positions, vertex * G3d.POSITION_SIZE)
         vector.applyMatrix4(matrix)
@@ -235,6 +242,7 @@ export class InsertableGeometry {
   }
 
   private expandBox (box: THREE.Box3) {
+    if (!box) return
     this.boundingBox = this.boundingBox?.union(box) ?? box.clone()
   }
 
@@ -269,10 +277,6 @@ export class InsertableGeometry {
 
     this._colorAttribute.count = vertexEnd
     this._colorAttribute.needsUpdate = true
-
-    this._lastUpdatedMesh = end
-    this.geometry.computeBoundingBox()
-    this.geometry.computeBoundingSphere()
   }
 
   private getUpdateRange () {

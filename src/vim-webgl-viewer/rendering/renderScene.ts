@@ -93,7 +93,6 @@ export class RenderScene {
     })
 
     this.updateBox(scene.getBoundingBox())
-    scene.onUpdate.sub(() => this.updateBox(scene.getBoundingBox()))
 
     // Memory
     this._memory += scene.getMemory()

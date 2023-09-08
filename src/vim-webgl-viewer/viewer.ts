@@ -20,7 +20,7 @@ import { Measure, IMeasure } from './gizmos/measure/measure'
 import { GizmoRectangle } from './gizmos/gizmoRectangle'
 import { VimX } from '../vim-loader/progressive/vimx'
 
-import { Vim, GizmoGrid, VimMaterials } from '../vim'
+import { Vim, GizmoGrid, VimMaterials, createBoxes } from '../vim'
 
 // loader
 import { Renderer } from './rendering/renderer'
@@ -218,36 +218,26 @@ export class Viewer {
 
     const success = this.renderer.add(vim.scene)
     if (!success) {
-      vim.dispose()
-      throw new Error(
-        'Could not load vim. Max geometry memory reached. Vim disposed.'
-      )
+      throw new Error('Could not load vim. Max geometry memory reached.')
     }
-    this._vims.add(vim)
-    this.fitBox(vim)
 
+    // Update box
+    const box = this.renderer.getBoundingBox()
+    this._environment.adaptToContent(box)
+    this.sectionBox.fitBox(box)
+
+    // Frame camera
     if (frameCamera) {
-      this._camera.do(true).frame('all', this._camera.defaultForward)
+      this._camera.do(true).frame(box, this._camera.defaultForward)
       this._camera.save()
     }
 
+    this._vims.add(vim)
     this._onVimLoaded.dispatch()
   }
 
-  private fitBox (vim: Vim | VimX) {
-    const fit = () => {
-      const box = this.renderer.getBoundingBox()
-      if (box) {
-        this._environment.adaptToContent(box)
-        this.sectionBox.fitBox(box)
-      }
-    }
-    if (vim instanceof VimX) {
-      vim.onUpdate.subscribe((v) => fit())
-      vim.onCompleted.subscribe(() => this._onVimLoaded.dispatch())
-    } else {
-      fit()
-    }
+  private fitBox (box: THREE.Box3) {
+    return box
   }
 
   /**

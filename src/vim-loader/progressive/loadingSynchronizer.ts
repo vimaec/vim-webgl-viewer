@@ -1,6 +1,7 @@
 // loader
 
-import { G3dSubset, RemoteGeometry, G3dMesh } from 'vim-format'
+import { RemoteGeometry, G3dMesh } from 'vim-format'
+import { G3dSubset } from './g3dSubset'
 
 /**
  * Makes sure merged and instanced meshes are loaded at the according to the same order.

@@ -19,7 +19,7 @@ export class InstancedMesh {
     this.mesh = mesh
     this.mesh.userData.vim = this
     this.instances = instances
-    this.boxes = this.computeBoudingBoxes()
+    this.boxes = this.computeBoundingBoxesFast()
     this.boundingBox = this.computeBoundingBox(this.boxes)
   }
 
@@ -62,7 +62,20 @@ export class InstancedMesh {
     }
   }
 
-  private computeBoudingBoxes () {
+  private computeBoundingBoxesFast () {
+    this.mesh.geometry.computeBoundingBox()
+
+    const boxes = new Array<THREE.Box3>(this.mesh.count)
+    const matrix = new THREE.Matrix4()
+    for (let i = 0; i < this.mesh.count; i++) {
+      this.mesh.getMatrixAt(i, matrix)
+      boxes[i] = this.mesh.geometry.boundingBox.clone().applyMatrix4(matrix)
+    }
+
+    return boxes
+  }
+
+  private computeBoundingBoxes () {
     const positions = this.mesh.geometry.getAttribute('position')
 
     const vector = new THREE.Vector3()
@@ -98,7 +111,7 @@ export class InstancedMesh {
     return boxes
   }
 
-  private computeBoundingBox (boxes: THREE.Box3[]) {
+  computeBoundingBox (boxes: THREE.Box3[]) {
     const box = boxes[0].clone()
     for (let i = 1; i < boxes.length; i++) {
       box.union(boxes[i])

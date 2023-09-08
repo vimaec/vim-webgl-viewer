@@ -34,11 +34,6 @@ export class Scene {
   private _instanceToMeshes: Map<number, Submesh[]> = new Map()
   private _material: THREE.Material | undefined
 
-  private _onUpdate = new SignalDispatcher()
-  get onUpdate () {
-    return this._onUpdate.asEvent()
-  }
-
   constructor (builder: SceneBuilder | undefined) {
     this.builder = builder
   }
@@ -144,13 +139,12 @@ export class Scene {
 
     mesh.mesh.matrixAutoUpdate = false
     mesh.mesh.matrix.copy(this._matrix)
-
-    mesh.getSubmeshes().forEach((s) => this.addSubmesh(s))
     this.updateBox(mesh.boundingBox)
 
+    // Add current and future submeshes
+    mesh.getSubmeshes().forEach((s) => this.addSubmesh(s))
     if (mesh instanceof InsertableMesh) {
       mesh.onSubmeshAdded = (submesh) => this.addSubmesh(submesh)
-      mesh.onUpdate.sub(() => this.updateBox(mesh.boundingBox))
     }
 
     this.meshes.push(mesh)
@@ -162,7 +156,6 @@ export class Scene {
     if (box !== undefined) {
       const b = box.clone().applyMatrix4(this._matrix)
       this._boundingBox = this._boundingBox?.union(b) ?? b
-      this._onUpdate.dispatch()
     }
   }
 

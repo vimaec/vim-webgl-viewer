@@ -5,13 +5,8 @@ import { InsertableMesh } from './insertableMesh'
 import { InstancedMeshFactory } from './instancedMeshFactory'
 import { Scene } from '../../vim'
 
-import {
-  G3dMeshIndex,
-  G3dSubset,
-  G3dMaterial,
-  RemoteGeometry,
-  G3dMesh
-} from 'vim-format'
+import { G3dMeshIndex, G3dMaterial, RemoteGeometry, G3dMesh } from 'vim-format'
+import { G3dSubset } from './g3dSubset'
 import { SignalDispatcher } from 'ste-signals'
 import { InstancedMesh } from './instancedMesh'
 import { LoadingSynchronizer } from './loadingSynchronizer'
@@ -21,6 +16,8 @@ import { LoadingSynchronizer } from './loadingSynchronizer'
  */
 export class SceneManager {
   private settings: VimSettings
+
+  subset: G3dSubset
 
   private _uniques: G3dSubset
   private _nonUniques: G3dSubset
@@ -35,6 +32,12 @@ export class SceneManager {
   private _started: boolean = false
 
   scene: Scene
+
+  getBoundingBox () {
+    const box = this.subset.getBoundingBox()
+    box.applyMatrix4(this.settings.matrix)
+    return box
+  }
 
   /**
    * Vim associated with this scene
@@ -69,9 +72,12 @@ export class SceneManager {
     const self = new SceneManager()
     self.settings = settings
 
-    const subset = index.filter(settings.filterMode, settings.filter)
-    self._uniques = subset.filterUniqueMeshes()
-    self._nonUniques = subset.filterNonUniqueMeshes()
+    self.subset = new G3dSubset(index, undefined).filter(
+      settings.filterMode,
+      settings.filter
+    )
+    self._uniques = self.subset.filterUniqueMeshes()
+    self._nonUniques = self.subset.filterNonUniqueMeshes()
 
     const opaqueOffsets = self._uniques.getOffsets('opaque')
     self._opaqueMesh = new InsertableMesh(opaqueOffsets, materials, false)

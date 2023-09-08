@@ -2,8 +2,9 @@
 import { VimSettings } from '../vimSettings'
 import { InsertableMesh } from './insertableMesh'
 import { Scene } from '../../vim'
-import { G3dMaterial, G3d, G3dSubset, MeshSection } from 'vim-format'
+import { G3dMaterial, G3d, MeshSection } from 'vim-format'
 import { InstancedMeshFactory } from './instancedMeshFactory'
+import { G3dSubset } from './g3dSubset'
 
 export class LegacyMeshFactory {
   g3d: G3d
@@ -20,10 +21,11 @@ export class LegacyMeshFactory {
 
   createScene () {
     // Apply filters and split meshes to be instanced/merged
-    const subset = this.g3d.filter(
+    const subset = new G3dSubset(this.g3d).filter(
       this.settings.filterMode,
       this.settings.filter
     )
+
     const uniques = subset.filterUniqueMeshes()
     const nonUniques = subset.filterNonUniqueMeshes()
 
