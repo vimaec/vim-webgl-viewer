@@ -263,7 +263,6 @@ export class InsertableGeometry {
       this._meshToUpdate.delete(this._updateEndMesh)
       this._updateEndMesh++
     }
-    console.log([this._updateStartMesh, this._updateEndMesh])
 
     if (this._updateStartMesh === this._updateEndMesh) return
 

@@ -72,7 +72,7 @@ export class SceneManager {
     const self = new SceneManager()
     self.settings = settings
 
-    self.subset = new G3dSubset(index, undefined).filter(
+    self.subset = new G3dSubset(index).filter(
       settings.filterMode,
       settings.filter
     )
@@ -81,6 +81,7 @@ export class SceneManager {
 
     const opaqueOffsets = self._uniques.getOffsets('opaque')
     self._opaqueMesh = new InsertableMesh(opaqueOffsets, materials, false)
+    self._opaqueMesh.mesh.name = 'Opaque_Merged_Mesh'
 
     const transparentOffsets = self._uniques.getOffsets('transparent')
     self._transparentMesh = new InsertableMesh(
@@ -88,6 +89,7 @@ export class SceneManager {
       materials,
       true
     )
+    self._transparentMesh.mesh.name = 'Transparent_Merged_Mesh'
 
     self.scene = new Scene(undefined)
     self.scene.addMesh(self._transparentMesh)
@@ -138,7 +140,6 @@ export class SceneManager {
     // Completed
     this.updateMeshes()
     this._onCompleted.dispatch()
-    console.log(this)
   }
 
   private async wait (delay: number = 0) {
@@ -163,7 +164,6 @@ export class SceneManager {
   }
 
   private updateMeshes () {
-    console.log('updateMeshes')
     // Update Instanced meshes
     while (this._meshQueue.length > 0) {
       const mesh = this._meshQueue.pop()
