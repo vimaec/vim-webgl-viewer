@@ -1,13 +1,16 @@
 import * as THREE from 'three'
 import { Vim } from '../../vim'
 import { InstancedSubmesh } from './instancedSubmesh'
+import { G3d, G3dMesh } from 'vim-format'
 
 export class InstancedMesh {
+  g3dMesh: G3dMesh | G3d
   vim: Vim
   mesh: THREE.InstancedMesh
 
   // instances
-  instances: ArrayLike<number>
+  bimInstances: ArrayLike<number>
+  meshInstances: ArrayLike<number>
   boundingBox: THREE.Box3
   boxes: THREE.Box3[]
 
@@ -15,11 +18,24 @@ export class InstancedMesh {
   ignoreSceneMaterial: boolean
   private _material: THREE.Material | THREE.Material[] | undefined
 
-  constructor (mesh: THREE.InstancedMesh, instances: ArrayLike<number>) {
+  constructor (
+    g3d: G3dMesh | G3d,
+    mesh: THREE.InstancedMesh,
+    instances: Array<number>
+  ) {
+    this.g3dMesh = g3d
     this.mesh = mesh
     this.mesh.userData.vim = this
-    this.instances = instances
-    this.boxes = this.computeBoundingBoxesFast()
+    this.bimInstances =
+      g3d instanceof G3dMesh
+        ? instances.map((i) => g3d.getBimInstance(i))
+        : instances
+    this.meshInstances = instances
+
+    this.boxes =
+      g3d instanceof G3dMesh
+        ? this.importBoundingBoxes()
+        : this.computeBoundingBoxes()
     this.boundingBox = this.computeBoundingBox(this.boxes)
   }
 
@@ -38,8 +54,8 @@ export class InstancedMesh {
    * Returns all submeshes for given index.
    */
   getSubmeshes () {
-    const submeshes = new Array<InstancedSubmesh>(this.instances.length)
-    for (let i = 0; i < this.instances.length; i++) {
+    const submeshes = new Array<InstancedSubmesh>(this.bimInstances.length)
+    for (let i = 0; i < this.bimInstances.length; i++) {
       submeshes[i] = new InstancedSubmesh(this, i)
     }
     return submeshes
@@ -62,7 +78,7 @@ export class InstancedMesh {
     }
   }
 
-  private computeBoundingBoxesFast () {
+  private computeBoundingBoxes () {
     this.mesh.geometry.computeBoundingBox()
 
     const boxes = new Array<THREE.Box3>(this.mesh.count)
@@ -75,39 +91,16 @@ export class InstancedMesh {
     return boxes
   }
 
-  private computeBoundingBoxes () {
-    const positions = this.mesh.geometry.getAttribute('position')
-
-    const vector = new THREE.Vector3()
-    const matrix = new THREE.Matrix4()
-
-    const getPoint = (i: number, p: number) => {
-      this.mesh.getMatrixAt(i, matrix)
-
-      vector.fromArray(positions.array, p * 3)
-      vector.applyMatrix4(matrix)
-
-      return vector
-    }
-
-    const boxes = new Array<THREE.Box3>(this.mesh.count)
-
-    for (let i = 0; i < this.mesh.count; i++) {
-      // First point of instance box.
-      const first = getPoint(i, 0)
-      const box = new THREE.Box3(first, first)
-
-      // Others points of instance box
-      for (let p = 1; p < positions.count; p++) {
-        box.expandByPoint(getPoint(i, p))
-      }
-
+  private importBoundingBoxes () {
+    if (this.g3dMesh instanceof G3d) throw new Error('Wrong type')
+    const boxes = new Array<THREE.Box3>(this.meshInstances.length)
+    for (let i = 0; i < this.meshInstances.length; i++) {
+      const box = new THREE.Box3()
+      const instance = this.meshInstances[i]
+      box.min.fromArray(this.g3dMesh.getInstanceMin(instance))
+      box.max.fromArray(this.g3dMesh.getInstanceMax(instance))
       boxes[i] = box
-      if (Number.isNaN(box.min.x)) {
-        console.log('NAN')
-      }
     }
-
     return boxes
   }
 

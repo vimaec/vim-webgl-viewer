@@ -5,7 +5,7 @@ import { InsertableMesh } from './insertableMesh'
 import { InstancedMeshFactory } from './instancedMeshFactory'
 import { Scene } from '../../vim'
 
-import { G3dMeshIndex, G3dMaterial, RemoteGeometry, G3dMesh } from 'vim-format'
+import { G3dScene, G3dMaterial, RemoteVimx, G3dMesh } from 'vim-format'
 import { G3dSubset } from './g3dSubset'
 import { SignalDispatcher } from 'ste-signals'
 import { InstancedMesh } from './instancedMesh'
@@ -64,8 +64,8 @@ export class SceneManager {
   }
 
   static async create (
-    geometry: RemoteGeometry,
-    index: G3dMeshIndex,
+    vimx: RemoteVimx,
+    index: G3dScene,
     materials: G3dMaterial,
     settings: VimSettings
   ) {
@@ -98,7 +98,7 @@ export class SceneManager {
     self._synchronizer = new LoadingSynchronizer(
       self._uniques,
       self._nonUniques,
-      geometry,
+      vimx,
       (mesh, index) => self.mergeMesh(mesh, index),
       (mesh, index) =>
         self.instanceMesh(mesh, self._nonUniques.getMeshInstances(index))
@@ -124,7 +124,7 @@ export class SceneManager {
     this._started = true
 
     // Loading and updates are independants
-    this._synchronizer.loadAll(this.settings.batchSize)
+    this._synchronizer.loadAll()
 
     // Loop until done or disposed.
     while (!this._synchronizer.isDone) {
@@ -138,6 +138,7 @@ export class SceneManager {
     // Completed
     this.updateMeshes()
     this._onCompleted.dispatch()
+    console.log(this)
   }
 
   private async wait (delay: number = 0) {
@@ -162,6 +163,7 @@ export class SceneManager {
   }
 
   private updateMeshes () {
+    console.log('updateMeshes')
     // Update Instanced meshes
     while (this._meshQueue.length > 0) {
       const mesh = this._meshQueue.pop()

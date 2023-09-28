@@ -8,7 +8,7 @@ export class GeometrySubmesh {
   instance: number
   start: number
   end: number
-  boundingBox: THREE.Box3
+  boundingBox = new THREE.Box3()
 
   expandBox (point: THREE.Vector3) {
     this.boundingBox =
@@ -28,11 +28,13 @@ export class InsertableGeometry {
   // No ideal, submeshes are added in real time but renderer only updated on update.
   onSubmeshAdded: (submesh: GeometrySubmesh, index: number) => void
 
+  private _computeBoundingBox = false
   private _indexAttribute: THREE.Uint32BufferAttribute
   private _vertexAttribute: THREE.BufferAttribute
   private _colorAttribute: THREE.BufferAttribute
 
-  private _lastUpdatedMesh = 0
+  private _updateStartMesh = 0
+  private _updateEndMesh = 0
   private _meshToUpdate = new Set<number>()
 
   constructor (
@@ -42,8 +44,6 @@ export class InsertableGeometry {
   ) {
     this.offsets = offsets
     this.materials = materials
-
-    this.boundingBox = offsets.subset.getBoundingBox()
 
     this._indexAttribute = new THREE.Uint32BufferAttribute(
       offsets.counts.indices,
@@ -70,9 +70,14 @@ export class InsertableGeometry {
     this.geometry.setAttribute('position', this._vertexAttribute)
     this.geometry.setAttribute('color', this._colorAttribute)
 
-    this.geometry.boundingBox = this.boundingBox
-    this.geometry.boundingSphere = new THREE.Sphere()
-    this.boundingBox.getBoundingSphere(this.geometry.boundingSphere)
+    this.boundingBox = offsets.subset.getBoundingBox()
+    if (this.boundingBox) {
+      this.geometry.boundingBox = this.boundingBox
+      this.geometry.boundingSphere = new THREE.Sphere()
+      this.boundingBox.getBoundingSphere(this.geometry.boundingSphere)
+    } else {
+      this._computeBoundingBox = true
+    }
   }
 
   get progress () {
@@ -115,7 +120,7 @@ export class InsertableGeometry {
       const instance = this.offsets.getMeshInstance(mesh, instance_i)
       matrix.fromArray(g3d.getInstanceMatrix(instance))
       const submesh = new GeometrySubmesh()
-      submesh.instance = g3d.instanceNodes[instance]
+      submesh.instance = g3d.getBimInstance(instance)
 
       // Append indices
       submesh.start = indexOffset + indexOut
@@ -134,7 +139,7 @@ export class InsertableGeometry {
         vector.fromArray(g3d.positions, vertex * G3d.POSITION_SIZE)
         vector.applyMatrix4(matrix)
         this.setVertex(vertexOffset + vertexOut, vector)
-        submesh.expandBox(vector)
+        // submesh.expandBox(vector)
         vertexOut++
       }
 
@@ -148,7 +153,8 @@ export class InsertableGeometry {
         }
       }
 
-      this.expandBox(submesh.boundingBox)
+      submesh.boundingBox.min.fromArray(g3d.getInstanceMin(instance))
+      submesh.boundingBox.max.fromArray(g3d.getInstanceMax(instance))
       this.submeshes.push(submesh)
       this.onSubmeshAdded?.(submesh, this.submeshes.length - 1)
     }
@@ -246,12 +252,24 @@ export class InsertableGeometry {
     this.boundingBox = this.boundingBox?.union(box) ?? box.clone()
   }
 
+  flushUpdate () {
+    // Makes sure that the update range has reached the renderer.
+    this._updateStartMesh = this._updateEndMesh
+  }
+
   update () {
-    const [start, end] = this.getUpdateRange()
-    if (start === end) return
+    // Update up to the mesh for which all preceding meshes are ready
+    while (this._meshToUpdate.has(this._updateEndMesh)) {
+      this._meshToUpdate.delete(this._updateEndMesh)
+      this._updateEndMesh++
+    }
+    console.log([this._updateStartMesh, this._updateEndMesh])
+
+    if (this._updateStartMesh === this._updateEndMesh) return
+
     // Compute index update range
-    const indexStart = this.offsets.getIndexOffset(start)
-    const indexEnd = this.offsets.getIndexOffset(end)
+    const indexStart = this.offsets.getIndexOffset(this._updateStartMesh)
+    const indexEnd = this.offsets.getIndexOffset(this._updateEndMesh)
 
     // updated indices
     this._indexAttribute.updateRange.offset = indexStart
@@ -260,8 +278,8 @@ export class InsertableGeometry {
     this._indexAttribute.needsUpdate = true
 
     // Compute vertex update range
-    const vertexStart = this.offsets.getVertexOffset(start)
-    const vertexEnd = this.offsets.getVertexOffset(end)
+    const vertexStart = this.offsets.getVertexOffset(this._updateStartMesh)
+    const vertexEnd = this.offsets.getVertexOffset(this._updateEndMesh)
 
     // update vertices
     const vSize = this._vertexAttribute.itemSize
@@ -277,14 +295,10 @@ export class InsertableGeometry {
 
     this._colorAttribute.count = vertexEnd
     this._colorAttribute.needsUpdate = true
-  }
 
-  private getUpdateRange () {
-    let meshEnd = this._lastUpdatedMesh
-    while (this._meshToUpdate.has(meshEnd)) {
-      this._meshToUpdate.delete(meshEnd)
-      meshEnd++
+    if (this._computeBoundingBox) {
+      this.geometry.computeBoundingBox()
+      this.geometry.computeBoundingSphere()
     }
-    return [this._lastUpdatedMesh, meshEnd]
   }
 }

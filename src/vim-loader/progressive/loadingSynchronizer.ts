@@ -1,93 +1,108 @@
 // loader
 
-import { RemoteGeometry, G3dMesh } from 'vim-format'
+import { RemoteVimx, G3dMesh } from 'vim-format'
 import { G3dSubset } from './g3dSubset'
 
 /**
- * Makes sure merged and instanced meshes are loaded at the according to the same order.
+ * Makes sure both instanced meshes and merged meshes are requested in the right order
+ * Also decouples downloads and processing.
  */
 export class LoadingSynchronizer {
-  private _merged: LoadingBatcher
-  private _instanced: LoadingBatcher
-  private _aborted = false
+  done = false
+  uniques: G3dSubset
+  nonUniques: G3dSubset
+  geometry: RemoteVimx
 
-  get isDone () {
-    return (this._merged.isDone && this._instanced.isDone) || this._aborted
-  }
+  mergeAction: (mesh: G3dMesh, index: number) => void
+  instanceAction: (mesh: G3dMesh, index: number) => void
+
+  mergeQueue = new Array<() => void>()
+  instanceQueue = new Array<() => void>()
 
   constructor (
     uniques: G3dSubset,
     nonUniques: G3dSubset,
-    geometry: RemoteGeometry,
+    geometry: RemoteVimx,
     mergeAction: (mesh: G3dMesh, index: number) => void,
     instanceAction: (mesh: G3dMesh, index: number) => void
   ) {
-    this._merged = new LoadingBatcher(uniques, geometry, mergeAction)
-    this._instanced = new LoadingBatcher(nonUniques, geometry, instanceAction)
-  }
-
-  abort () {
-    this._aborted = true
-  }
-
-  // Loads batches until the all meshes are loaded
-  async loadAll (batchSize: number) {
-    while (!this.isDone) {
-      await this.load(batchSize)
-    }
-  }
-
-  // Loads up batchsize meshes from unique and non unique meshes.
-  async load (batchSize: number) {
-    await Promise.all([
-      this._merged.load(batchSize),
-      this._instanced.load(batchSize)
-    ])
-  }
-}
-
-class LoadingBatcher {
-  private _subset: G3dSubset
-  private _geometry: RemoteGeometry
-  private _onLoad: (mesh: G3dMesh, index: number) => void
-
-  private _index: number = 0
-  private _maxMesh: number = 0
-
-  constructor (
-    subset: G3dSubset,
-    geometry: RemoteGeometry,
-    onLoad: (mesh: G3dMesh, index: number) => void
-  ) {
-    this._subset = subset
-    this._geometry = geometry
-    this._onLoad = onLoad
+    this.uniques = uniques
+    this.nonUniques = nonUniques
+    this.geometry = geometry
+    this.mergeAction = mergeAction
+    this.instanceAction = instanceAction
   }
 
   get isDone () {
-    return this._index >= this._subset.getMeshCount()
+    return this.done
   }
 
-  async load (batch: number) {
-    if (this.isDone) {
-      return Promise.resolve()
-    }
+  abort () {}
 
+  // Loads batches until the all meshes are loaded
+  async loadAll () {
+    const promises = this.getSortedPromises()
+    Promise.all(promises).then(() => (this.done = true))
+    await this.consumeQueues()
+  }
+
+  private async consumeQueues () {
+    while (
+      !(
+        this.done &&
+        this.mergeQueue.length === 0 &&
+        this.instanceQueue.length === 0
+      )
+    ) {
+      while (this.mergeQueue.length > 0) {
+        this.mergeQueue.pop()()
+      }
+      while (this.instanceQueue.length > 0) {
+        this.instanceQueue.pop()()
+      }
+
+      // Resume on next frame
+      await new Promise((resolve) => setTimeout(resolve, 0))
+    }
+  }
+
+  private getSortedPromises () {
     const promises = new Array<Promise<void>>()
-    this._maxMesh += batch
-    const count = this._subset.getMeshCount()
-    for (; this._index < count; this._index++) {
-      const mesh = this._subset.getMesh(this._index)
-      if (mesh >= this._maxMesh) break
-      promises.push(this.fetch(mesh, this._index))
+
+    const uniqueCount = this.uniques.getMeshCount()
+    const nonUniquesCount = this.nonUniques.getMeshCount()
+
+    let uniqueIndex = 0
+    let nonUniqueIndex = 0
+    let uniqueMesh = 0
+    let nonUniqueMesh = 0
+
+    while (true) {
+      const mergeDone = uniqueIndex >= uniqueCount
+      const instanceDone = nonUniqueIndex >= nonUniquesCount
+      if (mergeDone && instanceDone) {
+        break
+      }
+
+      if (!mergeDone && (uniqueMesh <= nonUniqueMesh || instanceDone)) {
+        uniqueMesh = this.uniques.getMesh(uniqueIndex)
+        promises.push(this.merge(uniqueMesh, uniqueIndex++))
+      }
+      if (!instanceDone && (nonUniqueMesh <= uniqueMesh || mergeDone)) {
+        nonUniqueMesh = this.nonUniques.getMesh(nonUniqueIndex)
+        promises.push(this.instance(nonUniqueMesh, nonUniqueIndex++))
+      }
     }
-    return Promise.all(promises)
+    return promises
   }
 
-  private async fetch (mesh: number, index: number) {
-    if (this._onLoad) {
-      const g3dMesh = await this._geometry.getMesh(mesh)
-      this._onLoad(g3dMesh, index)
-    }
+  async merge (mesh: number, index: number) {
+    const m = await this.geometry.getMeshRaw(mesh)
+    this.mergeQueue.push(() => this.mergeAction(m, index))
+  }
+
+  async instance (mesh: number, index: number) {
+    const m = await this.geometry.getMeshRaw(mesh)
+    this.instanceQueue.push(() => this.instanceAction(m, index))
   }
 }

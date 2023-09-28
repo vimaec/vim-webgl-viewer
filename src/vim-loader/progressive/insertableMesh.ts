@@ -86,6 +86,10 @@ export class InsertableMesh {
     this._onUpdate.dispatch()
   }
 
+  clearUpdate () {
+    this.geometry.flushUpdate()
+  }
+
   /**
    * Returns submesh corresponding to given face on a merged mesh.
    */

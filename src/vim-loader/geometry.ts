@@ -3,13 +3,7 @@
  */
 
 import * as THREE from 'three'
-import {
-  G3d,
-  G3dMesh,
-  G3dMeshIndex,
-  G3dMeshOffsets,
-  MeshSection
-} from 'vim-format'
+import { G3d, MeshSection } from 'vim-format'
 import { Vim, VimMaterials } from '../vim'
 import { Submesh } from './mesh'
 

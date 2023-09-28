@@ -1,4 +1,4 @@
-import { G3d, MeshSection, G3dMeshIndex, FilterMode } from 'vim-format'
+import { G3d, MeshSection, G3dScene, FilterMode } from 'vim-format'
 import { G3dMeshOffsets, G3dMeshCounts } from './g3dOffsets'
 import * as THREE from 'three'
 
@@ -7,7 +7,7 @@ import * as THREE from 'three'
  * Allows for further filtering or to get offsets needed to build the scene.
  */
 export class G3dSubset {
-  private _source: G3dMeshIndex | G3d
+  private _source: G3dScene | G3d
   // source-based indices of included instanced
   private _instances: number[]
 
@@ -20,7 +20,7 @@ export class G3dSubset {
    * @param instances source-based instance indices of included instances.
    */
   constructor (
-    source: G3dMeshIndex | G3d,
+    source: G3dScene | G3d,
     // source-based indices of included instanced
     instances?: number[]
   ) {
@@ -58,7 +58,7 @@ export class G3dSubset {
   }
 
   private getSourceInstance (index: number) {
-    return this._source instanceof G3dMeshIndex
+    return this._source instanceof G3dScene
       ? this._source.instanceIndices[index]
       : index
   }
@@ -202,34 +202,12 @@ export class G3dSubset {
     return result
   }
 
-  getInstanceBoundingBox (instance: number) {
-    if (this._instances.length === 0) return
-    if (this._source instanceof G3dMeshIndex) {
-      // To avoid including (0,0,0)
-      const box = new THREE.Box3()
-      box.min.fromArray(this._source.getInstanceMin(instance))
-      box.max.fromArray(this._source.getInstanceMax(instance))
-      return box
-    }
-  }
-
-  getNodeBoundingBox (node: number) {
-    if (this._instances.length === 0) return
-    if (this._source instanceof G3dMeshIndex) {
-      // To avoid including (0,0,0)
-      const box = new THREE.Box3()
-      box.min.fromArray(this._source.getNodeMin(node))
-      box.max.fromArray(this._source.getNodeMax(node))
-      return box
-    }
-  }
-
   /**
    * Return the bounding box of the current subset or undefined if subset is empty.
    */
   getBoundingBox () {
     if (this._instances.length === 0) return
-    if (this._source instanceof G3dMeshIndex) {
+    if (this._source instanceof G3dScene) {
       // To avoid including (0,0,0)
       const box = new THREE.Box3()
       const first = this._instances[0]

@@ -2,7 +2,7 @@
  * @module vim-loader
  */
 
-import { G3d, G3dMeshIndex, VimDocument } from 'vim-format'
+import { G3d, G3dScene, VimDocument } from 'vim-format'
 
 export class ElementNoMapping {
   getElementsFromElementId (id: number) {
@@ -151,18 +151,18 @@ export class ElementMapping2 {
   private _instanceToElementId: Map<number, BigInt>
   private _elementIdToInstances: Map<BigInt, number[]>
 
-  constructor (index: G3dMeshIndex) {
+  constructor (scene: G3dScene) {
     this._instanceToElement = new Map<number, number>()
     this._instanceToElementId = new Map<number, BigInt>()
 
-    for (let i = 0; i < index.instanceIndices.length; i++) {
+    for (let i = 0; i < scene.instanceIndices.length; i++) {
       this._instanceToElement.set(
-        index.instanceNodes[i],
-        index.instanceGroups[i]
+        scene.instanceNodes[i],
+        scene.instanceGroups[i]
       )
       this._instanceToElementId.set(
-        index.instanceNodes[i],
-        index.instanceTags[i]
+        scene.instanceNodes[i],
+        scene.instanceTags[i]
       )
     }
     this._elementToInstances = ElementMapping2.invertMap(

@@ -60,11 +60,7 @@ export type VimSettings = {
   filter: number[]
   /** EXPERIMENTAL: Defines what property to use as the filter. */
   filterMode: FilterMode
-  /** EXPERIMENTAL: Defines how closely the mesh order is respected.
-   * Lower values will more closely match the order provided by the index
-   * at the cost of more waiting for synchronization thus a longer load time.
-   */
-  batchSize: number
+
   /**
    * EXPERIMENTAL: Defines the time in miliseconds between each scene refresh in progressive loading.
    */
@@ -95,7 +91,6 @@ export const defaultConfig: VimSettings = {
   vimx: undefined,
   filter: undefined,
   filterMode: undefined,
-  batchSize: 100,
   refreshInterval: 1000,
 
   streamBim: false,

@@ -51,14 +51,11 @@ export class InstancedMeshFactory {
     const threeMesh = new THREE.InstancedMesh(
       geometry,
       material.material,
-      instances?.length ?? mesh.instanceNodes.length
+      instances?.length ?? mesh.getInstanceCount()
     )
 
     this.setMatricesFromVimx(threeMesh, mesh, instances)
-    const result = new InstancedMesh(
-      threeMesh,
-      pick(mesh.instanceNodes, instances)
-    )
+    const result = new InstancedMesh(mesh, threeMesh, instances)
     return result
   }
 
@@ -86,7 +83,7 @@ export class InstancedMeshFactory {
     )
 
     this.setMatricesFromVimx(threeMesh, g3d, instances)
-    const result = new InstancedMesh(threeMesh, instances)
+    const result = new InstancedMesh(g3d, threeMesh, instances)
     return result
   }
 
@@ -163,9 +160,13 @@ export class InstancedMeshFactory {
       three.setMatrixAt(at, matrix)
     }
     if (instances) {
-      instances.forEach((instance, i) => setMatrix(instance, i))
+      for (let i = 0; i < instances.length; i++) {
+        setMatrix(instances[i], i)
+      }
     } else {
-      source.instanceNodes.forEach((n, i) => setMatrix(i, i))
+      for (let i = 0; i < source.instanceTransforms.length; i++) {
+        setMatrix(i, i)
+      }
     }
   }
 }

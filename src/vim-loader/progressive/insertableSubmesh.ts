@@ -1,5 +1,6 @@
 import { InsertableMesh } from './insertableMesh'
 import { InsertableGeometry } from './insertableGeometry'
+import * as THREE from 'three'
 
 export class InsertableSubmesh {
   mesh: InsertableMesh

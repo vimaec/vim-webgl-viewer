@@ -18,14 +18,14 @@ import {
   RemoteBuffer,
   VimDocument,
   G3dMaterial,
-  RemoteGeometry,
+  RemoteVimx,
   G3d
 } from 'vim-format'
 import { SceneManager } from './sceneManager'
 
 export class VimX {
   settings: VimSettings
-  geometry: RemoteGeometry
+  geometry: RemoteVimx
   materials: G3dMaterial
   bim: VimDocument | undefined
   scene: SceneManager
@@ -45,7 +45,7 @@ export class VimX {
 
   constructor (
     settings: VimSettings,
-    geometry: RemoteGeometry,
+    geometry: RemoteVimx,
     materials: G3dMaterial,
     bim: VimDocument | undefined,
     scene: SceneManager,
@@ -82,6 +82,8 @@ export class VimX {
       return new Loader().createRequest(vimPath, fullSettings)
     }
     if (settings.vimx) {
+      console.log(vimPath)
+      console.log(fullSettings)
       return VimX.fromVimX(vimPath, fullSettings)
     } else {
       return VimX.fromVim(vimPath, fullSettings)
@@ -92,17 +94,19 @@ export class VimX {
    * Creates a VimX object from given path to a vimx file
    */
   static async fromVimX (bimPath: string, settings: VimSettings) {
-    // Fetch bim data
-    const bim = await VimX.createBim(bimPath, settings)
+    // Start fetch bim data
+    const bimPromise = VimX.createBim(bimPath, settings)
 
     // Fetch geometry data
-    const geometry = await RemoteGeometry.fromPath(settings.vimx)
+    const geometry = await RemoteVimx.fromPath(settings.vimx)
     if (!settings.progressive) {
       await geometry.bfast.forceDownload()
     }
 
-    const index = await geometry.getIndex()
-    const materials = await geometry.getMaterials()
+    const [index, materials] = await Promise.all([
+      geometry.getIndexRaw(),
+      geometry.getMaterialsRaw()
+    ])
 
     // Create scene
     const scene = await SceneManager.create(
@@ -115,6 +119,9 @@ export class VimX {
     const mapping = settings.noMap
       ? new ElementNoMapping()
       : new ElementMapping2(index)
+
+    // wait for bim data.
+    const bim = await bimPromise
 
     return new VimX(settings, geometry, materials, bim, scene, mapping)
   }

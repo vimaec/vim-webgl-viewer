@@ -23,6 +23,7 @@ export class Scene {
   readonly builder: SceneBuilder
 
   // State
+  insertables = new Array<InsertableMesh>()
   meshes: (Mesh | InsertableMesh | InstancedMesh)[] = []
   private _vim: Vim | undefined
   private _renderer: Renderer
@@ -62,6 +63,7 @@ export class Scene {
 
   clearUpdateFlag () {
     this._updated = false
+    this.insertables.forEach((mesh) => mesh.clearUpdate())
   }
 
   /**
@@ -125,6 +127,7 @@ export class Scene {
     const set = this._instanceToMeshes.get(submesh.instance) ?? []
     set.push(submesh)
     this._instanceToMeshes.set(submesh.instance, set)
+    this.updated = true
   }
 
   /**
@@ -144,6 +147,8 @@ export class Scene {
     // Add current and future submeshes
     mesh.getSubmeshes().forEach((s) => this.addSubmesh(s))
     if (mesh instanceof InsertableMesh) {
+      this.insertables.push(mesh)
+      mesh.onUpdate.sub(() => (this.updated = true))
       mesh.onSubmeshAdded = (submesh) => this.addSubmesh(submesh)
     }
 

@@ -27,7 +27,7 @@ export class InstancedSubmesh {
    * Returns vim instance associated with this submesh.
    */
   get instance () {
-    return this.mesh.instances[this.index]
+    return this.mesh.bimInstances[this.index]
   }
 
   /**
