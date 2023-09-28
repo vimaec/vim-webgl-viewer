@@ -14,7 +14,8 @@
         margin: 0;
         padding: 0;
         overflow: hidden;
-        background: radial-gradient(circle at center, #f0f0ff, #999999);
+        /*This prevents touches from being eaten up by the browser.*/
+        touch-action: none;
       }
     </style>
     <title>VIM 3D Model Viewer</title>
@@ -24,70 +25,59 @@
     />
   </head>
   <body>
-    <script src="https://unpkg.com/three@0.143/build/three.min.js"></script>
-    <script src="https://unpkg.com/vim-webgl-viewer@1.4.12-dev.15"></script>
+    <script src="https://unpkg.com/three@0.143"></script>
+    <script src="https://unpkg.com/vim-webgl-viewer@1.5.9-dev.5"></script>
     <script>
+      // Parse URL
+      const params = new URLSearchParams(window.location.search)
+      const url = params.has('vim')
+        ? params.get('vim')
+        : 'https://vim.azureedge.net/samples/residence.vim'
+
+      let transparency = 'all'
+      if (params.has('transparency')) {
+        const t = params.get('transparency')
+        transparency = geometry.transparencyIsValid(t) ? t : 'all'
+      }
+
+      let download = 'geometry'
+      if (params.has('download')) {
+        const t = params.get('download')
+        const valid = t === 'download' || t === 'stream' || t === 'geometry'
+        download = valid ? t : 'geometry'
+      }
+
       // Create Viewer
-      const viewer = new VIM.Viewer({
-        groundPlane: {
-          show: true,
-          texture:
-            'https://vimdevelopment01storage.blob.core.windows.net/textures/vim-floor-soft.png',
-          opacity: 1,
-          size: 5,
-        },
-      })
-
-      test()
-
-      async function test() {
-        const wolford =
-          'https://vimdevelopment01storage.blob.core.windows.net/samples/residence1.vim'
-        const wolfordNoZip =
-          'https://vimdevelopment01storage.blob.core.windows.net/samples/residence_nozip.vim'
-
-        const skanska =
-          'https://vimdevelopment01storage.blob.core.windows.net/samples/skanska.vim'
-        const skanskaNoZip =
-          'https://vimdevelopment01storage.blob.core.windows.net/samples/skanska.nozip.vim'
-
-        const whiteleys =
-          'https://vimdevelopment01storage.blob.core.windows.net/samples/_WHITELEYS-VIM-MAIN_detached.v1.2.42.vim.gz'
-        const whiteleysNoZip =
-          'https://vimdevelopment01storage.blob.core.windows.net/samples/_WHITELEYS-VIM-MAIN_detached.v1.2.13.S.O.nozip.vim'
-
-        await testLoad(wolford, 'stream', 28.6)
-        await testLoad(wolfordNoZip, 'stream', 34.6)
-        await testLoad(wolfordNoZip, 'geometry', 34.6)
-        await testLoad(skanska, 'stream', 74)
-        await testLoad(skanskaNoZip, 'stream', 241)
-        await testLoad(skanskaNoZip, 'geometry', 241)
-        await testLoad(whiteleys, 'stream', 328)
-        await testLoad(whiteleysNoZip, 'stream', 986)
-        await testLoad(whiteleysNoZip, 'geometry', 986)
+      const viewer = new VIM.Viewer()
+      load()
+      async function load() {
+        time = Date.now()
+        const vim = await VIM.VimX.load(undefined, {
+          // filter: [...new Array(5).keys()], // .map((i) => i + 3500000),
+          // filterMode: 'instance',
+          progressive: true,
+          vimx: 'https://vimdevelopment01storage.blob.core.windows.net/split-mesh/_WHITELEYS-VIM-MAIN_detached.v1.2.42.vimx',
+          refreshInterval: 1200,
+          loadRooms: true,
+          rotation: new VIM.THREE.Vector3(270, 0, 0),
+          streamBim: true,
+          noStrings: true,
+          noHeader: true,
+        })
+        onVimLoaded(vim)
       }
 
-      async function testLoad(url, download, size) {
-        const delay = (ms) => new Promise((resolve) => setTimeout(resolve, ms))
-        let loaded = 0
-        const start = new Date().getTime()
-        const vim = await viewer.loadVim(
-          url,
-          {
-            rotation: { x: 270, y: 0, z: 0 },
-            download: download,
-          },
-          (progress) => (loaded = progress.loaded)
+      async function onVimLoaded(vim) {
+        viewer.add(vim)
+        vim.onCompleted.subscribe(() =>
+          console.log(`loaded in ${(Date.now() - time) / 1000} seconds`)
         )
-        const secs = ((new Date().getTime() - start) / 1000).toFixed(2)
-        const mbs = (loaded / 1000000).toFixed(2)
-        const label = url.split('/').pop()
-        console.log(
-          `loaded ${label} : ${mbs}MB of ${size}MB in ${secs} seconds using ${download}`
-        )
-        await delay(1000)
-        viewer.unloadVim(vim)
+        vim.scene.start()
+        globalThis.vim = vim
       }
+
+      globalThis.viewer = viewer
+      globalThis.THREE = THREE
     </script>
   </body>
 </html>
