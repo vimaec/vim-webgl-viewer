@@ -95,7 +95,7 @@ export class VimX {
    */
   static async fromVimX (bimPath: string, settings: VimSettings) {
     // Start fetch bim data
-    const bimPromise = VimX.createBim(bimPath, settings)
+    const bimPromise = bimPath ? VimX.createBim(bimPath, settings) : null
 
     // Fetch geometry data
     const geometry = await RemoteVimx.fromPath(settings.vimx)
@@ -103,10 +103,12 @@ export class VimX {
       await geometry.bfast.forceDownload()
     }
 
+    console.log('Downloading Scene Index..')
     const [index, materials] = await Promise.all([
       geometry.getIndexRaw(),
       geometry.getMaterialsRaw()
     ])
+    console.log('Scene Index Downloaded.')
 
     // Create scene
     const scene = await SceneManager.create(
@@ -121,7 +123,7 @@ export class VimX {
       : new ElementMapping2(index)
 
     // wait for bim data.
-    const bim = await bimPromise
+    const bim = bimPromise ? await bimPromise : undefined
 
     return new VimX(settings, geometry, materials, bim, scene, mapping)
   }
