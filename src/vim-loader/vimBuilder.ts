@@ -32,18 +32,21 @@ export class VimBuilder {
   }
 
   async load (bfast: BFast, settings: VimSettings) {
-    if (!settings.streamBim && !settings.streamGeometry) {
-      await bfast.forceDownload()
+    const getBim = async () => {
+      const doc = await VimDocument.createFromBfast(bfast)
+      const [instanceToElement, elementIds] = await Promise.all([
+        settings.noMap ? undefined : doc.node.getAllElementIndex(),
+        settings.noMap ? undefined : doc.element.getAllId()
+      ])
+      return { doc, instanceToElement, elementIds }
     }
 
-    const doc = await VimDocument.createFromBfast(bfast)
-
-    const [header, g3d, instanceToElement, elementIds] = await Promise.all([
+    const [header, g3d, bim] = await Promise.all([
       settings.noHeader ? undefined : VimBuilder.requestHeader(bfast),
       VimBuilder.requestG3d(bfast),
-      settings.noMap ? undefined : doc.node.getAllElementIndex(),
-      settings.noMap ? undefined : doc.element.getAllId()
+      getBim()
     ])
+
     const scene = g3d
       ? this.sceneBuilder.createFromG3d(g3d, settings)
       : new Scene(this.sceneBuilder)
@@ -52,11 +55,11 @@ export class VimBuilder {
       ? undefined
       : new ElementMapping(
         Array.from(g3d.instanceNodes),
-          instanceToElement!,
-          elementIds!
+          bim.instanceToElement!,
+          bim.elementIds!
       )
 
-    const vim = new Vim(header, doc, g3d, scene, settings, mapping)
+    const vim = new Vim(header, bim.doc, g3d, scene, settings, mapping)
 
     return vim
   }
