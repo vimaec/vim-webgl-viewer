@@ -33,10 +33,10 @@ export class VimBuilder {
 
   async load (bfast: BFast, settings: VimSettings) {
     const getBim = async () => {
-      const doc = await VimDocument.createFromBfast(bfast)
+      const doc = await VimDocument.createFromBfast(bfast, true)
       const [instanceToElement, elementIds] = await Promise.all([
         settings.noMap ? undefined : doc.node.getAllElementIndex(),
-        settings.noMap ? undefined : doc.element.getAllId()
+        settings.noMap ? undefined : this.getElementIds(doc)
       ])
       return { doc, instanceToElement, elementIds }
     }
@@ -46,6 +46,7 @@ export class VimBuilder {
       VimBuilder.requestG3d(bfast),
       getBim()
     ])
+
 
     const scene = g3d
       ? this.sceneBuilder.createFromG3d(g3d, settings)
@@ -64,6 +65,23 @@ export class VimBuilder {
     return vim
   }
 
+  private async getElementIds (doc: VimDocument) {
+    const ids = await doc.element.getAllId()
+    if (ids !== undefined) {
+      // Expected good path.
+      return ids
+    }
+    const count = await doc.element.getCount()
+    if (count === 0) {
+      // No elements, can't use map.
+      return undefined
+    }
+    // Return placeholder ids
+    const fill = new BigInt64Array(count)
+    fill.fill(-1n)
+    return fill
+  }
+
   async loadRemote (bfast: BFast, settings: VimSettings) {
     const doc = await VimDocument.createFromBfast(bfast, settings.noStrings)
     const geometry = await bfast.getBfast('geometry')
@@ -72,7 +90,7 @@ export class VimBuilder {
     const [header, instanceToElement, elementIds] = await Promise.all([
       settings.noHeader ? undefined : VimBuilder.requestHeader(bfast),
       settings.noMap ? undefined : doc.node.getAllElementIndex(),
-      settings.noMap ? undefined : doc.element.getAllId()
+      settings.noMap ? undefined : this.getElementIds(doc)
     ])
 
     const g3d = settings.instances
@@ -109,7 +127,7 @@ export class VimBuilder {
   }
 
   private static async requestG3d (bfast: BFast) {
-    const geometry = await bfast.getLocalBfast('geometry')
+    const geometry = await bfast.getBfast('geometry')
 
     if (!geometry) {
       throw new Error('Could not get G3d Data from VIM file.')

@@ -104,9 +104,10 @@ export class VimX {
     }
 
     console.log('Downloading Scene Index..')
+    console.log(geometry)
     const [index, materials] = await Promise.all([
-      geometry.getIndexRaw(),
-      geometry.getMaterialsRaw()
+      geometry.getScene(),
+      geometry.getMaterials()
     ])
     console.log('Scene Index Downloaded.')
 

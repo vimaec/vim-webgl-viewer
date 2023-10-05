@@ -97,12 +97,12 @@ export class LoadingSynchronizer {
   }
 
   async merge (mesh: number, index: number) {
-    const m = await this.geometry.getMeshRaw(mesh)
+    const m = await this.geometry.getMesh(mesh)
     this.mergeQueue.push(() => this.mergeAction(m, index))
   }
 
   async instance (mesh: number, index: number) {
-    const m = await this.geometry.getMeshRaw(mesh)
+    const m = await this.geometry.getMesh(mesh)
     this.instanceQueue.push(() => this.instanceAction(m, index))
   }
 }

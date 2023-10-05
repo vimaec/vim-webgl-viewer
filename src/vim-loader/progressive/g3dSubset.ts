@@ -59,7 +59,7 @@ export class G3dSubset {
 
   private getSourceInstance (index: number) {
     return this._source instanceof G3dScene
-      ? this._source.instanceIndices[index]
+      ? this._source.instanceTransforms[index]
       : index
   }
 
