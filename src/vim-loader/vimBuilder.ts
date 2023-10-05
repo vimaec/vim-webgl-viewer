@@ -47,7 +47,6 @@ export class VimBuilder {
       getBim()
     ])
 
-
     const scene = g3d
       ? this.sceneBuilder.createFromG3d(g3d, settings)
       : new Scene(this.sceneBuilder)
@@ -63,23 +62,6 @@ export class VimBuilder {
     const vim = new Vim(header, bim.doc, g3d, scene, settings, mapping)
 
     return vim
-  }
-
-  private async getElementIds (doc: VimDocument) {
-    const ids = await doc.element.getAllId()
-    if (ids !== undefined) {
-      // Expected good path.
-      return ids
-    }
-    const count = await doc.element.getCount()
-    if (count === 0) {
-      // No elements, can't use map.
-      return undefined
-    }
-    // Return placeholder ids
-    const fill = new BigInt64Array(count)
-    fill.fill(-1n)
-    return fill
   }
 
   async loadRemote (bfast: BFast, settings: VimSettings) {
@@ -115,6 +97,23 @@ export class VimBuilder {
     const vim = new Vim(header, doc, g3d, scene, settings, mapping)
 
     return vim
+  }
+
+  private async getElementIds (doc: VimDocument) {
+    const ids = await doc.element.getAllId()
+    if (ids !== undefined) {
+      // Expected good path.
+      return ids
+    }
+    const count = await doc.element.getCount()
+    if (count === 0) {
+      // No elements, can't use map.
+      return undefined
+    }
+    // Return placeholder ids
+    const fill = new BigInt64Array(count)
+    fill.fill(BigInt(-1))
+    return fill
   }
 
   public static async requestHeader (bfast: BFast): Promise<VimHeader> {

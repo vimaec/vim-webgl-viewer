@@ -156,7 +156,7 @@ export class VimX {
     const scene = factory.createScene()
 
     // Create legacy mapping
-    const doc = await VimDocument.createFromBfast(bfast)
+    const doc = await VimDocument.createFromBfast(bfast, true)
     const mapping = await ElementMapping.fromG3d(g3d, doc)
 
     // Return legacy vim
