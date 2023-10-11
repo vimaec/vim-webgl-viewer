@@ -74,37 +74,68 @@ export class VimX {
    * Loads given vim or vimx file using progressive pipeline unless the legacy flag is true.
    */
   static async load (
-    vimPath: string | ArrayBuffer,
+    source: string | ArrayBuffer,
     settings: VimPartialSettings
   ) {
     const fullSettings = getFullSettings(settings)
-    if (settings.legacy || vimPath instanceof ArrayBuffer) {
-      return new Loader().createRequest(vimPath, fullSettings)
+    const type = this.determineFileType(source, fullSettings)
+
+    if (fullSettings.legacy) {
+      if (type === 'vimx') {
+        throw new Error('Cannot open a vimx using legacy pipeline.')
+      }
+
+      return new Loader().createRequest(source, fullSettings)
     }
-    if (settings.vimx) {
-      console.log(vimPath)
-      console.log(fullSettings)
-      return VimX.fromVimX(vimPath, fullSettings)
-    } else {
-      return VimX.fromVim(vimPath, fullSettings)
+
+    if (type === 'vim') {
+      return VimX.fromVim(source, fullSettings)
     }
+
+    if (type === 'vimx') {
+      return VimX.fromVimX(source, fullSettings)
+    }
+  }
+
+  static determineFileType (
+    vimPath: string | ArrayBuffer,
+    settings: VimSettings
+  ) {
+    if (settings.fileType === 'vim') return 'vim'
+    if (settings.fileType === 'vimx') return 'vimx'
+    if (vimPath instanceof ArrayBuffer) {
+      throw new Error(
+        'Cannot infer file type for ArrayBuffer. Please specify file type in options.'
+      )
+    }
+    if (vimPath.endsWith('vim')) return 'vim'
+    if (vimPath.endsWith('vimx')) return 'vimx'
+
+    throw new Error(
+      'Could not infer file type from extension. Please specify file type in options.'
+    )
   }
 
   /**
    * Creates a VimX object from given path to a vimx file
    */
-  static async fromVimX (bimPath: string, settings: VimSettings) {
+  static async fromVimX (source: string | ArrayBuffer, settings: VimSettings) {
     // Start fetch bim data
-    const bimPromise = bimPath ? VimX.createBim(bimPath, settings) : null
+    // const bimPromise = vimPath ? VimX.createBim(vimPath, settings) : null
 
     // Fetch geometry data
-    const geometry = await RemoteVimx.fromPath(settings.vimx)
+    console.log('REMOTE')
+    const geometry =
+      source instanceof ArrayBuffer
+        ? new RemoteVimx(new BFast(source))
+        : RemoteVimx.fromPath(source)
+
+    console.log(geometry)
     if (!settings.progressive) {
       await geometry.bfast.forceDownload()
     }
 
     console.log('Downloading Scene Index..')
-    console.log(geometry)
     const [index, materials] = await Promise.all([
       geometry.getScene(),
       geometry.getMaterials()
@@ -122,11 +153,11 @@ export class VimX {
     const mapping = settings.noMap
       ? new ElementNoMapping()
       : new ElementMapping2(index)
-
+    console.log(mapping)
     // wait for bim data.
-    const bim = bimPromise ? await bimPromise : undefined
+    // const bim = bimPromise ? await bimPromise : undefined
 
-    return new VimX(settings, geometry, materials, bim, scene, mapping)
+    return new VimX(settings, geometry, materials, undefined, scene, mapping)
   }
 
   /**
@@ -141,9 +172,10 @@ export class VimX {
   /**
    * Creates a legacy vim object from given path to a vim file
    */
-  static async fromVim (vimPath: string, settings: VimSettings) {
+  static async fromVim (source: string | ArrayBuffer, settings: VimSettings) {
     const fullSettings = getFullSettings(settings)
-    const buffer = new RemoteBuffer(vimPath)
+    const buffer =
+      source instanceof ArrayBuffer ? source : new RemoteBuffer(source)
     const bfast = new BFast(buffer)
 
     // Fetch g3d data

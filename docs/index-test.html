@@ -28,41 +28,20 @@
     <script src="https://unpkg.com/three@0.143"></script>
     <script src="https://unpkg.com/vim-webgl-viewer@1.5.9-dev.5"></script>
     <script>
-      // Parse URL
       const params = new URLSearchParams(window.location.search)
       const url = params.has('vim')
         ? params.get('vim')
-        : 'https://vim.azureedge.net/samples/residence.vim'
-
-      let transparency = 'all'
-      if (params.has('transparency')) {
-        const t = params.get('transparency')
-        transparency = geometry.transparencyIsValid(t) ? t : 'all'
-      }
-
-      let download = 'geometry'
-      if (params.has('download')) {
-        const t = params.get('download')
-        const valid = t === 'download' || t === 'stream' || t === 'geometry'
-        download = valid ? t : 'geometry'
-      }
+        : 'https://vimdevelopment01storage.blob.core.windows.net/split-mesh/_WHITELEYS-VIM-MAIN_detached.v1.2.42.vimx'
 
       // Create Viewer
       const viewer = new VIM.Viewer()
-      load()
-      async function load() {
+      async function load(url) {
         time = Date.now()
-        const vim = await VIM.VimX.load(undefined, {
-          // filter: [...new Array(5).keys()], // .map((i) => i + 3500000),
-          // filterMode: 'instance',
+        const vim = await VIM.VimX.load(url, {
           progressive: true,
-          vimx: 'https://vimdevelopment01storage.blob.core.windows.net/split-mesh/_WHITELEYS-VIM-MAIN_detached.v1.2.42.vimx',
-          refreshInterval: 1200,
+          refreshInterval: 500,
           loadRooms: true,
           rotation: new VIM.THREE.Vector3(270, 0, 0),
-          streamBim: true,
-          noStrings: true,
-          noHeader: true,
         })
         onVimLoaded(vim)
       }
@@ -75,6 +54,28 @@
         vim.scene.start()
         globalThis.vim = vim
       }
+
+      // Add load file button
+      const input = document.createElement('input')
+      input.type = 'file'
+      document.body.prepend(input)
+
+      input.onchange = (e) => {
+        viewer.clear()
+        // getting a hold of the file reference
+        const file = e.target.files[0]
+
+        // setting up the reader
+        const reader = new FileReader()
+        reader.readAsArrayBuffer(file)
+
+        // Load vim once file is read.
+        reader.onload = (readerEvent) => {
+          load(readerEvent.target.result)
+        }
+      }
+
+      load(url)
 
       globalThis.viewer = viewer
       globalThis.THREE = THREE

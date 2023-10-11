@@ -52,7 +52,6 @@ export class RaycastResult {
     const sub = mesh.merged
       ? mesh.getSubmeshFromFace(hit.faceIndex)
       : mesh.getSubMesh(hit.instanceId)
-
     return sub.object
   }
 

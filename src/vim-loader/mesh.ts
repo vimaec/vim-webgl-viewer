@@ -229,4 +229,3 @@ export class StandardSubmesh {
     return this.mesh.vim.getObjectFromInstance(this.instance)
   }
 }
-

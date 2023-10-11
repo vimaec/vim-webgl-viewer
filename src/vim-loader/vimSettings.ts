@@ -7,6 +7,8 @@ import { Transparency } from './geometry'
 import * as THREE from 'three'
 import { FilterMode } from 'vim-format'
 
+export type FileType = 'vim' | 'vimx' | undefined
+
 /**
  * Config object for loading a vim
  */
@@ -54,8 +56,8 @@ export type VimSettings = {
   legacy: boolean
   /** EXPERIMENTAL: Set to true to stream geometry to the scene. */
   progressive: boolean
-  /** EXPERIMENTAL: URL of streamable geometry */
-  vimx: string
+  /** EXPERIMENTAL: URL of a legacy vim from which to get bim. */
+  bimPath: string
   /** EXPERIMENTAL: Only geometry satisfying filter will be loaded. */
   filter: number[]
   /** EXPERIMENTAL: Defines what property to use as the filter. */
@@ -65,6 +67,11 @@ export type VimSettings = {
    * EXPERIMENTAL: Defines the time in miliseconds between each scene refresh in progressive loading.
    */
   refreshInterval: number
+
+  /**
+   * EXPERIMENTAL: Scecifies file type if file type cannot or should not be infered from file extension.
+   */
+  fileType: FileType
 
   /** EXPERIMENTAL: Set to true to stream geometry. Can be really slow on big models. */
   streamGeometry: boolean
@@ -86,9 +93,10 @@ export const defaultConfig: VimSettings = {
   transparency: 'all',
 
   // progressive
+  fileType: undefined,
   legacy: false,
   progressive: false,
-  vimx: undefined,
+  bimPath: undefined,
   filter: undefined,
   filterMode: undefined,
   refreshInterval: 1000,
