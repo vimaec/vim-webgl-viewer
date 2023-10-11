@@ -1,4 +1,4 @@
-import { RemoteGeometry } from 'vim-format'
+import { BFast, G3dMesh, RemoteBuffer, RemoteVimx } from 'vim-format'
 import * as VIM from './vim'
 import * as THREE from 'three'
 
@@ -49,64 +49,41 @@ addLoadButton()
 async function load (url: string | ArrayBuffer) {
   time = Date.now()
   const vim = await VIM.VimX.load(
-    url,
-    // 'https://vimdevelopment01storage.blob.core.windows.net/split-mesh/tower/tower',
-    // 'https://vimdevelopment01storage.blob.core.windows.net/split-mesh/residence_test.vim',
-    // 'https://vimdevelopment01storage.blob.core.windows.net/split-mesh/residence_test_sort.zg3d',
-    // './residence_test_sort.zg3d',
-    // './kahua_test.vim',
-    // './kahua_test.vim',
-    // './skanska.nozip_test.vim',
-    // './tower/tower',
-    // './tower.vim',
-    // 'https://vimdevelopment01storage.blob.core.windows.net/samples/_MAIN-AEI_HSIB-R20.v1.2.73.vim',
-    // ' ./residence.vim',
+    // 'https://vimdevelopment01storage.blob.core.windows.net/split-mesh/_WHITELEYS-VIM-MAIN_detached.v1.2.42.vimx',
+    'https://vimdevelopment01storage.blob.core.windows.net/split-mesh/residence.vimx',
+    // url,
     // 'https://vim.azureedge.net/samples/residence.v1.2.75.vim',
     // './residence.vim',
     {
-      legacy: true,
-      // filter: [...new Array(1000).keys()], // .map((i) => i + 3500000),
-      // filter: [1],
+      // filter: [...new Array(5).keys()], // .map((i) => i + 3500000),
+      // filter: [0, 1],
       // filter: [363],
+      // legacy: true,
       // filterMode: 'instance',
-      // progressive: true,
-      // vimx: './residence.vimx',
-      // vimx: './skanska12_test.vim',
-      // vimx: 'https://vimdevelopment01storage.blob.core.windows.net/samples/skanska12_test.vim',
-      // vimx: 'https://vimdevelopment01storage.blob.core.windows.net/split-mesh/residence_test.vim',
-      batchSize: 100,
-      refreshInterval: 1000,
+      // legacy: true,
+      progressive: true,
+      refreshInterval: 200,
       loadRooms: true,
-      rotation: new VIM.THREE.Vector3(270, 0, 0),
-      streamBim: true,
-      noStrings: true,
-      noHeader: true
+      rotation: new VIM.THREE.Vector3(270, 0, 0)
+      // streamBim: true,
+      // noStrings: true,
+      // noHeader: true
     }
   )
   onVimLoaded(vim)
 }
 
-async function onVimLoaded (vim: VIM.VimRequest | VIM.Vim | VIM.VimX) {
-  if (vim instanceof VIM.VimRequest) {
-    request = vim
-    await request.send()
-    viewer.add(request.vim)
-  }
+async function onVimLoaded (vim: VIM.Vim | VIM.VimX) {
+  viewer.add(vim)
   if (vim instanceof VIM.Vim) {
-    viewer.add(request.vim)
+    console.log(`loaded in ${(Date.now() - time) / 1000} seconds`)
   }
+
   if (vim instanceof VIM.VimX) {
-    viewer.add(vim)
+    vim.scene.start()
     vim.onCompleted.subscribe(() =>
       console.log(`loaded in ${(Date.now() - time) / 1000} seconds`)
     )
-
-    const connection = vim.onUpdate.subscribe(() => {
-      console.log(vim.sceneLegacy.getBoundingBox())
-      viewer.camera.lerp(1).frame(vim.sceneLegacy.getBoundingBox())
-      connection()
-    })
-    vim.scene.start()
   }
 
   globalThis.vim = vim

@@ -26,7 +26,7 @@
   </head>
   <body>
     <script src="https://unpkg.com/three@0.143"></script>
-    <script src="https://unpkg.com/vim-webgl-viewer@1.5.14-dev.0"></script>
+    <script src="https://unpkg.com/vim-webgl-viewer@1.5.14-dev.1"></script>
     <script>
       const params = new URLSearchParams(window.location.search)
       const url = params.has('vim')
@@ -38,6 +38,7 @@
       async function load(url) {
         time = Date.now()
         const vim = await VIM.VimX.load(url, {
+          //legacy: true,
           progressive: true,
           refreshInterval: 500,
           loadRooms: true,
@@ -53,7 +54,6 @@
         }
 
         if (vim instanceof VIM.VimX) {
-          viewer.add(vim)
           vim.scene.start()
           vim.onCompleted.subscribe(() =>
             console.log(`loaded in ${(Date.now() - time) / 1000} seconds`)
