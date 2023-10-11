@@ -26,7 +26,7 @@
   </head>
   <body>
     <script src="https://unpkg.com/three@0.143"></script>
-    <script src="https://unpkg.com/vim-webgl-viewer@1.5.9-dev.5"></script>
+    <script src="https://unpkg.com/vim-webgl-viewer@1.5.14-dev.1"></script>
     <script>
       const params = new URLSearchParams(window.location.search)
       const url = params.has('vim')
@@ -37,28 +37,28 @@
       const viewer = new VIM.Viewer()
       async function load(url) {
         time = Date.now()
-        const vim = await VIM.VimX.load(undefined, {
-          // filter: [...new Array(5).keys()], // .map((i) => i + 3500000),
-          // filterMode: 'instance',
+        const vim = await VIM.VimX.load(url, {
+          //legacy: true,
           progressive: true,
-          vimx: url,
-          refreshInterval: 1200,
+          refreshInterval: 500,
           loadRooms: true,
           rotation: new VIM.THREE.Vector3(270, 0, 0),
-          streamBim: true,
-          noStrings: true,
-          noHeader: true,
         })
         onVimLoaded(vim)
       }
 
       async function onVimLoaded(vim) {
         viewer.add(vim)
-        vim.onCompleted.subscribe(() =>
+        if (vim instanceof VIM.Vim) {
           console.log(`loaded in ${(Date.now() - time) / 1000} seconds`)
-        )
-        vim.scene.start()
-        globalThis.vim = vim
+        }
+
+        if (vim instanceof VIM.VimX) {
+          vim.scene.start()
+          vim.onCompleted.subscribe(() =>
+            console.log(`loaded in ${(Date.now() - time) / 1000} seconds`)
+          )
+        }
       }
 
       // Add load file button
