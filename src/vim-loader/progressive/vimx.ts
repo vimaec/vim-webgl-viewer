@@ -85,7 +85,7 @@ export class VimX {
         throw new Error('Cannot open a vimx using legacy pipeline.')
       }
 
-      return new Loader().createRequest(source, fullSettings)
+      return new Loader().load(source, fullSettings)
     }
 
     if (type === 'vim') {
@@ -124,13 +124,11 @@ export class VimX {
     // const bimPromise = vimPath ? VimX.createBim(vimPath, settings) : null
 
     // Fetch geometry data
-    console.log('REMOTE')
     const geometry =
       source instanceof ArrayBuffer
         ? new RemoteVimx(new BFast(source))
         : RemoteVimx.fromPath(source)
 
-    console.log(geometry)
     if (!settings.progressive) {
       await geometry.bfast.forceDownload()
     }
@@ -153,7 +151,7 @@ export class VimX {
     const mapping = settings.noMap
       ? new ElementNoMapping()
       : new ElementMapping2(index)
-    console.log(mapping)
+
     // wait for bim data.
     // const bim = bimPromise ? await bimPromise : undefined
 
