@@ -155,7 +155,16 @@ export class VimX {
     // wait for bim data.
     // const bim = bimPromise ? await bimPromise : undefined
 
-    return new VimX(settings, geometry, materials, undefined, scene, mapping)
+    const vimx = new VimX(
+      settings,
+      geometry,
+      materials,
+      undefined,
+      scene,
+      mapping
+    )
+    vimx.vim.source = typeof source === 'string' ? source : undefined
+    return vimx
   }
 
   /**
@@ -191,6 +200,7 @@ export class VimX {
 
     // Return legacy vim
     const vim = new Vim(undefined, doc, g3d, scene, fullSettings, mapping)
+    vim.source = typeof source === 'string' ? source : undefined
     return vim
   }
 
