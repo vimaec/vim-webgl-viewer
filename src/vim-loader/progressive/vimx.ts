@@ -19,7 +19,9 @@ import {
   VimDocument,
   G3dMaterial,
   RemoteVimx,
-  G3d
+  G3d,
+  requestHeader,
+  VimHeader
 } from 'vim-format'
 import { SceneManager } from './sceneManager'
 
@@ -46,6 +48,7 @@ export class VimX {
   constructor (
     settings: VimSettings,
     geometry: RemoteVimx,
+    header: VimHeader,
     materials: G3dMaterial,
     bim: VimDocument | undefined,
     scene: SceneManager,
@@ -61,7 +64,7 @@ export class VimX {
     this.mapping = mapping
 
     this.vim = new Vim(
-      undefined,
+      header,
       bim,
       undefined,
       this.scene.scene,
@@ -124,25 +127,25 @@ export class VimX {
     // const bimPromise = vimPath ? VimX.createBim(vimPath, settings) : null
 
     // Fetch geometry data
-    const geometry =
+    const remoteVimx =
       source instanceof ArrayBuffer
         ? new RemoteVimx(new BFast(source))
         : RemoteVimx.fromPath(source)
 
     if (!settings.progressive) {
-      await geometry.bfast.forceDownload()
+      await remoteVimx.bfast.forceDownload()
     }
 
     console.log('Downloading Scene Index..')
     const [index, materials] = await Promise.all([
-      geometry.getScene(),
-      geometry.getMaterials()
+      remoteVimx.getScene(),
+      remoteVimx.getMaterials()
     ])
     console.log('Scene Index Downloaded.')
 
     // Create scene
     const scene = await SceneManager.create(
-      geometry,
+      remoteVimx,
       index,
       materials,
       settings
@@ -152,18 +155,22 @@ export class VimX {
       ? new ElementNoMapping()
       : new ElementMapping2(index)
 
+    const header = await remoteVimx.getHeader()
+
     // wait for bim data.
     // const bim = bimPromise ? await bimPromise : undefined
 
     const vimx = new VimX(
       settings,
-      geometry,
+      remoteVimx,
+      header,
       materials,
       undefined,
       scene,
       mapping
     )
     vimx.vim.source = typeof source === 'string' ? source : undefined
+
     return vimx
   }
 
@@ -197,9 +204,10 @@ export class VimX {
     // Create legacy mapping
     const doc = await VimDocument.createFromBfast(bfast, true)
     const mapping = await ElementMapping.fromG3d(g3d, doc)
+    const header = await requestHeader(bfast)
 
     // Return legacy vim
-    const vim = new Vim(undefined, doc, g3d, scene, fullSettings, mapping)
+    const vim = new Vim(header, doc, g3d, scene, fullSettings, mapping)
     vim.source = typeof source === 'string' ? source : undefined
     return vim
   }
