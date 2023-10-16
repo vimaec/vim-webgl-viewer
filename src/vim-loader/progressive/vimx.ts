@@ -21,7 +21,8 @@ import {
   RemoteVimx,
   G3d,
   requestHeader,
-  VimHeader
+  VimHeader,
+  G3dScene
 } from 'vim-format'
 import { SceneManager } from './sceneManager'
 
@@ -47,9 +48,7 @@ export class VimX {
 
   constructor (
     settings: VimSettings,
-    geometry: RemoteVimx,
-    header: VimHeader,
-    materials: G3dMaterial,
+    localVimx: LocalVimx,
     bim: VimDocument | undefined,
     scene: SceneManager,
     mapping: ElementMapping2 | ElementNoMapping
@@ -57,14 +56,12 @@ export class VimX {
     this.scene = scene
     this.sceneLegacy = this.scene.scene
     this.settings = getFullSettings(settings)
-    this.geometry = geometry
     this.bim = bim
-    this.materials = materials
 
     this.mapping = mapping
 
     this.vim = new Vim(
-      header,
+      localVimx.header,
       bim,
       undefined,
       this.scene.scene,
@@ -137,38 +134,23 @@ export class VimX {
     }
 
     console.log('Downloading Scene Index..')
-    const [index, materials] = await Promise.all([
-      remoteVimx.getScene(),
-      remoteVimx.getMaterials()
-    ])
+
+    const localVimx = await LocalVimx.fromRemote(remoteVimx)
     console.log('Scene Index Downloaded.')
 
     // Create scene
-    const scene = await SceneManager.create(
-      remoteVimx,
-      index,
-      materials,
-      settings
-    )
+    const scene = await SceneManager.create(localVimx, settings)
 
     const mapping = settings.noMap
       ? new ElementNoMapping()
-      : new ElementMapping2(index)
+      : new ElementMapping2(localVimx.scene)
 
     const header = await remoteVimx.getHeader()
 
     // wait for bim data.
     // const bim = bimPromise ? await bimPromise : undefined
 
-    const vimx = new VimX(
-      settings,
-      remoteVimx,
-      header,
-      materials,
-      undefined,
-      scene,
-      mapping
-    )
+    const vimx = new VimX(settings, localVimx, undefined, scene, mapping)
     vimx.vim.source = typeof source === 'string' ? source : undefined
 
     return vimx
@@ -219,5 +201,38 @@ export class VimX {
   dispose () {
     this.geometry.abort()
     this.scene.dispose()
+  }
+}
+
+export class LocalVimx {
+  private readonly vimx: RemoteVimx
+  readonly scene: G3dScene
+  readonly materials: G3dMaterial
+  readonly header: VimHeader
+
+  static async fromRemote (vimx: RemoteVimx) {
+    const [header, scene, materials] = await Promise.all([
+      await vimx.getHeader(),
+      await vimx.getScene(),
+      await vimx.getMaterials()
+    ])
+
+    return new LocalVimx(vimx, header, scene, materials)
+  }
+
+  private constructor (
+    vimx: RemoteVimx,
+    header: VimHeader,
+    scene: G3dScene,
+    material: G3dMaterial
+  ) {
+    this.vimx = vimx
+    this.header = header
+    this.scene = scene
+    this.materials = material
+  }
+
+  getMesh (mesh: number) {
+    return this.vimx.getMesh(mesh)
   }
 }

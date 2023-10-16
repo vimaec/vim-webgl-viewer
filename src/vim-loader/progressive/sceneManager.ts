@@ -3,7 +3,7 @@ import { VimSettings } from '../vimSettings'
 import { Vim } from '../vim'
 import { InsertableMesh } from './insertableMesh'
 import { InstancedMeshFactory } from './instancedMeshFactory'
-import { Scene } from '../../vim'
+import { LocalVimx, Scene } from '../../vim'
 
 import { G3dScene, G3dMaterial, RemoteVimx, G3dMesh } from 'vim-format'
 import { G3dSubset } from './g3dSubset'
@@ -63,16 +63,11 @@ export class SceneManager {
     return this._onCompleted.asEvent()
   }
 
-  static async create (
-    vimx: RemoteVimx,
-    index: G3dScene,
-    materials: G3dMaterial,
-    settings: VimSettings
-  ) {
+  static async create (localVimx: LocalVimx, settings: VimSettings) {
     const self = new SceneManager()
     self.settings = settings
 
-    self.subset = new G3dSubset(index).filter(
+    self.subset = new G3dSubset(localVimx.scene).filter(
       settings.filterMode,
       settings.filter
     )
@@ -80,13 +75,17 @@ export class SceneManager {
     self._nonUniques = self.subset.filterNonUniqueMeshes()
 
     const opaqueOffsets = self._uniques.getOffsets('opaque')
-    self._opaqueMesh = new InsertableMesh(opaqueOffsets, materials, false)
+    self._opaqueMesh = new InsertableMesh(
+      opaqueOffsets,
+      localVimx.materials,
+      false
+    )
     self._opaqueMesh.mesh.name = 'Opaque_Merged_Mesh'
 
     const transparentOffsets = self._uniques.getOffsets('transparent')
     self._transparentMesh = new InsertableMesh(
       transparentOffsets,
-      materials,
+      localVimx.materials,
       true
     )
     self._transparentMesh.mesh.name = 'Transparent_Merged_Mesh'
@@ -95,12 +94,12 @@ export class SceneManager {
     self.scene.addMesh(self._transparentMesh)
     self.scene.addMesh(self._opaqueMesh)
 
-    self._meshFactory = new InstancedMeshFactory(materials)
+    self._meshFactory = new InstancedMeshFactory(localVimx.materials)
 
     self._synchronizer = new LoadingSynchronizer(
       self._uniques,
       self._nonUniques,
-      (mesh) => vimx.getMesh(mesh),
+      (mesh) => localVimx.getMesh(mesh),
       (mesh, index) => self.mergeMesh(mesh, index),
       (mesh, index) =>
         self.instanceMesh(mesh, self._nonUniques.getMeshInstances(index))
