@@ -15,7 +15,7 @@ import { Camera } from '../camera/camera'
 import { RenderingSection } from './renderingSection'
 import { RenderingComposer } from './renderingComposer'
 import { Settings } from '../viewerSettings'
-import { SceneManager } from '../../vim-loader/progressive/sceneManager'
+import { DynamicScene } from '../../vim-loader/progressive/dynamicScene'
 
 /**
  * Manages how vim objects are added and removed from the THREE.Scene to be rendered
@@ -199,8 +199,8 @@ export class Renderer {
   /**
    * Add object to be rendered
    */
-  add (target: SceneManager | Scene | THREE.Object3D) {
-    if (target instanceof SceneManager) {
+  add (target: DynamicScene | Scene | THREE.Object3D) {
+    if (target instanceof DynamicScene) {
       target = target.scene
       target.renderer = this
     }
@@ -221,8 +221,8 @@ export class Renderer {
   /**
    * Remove object from rendering
    */
-  remove (target: SceneManager | Scene | THREE.Object3D) {
-    if (target instanceof SceneManager) {
+  remove (target: DynamicScene | Scene | THREE.Object3D) {
+    if (target instanceof DynamicScene) {
       target = target.scene
       target.renderer = undefined
     }

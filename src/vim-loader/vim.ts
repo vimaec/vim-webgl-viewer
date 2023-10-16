@@ -14,7 +14,7 @@ import {
 } from './elementMapping'
 import { Submesh } from './mesh'
 import { ISignal, SignalDispatcher } from 'ste-signals'
-import { SceneManager } from './progressive/sceneManager'
+import { DynamicScene } from './progressive/dynamicScene'
 
 /**
  * Container for the built three meshes and the vim data from which it was built.
@@ -41,7 +41,7 @@ export class Vim {
     header: VimHeader | undefined,
     document: VimDocument,
     g3d: G3d | undefined,
-    scene: Scene | SceneManager,
+    scene: Scene | DynamicScene,
     settings: VimSettings,
     map: ElementMapping | ElementNoMapping | ElementMapping2
   ) {
@@ -49,7 +49,7 @@ export class Vim {
     this.bim = document
     this.g3d = g3d
     scene.vim = this
-    this.scene = scene instanceof SceneManager ? scene.scene : scene
+    this.scene = scene instanceof DynamicScene ? scene.scene : scene
     this.settings = settings
     this.scene.applyMatrix4(this.settings.matrix)
 

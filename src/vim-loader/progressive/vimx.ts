@@ -25,7 +25,7 @@ import {
   G3dScene,
   FilterMode
 } from 'vim-format'
-import { SceneManager } from './sceneManager'
+import { DynamicScene } from './dynamicScene'
 import { G3dSubset } from './g3dSubset'
 
 export class VimX {
@@ -33,7 +33,7 @@ export class VimX {
   geometry: RemoteVimx
   materials: G3dMaterial
   bim: VimDocument | undefined
-  scene: SceneManager
+  scene: DynamicScene
   sceneLegacy: Scene // TODO : Remove
   mapping: ElementMapping2 | ElementNoMapping
 
@@ -52,7 +52,7 @@ export class VimX {
     settings: VimSettings,
     localVimx: LocalVimx,
     bim: VimDocument | undefined,
-    scene: SceneManager,
+    scene: DynamicScene,
     mapping: ElementMapping2 | ElementNoMapping
   ) {
     this.scene = scene
@@ -140,7 +140,7 @@ export class VimX {
 
     // Create scene
     const subset = localVimx.getSubset(settings.filterMode, settings.filter)
-    const scene = new SceneManager(localVimx, subset)
+    const scene = new DynamicScene(localVimx, subset)
 
     const mapping = settings.noMap
       ? new ElementNoMapping()

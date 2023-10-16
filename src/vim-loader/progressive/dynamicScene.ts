@@ -14,7 +14,7 @@ import { LoadingSynchronizer } from './loadingSynchronizer'
 /**
  * Manages geometry downloads and loads it into a scene for rendering.
  */
-export class SceneManager {
+export class DynamicScene {
   private settings: VimSettings
 
   subset: G3dSubset
