@@ -100,7 +100,7 @@ export class SceneManager {
     self._synchronizer = new LoadingSynchronizer(
       self._uniques,
       self._nonUniques,
-      vimx,
+      (mesh) => vimx.getMesh(mesh),
       (mesh, index) => self.mergeMesh(mesh, index),
       (mesh, index) =>
         self.instanceMesh(mesh, self._nonUniques.getMeshInstances(index))

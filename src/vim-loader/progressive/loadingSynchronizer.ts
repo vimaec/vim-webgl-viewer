@@ -11,8 +11,7 @@ export class LoadingSynchronizer {
   done = false
   uniques: G3dSubset
   nonUniques: G3dSubset
-  geometry: RemoteVimx
-
+  getMesh: (mesh: number) => Promise<G3dMesh>
   mergeAction: (mesh: G3dMesh, index: number) => void
   instanceAction: (mesh: G3dMesh, index: number) => void
 
@@ -22,13 +21,13 @@ export class LoadingSynchronizer {
   constructor (
     uniques: G3dSubset,
     nonUniques: G3dSubset,
-    geometry: RemoteVimx,
+    getMesh: (mesh: number) => Promise<G3dMesh>,
     mergeAction: (mesh: G3dMesh, index: number) => void,
     instanceAction: (mesh: G3dMesh, index: number) => void
   ) {
     this.uniques = uniques
     this.nonUniques = nonUniques
-    this.geometry = geometry
+    this.getMesh = getMesh
     this.mergeAction = mergeAction
     this.instanceAction = instanceAction
   }
@@ -97,12 +96,12 @@ export class LoadingSynchronizer {
   }
 
   async merge (mesh: number, index: number) {
-    const m = await this.geometry.getMesh(mesh)
+    const m = await this.getMesh(mesh)
     this.mergeQueue.push(() => this.mergeAction(m, index))
   }
 
   async instance (mesh: number, index: number) {
-    const m = await this.geometry.getMesh(mesh)
+    const m = await this.getMesh(mesh)
     this.instanceQueue.push(() => this.instanceAction(m, index))
   }
 }
