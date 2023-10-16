@@ -139,7 +139,8 @@ export class VimX {
     console.log('Scene Index Downloaded.')
 
     // Create scene
-    const scene = SceneManager.create(localVimx, settings)
+    const subset = localVimx.getSubset(settings.filterMode, settings.filter)
+    const scene = SceneManager.create(localVimx, subset)
 
     const mapping = settings.noMap
       ? new ElementNoMapping()

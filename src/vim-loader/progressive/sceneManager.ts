@@ -63,11 +63,9 @@ export class SceneManager {
     return this._onCompleted.asEvent()
   }
 
-  static create (localVimx: LocalVimx, settings: VimSettings) {
+  static create (localVimx: LocalVimx, subset: G3dSubset) {
     const self = new SceneManager()
-    self.settings = settings
-
-    self.subset = localVimx.getSubset(settings.filterMode, settings.filter)
+    self.subset = subset
     self._uniques = self.subset.filterUniqueMeshes()
     self._nonUniques = self.subset.filterNonUniqueMeshes()
 
