@@ -115,7 +115,7 @@ export class SceneManager {
     }
   }
 
-  async start () {
+  async start (refreshInterval: number) {
     if (this._started) {
       return
     }
@@ -126,7 +126,7 @@ export class SceneManager {
 
     // Loop until done or disposed.
     while (!this._synchronizer.isDone) {
-      await this.wait(this.settings.refreshInterval)
+      await this.wait(refreshInterval)
       if (this._disposed) {
         return
       }
