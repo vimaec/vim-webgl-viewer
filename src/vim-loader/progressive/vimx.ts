@@ -140,7 +140,7 @@ export class VimX {
 
     // Create scene
     const subset = localVimx.getSubset(settings.filterMode, settings.filter)
-    const scene = SceneManager.create(localVimx, subset)
+    const scene = new SceneManager(localVimx, subset)
 
     const mapping = settings.noMap
       ? new ElementNoMapping()

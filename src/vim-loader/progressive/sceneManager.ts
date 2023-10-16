@@ -63,44 +63,43 @@ export class SceneManager {
     return this._onCompleted.asEvent()
   }
 
-  static create (localVimx: LocalVimx, subset: G3dSubset) {
-    const self = new SceneManager()
-    self.subset = subset
-    self._uniques = self.subset.filterUniqueMeshes()
-    self._nonUniques = self.subset.filterNonUniqueMeshes()
+  constructor (localVimx: LocalVimx, subset: G3dSubset) {
+    this.subset = subset
+    this._uniques = this.subset.filterUniqueMeshes()
+    this._nonUniques = this.subset.filterNonUniqueMeshes()
 
-    const opaqueOffsets = self._uniques.getOffsets('opaque')
-    self._opaqueMesh = new InsertableMesh(
+    const opaqueOffsets = this._uniques.getOffsets('opaque')
+    this._opaqueMesh = new InsertableMesh(
       opaqueOffsets,
       localVimx.materials,
       false
     )
-    self._opaqueMesh.mesh.name = 'Opaque_Merged_Mesh'
+    this._opaqueMesh.mesh.name = 'Opaque_Merged_Mesh'
 
-    const transparentOffsets = self._uniques.getOffsets('transparent')
-    self._transparentMesh = new InsertableMesh(
+    const transparentOffsets = this._uniques.getOffsets('transparent')
+    this._transparentMesh = new InsertableMesh(
       transparentOffsets,
       localVimx.materials,
       true
     )
-    self._transparentMesh.mesh.name = 'Transparent_Merged_Mesh'
+    this._transparentMesh.mesh.name = 'Transparent_Merged_Mesh'
 
-    self.scene = new Scene(undefined)
-    self.scene.addMesh(self._transparentMesh)
-    self.scene.addMesh(self._opaqueMesh)
+    this.scene = new Scene(undefined)
+    this.scene.addMesh(this._transparentMesh)
+    this.scene.addMesh(this._opaqueMesh)
 
-    self._meshFactory = new InstancedMeshFactory(localVimx.materials)
+    this._meshFactory = new InstancedMeshFactory(localVimx.materials)
 
-    self._synchronizer = new LoadingSynchronizer(
-      self._uniques,
-      self._nonUniques,
+    this._synchronizer = new LoadingSynchronizer(
+      this._uniques,
+      this._nonUniques,
       (mesh) => localVimx.getMesh(mesh),
-      (mesh, index) => self.mergeMesh(mesh, index),
+      (mesh, index) => this.mergeMesh(mesh, index),
       (mesh, index) =>
-        self.instanceMesh(mesh, self._nonUniques.getMeshInstances(index))
+        this.instanceMesh(mesh, this._nonUniques.getMeshInstances(index))
     )
 
-    return self
+    return this
   }
 
   dispose () {
