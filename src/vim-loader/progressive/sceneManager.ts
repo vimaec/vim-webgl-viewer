@@ -95,7 +95,7 @@ export class SceneManager {
     self.scene.addMesh(self._transparentMesh)
     self.scene.addMesh(self._opaqueMesh)
 
-    self._meshFactory = new InstancedMeshFactory(settings, materials)
+    self._meshFactory = new InstancedMeshFactory(materials)
 
     self._synchronizer = new LoadingSynchronizer(
       self._uniques,

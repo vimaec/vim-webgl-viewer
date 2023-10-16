@@ -16,7 +16,7 @@ export class LegacyMeshFactory {
     this.g3d = g3d
     this.materials = materials
     this.settings = settings
-    this.instancedFactory = new InstancedMeshFactory(settings, materials)
+    this.instancedFactory = new InstancedMeshFactory(materials)
   }
 
   createScene () {
@@ -61,7 +61,7 @@ export class LegacyMeshFactory {
   }
 
   addInstancedMeshes (scene: Scene, subset: G3dSubset) {
-    const factory = new InstancedMeshFactory(this.settings, this.materials)
+    const factory = new InstancedMeshFactory(this.materials)
 
     const count2 = subset.getMeshCount()
     for (let m = 0; m < count2; m++) {

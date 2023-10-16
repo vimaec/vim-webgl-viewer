@@ -4,12 +4,10 @@ import { Geometry, Settings, Vim, VimMaterials, VimSettings } from '../../vim'
 import { InstancedMesh } from './instancedMesh'
 
 export class InstancedMeshFactory {
-  settings: VimSettings
   materials: G3dMaterial
 
-  constructor (settings: VimSettings, materials: G3dMaterial) {
+  constructor (materials: G3dMaterial) {
     this.materials = materials
-    this.settings = settings
   }
 
   createTransparent (mesh: G3dMesh, instances: number[]) {
