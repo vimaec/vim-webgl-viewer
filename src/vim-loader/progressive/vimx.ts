@@ -22,9 +22,11 @@ import {
   G3d,
   requestHeader,
   VimHeader,
-  G3dScene
+  G3dScene,
+  FilterMode
 } from 'vim-format'
 import { SceneManager } from './sceneManager'
+import { G3dSubset } from './g3dSubset'
 
 export class VimX {
   settings: VimSettings
@@ -129,17 +131,15 @@ export class VimX {
         ? new RemoteVimx(new BFast(source))
         : RemoteVimx.fromPath(source)
 
-    if (!settings.progressive) {
-      await remoteVimx.bfast.forceDownload()
-    }
-
     console.log('Downloading Scene Index..')
-
-    const localVimx = await LocalVimx.fromRemote(remoteVimx)
+    const localVimx = await LocalVimx.fromRemote(
+      remoteVimx,
+      !settings.progressive
+    )
     console.log('Scene Index Downloaded.')
 
     // Create scene
-    const scene = await SceneManager.create(localVimx, settings)
+    const scene = SceneManager.create(localVimx, settings)
 
     const mapping = settings.noMap
       ? new ElementNoMapping()
@@ -210,7 +210,10 @@ export class LocalVimx {
   readonly materials: G3dMaterial
   readonly header: VimHeader
 
-  static async fromRemote (vimx: RemoteVimx) {
+  static async fromRemote (vimx: RemoteVimx, downloadMeshes: boolean) {
+    if (downloadMeshes) {
+      await vimx.bfast.forceDownload()
+    }
     const [header, scene, materials] = await Promise.all([
       await vimx.getHeader(),
       await vimx.getScene(),
@@ -234,5 +237,9 @@ export class LocalVimx {
 
   getMesh (mesh: number) {
     return this.vimx.getMesh(mesh)
+  }
+
+  getSubset (mode: FilterMode, filter: number[]) {
+    return new G3dSubset(this.scene).filter(mode, filter)
   }
 }
