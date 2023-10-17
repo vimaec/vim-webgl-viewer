@@ -63,8 +63,10 @@ export class DynamicScene {
     return this._onCompleted.asEvent()
   }
 
-  constructor (localVimx: LocalVimx, subset: G3dSubset) {
+  constructor (scene: Scene, localVimx: LocalVimx, subset: G3dSubset) {
     this.subset = subset
+    this.scene = scene
+
     this._uniques = this.subset.filterUniqueMeshes()
     this._nonUniques = this.subset.filterNonUniqueMeshes()
 
@@ -84,7 +86,6 @@ export class DynamicScene {
     )
     this._transparentMesh.mesh.name = 'Transparent_Merged_Mesh'
 
-    this.scene = new Scene(undefined)
     this.scene.addMesh(this._transparentMesh)
     this.scene.addMesh(this._opaqueMesh)
 
@@ -108,7 +109,7 @@ export class DynamicScene {
       this._synchronizer.abort()
       this._onUpdate.clear()
       this._onCompleted.clear()
-      this.scene.dispose()
+      // this.scene.dispose()
     }
   }
 

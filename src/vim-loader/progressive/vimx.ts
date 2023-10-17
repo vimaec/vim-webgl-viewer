@@ -31,31 +31,34 @@ import { G3dSubset } from './g3dSubset'
 export class VimX {
   settings: VimSettings
   bim: VimDocument | undefined
-  scene: DynamicScene
+  dynamicScene: DynamicScene
   mapping: ElementMapping2 | ElementNoMapping
 
+  scene: Scene
   localVimx: LocalVimx
-  scenes: DynamicScene[]
+  scenes = new Array<DynamicScene>()
   renderer: IRenderer
   // Vim instance here is only for transition.
   vim: Vim
 
   get onUpdate () {
-    return this.scene.onUpdate
+    return this.dynamicScene.onUpdate
   }
 
   get onCompleted () {
-    return this.scene.onCompleted
+    return this.dynamicScene.onCompleted
   }
 
   constructor (
     settings: VimSettings,
     localVimx: LocalVimx,
     bim: VimDocument | undefined,
-    scene: DynamicScene,
+    scene: Scene,
+    dynamicScene: DynamicScene,
     mapping: ElementMapping2 | ElementNoMapping
   ) {
     this.scene = scene
+    this.dynamicScene = dynamicScene
     this.settings = getFullSettings(settings)
     this.bim = bim
     this.localVimx = localVimx
@@ -65,7 +68,7 @@ export class VimX {
       localVimx.header,
       bim,
       undefined,
-      this.scene.scene,
+      this.dynamicScene.scene,
       settings,
       mapping
     )
@@ -138,8 +141,9 @@ export class VimX {
     console.log('Scene Index Downloaded.')
 
     // Create scene
+    const scene = new Scene(undefined)
     const subset = localVimx.getSubset(settings.filterMode, settings.filter)
-    const scene = new DynamicScene(localVimx, subset)
+    const dynamicScene = new DynamicScene(scene, localVimx, subset)
 
     const mapping = settings.noMap
       ? new ElementNoMapping()
@@ -148,7 +152,14 @@ export class VimX {
     // wait for bim data.
     // const bim = bimPromise ? await bimPromise : undefined
 
-    const vimx = new VimX(settings, localVimx, undefined, scene, mapping)
+    const vimx = new VimX(
+      settings,
+      localVimx,
+      undefined,
+      scene,
+      dynamicScene,
+      mapping
+    )
     vimx.vim.source = typeof source === 'string' ? source : undefined
 
     return vimx
@@ -194,14 +205,15 @@ export class VimX {
 
   async add (filterMode: FilterMode, filter: number[]) {
     const subset = this.localVimx.getSubset(filterMode, filter)
-    const scene = new DynamicScene(this.localVimx, subset)
+    const scene = new DynamicScene(this.scene, this.localVimx, subset)
     scene.scene.applyMatrix4(this.settings.matrix)
+    scene.vim = this.vim
     this.renderer.add(scene.scene)
     await scene.start(this.settings.refreshInterval)
   }
 
   start (refreshInterval: number) {
-    this.scene.start(refreshInterval)
+    this.dynamicScene.start(refreshInterval)
   }
 
   abort () {
@@ -210,7 +222,7 @@ export class VimX {
 
   dispose () {
     this.localVimx.abort()
-    this.scene.dispose()
+    this.dynamicScene.dispose()
   }
 }
 
