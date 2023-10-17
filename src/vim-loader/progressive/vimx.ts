@@ -31,7 +31,6 @@ import { G3dSubset } from './g3dSubset'
 export class VimX {
   settings: VimSettings
   geometry: RemoteVimx
-  materials: G3dMaterial
   bim: VimDocument | undefined
   scene: DynamicScene
   mapping: ElementMapping2 | ElementNoMapping
