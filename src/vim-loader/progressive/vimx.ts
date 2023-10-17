@@ -30,11 +30,11 @@ import { G3dSubset } from './g3dSubset'
 
 export class VimX {
   settings: VimSettings
-  geometry: RemoteVimx
   bim: VimDocument | undefined
   scene: DynamicScene
   mapping: ElementMapping2 | ElementNoMapping
 
+  localVimx: LocalVimx
   scenes: DynamicScene[]
 
   // Vim instance here is only for transition.
@@ -58,7 +58,7 @@ export class VimX {
     this.scene = scene
     this.settings = getFullSettings(settings)
     this.bim = bim
-
+    this.localVimx = localVimx
     this.mapping = mapping
 
     this.vim = new Vim(
@@ -201,7 +201,7 @@ export class VimX {
   }
 
   dispose () {
-    this.geometry.abort()
+    this.localVimx.abort()
     this.scene.dispose()
   }
 }
@@ -243,5 +243,9 @@ export class LocalVimx {
 
   getSubset (mode: FilterMode, filter: number[]) {
     return new G3dSubset(this.scene).filter(mode, filter)
+  }
+
+  abort () {
+    this.vimx.abort()
   }
 }
