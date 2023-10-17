@@ -34,8 +34,9 @@ export class VimX {
   materials: G3dMaterial
   bim: VimDocument | undefined
   scene: DynamicScene
-  sceneLegacy: Scene // TODO : Remove
   mapping: ElementMapping2 | ElementNoMapping
+
+  scenes: DynamicScene[]
 
   // Vim instance here is only for transition.
   vim: Vim
@@ -56,7 +57,6 @@ export class VimX {
     mapping: ElementMapping2 | ElementNoMapping
   ) {
     this.scene = scene
-    this.sceneLegacy = this.scene.scene
     this.settings = getFullSettings(settings)
     this.bim = bim
 
