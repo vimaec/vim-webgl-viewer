@@ -165,6 +165,9 @@ export class Viewer {
 
     this._environment = new Environment(this.settings)
     this._environment.getObjects().forEach((o) => this.renderer.add(o))
+    this.renderer.onUpdate.subscribe((_) => {
+      this._environment.adaptToContent(this.renderer.getBoundingBox())
+    })
 
     // Input and Selection
     this.selection = new Selection(this.materials)
@@ -212,6 +215,10 @@ export class Viewer {
   }
 
   add (vim: Vim | VimX, frameCamera = true) {
+    if (vim instanceof VimX) {
+      vim.renderer = this.renderer
+    }
+
     if (this._vims.has(vim)) {
       throw new Error('Vim cannot be added again, unless removed first.')
     }

@@ -36,7 +36,7 @@ export class VimX {
 
   localVimx: LocalVimx
   scenes: DynamicScene[]
-
+  renderer: IRenderer
   // Vim instance here is only for transition.
   vim: Vim
 
@@ -192,6 +192,14 @@ export class VimX {
     return vim
   }
 
+  async add (filterMode: FilterMode, filter: number[]) {
+    const subset = this.localVimx.getSubset(filterMode, filter)
+    const scene = new DynamicScene(this.localVimx, subset)
+    scene.scene.applyMatrix4(this.settings.matrix)
+    this.renderer.add(scene.scene)
+    await scene.start(this.settings.refreshInterval)
+  }
+
   start (refreshInterval: number) {
     this.scene.start(refreshInterval)
   }
@@ -248,4 +256,9 @@ export class LocalVimx {
   abort () {
     this.vimx.abort()
   }
+}
+
+export interface IRenderer {
+  add(scene: Scene)
+  remove(scene: Scene)
 }

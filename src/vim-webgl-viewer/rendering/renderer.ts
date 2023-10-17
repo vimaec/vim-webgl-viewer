@@ -9,18 +9,19 @@ import { RenderScene } from './renderScene'
 import { VimMaterials } from '../../vim-loader/materials/materials'
 import { CSS2DRenderer } from 'three/examples/jsm/renderers/CSS2DRenderer'
 import { SimpleEventDispatcher } from 'ste-simple-events'
-import { Vim } from '../../vim'
+import { IRenderer, Vim } from '../../vim'
 
 import { Camera } from '../camera/camera'
 import { RenderingSection } from './renderingSection'
 import { RenderingComposer } from './renderingComposer'
 import { Settings } from '../viewerSettings'
 import { DynamicScene } from '../../vim-loader/progressive/dynamicScene'
+import { SignalDispatcher } from 'ste-signals'
 
 /**
  * Manages how vim objects are added and removed from the THREE.Scene to be rendered
  */
-export class Renderer {
+export class Renderer implements IRenderer {
   /**
    * Three webgl renderer
    */
@@ -46,6 +47,7 @@ export class Renderer {
   private _composer: RenderingComposer
   private _materials: VimMaterials
   private _onSceneUpdate = new SimpleEventDispatcher<Vim>()
+  private _onUpdate = new SignalDispatcher()
   private _renderText: boolean | undefined
   private _needsUpdate: boolean
   private _skipAntialias: boolean
@@ -151,6 +153,13 @@ export class Renderer {
     return this._onSceneUpdate.asEvent()
   }
 
+  /**
+   * Event called when a scene is added or removed.
+   */
+  get onUpdate () {
+    return this._onUpdate.asEvent()
+  }
+
   /** 2D renderer will render to screen when this is true. */
   get textEnabled () {
     return this._renderText ?? false
@@ -211,6 +220,7 @@ export class Renderer {
         return false
       }
       target.renderer = this
+      this._onUpdate.dispatch()
     }
 
     this._scene.add(target)
@@ -227,6 +237,7 @@ export class Renderer {
       target.renderer = undefined
     }
     this._scene.remove(target)
+    this._onUpdate.dispatch()
     this._needsUpdate = true
   }
 
