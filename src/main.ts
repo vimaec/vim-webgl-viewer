@@ -80,7 +80,7 @@ async function onVimLoaded (vim: VIM.Vim | VIM.VimX) {
   }
 
   if (vim instanceof VIM.VimX) {
-    vim.scene.start(vim.settings.refreshInterval)
+    vim.start(vim.settings.refreshInterval)
     vim.onCompleted.subscribe(() =>
       console.log(`loaded in ${(Date.now() - time) / 1000} seconds`)
     )

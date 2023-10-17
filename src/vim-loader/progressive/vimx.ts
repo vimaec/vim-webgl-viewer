@@ -146,8 +146,6 @@ export class VimX {
       ? new ElementNoMapping()
       : new ElementMapping2(localVimx.scene)
 
-    const header = await remoteVimx.getHeader()
-
     // wait for bim data.
     // const bim = bimPromise ? await bimPromise : undefined
 
@@ -193,6 +191,10 @@ export class VimX {
     const vim = new Vim(header, doc, g3d, scene, fullSettings, mapping)
     vim.source = typeof source === 'string' ? source : undefined
     return vim
+  }
+
+  start (refreshInterval: number) {
+    this.scene.start(refreshInterval)
   }
 
   abort () {
