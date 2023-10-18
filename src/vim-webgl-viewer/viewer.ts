@@ -165,7 +165,7 @@ export class Viewer {
 
     this._environment = new Environment(this.settings)
     this._environment.getObjects().forEach((o) => this.renderer.add(o))
-    this.renderer.onUpdate.subscribe((_) => {
+    this.renderer.onSceneUpdated.subscribe((_) => {
       this._environment.adaptToContent(this.renderer.getBoundingBox())
     })
 

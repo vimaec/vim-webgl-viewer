@@ -27,7 +27,7 @@ export class Vim {
   readonly bim: VimDocument
   readonly g3d: G3d | undefined
   readonly settings: VimSettings
-  readonly scene: Scene
+  scene: Scene
   readonly map: ElementMapping | ElementNoMapping | ElementMapping2
 
   private _elementToObject: Map<number, Object> = new Map<number, Object>()

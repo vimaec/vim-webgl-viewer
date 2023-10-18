@@ -15,8 +15,6 @@ import { LoadingSynchronizer } from './loadingSynchronizer'
  * Manages geometry downloads and loads it into a scene for rendering.
  */
 export class DynamicScene {
-  private settings: VimSettings
-
   subset: G3dSubset
 
   private _uniques: G3dSubset
@@ -26,7 +24,8 @@ export class DynamicScene {
 
   private _synchronizer: LoadingSynchronizer
   private _meshFactory: InstancedMeshFactory
-  private _meshQueue = new Array<InstancedMesh>()
+  private _meshes = new Array<InstancedMesh>()
+  private _pushedMesh = 0
 
   private _disposed: boolean = false
   private _started: boolean = false
@@ -34,9 +33,7 @@ export class DynamicScene {
   scene: Scene
 
   getBoundingBox () {
-    const box = this.subset.getBoundingBox()
-    box.applyMatrix4(this.settings.matrix)
-    return box
+    return this.subset.getBoundingBox()
   }
 
   /**
@@ -66,6 +63,7 @@ export class DynamicScene {
   constructor (scene: Scene, localVimx: LocalVimx, subset: G3dSubset) {
     this.subset = subset
     this.scene = scene
+    this.vim = scene.vim
 
     this._uniques = this.subset.filterUniqueMeshes()
     this._nonUniques = this.subset.filterNonUniqueMeshes()
@@ -150,17 +148,17 @@ export class DynamicScene {
     const transparent = this._meshFactory.createTransparent(g3dMesh, instances)
 
     if (opaque) {
-      this._meshQueue.push(opaque)
+      this._meshes.push(opaque)
     }
     if (transparent) {
-      this._meshQueue.push(transparent)
+      this._meshes.push(transparent)
     }
   }
 
   private updateMeshes () {
     // Update Instanced meshes
-    while (this._meshQueue.length > 0) {
-      const mesh = this._meshQueue.pop()
+    while (this._pushedMesh < this._meshes.length) {
+      const mesh = this._meshes[this._pushedMesh++]
       this.scene.addMesh(mesh)
     }
 

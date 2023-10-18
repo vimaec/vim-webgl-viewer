@@ -27,11 +27,11 @@ import {
 } from 'vim-format'
 import { DynamicScene } from './dynamicScene'
 import { G3dSubset } from './g3dSubset'
+import { Console } from 'console'
 
 export class VimX {
   settings: VimSettings
   bim: VimDocument | undefined
-  dynamicScene: DynamicScene
   mapping: ElementMapping2 | ElementNoMapping
 
   scene: Scene
@@ -41,25 +41,15 @@ export class VimX {
   // Vim instance here is only for transition.
   vim: Vim
 
-  get onUpdate () {
-    return this.dynamicScene.onUpdate
-  }
-
-  get onCompleted () {
-    return this.dynamicScene.onCompleted
-  }
-
   constructor (
     settings: VimSettings,
     localVimx: LocalVimx,
     bim: VimDocument | undefined,
     scene: Scene,
-    dynamicScene: DynamicScene,
     mapping: ElementMapping2 | ElementNoMapping
   ) {
     this.scene = scene
-    this.dynamicScene = dynamicScene
-    this.settings = getFullSettings(settings)
+    this.settings = settings
     this.bim = bim
     this.localVimx = localVimx
     this.mapping = mapping
@@ -68,55 +58,9 @@ export class VimX {
       localVimx.header,
       bim,
       undefined,
-      this.dynamicScene.scene,
+      scene,
       settings,
       mapping
-    )
-  }
-
-  /**
-   * Loads given vim or vimx file using progressive pipeline unless the legacy flag is true.
-   */
-  static async load (
-    source: string | ArrayBuffer,
-    settings: VimPartialSettings
-  ) {
-    const fullSettings = getFullSettings(settings)
-    const type = this.determineFileType(source, fullSettings)
-
-    if (fullSettings.legacy) {
-      if (type === 'vimx') {
-        throw new Error('Cannot open a vimx using legacy pipeline.')
-      }
-
-      return new Loader().load(source, fullSettings)
-    }
-
-    if (type === 'vim') {
-      return VimX.fromVim(source, fullSettings)
-    }
-
-    if (type === 'vimx') {
-      return VimX.fromVimX(source, fullSettings)
-    }
-  }
-
-  static determineFileType (
-    vimPath: string | ArrayBuffer,
-    settings: VimSettings
-  ) {
-    if (settings.fileType === 'vim') return 'vim'
-    if (settings.fileType === 'vimx') return 'vimx'
-    if (vimPath instanceof ArrayBuffer) {
-      throw new Error(
-        'Cannot infer file type for ArrayBuffer. Please specify file type in options.'
-      )
-    }
-    if (vimPath.endsWith('vim')) return 'vim'
-    if (vimPath.endsWith('vimx')) return 'vimx'
-
-    throw new Error(
-      'Could not infer file type from extension. Please specify file type in options.'
     )
   }
 
@@ -142,24 +86,12 @@ export class VimX {
 
     // Create scene
     const scene = new Scene(undefined)
-    const subset = localVimx.getSubset(settings.filterMode, settings.filter)
-    const dynamicScene = new DynamicScene(scene, localVimx, subset)
-
-    const mapping = settings.noMap
-      ? new ElementNoMapping()
-      : new ElementMapping2(localVimx.scene)
+    const mapping = new ElementMapping2(localVimx.scene)
 
     // wait for bim data.
     // const bim = bimPromise ? await bimPromise : undefined
 
-    const vimx = new VimX(
-      settings,
-      localVimx,
-      undefined,
-      scene,
-      dynamicScene,
-      mapping
-    )
+    const vimx = new VimX(settings, localVimx, undefined, scene, mapping)
     vimx.vim.source = typeof source === 'string' ? source : undefined
 
     return vimx
@@ -203,17 +135,37 @@ export class VimX {
     return vim
   }
 
-  async add (filterMode: FilterMode, filter: number[]) {
-    const subset = this.localVimx.getSubset(filterMode, filter)
-    const scene = new DynamicScene(this.scene, this.localVimx, subset)
-    scene.scene.applyMatrix4(this.settings.matrix)
-    scene.vim = this.vim
-    this.renderer.add(scene.scene)
-    await scene.start(this.settings.refreshInterval)
+  async loadAll () {
+    return this.add(undefined, undefined)
   }
 
-  start (refreshInterval: number) {
-    this.dynamicScene.start(refreshInterval)
+  clear () {
+    console.log('clear')
+    this.renderer?.remove(this.scene)
+    this.scene.dispose()
+    this.scenes.forEach((s) => s.dispose())
+    this.scenes.length = 0
+
+    // Create a new scene
+    this.scene = new Scene(undefined)
+    this.scene.vim = this.vim
+    this.vim.scene = this.scene
+    this.renderer?.add(this.scene)
+    this.scene.applyMatrix4(this.settings.matrix)
+  }
+
+  async add (filterMode: FilterMode, filter: number[]) {
+    const subset = this.localVimx.getSubset(filterMode, filter)
+    const dynamicScene = new DynamicScene(this.scene, this.localVimx, subset)
+
+    // Add box to rendering.
+    const box = subset.getBoundingBox()
+    box.applyMatrix4(this.settings.matrix)
+    this.renderer.updateBox(box)
+
+    this.scenes.push(dynamicScene)
+
+    await dynamicScene.start(this.settings.refreshInterval)
   }
 
   abort () {
@@ -222,7 +174,6 @@ export class VimX {
 
   dispose () {
     this.localVimx.abort()
-    this.dynamicScene.dispose()
   }
 }
 
@@ -273,4 +224,5 @@ export class LocalVimx {
 export interface IRenderer {
   add(scene: Scene)
   remove(scene: Scene)
+  updateBox(box: THREE.Box3)
 }

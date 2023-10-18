@@ -98,7 +98,7 @@ export class RenderScene {
     this._memory += scene.getMemory()
   }
 
-  private updateBox (box: THREE.Box3 | undefined) {
+  updateBox (box: THREE.Box3 | undefined) {
     if (!box) return
     this._boundingBox = this._boundingBox ? this._boundingBox.union(box) : box
   }

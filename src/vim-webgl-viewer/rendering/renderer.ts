@@ -180,6 +180,10 @@ export class Renderer implements IRenderer {
     return this._scene.getBoundingBox(target)
   }
 
+  updateBox (box: THREE.Box3) {
+    this._scene.updateBox(box)
+  }
+
   /**
    * Render what is in camera.
    */
