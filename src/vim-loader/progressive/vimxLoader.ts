@@ -3,11 +3,11 @@ import {
   VimPartialSettings,
   VimSettings
 } from '../vimSettings'
-import { Loader, Scene, VimX } from '../../vim'
+import { Loader, VimX } from '../../vim'
 
 import { BFast, requestHeader } from 'vim-format'
 
-export class VimXLoader {
+export class VimxLoader {
   /**
    * Loads given vim or vimx file using progressive pipeline unless the legacy flag is true.
    */
