@@ -73,6 +73,13 @@ export class Scene {
     return this._boundingBox ? target.copy(this._boundingBox) : undefined
   }
 
+  updateBox (box: THREE.Box3) {
+    if (box !== undefined) {
+      const b = box.clone().applyMatrix4(this._matrix)
+      this._boundingBox = this._boundingBox?.union(b) ?? b
+    }
+  }
+
   getMemory () {
     return this.meshes
       .map((m) => estimateBytesUsed(m.mesh.geometry))
@@ -155,13 +162,6 @@ export class Scene {
     this.meshes.push(mesh)
     this.updated = true
     return this
-  }
-
-  private updateBox (box: THREE.Box3) {
-    if (box !== undefined) {
-      const b = box.clone().applyMatrix4(this._matrix)
-      this._boundingBox = this._boundingBox?.union(b) ?? b
-    }
   }
 
   /**

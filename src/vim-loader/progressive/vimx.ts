@@ -161,8 +161,8 @@ export class VimX {
     // Add box to rendering.
     const box = subset.getBoundingBox()
     box.applyMatrix4(this.settings.matrix)
-    this.renderer.updateBox(box)
-
+    this.scene.updateBox(box)
+    this.renderer?.updateBox(box)
     this.scenes.push(dynamicScene)
 
     await dynamicScene.start(this.settings.refreshInterval)

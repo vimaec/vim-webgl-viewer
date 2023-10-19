@@ -229,6 +229,7 @@ export class Viewer {
     }
 
     // Update box
+    this.renderer.updateBox(vim.scene.getBoundingBox())
     const box = this.renderer.getBoundingBox()
     this._environment.adaptToContent(box)
     this.sectionBox.fitBox(box)
