@@ -1,14 +1,15 @@
 import { BFast, G3dMesh, RemoteBuffer, RemoteVimx } from 'vim-format'
 import * as VIM from './vim'
 import * as THREE from 'three'
+import { VimXLoader } from './vim-loader/progressive/vimxLoader'
 
 // Parse URL for source file
 const params = new URLSearchParams(window.location.search)
 // Edge server doesn't serve http ranges properly
 const url = params.has('vim')
   ? params.get('vim') // : './test_vim.vim.gz'
-  : 'https://vim.azureedge.net/samples/residence.vim'
-// 'https://vim.azureedge.net/samples/test_vim.vim.gz'
+  : 'https://vim02.azureedge.net/samples/residence.vim'
+// 'https://vim02.azureedge.net/samples/test_vim.vim.gz'
 // : 'https://vimdevelopment01storage.blob.core.windows.net/samples/TowerS-ARCHITECTURE-ALL.v1.2.50.vim'
 
 // Parse URL for transparency mode
@@ -43,34 +44,31 @@ if (params.has('selection')) {
 let time: number
 const viewer = new VIM.Viewer()
 let request: VIM.VimRequest
-load(url!)
+test()
 addLoadButton()
+
+async function test () {
+  const vim = await load(url)
+}
 
 async function load (url: string | ArrayBuffer) {
   time = Date.now()
-  const vim = await VIM.VimX.load(
+  const vim = await VimXLoader.loadAny(
     // 'https://vimdevelopment01storage.blob.core.windows.net/split-mesh/_WHITELEYS-VIM-MAIN_detached.v1.2.42.vimx',
-    'https://vimdevelopment01storage.blob.core.windows.net/split-mesh/residence.vimx',
-    // url,
-    // 'https://vim.azureedge.net/samples/residence.v1.2.75.vim',
-    // './residence.vim',
+    'https://vimdevelopment01storage.blob.core.windows.net/samples/residence.vim',
     {
       // filter: [...new Array(5).keys()], // .map((i) => i + 3500000),
-      // filter: [0, 1],
-      // filter: [363],
-      // legacy: true,
       // filterMode: 'instance',
       // legacy: true,
       progressive: true,
       refreshInterval: 200,
       loadRooms: true,
       rotation: new VIM.THREE.Vector3(270, 0, 0)
-      // streamBim: true,
-      // noStrings: true,
-      // noHeader: true
     }
   )
-  onVimLoaded(vim)
+
+  await onVimLoaded(vim)
+  return vim
 }
 
 async function onVimLoaded (vim: VIM.Vim | VIM.VimX) {
@@ -80,12 +78,11 @@ async function onVimLoaded (vim: VIM.Vim | VIM.VimX) {
   }
 
   if (vim instanceof VIM.VimX) {
-    vim.start(vim.settings.refreshInterval)
-    vim.onCompleted.subscribe(() =>
-      console.log(`loaded in ${(Date.now() - time) / 1000} seconds`)
-    )
+    await vim.loadAll()
+    console.log(`loaded in ${(Date.now() - time) / 1000} seconds`)
   }
 
+  viewer.camera.do().frame('all')
   globalThis.vim = vim
   globalThis.viewer = viewer
   globalThis.THREE = THREE
