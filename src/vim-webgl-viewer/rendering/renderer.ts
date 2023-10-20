@@ -47,9 +47,13 @@ export class Renderer implements IRenderer {
   private _composer: RenderingComposer
   private _materials: VimMaterials
   private _renderText: boolean | undefined
-  private _needsUpdate: boolean
+
   private _skipAntialias: boolean
+
+  private _needsUpdate: boolean
+  private _onSceneUpdate = new SignalDispatcher()
   private _onBoxUpdated = new SignalDispatcher()
+  private _sceneUpdated = false
 
   // 3GB
   private maxMemory = 3 * Math.pow(10, 9)
@@ -145,6 +149,16 @@ export class Renderer implements IRenderer {
     this.needsUpdate = true
   }
 
+  /**
+   * Event called at the end of frame if a scene was updated such as visibility change.
+   */
+  get onSceneUpdated () {
+    return this._onSceneUpdate.asEvent()
+  }
+
+  /**
+   * Event called when bounding box is updated.
+   */
   get onBoxUpdated () {
     return this._onBoxUpdated.asEvent()
   }
@@ -173,6 +187,11 @@ export class Renderer implements IRenderer {
     this._scene.updateBox(box)
   }
 
+  notifySceneUpdate () {
+    this._sceneUpdated = true
+    this.needsUpdate = true
+  }
+
   /**
    * Render what is in camera.
    */
@@ -180,6 +199,11 @@ export class Renderer implements IRenderer {
     if (this._scene.boxUpdated) {
       this._onBoxUpdated.dispatch()
       this._scene.boxUpdated = false
+    }
+
+    if (this._sceneUpdated) {
+      this._onSceneUpdate.dispatch()
+      this._sceneUpdated = false
     }
 
     this._composer.outlines = this._scene.hasOutline()
@@ -209,10 +233,11 @@ export class Renderer implements IRenderer {
         return false
       }
       target.renderer = this
+      this._sceneUpdated = true
     }
 
     this._scene.add(target)
-    this._needsUpdate = true
+    this.notifySceneUpdate()
     return true
   }
 
@@ -225,7 +250,7 @@ export class Renderer implements IRenderer {
       target.renderer = undefined
     }
     this._scene.remove(target)
-    this._needsUpdate = true
+    this.notifySceneUpdate()
   }
 
   /**

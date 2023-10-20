@@ -222,5 +222,5 @@ export interface IRenderer {
   add(scene: Scene | THREE.Object3D)
   remove(scene: Scene)
   updateBox(box: THREE.Box3)
-  needsUpdate: boolean
+  notifySceneUpdate()
 }

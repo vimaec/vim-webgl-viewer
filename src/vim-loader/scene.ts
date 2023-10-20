@@ -42,9 +42,7 @@ export class Scene {
   }
 
   setDirty () {
-    if (this.renderer) {
-      this.renderer.needsUpdate = true
-    }
+    this.renderer?.notifySceneUpdate()
   }
 
   hasOutline () {
