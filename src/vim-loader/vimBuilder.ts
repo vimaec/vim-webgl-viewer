@@ -49,7 +49,7 @@ export class VimBuilder {
 
     const scene = g3d
       ? this.sceneBuilder.createFromG3d(g3d, settings)
-      : new Scene(this.sceneBuilder)
+      : new Scene(this.sceneBuilder, settings.matrix)
 
     const mapping = settings.noMap
       ? undefined
@@ -84,7 +84,7 @@ export class VimBuilder {
 
     const scene = g3d
       ? this.sceneBuilder.createFromG3d(g3d, copy)
-      : new Scene(this.sceneBuilder)
+      : new Scene(this.sceneBuilder, copy.matrix)
 
     const mapping = settings.noMap
       ? undefined
