@@ -167,7 +167,6 @@ export class Viewer {
     this._environment.getObjects().forEach((o) => this.renderer.add(o))
     this.renderer.onBoxUpdated.subscribe((_) => {
       const box = this.renderer.getBoundingBox()
-      console.log(box)
       this._environment.adaptToContent(box)
       this.sectionBox.fitBox(box)
     })
