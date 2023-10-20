@@ -12,6 +12,7 @@ import { InsertableSubmesh } from './progressive/insertableSubmesh'
 import { SignalDispatcher } from 'ste-signals'
 import { InstancedMesh } from './progressive/instancedMesh'
 import { Renderer } from '../vim-webgl-viewer/rendering/renderer'
+import { IRenderer } from '../vim'
 
 /**
  * A Scene regroups many Meshes
@@ -26,25 +27,24 @@ export class Scene {
   insertables = new Array<InsertableMesh>()
   meshes: (Mesh | InsertableMesh | InstancedMesh)[] = []
   private _vim: Vim | undefined
-  private _renderer: Renderer
+  private _renderer: IRenderer
   private _matrix = new THREE.Matrix4()
-  private _updated: boolean = false
   private _outlineCount: number = 0
 
   private _boundingBox: THREE.Box3
+
   private _instanceToMeshes: Map<number, Submesh[]> = new Map()
   private _material: THREE.Material | undefined
 
-  constructor (builder: SceneBuilder | undefined) {
+  constructor (builder: SceneBuilder | undefined, matrix: THREE.Matrix4) {
+    this._matrix = matrix
     this.builder = builder
   }
 
-  get updated () {
-    return this._updated
-  }
-
-  set updated (value: boolean) {
-    this._updated = this._updated || value
+  setDirty () {
+    if (this.renderer) {
+      this.renderer.needsUpdate = true
+    }
   }
 
   hasOutline () {
@@ -53,16 +53,15 @@ export class Scene {
 
   addOutline () {
     this._outlineCount++
-    this.updated = true
+    this.setDirty()
   }
 
   removeOutline () {
     this._outlineCount--
-    this.updated = true
+    this.setDirty()
   }
 
   clearUpdateFlag () {
-    this._updated = false
     this.insertables.forEach((mesh) => mesh.clearUpdate())
   }
 
@@ -77,6 +76,7 @@ export class Scene {
     if (box !== undefined) {
       const b = box.clone().applyMatrix4(this._matrix)
       this._boundingBox = this._boundingBox?.union(b) ?? b
+      this.renderer?.updateBox(this._boundingBox)
     }
   }
 
@@ -95,26 +95,11 @@ export class Scene {
     return this._instanceToMeshes.get(instance)
   }
 
-  /**
-   * Applies given transform matrix to all Meshes and bounding box.
-   */
-  applyMatrix4 (matrix: THREE.Matrix4) {
-    for (let m = 0; m < this.meshes.length; m++) {
-      this.meshes[m].mesh.matrixAutoUpdate = false
-      this.meshes[m].mesh.matrix.copy(matrix)
-    }
-
-    // Revert previous matrix
-    this._boundingBox?.applyMatrix4(this._matrix.invert())
-    this._matrix.copy(matrix)
-    this._boundingBox?.applyMatrix4(this._matrix)
-  }
-
   get renderer () {
     return this._renderer
   }
 
-  set renderer (value: Renderer) {
+  set renderer (value: IRenderer) {
     this._renderer = value
   }
 
@@ -134,7 +119,7 @@ export class Scene {
     const set = this._instanceToMeshes.get(submesh.instance) ?? []
     set.push(submesh)
     this._instanceToMeshes.set(submesh.instance, set)
-    this.updated = true
+    this.setDirty()
   }
 
   /**
@@ -155,12 +140,12 @@ export class Scene {
     mesh.getSubmeshes().forEach((s) => this.addSubmesh(s))
     if (mesh instanceof InsertableMesh) {
       this.insertables.push(mesh)
-      mesh.onUpdate.sub(() => (this.updated = true))
+      mesh.onUpdate.sub(() => this.setDirty())
       mesh.onSubmeshAdded = (submesh) => this.addSubmesh(submesh)
     }
 
     this.meshes.push(mesh)
-    this.updated = true
+    this.setDirty()
     return this
   }
 
@@ -182,7 +167,7 @@ export class Scene {
         other._boundingBox.clone()
     }
 
-    this.updated = true
+    this.setDirty()
     return this
   }
 
@@ -198,7 +183,7 @@ export class Scene {
    */
   set material (value: THREE.Material | undefined) {
     if (this._material === value) return
-    this.updated = true
+    this.setDirty()
     this._material = value
     this.meshes.forEach((m) => m.setMaterial(value))
   }

@@ -165,8 +165,11 @@ export class Viewer {
 
     this._environment = new Environment(this.settings)
     this._environment.getObjects().forEach((o) => this.renderer.add(o))
-    this.renderer.onSceneUpdated.subscribe((_) => {
-      this._environment.adaptToContent(this.renderer.getBoundingBox())
+    this.renderer.onBoxUpdated.subscribe((_) => {
+      const box = this.renderer.getBoundingBox()
+      console.log(box)
+      this._environment.adaptToContent(box)
+      this.sectionBox.fitBox(box)
     })
 
     // Input and Selection
@@ -214,7 +217,7 @@ export class Viewer {
     return this._vims.size
   }
 
-  add (vim: Vim | VimX, frameCamera = true) {
+  add (vim: Vim | VimX) {
     if (vim instanceof VimX) {
       vim.renderer = this.renderer
     }
@@ -228,24 +231,8 @@ export class Viewer {
       throw new Error('Could not load vim. Max geometry memory reached.')
     }
 
-    // Update box
-    this.renderer.updateBox(vim.scene.getBoundingBox())
-    const box = this.renderer.getBoundingBox()
-    this._environment.adaptToContent(box)
-    this.sectionBox.fitBox(box)
-
-    // Frame camera
-    if (frameCamera) {
-      this._camera.do(true).frame(box, this._camera.defaultForward)
-      this._camera.save()
-    }
-
     this._vims.add(vim)
     this._onVimLoaded.dispatch()
-  }
-
-  private fitBox (box: THREE.Box3) {
-    return box
   }
 
   /**

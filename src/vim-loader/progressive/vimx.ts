@@ -85,7 +85,7 @@ export class VimX {
     console.log('Scene Index Downloaded.')
 
     // Create scene
-    const scene = new Scene(undefined)
+    const scene = new Scene(undefined, settings.matrix)
     const mapping = new ElementMapping2(localVimx.scene)
 
     // wait for bim data.
@@ -147,11 +147,10 @@ export class VimX {
     this.scenes.length = 0
 
     // Create a new scene
-    this.scene = new Scene(undefined)
+    this.scene = new Scene(undefined, this.settings.matrix)
     this.scene.vim = this.vim
     this.vim.scene = this.scene
     this.renderer?.add(this.scene)
-    this.scene.applyMatrix4(this.settings.matrix)
   }
 
   async add (filterMode: FilterMode, filter: number[]) {
@@ -160,9 +159,7 @@ export class VimX {
 
     // Add box to rendering.
     const box = subset.getBoundingBox()
-    box.applyMatrix4(this.settings.matrix)
     this.scene.updateBox(box)
-    this.renderer?.updateBox(box)
     this.scenes.push(dynamicScene)
 
     await dynamicScene.start(this.settings.refreshInterval)
@@ -222,7 +219,8 @@ export class LocalVimx {
 }
 
 export interface IRenderer {
-  add(scene: Scene)
+  add(scene: Scene | THREE.Object3D)
   remove(scene: Scene)
   updateBox(box: THREE.Box3)
+  needsUpdate: boolean
 }

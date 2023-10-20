@@ -51,7 +51,6 @@ export class Vim {
     scene.vim = this
     this.scene = scene instanceof DynamicScene ? scene.scene : scene
     this.settings = settings
-    this.scene.applyMatrix4(this.settings.matrix)
 
     this.map = map ?? new ElementNoMapping()
   }

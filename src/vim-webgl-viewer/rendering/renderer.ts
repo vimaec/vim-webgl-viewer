@@ -46,11 +46,10 @@ export class Renderer implements IRenderer {
   private _camera: Camera
   private _composer: RenderingComposer
   private _materials: VimMaterials
-  private _onSceneUpdate = new SimpleEventDispatcher<Vim>()
-  private _onUpdate = new SignalDispatcher()
   private _renderText: boolean | undefined
   private _needsUpdate: boolean
   private _skipAntialias: boolean
+  private _onBoxUpdated = new SignalDispatcher()
 
   // 3GB
   private maxMemory = 3 * Math.pow(10, 9)
@@ -146,18 +145,8 @@ export class Renderer implements IRenderer {
     this.needsUpdate = true
   }
 
-  /**
-   * Event called at the end of frame for each vim in which an object changed visibility.
-   */
-  get onSceneUpdated () {
-    return this._onSceneUpdate.asEvent()
-  }
-
-  /**
-   * Event called when a scene is added or removed.
-   */
-  get onUpdate () {
-    return this._onUpdate.asEvent()
+  get onBoxUpdated () {
+    return this._onBoxUpdated.asEvent()
   }
 
   /** 2D renderer will render to screen when this is true. */
@@ -188,10 +177,10 @@ export class Renderer implements IRenderer {
    * Render what is in camera.
    */
   render () {
-    this._scene.getUpdatedScenes().forEach((s) => {
-      this.needsUpdate = true
-      if (s.vim) this._onSceneUpdate.dispatch(s.vim)
-    })
+    if (this._scene.boxUpdated) {
+      this._onBoxUpdated.dispatch()
+      this._scene.boxUpdated = false
+    }
 
     this._composer.outlines = this._scene.hasOutline()
 
@@ -212,11 +201,7 @@ export class Renderer implements IRenderer {
   /**
    * Add object to be rendered
    */
-  add (target: DynamicScene | Scene | THREE.Object3D) {
-    if (target instanceof DynamicScene) {
-      target = target.scene
-      target.renderer = this
-    }
+  add (target: Scene | THREE.Object3D) {
     if (target instanceof Scene) {
       const mem = target.getMemory()
       const remaining = this.maxMemory - this.estimatedMemory
@@ -224,7 +209,6 @@ export class Renderer implements IRenderer {
         return false
       }
       target.renderer = this
-      this._onUpdate.dispatch()
     }
 
     this._scene.add(target)
@@ -241,7 +225,6 @@ export class Renderer implements IRenderer {
       target.renderer = undefined
     }
     this._scene.remove(target)
-    this._onUpdate.dispatch()
     this._needsUpdate = true
   }
 

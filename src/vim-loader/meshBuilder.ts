@@ -9,6 +9,7 @@ import { VimMaterials } from './materials/materials'
 import { Mesh } from './mesh'
 
 export type InstancingArgs = {
+  matrix: THREE.Matrix4
   instances: number[]
   loadRooms: boolean
   transparency: Transparency.Mode
@@ -157,6 +158,7 @@ export class MeshBuilder {
    */
   createWireframe (g3d: G3d, instances: number[]) {
     const geometry = Geometry.createGeometryFromInstances(g3d, {
+      matrix: new THREE.Matrix4(),
       section: 'all',
       transparent: false,
       instances,

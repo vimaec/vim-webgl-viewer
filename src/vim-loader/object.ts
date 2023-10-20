@@ -111,7 +111,9 @@ export class Object {
   }
 
   set focused (value: boolean) {
-    this.vim.scene.updated = this.focusedAttribute.apply(value)
+    if (this.focusedAttribute.apply(value)) {
+      this.vim.scene.setDirty()
+    }
   }
 
   /**
@@ -123,7 +125,9 @@ export class Object {
   }
 
   set visible (value: boolean) {
-    this.vim.scene.updated = this.visibleAttribute.apply(value)
+    if (this.visibleAttribute.apply(value)) {
+      this.vim.scene.setDirty()
+    }
   }
 
   /**
@@ -142,7 +146,7 @@ export class Object {
     ) {
       return
     }
-    this.vim.scene.updated = true
+    this.vim.scene.setDirty()
     this._color = color
     this.coloredAttribute.apply(color !== undefined)
     this.colorAttribute.apply(color)
@@ -154,7 +158,7 @@ export class Object {
   updateMeshes (meshes: Submesh[] | undefined) {
     this._meshes = meshes
     if (!meshes) return
-    this.vim.scene.updated = true
+    this.vim.scene.setDirty()
     // if there was a color override reapply to new meshes.
     if (this.color) {
       this.color = this._color
@@ -236,6 +240,7 @@ export class Object {
     if (!this.instances || !this.vim.g3d) return
 
     const geometry = Geometry.createGeometryFromInstances(this.vim.g3d, {
+      matrix: this.vim.settings.matrix,
       section: 'all',
       transparent: false,
       instances: this.instances,

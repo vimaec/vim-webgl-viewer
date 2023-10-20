@@ -30,7 +30,7 @@ export class LegacyMeshFactory {
     const nonUniques = subset.filterNonUniqueMeshes()
 
     // Create and add meshes to scene
-    const scene = new Scene(undefined)
+    const scene = new Scene(undefined, this.settings.matrix)
     this.addInstancedMeshes(scene, nonUniques)
     this.addMergedMesh(scene, uniques)
     return scene

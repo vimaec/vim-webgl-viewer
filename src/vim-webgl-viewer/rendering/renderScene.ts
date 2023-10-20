@@ -12,6 +12,8 @@ export class RenderScene {
   scene: THREE.Scene
 
   // state
+  boxUpdated = false
+
   private _scenes: Scene[] = []
   private _boundingBox: THREE.Box3 | undefined
   private _memory: number = 0
@@ -22,15 +24,6 @@ export class RenderScene {
 
   get estimatedMemory () {
     return this._memory
-  }
-
-  /** Returns an array of all the scenes that were updated since last clearUpdateFlags */
-  getUpdatedScenes () {
-    const result: Scene[] = []
-    for (const s of this._scenes) {
-      if (s.updated) result.push(s)
-    }
-    return result
   }
 
   hasOutline () {
@@ -100,6 +93,7 @@ export class RenderScene {
 
   updateBox (box: THREE.Box3 | undefined) {
     if (!box) return
+    this.boxUpdated = true
     this._boundingBox = this._boundingBox ? this._boundingBox.union(box) : box
   }
 

@@ -8,6 +8,7 @@ import { Vim, VimMaterials } from '../vim'
 import { Submesh } from './mesh'
 
 export type MergeArgs = {
+  matrix: THREE.Matrix4
   section: MeshSection
   instances: number[]
   loadRooms: boolean
