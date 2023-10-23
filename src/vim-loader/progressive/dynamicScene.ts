@@ -47,19 +47,6 @@ export class DynamicScene {
     this.scene.vim = value
   }
 
-  private _onUpdate = new SignalDispatcher()
-  /**
-   * Event sent whenever new
-   */
-  get onUpdate () {
-    return this._onUpdate.asEvent()
-  }
-
-  private _onCompleted = new SignalDispatcher()
-  get onCompleted () {
-    return this._onCompleted.asEvent()
-  }
-
   constructor (scene: Scene, localVimx: LocalVimx, subset: G3dSubset) {
     this.subset = subset
     this.scene = scene
@@ -105,9 +92,6 @@ export class DynamicScene {
     if (!this._disposed) {
       this._disposed = true
       this._synchronizer.abort()
-      this._onUpdate.clear()
-      this._onCompleted.clear()
-      // this.scene.dispose()
     }
   }
 
@@ -131,7 +115,6 @@ export class DynamicScene {
 
     // Completed
     this.updateMeshes()
-    this._onCompleted.dispatch()
   }
 
   private async wait (delay: number = 0) {
@@ -165,8 +148,6 @@ export class DynamicScene {
     // Update Merged meshes
     this._transparentMesh.update()
     this._opaqueMesh.update()
-
-    // Notify observer
-    this._onUpdate.dispatch()
+    this.scene.setDirty()
   }
 }

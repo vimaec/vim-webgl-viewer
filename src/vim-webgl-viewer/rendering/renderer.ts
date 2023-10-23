@@ -207,7 +207,6 @@ export class Renderer implements IRenderer {
     }
 
     this._composer.outlines = this._scene.hasOutline()
-
     this._composer.render(
       this.needsUpdate,
       this.antialias && !this.skipAntialias && !this._camera.hasMoved

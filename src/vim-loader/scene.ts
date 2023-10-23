@@ -138,7 +138,6 @@ export class Scene {
     mesh.getSubmeshes().forEach((s) => this.addSubmesh(s))
     if (mesh instanceof InsertableMesh) {
       this.insertables.push(mesh)
-      mesh.onUpdate.sub(() => this.setDirty())
       mesh.onSubmeshAdded = (submesh) => this.addSubmesh(submesh)
     }
 

@@ -12,10 +12,6 @@ export class InsertableMesh {
   vim: Vim
 
   onSubmeshAdded: (submesh: InsertableSubmesh) => void
-  private _onUpdate = new SignalDispatcher()
-  get onUpdate () {
-    return this._onUpdate.asEvent()
-  }
 
   /**
    * Wether the mesh is merged or not.
@@ -83,7 +79,6 @@ export class InsertableMesh {
 
   update () {
     this.geometry.update()
-    this._onUpdate.dispatch()
   }
 
   clearUpdate () {
