@@ -141,6 +141,7 @@ export class VimX {
 
   clear () {
     console.log('clear')
+    this.localVimx.abort()
     this.renderer?.remove(this.scene)
     this.scene.dispose()
     this.scenes.forEach((s) => s.dispose())

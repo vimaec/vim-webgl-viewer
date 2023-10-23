@@ -36,7 +36,11 @@ export class LoadingSynchronizer {
     return this.done
   }
 
-  abort () {}
+  abort () {
+    this.done = true
+    this.mergeQueue.length = 0
+    this.instanceQueue.length = 0
+  }
 
   // Loads batches until the all meshes are loaded
   async loadAll () {
@@ -76,7 +80,7 @@ export class LoadingSynchronizer {
     let uniqueMesh = 0
     let nonUniqueMesh = 0
 
-    while (true) {
+    while (!this.isDone) {
       const mergeDone = uniqueIndex >= uniqueCount
       const instanceDone = nonUniqueIndex >= nonUniquesCount
       if (mergeDone && instanceDone) {
