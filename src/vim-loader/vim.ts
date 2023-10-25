@@ -15,6 +15,7 @@ import {
 import { Submesh } from './mesh'
 import { ISignal, SignalDispatcher } from 'ste-signals'
 import { DynamicScene } from './progressive/dynamicScene'
+import { G3dSubset } from './progressive/g3dSubset'
 
 /**
  * Container for the built three meshes and the vim data from which it was built.
@@ -135,6 +136,21 @@ export class Vim {
       const obj = this.getObjectFromElement(e)
       if (obj) yield obj
     }
+  }
+
+  /**
+   * Enumerates all objects of the vim
+   */
+  * getSubsetObjects (subset: G3dSubset) {
+    for (let i = 0; i < subset.getInstanceCount(); i++) {
+      const instance = subset.getVimInstance(i)
+      const obj = this.getObjectFromInstance(instance)
+      if (obj) yield obj
+    }
+  }
+
+  clearObjectCache () {
+    this._elementToObject.clear()
   }
 
   private getMeshesFromInstances (instances: number[] | undefined) {
