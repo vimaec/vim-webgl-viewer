@@ -135,13 +135,9 @@ export class VimX {
     return vim
   }
 
-  async loadAll () {
-    return this.add(undefined, undefined)
-  }
-
   clear () {
-    console.log('clear')
     this.localVimx.abort()
+    this.vim.clearObjectCache()
     this.renderer?.remove(this.scene)
     this.scene.dispose()
     this.scenes.forEach((s) => s.dispose())
@@ -154,8 +150,15 @@ export class VimX {
     this.renderer?.add(this.scene)
   }
 
-  async add (filterMode: FilterMode, filter: number[]) {
-    const subset = this.localVimx.getSubset(filterMode, filter)
+  getSubset () {
+    return new G3dSubset(this.localVimx.scene)
+  }
+
+  async loadAll () {
+    return this.loadFilter(undefined, undefined)
+  }
+
+  async loadSubset (subset: G3dSubset) {
     const dynamicScene = new DynamicScene(this.scene, this.localVimx, subset)
 
     // Add box to rendering.
@@ -164,6 +167,11 @@ export class VimX {
     this.scenes.push(dynamicScene)
 
     await dynamicScene.start(this.settings.refreshInterval)
+  }
+
+  async loadFilter (filterMode: FilterMode, filter: number[]) {
+    const subset = this.localVimx.getSubset(filterMode, filter)
+    await this.loadSubset(subset)
   }
 
   abort () {

@@ -63,6 +63,14 @@ export class G3dSubset {
       : index
   }
 
+  getInstanceCount () {
+    return this._instances.length
+  }
+
+  getVimInstance (index: number) {
+    return this._source.instanceNodes[index]
+  }
+
   getMesh (index: number) {
     return this._meshes[index]
   }
@@ -121,6 +129,34 @@ export class G3dSubset {
    */
   filterUniqueMeshes () {
     return this.filterByCount((count) => count === 1)
+  }
+
+  /**
+   * Returns a new subset that contains only the N largest meshes
+   */
+  filterLargests (count: number) {
+    if (this._source instanceof G3d) {
+      throw new Error('Feature requires a vimx file')
+    }
+
+    // reuse vector3 to avoid wateful allocations
+    const min = new THREE.Vector3()
+    const max = new THREE.Vector3()
+
+    // Compute all sizes
+    const values = new Array<[number, number]>(this._instances.length)
+    for (let i = 0; i < this._instances.length; i++) {
+      const instance = this._instances[i]
+      min.fromArray(this._source.getInstanceMin(instance))
+      max.fromArray(this._source.getInstanceMax(instance))
+      const size = min.distanceToSquared(max)
+      values.push([i, size])
+    }
+
+    // Take top 100 instances
+    values.sort((v) => v[1])
+    const instances = values.slice(0, count).map((v) => v[0])
+    return new G3dSubset(this._source, instances)
   }
 
   /**

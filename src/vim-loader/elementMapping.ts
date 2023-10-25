@@ -32,6 +32,7 @@ export class ElementNoMapping {
 
 export class ElementMapping {
   private _instanceToElement: Map<number, number>
+  private _instanceMeshes: Int32Array
   private _elementToInstances: Map<number, number[]>
   private _elementIds: BigInt64Array
   private _elementIdToElements: Map<BigInt, number[]>
@@ -39,7 +40,8 @@ export class ElementMapping {
   constructor (
     instances: number[],
     instanceToElement: number[],
-    elementIds: BigInt64Array
+    elementIds: BigInt64Array,
+    instanceMeshes?: Int32Array
   ) {
     this._instanceToElement = new Map<number, number>()
     instances.forEach((i) =>
@@ -50,6 +52,7 @@ export class ElementMapping {
     )
     this._elementIds = elementIds
     this._elementIdToElements = ElementMapping.invertArray(elementIds!)
+    this._instanceMeshes = instanceMeshes
   }
 
   static async fromG3d (g3d: G3d, bim: VimDocument) {
@@ -59,7 +62,8 @@ export class ElementMapping {
     return new ElementMapping(
       Array.from(g3d.instanceNodes),
       instanceToElement!,
-      elementIds!
+      elementIds!,
+      g3d.instanceMeshes
     )
   }
 
@@ -76,6 +80,17 @@ export class ElementMapping {
    */
   hasElement (element: number) {
     return element >= 0 && element < this._elementIds.length
+  }
+
+  hasMesh (element: number) {
+    if (!this._instanceMeshes) return true
+    const instances = this._elementToInstances.get(element)
+    for (const i of instances) {
+      if (this._instanceMeshes[i] >= 0) {
+        return true
+      }
+    }
+    return false
   }
 
   /**
@@ -186,6 +201,11 @@ export class ElementMapping2 {
    */
   hasElement (element: number) {
     return this._elementToInstances.has(element)
+  }
+
+  hasMesh (element: number) {
+    // All elements have meshes in vimx
+    return this.hasElement(element)
   }
 
   /**
