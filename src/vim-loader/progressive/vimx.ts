@@ -25,7 +25,7 @@ import {
   G3dScene,
   FilterMode
 } from 'vim-format'
-import { DynamicScene } from './dynamicScene'
+import { LoadPartialSettings, DynamicScene, LoadSettings } from './dynamicScene'
 import { G3dSubset } from './g3dSubset'
 import { Console } from 'console'
 
@@ -154,24 +154,28 @@ export class VimX {
     return new G3dSubset(this.localVimx.scene)
   }
 
-  async loadAll () {
-    return this.loadFilter(undefined, undefined)
+  async loadAll (settings?: LoadPartialSettings) {
+    return this.loadFilter(undefined, undefined, settings)
   }
 
-  async loadSubset (subset: G3dSubset) {
-    const dynamicScene = new DynamicScene(this.scene, this.localVimx, subset)
-
+  async loadSubset (subset: G3dSubset, settings?: LoadPartialSettings) {
     // Add box to rendering.
     const box = subset.getBoundingBox()
     this.scene.updateBox(box)
-    this.scenes.push(dynamicScene)
 
-    await dynamicScene.start(this.settings.refreshInterval)
+    // Launch loading
+    const dynamicScene = new DynamicScene(this.scene, this.localVimx, subset)
+    this.scenes.push(dynamicScene)
+    await dynamicScene.start(settings)
   }
 
-  async loadFilter (filterMode: FilterMode, filter: number[]) {
+  async loadFilter (
+    filterMode: FilterMode,
+    filter: number[],
+    settings?: LoadPartialSettings
+  ) {
     const subset = this.localVimx.getSubset(filterMode, filter)
-    await this.loadSubset(subset)
+    await this.loadSubset(subset, settings)
   }
 
   abort () {

@@ -5,11 +5,25 @@ import { InsertableMesh } from './insertableMesh'
 import { InstancedMeshFactory } from './instancedMeshFactory'
 import { LocalVimx, Scene } from '../../vim'
 
-import { G3dScene, G3dMaterial, RemoteVimx, G3dMesh } from 'vim-format'
+import { G3dMesh } from 'vim-format'
 import { G3dSubset } from './g3dSubset'
-import { SignalDispatcher } from 'ste-signals'
 import { InstancedMesh } from './instancedMesh'
 import { LoadingSynchronizer } from './loadingSynchronizer'
+
+export type LoadSettings = {
+  /** Delay in ms between each rendering list update. @default: 400ms */
+  updateDelayMs: number
+  /** If true, will wait for geometry to be ready before it is added to the renderer. @default: false */
+  delayRender: boolean
+}
+
+export type LoadPartialSettings = Partial<LoadSettings>
+function getFullSettings (option: LoadPartialSettings) {
+  return {
+    updateDelayMs: option?.updateDelayMs ?? 400,
+    delayRender: option?.delayRender ?? false
+  } as LoadSettings
+}
 
 /**
  * Manages geometry downloads and loads it into a scene for rendering.
@@ -95,22 +109,26 @@ export class DynamicScene {
     }
   }
 
-  async start (refreshInterval: number) {
+  async start (settings: LoadPartialSettings) {
     if (this._started) {
       return
     }
     this._started = true
+    const fullSettings = getFullSettings(settings)
 
     // Loading and updates are independants
     this._synchronizer.loadAll()
 
     // Loop until done or disposed.
     while (!this._synchronizer.isDone) {
-      await this.wait(refreshInterval)
+      await this.wait(fullSettings.updateDelayMs)
       if (this._disposed) {
         return
       }
-      this.updateMeshes()
+
+      if (!fullSettings.delayRender) {
+        this.updateMeshes()
+      }
     }
 
     // Completed
