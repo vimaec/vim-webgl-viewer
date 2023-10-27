@@ -18,6 +18,7 @@ export {
 } from './vim-webgl-viewer/raycaster'
 
 export * from './vim-loader/progressive/insertableMesh'
+export * from './vim-loader/progressive/g3dSubset'
 export * from './vim-loader/geometry'
 export * from './vim-loader/vimBuilder'
 export * from './vim-loader/loader'
