@@ -67,8 +67,9 @@ export class G3dSubset {
     return this._instances.length
   }
 
-  getVimInstance (index: number) {
-    return this._source.instanceNodes[index]
+  getVimInstance (subsetIndex: number) {
+    const vimIndex = this._instances[subsetIndex]
+    return this._source.instanceNodes[vimIndex]
   }
 
   getMesh (index: number) {
@@ -154,7 +155,7 @@ export class G3dSubset {
     }
 
     // Take top 100 instances
-    values.sort((v) => v[1])
+    values.sort((v1, v2) => v2[1] - v1[1])
     const instances = values.slice(0, count).map((v) => v[0])
     return new G3dSubset(this._source, instances)
   }
@@ -201,6 +202,11 @@ export class G3dSubset {
     result.meshes = count
 
     return result
+  }
+
+  reverse () {
+    const reverse = [...this._instances].reverse()
+    return new G3dSubset(this._source, reverse)
   }
 
   /**
