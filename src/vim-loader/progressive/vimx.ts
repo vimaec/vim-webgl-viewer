@@ -23,7 +23,8 @@ import {
   requestHeader,
   VimHeader,
   G3dScene,
-  FilterMode
+  FilterMode,
+  IProgressLogs
 } from 'vim-format'
 import { LoadPartialSettings, DynamicScene, LoadSettings } from './dynamicScene'
 import { G3dSubset } from './g3dSubset'
@@ -67,15 +68,19 @@ export class VimX {
   /**
    * Creates a VimX object from given path to a vimx file
    */
-  static async fromVimX (source: string | ArrayBuffer, settings: VimSettings) {
+  static async fromVimX (
+    source: string | ArrayBuffer,
+    settings: VimSettings,
+    onProgress: (p: IProgressLogs) => void
+  ) {
     // Start fetch bim data
     // const bimPromise = vimPath ? VimX.createBim(vimPath, settings) : null
 
     // Fetch geometry data
-    const remoteVimx =
-      source instanceof ArrayBuffer
-        ? new RemoteVimx(new BFast(source))
-        : RemoteVimx.fromPath(source)
+    const remoteVimx = new RemoteVimx(source)
+    if (remoteVimx.bfast.source instanceof RemoteBuffer) {
+      remoteVimx.bfast.source.onProgress = onProgress
+    }
 
     console.log('Downloading Scene Index..')
     const localVimx = await LocalVimx.fromRemote(
@@ -109,11 +114,16 @@ export class VimX {
   /**
    * Creates a legacy vim object from given path to a vim file
    */
-  static async fromVim (source: string | ArrayBuffer, settings: VimSettings) {
+  static async fromVim (
+    source: string | ArrayBuffer,
+    settings: VimSettings,
+    onProgress?: (p: IProgressLogs) => void
+  ) {
     const fullSettings = getFullSettings(settings)
-    const buffer =
-      source instanceof ArrayBuffer ? source : new RemoteBuffer(source)
-    const bfast = new BFast(buffer)
+    const bfast = new BFast(source)
+    if (bfast.source instanceof RemoteBuffer) {
+      bfast.source.onProgress = onProgress
+    }
 
     // Fetch g3d data
     const geometry = await bfast.getBfast('geometry')

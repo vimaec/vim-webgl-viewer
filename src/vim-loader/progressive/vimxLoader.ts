@@ -5,7 +5,7 @@ import {
 } from '../vimSettings'
 import { Loader, VimX } from '../../vim'
 
-import { BFast, requestHeader } from 'vim-format'
+import { BFast, requestHeader, IProgressLogs } from 'vim-format'
 
 export class VimxLoader {
   /**
@@ -13,7 +13,8 @@ export class VimxLoader {
    */
   static async loadAny (
     source: string | ArrayBuffer,
-    settings: VimPartialSettings
+    settings: VimPartialSettings,
+    onProgress?: () => IProgressLogs
   ) {
     const fullSettings = getFullSettings(settings)
     const type = await this.determineFileType(source, fullSettings)
@@ -23,15 +24,17 @@ export class VimxLoader {
         throw new Error('Cannot open a vimx using legacy pipeline.')
       }
 
-      return new Loader().load(source, fullSettings)
+      const request = new Loader().createRequest(source, settings)
+      request.onProgress.subscribe(onProgress)
+      return request.send()
     }
 
     if (type === 'vim') {
-      return VimX.fromVim(source, fullSettings)
+      return VimX.fromVim(source, fullSettings, onProgress)
     }
 
     if (type === 'vimx') {
-      return VimX.fromVimX(source, fullSettings)
+      return VimX.fromVimX(source, fullSettings, onProgress)
     }
   }
 
