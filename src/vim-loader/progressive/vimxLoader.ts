@@ -35,13 +35,16 @@ export class VimxLoader {
     }
   }
 
-  static async determineFileType (
+  private static async determineFileType (
     vimPath: string | ArrayBuffer,
     settings: VimSettings
   ) {
-    if (settings.fileType === 'vim') return 'vim'
-    if (settings.fileType === 'vimx') return 'vimx'
+    if (settings?.fileType === 'vim') return 'vim'
+    if (settings?.fileType === 'vimx') return 'vimx'
+    return this.requestFileType(vimPath)
+  }
 
+  static async requestFileType (vimPath: string | ArrayBuffer) {
     if (typeof vimPath === 'string') {
       if (vimPath.endsWith('vim')) return 'vim'
       if (vimPath.endsWith('vimx')) return 'vimx'
