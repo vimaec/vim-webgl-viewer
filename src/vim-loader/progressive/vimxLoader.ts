@@ -25,8 +25,10 @@ export class VimxLoader {
       }
 
       const request = new Loader().createRequest(source, settings)
-      request.onProgress.subscribe(onProgress)
-      return request.send()
+      const unsub = request.onProgress.sub(onProgress)
+      const vim = await request.send()
+      unsub()
+      return vim
     }
 
     if (type === 'vim') {

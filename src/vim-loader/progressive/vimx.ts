@@ -99,6 +99,10 @@ export class VimX {
     const vimx = new VimX(settings, localVimx, undefined, scene, mapping)
     vimx.vim.source = typeof source === 'string' ? source : undefined
 
+    if (remoteVimx.bfast.source instanceof RemoteBuffer) {
+      remoteVimx.bfast.source.onProgress = undefined
+    }
+
     return vimx
   }
 
@@ -142,6 +146,11 @@ export class VimX {
     // Return legacy vim
     const vim = new Vim(header, doc, g3d, scene, fullSettings, mapping)
     vim.source = typeof source === 'string' ? source : undefined
+
+    if (bfast.source instanceof RemoteBuffer) {
+      bfast.source.onProgress = undefined
+    }
+
     return vim
   }
 
