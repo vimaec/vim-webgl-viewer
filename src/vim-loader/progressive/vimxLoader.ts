@@ -14,7 +14,7 @@ export class VimxLoader {
   static async loadAny (
     source: string | ArrayBuffer,
     settings: VimPartialSettings,
-    onProgress?: () => IProgressLogs
+    onProgress?: (p: IProgressLogs) => void
   ) {
     const fullSettings = getFullSettings(settings)
     const type = await this.determineFileType(source, fullSettings)
