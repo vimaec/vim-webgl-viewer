@@ -120,23 +120,28 @@ export class DynamicScene {
     this._synchronizer.loadAll()
 
     // Loop until done or disposed.
-    while (!this._synchronizer.isDone) {
-      await this.wait(fullSettings.updateDelayMs)
+    let lastUpdate = Date.now()
+    while (true) {
+      await this.nextFrame()
       if (this._disposed) {
         return
       }
-
-      if (!fullSettings.delayRender) {
+      if (this._synchronizer.isDone) {
         this.updateMeshes()
+        return
+      }
+      if (
+        !fullSettings.delayRender &&
+        Date.now() - lastUpdate > fullSettings.updateDelayMs
+      ) {
+        this.updateMeshes()
+        lastUpdate = Date.now()
       }
     }
-
-    // Completed
-    this.updateMeshes()
   }
 
-  private async wait (delay: number = 0) {
-    return new Promise((resolve) => setTimeout(resolve, delay))
+  private async nextFrame () {
+    return new Promise((resolve) => setTimeout(resolve, 0))
   }
 
   private mergeMesh (g3dMesh: G3dMesh, index: number) {
