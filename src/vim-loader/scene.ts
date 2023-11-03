@@ -93,6 +93,20 @@ export class Scene {
     return this._instanceToMeshes.get(instance)
   }
 
+  getMeshesFromInstances (instances: number[] | undefined) {
+    if (!instances?.length) return
+
+    const meshes: Submesh[] = []
+    for (let i = 0; i < instances.length; i++) {
+      const instance = instances[i]
+      if (instance < 0) continue
+      const submeshes = this.getMeshFromInstance(instance)
+      submeshes?.forEach((s) => meshes.push(s))
+    }
+    if (meshes.length === 0) return
+    return meshes
+  }
+
   get renderer () {
     return this._renderer
   }

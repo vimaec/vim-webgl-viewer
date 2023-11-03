@@ -105,7 +105,7 @@ export class Vim {
     }
 
     const instances = this.map.getInstancesFromElement(element)
-    const meshes = this.getMeshesFromInstances(instances)
+    const meshes = this.scene.getMeshesFromInstances(instances)
 
     const result = new Object(this, element, instances, meshes)
     this._elementToObject.set(element, result)
@@ -158,19 +158,5 @@ export class Vim {
 
   clearObjectCache () {
     this._elementToObject.clear()
-  }
-
-  private getMeshesFromInstances (instances: number[] | undefined) {
-    if (!instances?.length) return
-
-    const meshes: Submesh[] = []
-    for (let i = 0; i < instances.length; i++) {
-      const instance = instances[i]
-      if (instance < 0) continue
-      const submeshes = this.scene.getMeshFromInstance(instance)
-      submeshes?.forEach((s) => meshes.push(s))
-    }
-    if (meshes.length === 0) return
-    return meshes
   }
 }
