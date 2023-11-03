@@ -210,22 +210,47 @@ export class G3dSubset {
   }
 
   /**
+   * Returns a new subset with instances not included in given filter.
+   * @param mode Defines which field the filter will be applied to.
+   * @param filter Array of all values to match for.
+   */
+  except (mode: FilterMode, filter: number[] | Set<number>): G3dSubset {
+    return this._filter(mode, filter, false)
+  }
+
+  /**
    * Returns a new subset with instances matching given filter.
    * @param mode Defines which field the filter will be applied to.
    * @param filter Array of all values to match for.
    */
-  filter (mode: FilterMode, filter: number[]) {
+  filter (mode: FilterMode, filter: number[] | Set<number>): G3dSubset {
+    return this._filter(mode, filter, true)
+  }
+
+  private _filter (
+    mode: FilterMode,
+    filter: number[] | Set<number>,
+    has: boolean
+  ): G3dSubset {
     if (filter === undefined || mode === undefined) {
       return new G3dSubset(this._source, undefined)
     }
 
     if (mode === 'instance') {
-      const instances = this.filterOnArray(filter, this._source.instanceNodes)
+      const instances = this.filterOnArray(
+        filter,
+        this._source.instanceNodes,
+        has
+      )
       return new G3dSubset(this._source, instances)
     }
 
     if (mode === 'mesh') {
-      const instances = this.filterOnArray(filter, this._source.instanceMeshes)
+      const instances = this.filterOnArray(
+        filter,
+        this._source.instanceMeshes,
+        has
+      )
       return new G3dSubset(this._source, instances)
     }
     if (mode === 'tag' || mode === 'group') {
@@ -233,14 +258,19 @@ export class G3dSubset {
     }
   }
 
-  private filterOnArray (filter: number[], array: Int32Array) {
-    const set = new Set(filter)
+  private filterOnArray (
+    filter: number[] | Set<number>,
+    array: Int32Array,
+    has: boolean = true
+  ) {
+    const set = filter instanceof Set ? filter : new Set(filter)
     const result = new Array<number>()
-    array.forEach((mesh, i) => {
-      if (set.has(mesh) && this._source.instanceMeshes[i] >= 0) {
+    for (const i of this._instances) {
+      const value = array[i]
+      if (set.has(value) === has && this._source.instanceMeshes[i] >= 0) {
         result.push(i)
       }
-    })
+    }
     return result
   }
 
