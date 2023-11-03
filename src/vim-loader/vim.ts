@@ -141,12 +141,19 @@ export class Vim {
   /**
    * Enumerates all objects of the vim
    */
-  * getSubsetObjects (subset: G3dSubset) {
-    for (let i = 0; i < subset.getInstanceCount(); i++) {
+  getSubsetObjects (subset: G3dSubset) {
+    const set = new Set<Object>()
+    const result = new Array<Object>()
+    const count = subset.getInstanceCount()
+    for (let i = 0; i < count; i++) {
       const instance = subset.getVimInstance(i)
       const obj = this.getObjectFromInstance(instance)
-      if (obj) yield obj
+      if (!set.has(obj)) {
+        result.push(obj)
+        set.add(obj)
+      }
     }
+    return result
   }
 
   clearObjectCache () {
