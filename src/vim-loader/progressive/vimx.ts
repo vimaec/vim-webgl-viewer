@@ -28,7 +28,6 @@ import {
 } from 'vim-format'
 import { LoadPartialSettings, DynamicScene, LoadSettings } from './dynamicScene'
 import { G3dSubset } from './g3dSubset'
-import { Console } from 'console'
 
 export class VimX {
   settings: VimSettings
@@ -168,6 +167,7 @@ export class VimX {
     this.scene.vim = this.vim
     this.vim.scene = this.scene
     this.renderer?.add(this.scene)
+    this.instances.clear()
   }
 
   getSubset () {
