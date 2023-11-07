@@ -125,14 +125,14 @@ export class ColorAttribute {
   }
 
   private resetMergedInsertableColor (sub: InsertableSubmesh) {
+    const previous = sub.popColors()
+    if (previous === undefined) return
+
+    const indices = sub.three.geometry.index!
     const colors = sub.three.geometry.getAttribute(
       'color'
     ) as THREE.BufferAttribute
 
-    const indices = sub.three.geometry.index!
-
-    const previous = sub.popColors()
-    // restored previous colors
     let c = 0
     for (let i = sub.meshStart; i < sub.meshEnd; i++) {
       const v = indices.getX(i)
