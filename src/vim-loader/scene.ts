@@ -22,15 +22,15 @@ import { IRenderer } from '../vim'
 export class Scene {
   // Dependencies
   readonly builder: SceneBuilder
+  private _renderer: IRenderer
+  private _vim: Vim | undefined
+  private _matrix = new THREE.Matrix4()
 
   // State
   insertables = new Array<InsertableMesh>()
   meshes: (Mesh | InsertableMesh | InstancedMesh)[] = []
-  private _vim: Vim | undefined
-  private _renderer: IRenderer
-  private _matrix = new THREE.Matrix4()
-  private _outlineCount: number = 0
 
+  private _outlineCount: number = 0
   private _boundingBox: THREE.Box3
 
   private _instanceToMeshes: Map<number, Submesh[]> = new Map()
@@ -128,10 +128,14 @@ export class Scene {
   }
 
   addSubmesh (submesh: Submesh) {
-    const set = this._instanceToMeshes.get(submesh.instance) ?? []
-    set.push(submesh)
-    this._instanceToMeshes.set(submesh.instance, set)
+    const meshes = this._instanceToMeshes.get(submesh.instance) ?? []
+    meshes.push(submesh)
+    this._instanceToMeshes.set(submesh.instance, meshes)
     this.setDirty()
+    if (this.vim) {
+      const obj = this.vim.getObjectFromInstance(submesh.instance)
+      obj.addMesh(submesh)
+    }
   }
 
   /**
@@ -150,10 +154,6 @@ export class Scene {
 
     // Add current and future submeshes
     mesh.getSubmeshes().forEach((s) => this.addSubmesh(s))
-    if (mesh instanceof InsertableMesh) {
-      this.insertables.push(mesh)
-      mesh.onSubmeshAdded = (submesh) => this.addSubmesh(submesh)
-    }
 
     this.meshes.push(mesh)
     this.setDirty()
