@@ -1,3 +1,4 @@
+import { Submesh } from '../mesh'
 import { InstancedMesh } from './instancedMesh'
 
 export class InstancedSubmesh {
@@ -7,6 +8,10 @@ export class InstancedSubmesh {
   constructor (mesh: InstancedMesh, index: number) {
     this.mesh = mesh
     this.index = index
+  }
+
+  equals (other: Submesh) {
+    return this.mesh === other.mesh && this.index === other.index
   }
 
   /**
@@ -20,7 +25,7 @@ export class InstancedSubmesh {
    * True if parent mesh is merged.
    */
   get merged () {
-    return this.mesh.merged
+    return false
   }
 
   /**

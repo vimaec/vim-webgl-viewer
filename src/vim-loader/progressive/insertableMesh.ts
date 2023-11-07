@@ -14,7 +14,9 @@ export class InsertableMesh {
   /**
    * Wether the mesh is merged or not.
    */
-  merged: boolean
+  get merged () {
+    return true
+  }
 
   /**
    * Wether the mesh is transparent or not.
@@ -47,7 +49,6 @@ export class InsertableMesh {
   ) {
     this.offsets = offsets
     this.transparent = transparent
-    this.merged = true
 
     this.geometry = new InsertableGeometry(offsets, materials, transparent)
 

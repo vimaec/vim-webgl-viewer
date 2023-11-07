@@ -3,7 +3,7 @@
  */
 
 import * as THREE from 'three'
-import { Submesh } from './mesh'
+import { MergedSubmesh, Submesh } from './mesh'
 
 export class ObjectAttribute<T> {
   readonly vertexAttribute: string
@@ -49,7 +49,7 @@ export class ObjectAttribute<T> {
     for (let m = 0; m < this._meshes.length; m++) {
       const sub = this._meshes[m]
       if (sub.merged) {
-        this.applyMerged(sub, number)
+        this.applyMerged(sub as MergedSubmesh, number)
       } else {
         this.applyInstanced(sub, number)
       }
@@ -75,7 +75,7 @@ export class ObjectAttribute<T> {
     attribute.updateRange.count = -1
   }
 
-  private applyMerged (sub: Submesh, number: number) {
+  private applyMerged (sub: MergedSubmesh, number: number) {
     const geometry = sub.three.geometry
     const positions = geometry.getAttribute('position')
 

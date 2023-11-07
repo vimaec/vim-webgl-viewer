@@ -10,6 +10,7 @@ import { InsertableSubmesh } from './progressive/insertableSubmesh'
 import { InstancedMesh } from './progressive/instancedMesh'
 import { VimMaterials } from './materials/materials'
 import { Vim } from './vim'
+import { InstancedSubmesh } from './progressive/instancedSubmesh'
 
 /**
  * Wrapper around THREE.Mesh
@@ -167,7 +168,8 @@ export class Mesh {
   }
 }
 
-export type Submesh = StandardSubmesh | InsertableSubmesh
+export type MergedSubmesh = StandardSubmesh | InsertableSubmesh
+export type Submesh = MergedSubmesh | InstancedSubmesh
 
 export class StandardSubmesh {
   mesh: Mesh

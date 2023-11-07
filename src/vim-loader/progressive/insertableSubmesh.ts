@@ -26,7 +26,7 @@ export class InsertableSubmesh {
    * True if parent mesh is merged.
    */
   get merged () {
-    return this.mesh.merged
+    return true
   }
 
   private get submesh () {

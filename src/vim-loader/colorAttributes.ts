@@ -1,5 +1,5 @@
 import * as THREE from 'three'
-import { Submesh } from './mesh'
+import { MergedSubmesh, StandardSubmesh, Submesh } from './mesh'
 import { Vim } from './vim'
 import { InsertableSubmesh } from './progressive/insertableSubmesh'
 
@@ -36,7 +36,7 @@ export class ColorAttribute {
     for (let m = 0; m < this._meshes.length; m++) {
       const sub = this._meshes[m]
       if (sub.merged) {
-        this.applyMergedColor(sub, color)
+        this.applyMergedColor(sub as MergedSubmesh, color)
       } else {
         this.applyInstancedColor(sub, color)
       }
@@ -48,7 +48,7 @@ export class ColorAttribute {
    * @param index index of the merged mesh instance
    * @param color rgb representation of the color to apply
    */
-  private applyMergedColor (sub: Submesh, color: THREE.Color | undefined) {
+  private applyMergedColor (sub: MergedSubmesh, color: THREE.Color | undefined) {
     if (!color) {
       this.resetMergedColor(sub)
       return
@@ -90,7 +90,7 @@ export class ColorAttribute {
    * Repopulates the color buffer of the merged mesh from original g3d data.
    * @param index index of the merged mesh instance
    */
-  private resetMergedColor (sub: Submesh) {
+  private resetMergedColor (sub: MergedSubmesh) {
     if (!this.vim) return
     if (sub instanceof InsertableSubmesh) {
       this.resetMergedInsertableColor(sub)
