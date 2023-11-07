@@ -9,7 +9,8 @@ import * as THREE from 'three'
 import { Geometry } from './geometry'
 import { Vim } from './vim'
 import { VimDocument, IElement, VimHelpers } from 'vim-format'
-import { ObjectAttribute, ColorAttribute } from './objectAttributes'
+import { ObjectAttribute } from './objectAttributes'
+import { ColorAttribute } from './colorAttributes'
 import { Submesh } from './mesh'
 
 /**
@@ -24,7 +25,7 @@ export class Object {
   private _boundingBox: THREE.Box3 | undefined
   private _meshes: Submesh[] | undefined
 
-  private selectedAttribute: ObjectAttribute<boolean>
+  private outlineAttribute: ObjectAttribute<boolean>
   private visibleAttribute: ObjectAttribute<boolean>
   private coloredAttribute: ObjectAttribute<boolean>
   private focusedAttribute: ObjectAttribute<boolean>
@@ -41,7 +42,7 @@ export class Object {
     this.instances = instances
     this._meshes = meshes
 
-    this.selectedAttribute = new ObjectAttribute(
+    this.outlineAttribute = new ObjectAttribute(
       false,
       'selected',
       'selected',
@@ -92,11 +93,11 @@ export class Object {
    * @param value true to show object, false to hide object.
    */
   get outline () {
-    return this.selectedAttribute.value
+    return this.outlineAttribute.value
   }
 
   set outline (value: boolean) {
-    if (this.selectedAttribute.apply(value)) {
+    if (this.outlineAttribute.apply(value)) {
       if (value) this.vim.scene.addOutline()
       else this.vim.scene.removeOutline()
     }
@@ -135,34 +136,43 @@ export class Object {
    * @param color Color to apply, undefined to revert to default color.
    */
   get color () {
-    return this.colorAttribute.value
+    return this._color
   }
 
   set color (color: THREE.Color | undefined) {
-    if (
-      !this._color || !color
-        ? !this._color && !color
-        : this._color.equals(color)
-    ) {
-      return
-    }
-    this.vim.scene.setDirty()
     this._color = color
-    this.coloredAttribute.apply(color !== undefined)
-    this.colorAttribute.apply(color)
+    this.vim.scene.setDirty()
+    this._color = this._color
+    this.coloredAttribute.apply(this._color !== undefined)
+    this.colorAttribute.apply(this._color)
   }
 
   /**
    * Internal - Replace this object meshes and apply color as needed.
    */
-  updateMeshes (meshes: Submesh[] | undefined) {
+  private updateMeshes (meshes: Submesh[] | undefined) {
     this._meshes = meshes
-    if (!meshes) return
     this.vim.scene.setDirty()
-    // if there was a color override reapply to new meshes.
-    if (this.color) {
-      this.color = this._color
+
+    this.outlineAttribute.updateMeshes(meshes)
+    this.visibleAttribute.updateMeshes(meshes)
+    this.focusedAttribute.updateMeshes(meshes)
+    this.colorAttribute.updateMeshes(meshes)
+  }
+
+  /**
+   * Internal - Replace this object meshes and apply color as needed.
+   */
+  addMesh (mesh: Submesh) {
+    if (this.instances.findIndex((i) => i === mesh.instance) < 0) {
+      throw new Error('Cannot update mismatched instance')
     }
+    if (this._meshes) {
+      this._meshes.push(mesh)
+    } else {
+      this._meshes = [mesh]
+    }
+    this.updateMeshes(this._meshes)
   }
 
   /**
