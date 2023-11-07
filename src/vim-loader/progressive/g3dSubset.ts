@@ -72,6 +72,14 @@ export class G3dSubset {
     return this._source.instanceNodes[vimIndex]
   }
 
+  getVimInstances () {
+    const results = new Array<number>(this._instances.length)
+    for (let i = 0; i < results.length; i++) {
+      results[i] = this.getVimInstance(i)
+    }
+    return results
+  }
+
   getMesh (index: number) {
     return this._meshes[index]
   }
