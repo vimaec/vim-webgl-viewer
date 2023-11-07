@@ -178,6 +178,10 @@ export class StandardSubmesh {
     this.index = index
   }
 
+  equals (other: Submesh) {
+    return this.mesh === other.mesh && this.index === other.index
+  }
+
   /**
    * Returns parent three mesh.
    */

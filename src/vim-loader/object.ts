@@ -167,12 +167,16 @@ export class Object {
     if (this.instances.findIndex((i) => i === mesh.instance) < 0) {
       throw new Error('Cannot update mismatched instance')
     }
+
     if (this._meshes) {
-      this._meshes.push(mesh)
+      if (this._meshes.findIndex((m) => m.equals(mesh)) < 0) {
+        this._meshes.push(mesh)
+        this.updateMeshes(this._meshes)
+      }
     } else {
       this._meshes = [mesh]
+      this.updateMeshes(this._meshes)
     }
-    this.updateMeshes(this._meshes)
   }
 
   /**

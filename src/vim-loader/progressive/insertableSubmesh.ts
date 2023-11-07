@@ -1,6 +1,5 @@
+import { Submesh } from '../mesh'
 import { InsertableMesh } from './insertableMesh'
-import { InsertableGeometry } from './insertableGeometry'
-import * as THREE from 'three'
 
 export class InsertableSubmesh {
   mesh: InsertableMesh
@@ -10,6 +9,10 @@ export class InsertableSubmesh {
   constructor (mesh: InsertableMesh, index: number) {
     this.mesh = mesh
     this.index = index
+  }
+
+  equals (other: Submesh) {
+    return this.mesh === other.mesh && this.index === other.index
   }
 
   /**
