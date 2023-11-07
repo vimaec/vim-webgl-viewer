@@ -11,8 +11,6 @@ export class InsertableMesh {
   mesh: THREE.Mesh
   vim: Vim
 
-  onSubmeshAdded: (submesh: InsertableSubmesh) => void
-
   /**
    * Wether the mesh is merged or not.
    */
@@ -52,9 +50,6 @@ export class InsertableMesh {
     this.merged = true
 
     this.geometry = new InsertableGeometry(offsets, materials, transparent)
-    this.geometry.onSubmeshAdded = (submesh, index) => {
-      this.onSubmeshAdded?.(new InsertableSubmesh(this, index))
-    }
 
     this._material = transparent
       ? VimMaterials.getInstance().transparent.material
@@ -70,7 +65,14 @@ export class InsertableMesh {
   }
 
   insert (g3d: G3dMesh, mesh: number) {
-    this.geometry.insert(g3d, mesh)
+    const added = this.geometry.insert(g3d, mesh)
+    if (!this.vim) {
+      return
+    }
+
+    for (const i of added) {
+      this.vim.scene.addSubmesh(new InsertableSubmesh(this, i))
+    }
   }
 
   insertFromVim (g3d: G3d, mesh: number) {

@@ -25,9 +25,6 @@ export class InsertableGeometry {
   submeshes = new Array<GeometrySubmesh>()
   boundingBox: THREE.Box3
 
-  // No ideal, submeshes are added in real time but renderer only updated on update.
-  onSubmeshAdded: (submesh: GeometrySubmesh, index: number) => void
-
   private _computeBoundingBox = false
   private _indexAttribute: THREE.Uint32BufferAttribute
   private _vertexAttribute: THREE.BufferAttribute
@@ -86,6 +83,7 @@ export class InsertableGeometry {
 
   // TODO: remove the need for mesh argument.
   insert (g3d: G3dMesh, mesh: number) {
+    const added = new Array<number>()
     const section = this.offsets.section
     const indexStart = g3d.getIndexStart(section)
     const indexEnd = g3d.getIndexEnd(section)
@@ -93,7 +91,7 @@ export class InsertableGeometry {
     // Skip empty mesh
     if (indexStart === indexEnd) {
       this._meshToUpdate.add(mesh)
-      return
+      return added
     }
 
     // Reusable matrix and vector3 to avoid allocations
@@ -156,12 +154,14 @@ export class InsertableGeometry {
       submesh.boundingBox.min.fromArray(g3d.getInstanceMin(instance))
       submesh.boundingBox.max.fromArray(g3d.getInstanceMax(instance))
       this.submeshes.push(submesh)
-      this.onSubmeshAdded?.(submesh, this.submeshes.length - 1)
+      added.push(this.submeshes.length - 1)
     }
     this._meshToUpdate.add(mesh)
+    return added
   }
 
   insertFromG3d (g3d: G3d, mesh: number) {
+    const added = new Array<number>()
     const meshG3dIndex = this.offsets.getMesh(mesh)
     const subStart = g3d.getMeshSubmeshStart(meshG3dIndex, this.offsets.section)
     const subEnd = g3d.getMeshSubmeshEnd(meshG3dIndex, this.offsets.section)
@@ -169,7 +169,7 @@ export class InsertableGeometry {
     // Skip empty mesh
     if (subStart === subEnd) {
       this._meshToUpdate.add(mesh)
-      return
+      return added
     }
 
     // Reusable matrix and vector3 to avoid allocations
@@ -226,10 +226,11 @@ export class InsertableGeometry {
       submesh.end = indexOffset + indexOut
       this.expandBox(submesh.boundingBox)
       this.submeshes.push(submesh)
-      this.onSubmeshAdded?.(submesh, this.submeshes.length - 1)
+      added.push(this.submeshes.length - 1)
     }
 
     this._meshToUpdate.add(mesh)
+    return added
   }
 
   private setIndex (index: number, value: number) {
