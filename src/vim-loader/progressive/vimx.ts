@@ -41,6 +41,7 @@ export class VimX {
   renderer: IRenderer
   // Vim instance here is only for transition.
   vim: Vim
+  instances = new Set<number>()
 
   constructor (
     settings: VimSettings,
@@ -174,14 +175,24 @@ export class VimX {
   }
 
   async loadAll (settings?: LoadPartialSettings) {
-    return this.loadFilter(undefined, undefined, settings)
+    return this.loadSubset(this.getSubset(), settings)
   }
 
   async loadSubset (subset: G3dSubset, settings?: LoadPartialSettings) {
+    subset = subset.except('instance', this.instances)
+    const count = subset.getInstanceCount()
+    for (let i = 0; i < count; i++) {
+      this.instances.add(subset.getVimInstance(i))
+    }
+
     // Add box to rendering.
     const box = subset.getBoundingBox()
     this.scene.updateBox(box)
 
+    if (subset.getInstanceCount() === 0) {
+      console.log('Empty subset. Ignoring')
+      return
+    }
     // Launch loading
     const dynamicScene = new DynamicScene(this.scene, this.localVimx, subset)
     this.scenes.push(dynamicScene)
@@ -193,7 +204,7 @@ export class VimX {
     filter: number[],
     settings?: LoadPartialSettings
   ) {
-    const subset = this.localVimx.getSubset(filterMode, filter)
+    const subset = this.getSubset().filter(filterMode, filter)
     await this.loadSubset(subset, settings)
   }
 
@@ -239,10 +250,6 @@ export class LocalVimx {
 
   getMesh (mesh: number) {
     return this.vimx.getMesh(mesh)
-  }
-
-  getSubset (mode: FilterMode, filter: number[]) {
-    return new G3dSubset(this.scene).filter(mode, filter)
   }
 
   abort () {
