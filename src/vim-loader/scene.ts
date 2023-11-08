@@ -152,8 +152,8 @@ export class Scene {
     mesh.mesh.matrix.copy(this._matrix)
     this.updateBox(mesh.boundingBox)
 
-    // Add current and future submeshes
     mesh.getSubmeshes().forEach((s) => this.addSubmesh(s))
+    mesh.setMaterial(this.material)
 
     this.meshes.push(mesh)
     this.setDirty()
