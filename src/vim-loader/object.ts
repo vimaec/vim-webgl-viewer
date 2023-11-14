@@ -157,6 +157,7 @@ export class Object {
     this.outlineAttribute.updateMeshes(meshes)
     this.visibleAttribute.updateMeshes(meshes)
     this.focusedAttribute.updateMeshes(meshes)
+    this.coloredAttribute.updateMeshes(meshes)
     this.colorAttribute.updateMeshes(meshes)
   }
 
