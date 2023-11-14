@@ -78,7 +78,7 @@ export class Vim {
    */
   getObjectFromInstance (instance: number) {
     const element = this.map?.getElementFromInstance(instance)
-    if (!element) return
+    if (element === undefined) return
     return this.getObjectFromElement(element)
   }
 
@@ -118,7 +118,7 @@ export class Vim {
   getObjectsInBox (box: THREE.Box3) {
     const result: Object[] = []
 
-    for (const obj of this.getAllObjects()) {
+    for (const obj of this.getObjects()) {
       const b = obj.getBoundingBox()
       if (!b) continue
       if (box.containsBox(b)) {
@@ -131,17 +131,19 @@ export class Vim {
   /**
    * Enumerates all objects of the vim
    */
-  * getAllObjects () {
-    for (const e of this.map.getAllElements()) {
+  getObjects () {
+    const result = new Array<Object>()
+    for (const e of this.map.getElements()) {
       const obj = this.getObjectFromElement(e)
-      if (obj) yield obj
+      result.push(obj)
     }
+    return result
   }
 
   /**
    * Enumerates all objects of the vim
    */
-  getSubsetObjects (subset: G3dSubset) {
+  getObjectsInSubset (subset: G3dSubset) {
     const set = new Set<Object>()
     const result = new Array<Object>()
     const count = subset.getInstanceCount()

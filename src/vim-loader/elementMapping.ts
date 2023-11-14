@@ -13,7 +13,7 @@ export class ElementNoMapping {
     return false
   }
 
-  getAllElements () {
+  getElements () {
     return []
   }
 
@@ -96,7 +96,7 @@ export class ElementMapping {
   /**
    * Returns all element indices of the vim
    */
-  getAllElements () {
+  getElements () {
     return this._elementIds.keys()
   }
 
@@ -211,7 +211,7 @@ export class ElementMapping2 {
   /**
    * Returns all element indices of the vim
    */
-  getAllElements () {
+  getElements () {
     return this._elementToInstances.keys()
   }
 

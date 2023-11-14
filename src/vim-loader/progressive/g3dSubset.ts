@@ -261,6 +261,7 @@ export class G3dSubset {
       )
       return new G3dSubset(this._source, instances)
     }
+
     if (mode === 'tag' || mode === 'group') {
       throw new Error('Filter Mode Not implemented')
     }
