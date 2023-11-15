@@ -15,7 +15,6 @@ import { Camera } from '../camera/camera'
 import { RenderingSection } from './renderingSection'
 import { RenderingComposer } from './renderingComposer'
 import { Settings } from '../viewerSettings'
-import { DynamicScene } from '../../vim-loader/progressive/dynamicScene'
 import { SignalDispatcher } from 'ste-signals'
 
 /**
@@ -243,11 +242,7 @@ export class Renderer implements IRenderer {
   /**
    * Remove object from rendering
    */
-  remove (target: DynamicScene | Scene | THREE.Object3D) {
-    if (target instanceof DynamicScene) {
-      target = target.scene
-      target.renderer = undefined
-    }
+  remove (target: Scene | THREE.Object3D) {
     this._scene.remove(target)
     this.notifySceneUpdate()
   }

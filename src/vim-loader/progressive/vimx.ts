@@ -1,11 +1,7 @@
 // loader
-import {
-  getFullSettings,
-  VimPartialSettings,
-  VimSettings
-} from '../vimSettings'
+import { getFullSettings, VimSettings } from '../vimSettings'
 import { Vim } from '../vim'
-import { Loader, Scene } from '../../vim'
+import { Scene } from '../../vim'
 import { LegacyMeshFactory } from './legacyMeshFactory'
 
 import {
@@ -26,21 +22,28 @@ import {
   FilterMode,
   IProgressLogs
 } from 'vim-format'
-import { LoadPartialSettings, DynamicScene, LoadSettings } from './dynamicScene'
+import { LoadPartialSettings, SubsetRequest } from './subsetRequest'
 import { G3dSubset } from './g3dSubset'
+import { SignalDispatcher } from 'ste-signals'
 
 export class VimX {
   settings: VimSettings
   bim: VimDocument | undefined
-  mapping: ElementMapping2 | ElementNoMapping
-
   scene: Scene
-  localVimx: LocalVimx
-  scenes = new Array<DynamicScene>()
-  renderer: IRenderer
-  // Vim instance here is only for transition.
   vim: Vim
-  instances = new Set<number>()
+
+  renderer: IRenderer
+  private _localVimx: LocalVimx
+  private _instances = new Set<number>()
+
+  private _activeRequests = new SignalSet<SubsetRequest>()
+  get onLoadingUpdate () {
+    return this._activeRequests.onUpdate
+  }
+
+  get isLoading () {
+    return this._activeRequests.size > 0
+  }
 
   constructor (
     settings: VimSettings,
@@ -52,8 +55,7 @@ export class VimX {
     this.scene = scene
     this.settings = settings
     this.bim = bim
-    this.localVimx = localVimx
-    this.mapping = mapping
+    this._localVimx = localVimx
 
     this.vim = new Vim(
       localVimx.header,
@@ -155,23 +157,23 @@ export class VimX {
   }
 
   clear () {
-    this.localVimx.abort()
+    this._localVimx.abort()
     this.vim.clearObjectCache()
     this.renderer?.remove(this.scene)
     this.scene.dispose()
-    this.scenes.forEach((s) => s.dispose())
-    this.scenes.length = 0
+    this._activeRequests.forEach((s) => s.dispose())
+    this._activeRequests.clear()
 
     // Create a new scene
     this.scene = new Scene(undefined, this.settings.matrix)
     this.scene.vim = this.vim
     this.vim.scene = this.scene
     this.renderer?.add(this.scene)
-    this.instances.clear()
+    this._instances.clear()
   }
 
   getSubset () {
-    return new G3dSubset(this.localVimx.scene)
+    return new G3dSubset(this._localVimx.scene)
   }
 
   async loadAll (settings?: LoadPartialSettings) {
@@ -179,10 +181,10 @@ export class VimX {
   }
 
   async loadSubset (subset: G3dSubset, settings?: LoadPartialSettings) {
-    subset = subset.except('instance', this.instances)
+    subset = subset.except('instance', this._instances)
     const count = subset.getInstanceCount()
     for (let i = 0; i < count; i++) {
-      this.instances.add(subset.getVimInstance(i))
+      this._instances.add(subset.getVimInstance(i))
     }
 
     // Add box to rendering.
@@ -194,9 +196,10 @@ export class VimX {
       return
     }
     // Launch loading
-    const dynamicScene = new DynamicScene(this.scene, this.localVimx, subset)
-    this.scenes.push(dynamicScene)
-    await dynamicScene.start(settings)
+    const request = new SubsetRequest(this.scene, this._localVimx, subset)
+    this._activeRequests.add(request)
+    await request.start(settings)
+    this._activeRequests.delete(request)
   }
 
   async loadFilter (
@@ -213,7 +216,7 @@ export class VimX {
   }
 
   dispose () {
-    this.localVimx.abort()
+    this._localVimx.abort()
   }
 }
 
@@ -262,4 +265,36 @@ export interface IRenderer {
   remove(scene: Scene)
   updateBox(box: THREE.Box3)
   notifySceneUpdate()
+}
+
+class SignalSet<T> {
+  private _set = new Set<T>()
+  private _signal = new SignalDispatcher()
+
+  get onUpdate () {
+    return this._signal.asEvent()
+  }
+
+  get size () {
+    return this._set.size
+  }
+
+  add (value: T) {
+    this._set.add(value)
+    this._signal.dispatch()
+  }
+
+  delete (value: T) {
+    this._set.delete(value)
+    this._signal.dispatch()
+  }
+
+  clear () {
+    this._set.clear()
+    this._signal.dispatch()
+  }
+
+  forEach (action: (value: T) => void) {
+    this._set.forEach(action)
+  }
 }

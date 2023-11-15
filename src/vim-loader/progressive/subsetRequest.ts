@@ -28,8 +28,8 @@ function getFullSettings (option: LoadPartialSettings) {
 /**
  * Manages geometry downloads and loads it into a scene for rendering.
  */
-export class DynamicScene {
-  subset: G3dSubset
+export class SubsetRequest {
+  private _subset: G3dSubset
 
   private _uniques: G3dSubset
   private _nonUniques: G3dSubset
@@ -44,30 +44,18 @@ export class DynamicScene {
   private _disposed: boolean = false
   private _started: boolean = false
 
-  scene: Scene
+  private _scene: Scene
 
   getBoundingBox () {
-    return this.subset.getBoundingBox()
-  }
-
-  /**
-   * Vim associated with this scene
-   */
-  get vim () {
-    return this.scene.vim
-  }
-
-  set vim (value: Vim) {
-    this.scene.vim = value
+    return this._subset.getBoundingBox()
   }
 
   constructor (scene: Scene, localVimx: LocalVimx, subset: G3dSubset) {
-    this.subset = subset
-    this.scene = scene
-    this.vim = scene.vim
+    this._subset = subset
+    this._scene = scene
 
-    this._uniques = this.subset.filterUniqueMeshes()
-    this._nonUniques = this.subset.filterNonUniqueMeshes()
+    this._uniques = this._subset.filterUniqueMeshes()
+    this._nonUniques = this._subset.filterNonUniqueMeshes()
 
     const opaqueOffsets = this._uniques.getOffsets('opaque')
     this._opaqueMesh = new InsertableMesh(
@@ -85,8 +73,8 @@ export class DynamicScene {
     )
     this._transparentMesh.mesh.name = 'Transparent_Merged_Mesh'
 
-    this.scene.addMesh(this._transparentMesh)
-    this.scene.addMesh(this._opaqueMesh)
+    this._scene.addMesh(this._transparentMesh)
+    this._scene.addMesh(this._opaqueMesh)
 
     this._meshFactory = new InstancedMeshFactory(localVimx.materials)
 
@@ -165,12 +153,12 @@ export class DynamicScene {
     // Update Instanced meshes
     while (this._pushedMesh < this._meshes.length) {
       const mesh = this._meshes[this._pushedMesh++]
-      this.scene.addMesh(mesh)
+      this._scene.addMesh(mesh)
     }
 
     // Update Merged meshes
     this._transparentMesh.update()
     this._opaqueMesh.update()
-    this.scene.setDirty()
+    this._scene.setDirty()
   }
 }

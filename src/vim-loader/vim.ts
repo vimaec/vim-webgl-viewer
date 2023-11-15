@@ -12,9 +12,7 @@ import {
   ElementMapping2,
   ElementNoMapping
 } from './elementMapping'
-import { Submesh } from './mesh'
 import { ISignal, SignalDispatcher } from 'ste-signals'
-import { DynamicScene } from './progressive/dynamicScene'
 import { G3dSubset } from './progressive/g3dSubset'
 
 /**
@@ -42,7 +40,7 @@ export class Vim {
     header: VimHeader | undefined,
     document: VimDocument,
     g3d: G3d | undefined,
-    scene: Scene | DynamicScene,
+    scene: Scene,
     settings: VimSettings,
     map: ElementMapping | ElementNoMapping | ElementMapping2
   ) {
@@ -50,7 +48,7 @@ export class Vim {
     this.bim = document
     this.g3d = g3d
     scene.vim = this
-    this.scene = scene instanceof DynamicScene ? scene.scene : scene
+    this.scene = scene
     this.settings = settings
 
     this.map = map ?? new ElementNoMapping()
