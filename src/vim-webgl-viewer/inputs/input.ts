@@ -71,7 +71,7 @@ export class DefaultInputScheme implements InputScheme {
   }
 
   onIdleAction (hit: InputAction): void {
-    if (!this._viewer.sectionBox.interactive) {
+    if (!this._viewer.gizmos.section.interactive) {
       this._viewer.selection.focus(hit?.object)
     }
   }
@@ -190,7 +190,7 @@ export class Input {
 
     if (value === 'look') this._pointerFallback = 'orbit'
     else if (value === 'orbit') this._pointerFallback = 'look'
-    this._viewer.gizmoRectangle.visible = false
+    this._viewer.gizmos.rectangle.visible = false
 
     this._pointerActive = value
     this._onPointerModeChanged.dispatch()

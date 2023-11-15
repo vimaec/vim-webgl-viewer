@@ -2,7 +2,6 @@
  * @module viw-webgl-viewer/inputs
  */
 
-
 import * as THREE from 'three'
 import { InputHandler } from './inputHandler'
 import { InputAction } from '../raycaster'
@@ -58,7 +57,7 @@ export class MouseHandler extends InputHandler {
   }
 
   private get gizmoRect () {
-    return this._viewer.gizmoRectangle
+    return this._viewer.gizmos.rectangle
   }
 
   protected override addListeners (): void {
@@ -255,7 +254,7 @@ export class MouseHandler extends InputHandler {
     const btn = this.getButton(event)
     if (btn === this._buttonDown) return // the active button is still down.
 
-    this._viewer.gizmoRectangle.visible = false
+    this._viewer.gizmos.rectangle.visible = false
     event.preventDefault()
     if (!this._buttonDown) return
 

@@ -12,8 +12,10 @@ import { Selection } from './selection'
 import { Environment, IEnvironment } from './environment'
 import { Raycaster } from './raycaster'
 import { GizmoOrbit } from './gizmos/gizmoOrbit'
+import { GizmoLoading } from './gizmos/gizmoLoading'
 import { RenderScene } from './rendering/renderScene'
 import { Viewport } from './viewport'
+import { Gizmos } from './gizmos/gizmos'
 import { GizmoAxes } from './gizmos/gizmoAxes'
 import { SectionBox } from './gizmos/sectionBox/sectionBox'
 import { Measure, IMeasure } from './gizmos/measure/measure'
@@ -61,26 +63,6 @@ export class Viewer {
   raycaster: Raycaster
 
   /**
-   * Interface to interact with the section gizmo.
-   */
-  sectionBox: SectionBox
-
-  /**
-   * Interface to interact with measure.
-   */
-  measure: IMeasure
-
-  /**
-   * Interface to interact with the rectangle gizmo.
-   */
-  gizmoRectangle: GizmoRectangle
-
-  /**
-   * Interface to interact with the grid gizmo.
-   */
-  grid: GizmoGrid
-
-  /**
    * Interface to interact with viewer materials
    */
   materials: VimMaterials
@@ -106,19 +88,10 @@ export class Viewer {
     return this._onVimLoaded.asEvent()
   }
 
-  /**
-   * Will be removed once gizmo axes are cleaned up to expose canvas.
-   * @deprecated
-   */
-  get axesCanvas () {
-    return this._gizmoAxes.canvas
-  }
-
   private _environment: Environment
   private _camera: Camera
   private _clock = new THREE.Clock()
-  private _gizmoAxes: GizmoAxes
-  private _gizmoOrbit: GizmoOrbit
+  gizmos: Gizmos
 
   // State
   private _vims = new Set<Vim | VimX>()
@@ -141,34 +114,18 @@ export class Viewer {
       this.settings
     )
 
-    this.gizmoRectangle = new GizmoRectangle(this)
     this.inputs = new Input(this)
 
-    if (this.settings.camera.gizmo.enable) {
-      this._gizmoOrbit = new GizmoOrbit(
-        this.renderer,
-        this._camera,
-        this.inputs,
-        this.settings
-      )
-    }
+    this.gizmos = new Gizmos(this)
     this.materials.applySettings(this.settings)
 
     // TODO add options
-    this.measure = new Measure(this)
-    this._gizmoAxes = new GizmoAxes(this.camera, this.settings.axes)
-    this.viewport.canvas.parentElement?.prepend(this._gizmoAxes.canvas)
-
-    this.sectionBox = new SectionBox(this)
-
-    this.grid = new GizmoGrid(this.renderer, this.materials)
-
     this._environment = new Environment(this.settings)
     this._environment.getObjects().forEach((o) => this.renderer.add(o))
     this.renderer.onBoxUpdated.subscribe((_) => {
       const box = this.renderer.getBoundingBox()
       this._environment.adaptToContent(box)
-      this.sectionBox.fitBox(box)
+      this.gizmos.section.fitBox(box)
     })
 
     // Input and Selection
@@ -264,12 +221,11 @@ export class Viewer {
     this.selection.dispose()
     this._environment.dispose()
     this.selection.clear()
-    this._gizmoOrbit.dispose()
     this.viewport.dispose()
     this.renderer.dispose()
     this.inputs.unregisterAll()
     this._vims.forEach((v) => v?.dispose())
     this.materials.dispose()
-    this.gizmoRectangle.dispose()
+    this.gizmos.dispose()
   }
 }

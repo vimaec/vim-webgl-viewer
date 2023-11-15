@@ -105,7 +105,7 @@ export class Renderer implements IRenderer {
     })
 
     this.textRenderer = this._viewport.createTextRenderer()
-    this.textEnabled = false
+    this.textEnabled = true
 
     this._composer = new RenderingComposer(
       this.renderer,
