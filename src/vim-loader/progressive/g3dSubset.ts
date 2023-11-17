@@ -11,8 +11,9 @@ export class G3dSubset {
   // source-based indices of included instanced
   private _instances: number[]
 
-  // computed fields
-  private _meshes: number[]
+  /** Source-based mesh indices */
+  private _meshes: Array<number>
+  /** Source-based instances aligned with corresponding mesh */
   private _meshInstances: Array<Array<number>>
 
   /**
@@ -63,15 +64,24 @@ export class G3dSubset {
       : index
   }
 
+  /**
+   * Returns total instance count in subset.
+   */
   getInstanceCount () {
     return this._instances.length
   }
 
+  /**
+   * Returns the vim-based instance (node) for given subset-based instance.
+   */
   getVimInstance (subsetIndex: number) {
     const vimIndex = this._instances[subsetIndex]
     return this._source.instanceNodes[vimIndex]
   }
 
+  /**
+   * Returns the vim-based instances (nodes) for current subset.
+   */
   getVimInstances () {
     const results = new Array<number>(this._instances.length)
     for (let i = 0; i < results.length; i++) {
@@ -80,30 +90,44 @@ export class G3dSubset {
     return results
   }
 
-  getMesh (index: number) {
+  /**
+   * Returns source-based mesh index.
+   * @param index subset-based mesh index
+   */
+  getSourceMesh (index: number) {
     return this._meshes[index]
   }
 
+  /**
+   * Returns total mesh count in subset.
+   */
   getMeshCount () {
     return this._meshes.length
   }
 
   /**
-   * Returns index count for given mesh and section.
+   * Returns total index count for given mesh and section.
+   * @param mesh subset-based mesh index
+   * @param section sections to include based on opacity
    */
   getMeshIndexCount (mesh: number, section: MeshSection) {
     const instances = this.getMeshInstanceCount(mesh)
-    const indices = this._source.getMeshIndexCount(this.getMesh(mesh), section)
+    const indices = this._source.getMeshIndexCount(
+      this.getSourceMesh(mesh),
+      section
+    )
     return indices * instances
   }
 
   /**
-   * Returns vertext count for given mesh and section.
+   * Returns total vertex count for given mesh and section.
+   * @param mesh subset-based mesh index
+   * @param section sections to include based on opacity
    */
   getMeshVertexCount (mesh: number, section: MeshSection) {
     const instances = this.getMeshInstanceCount(mesh)
     const vertices = this._source.getMeshVertexCount(
-      this.getMesh(mesh),
+      this.getSourceMesh(mesh),
       section
     )
     return vertices * instances
@@ -111,23 +135,24 @@ export class G3dSubset {
 
   /**
    * Returns instance count for given mesh.
-   * @param mesh The index of the mesh from the g3dIndex.
+   * @param mesh subset-based mesh index.
    */
   getMeshInstanceCount (mesh: number) {
     return this._meshInstances[mesh].length
   }
 
   /**
-   * Returns the list of mesh-based instance indices for given mesh or undefined if all instances are included.
-   * @param mesh The index of the mesh from the g3dIndex.
+   * Returns a list of source-based instance indices for given mesh.
+   * @param mesh subset-based mesh index.
    */
   getMeshInstances (mesh: number) {
     return this._meshInstances[mesh]
   }
 
   /**
-   * Returns index-th mesh-based instance index for given mesh.
-   * @param mesh The index of the mesh from the g3dIndex.
+   * Returns the source-based instance index for given mesh and index.
+   * @param mesh subset-based mesh index.
+   * @param index mesh-based instance index
    */
   getMeshInstance (mesh: number, index: number) {
     return this._meshInstances[mesh][index]
@@ -141,7 +166,7 @@ export class G3dSubset {
   }
 
   /**
-   * Returns a new subset that contains only the N largest meshes
+   * Returns a new subset that contains only the N largest meshes sorted by largest
    */
   filterLargests (count: number) {
     if (this._source instanceof G3d) {
@@ -193,7 +218,7 @@ export class G3dSubset {
    * Returns offsets needed to build geometry.
    */
   getOffsets (section: MeshSection) {
-    return G3dMeshOffsets.fromSubset(this, section)
+    return new G3dMeshOffsets(this, section)
   }
 
   /**
@@ -212,6 +237,9 @@ export class G3dSubset {
     return result
   }
 
+  /**
+   * Returns a new subset where the order of meshes is inverted.
+   */
   reverse () {
     const reverse = [...this._instances].reverse()
     return new G3dSubset(this._source, reverse)
@@ -303,6 +331,44 @@ export class G3dSubset {
       return box
     }
   }
+
+  /*
+  getAverageBoundingBox () {
+    if (this._instances.length === 0) return
+    if (this._source instanceof G3dScene) {
+      const center = new THREE.Vector3()
+      const dist = new THREE.Vector3(1, 1, 1)
+
+      const min = new THREE.Vector3()
+      const max = new THREE.Vector3()
+      const pos = new THREE.Vector3()
+
+      // Compute center
+      for (let i = 0; i < this._instances.length; i++) {
+        const instance = this._instances[i]
+        min.fromArray(this._source.getInstanceMin(instance))
+        max.fromArray(this._source.getInstanceMax(instance))
+        center.add(min).add(max)
+      }
+      center.divideScalar(2 * this._instances.length)
+
+      // Compute average distance
+      for (let i = 0; i < this._instances.length; i++) {
+        const instance = this._instances[i]
+        min.fromArray(this._source.getInstanceMin(instance))
+        max.fromArray(this._source.getInstanceMax(instance))
+
+        pos.copy(min).lerp(max, 0.5) // center
+        pos.sub(center) // delta
+        pos.set(Math.abs(pos.x), Math.abs(pos.y), Math.abs(pos.z)) // dist
+        dist.add(pos)
+      }
+      dist.divideScalar(this._instances.length).multiplyScalar(5)
+
+      return new THREE.Box3().setFromCenterAndSize(center, dist)
+    }
+  }
+  */
 }
 
 function minBox (box: THREE.Box3, other: Float32Array) {

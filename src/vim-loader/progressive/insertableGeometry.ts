@@ -162,7 +162,7 @@ export class InsertableGeometry {
 
   insertFromG3d (g3d: G3d, mesh: number) {
     const added = new Array<number>()
-    const meshG3dIndex = this.offsets.getMesh(mesh)
+    const meshG3dIndex = this.offsets.getSourceMesh(mesh)
     const subStart = g3d.getMeshSubmeshStart(meshG3dIndex, this.offsets.section)
     const subEnd = g3d.getMeshSubmeshEnd(meshG3dIndex, this.offsets.section)
 

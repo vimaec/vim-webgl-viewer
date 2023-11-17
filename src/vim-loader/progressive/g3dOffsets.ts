@@ -13,78 +13,83 @@ export class G3dMeshCounts {
  */
 export class G3dMeshOffsets {
   // inputs
-  subset: G3dSubset
-  section: MeshSection
+  readonly subset: G3dSubset
+  readonly section: MeshSection
 
   // computed
-  counts: G3dMeshCounts
-  indexOffsets: Int32Array
-  vertexOffsets: Int32Array
+  readonly counts: G3dMeshCounts
+  private readonly _indexOffsets: Int32Array
+  private readonly _vertexOffsets: Int32Array
 
   /**
    * Computes geometry offsets for given subset and section
    * @param subset subset for which to compute offsets
-   * @param section on of 'opaque' | 'transparent' | 'all'
+   * @param section 'opaque' | 'transparent' | 'all'
    */
-  static fromSubset (subset: G3dSubset, section: MeshSection) {
-    const result = new G3dMeshOffsets()
-    result.subset = subset
-    result.section = section
+  constructor (subset: G3dSubset, section: MeshSection) {
+    this.subset = subset
+    this.section = section
 
-    function computeOffsets (getter: (mesh: number) => number) {
-      const meshCount = subset.getMeshCount()
-      const offsets = new Int32Array(meshCount)
-
-      for (let i = 1; i < meshCount; i++) {
-        offsets[i] = offsets[i - 1] + getter(i - 1)
-      }
-      return offsets
-    }
-
-    result.counts = subset.getAttributeCounts(section)
-    result.indexOffsets = computeOffsets((m) =>
+    this.counts = subset.getAttributeCounts(section)
+    this._indexOffsets = this.computeOffsets(subset, (m) =>
       subset.getMeshIndexCount(m, section)
     )
-    result.vertexOffsets = computeOffsets((m) =>
+    this._vertexOffsets = this.computeOffsets(subset, (m) =>
       subset.getMeshVertexCount(m, section)
     )
-
-    return result
   }
 
+  private computeOffsets (subset: G3dSubset, getter: (mesh: number) => number) {
+    const meshCount = subset.getMeshCount()
+    const offsets = new Int32Array(meshCount)
+
+    for (let i = 1; i < meshCount; i++) {
+      offsets[i] = offsets[i - 1] + getter(i - 1)
+    }
+    return offsets
+  }
+
+  /**
+   * Returns the index offset for given mesh and its instances.
+   * @param mesh subset-based mesh index
+   */
   getIndexOffset (mesh: number) {
     return mesh < this.counts.meshes
-      ? this.indexOffsets[mesh]
+      ? this._indexOffsets[mesh]
       : this.counts.indices
   }
 
+  /**
+   * Returns the vertex offset for given mesh and its instances.
+   * @param mesh subset-based mesh index
+   */
   getVertexOffset (mesh: number) {
     return mesh < this.counts.meshes
-      ? this.vertexOffsets[mesh]
+      ? this._vertexOffsets[mesh]
       : this.counts.vertices
   }
 
   /**
-   * Returns how many instances of given meshes are the filtered view.
+   * Returns instance counts of given mesh.
+   * @param mesh subset-based mesh index
    */
   getMeshInstanceCount (mesh: number) {
     return this.subset.getMeshInstanceCount(mesh)
   }
 
   /**
-   * Returns instance for given mesh.
-   * @mesh view-relative mesh index
-   * @at view-relative instance index for given mesh
-   * @returns mesh-relative instance index
+   * Returns source-based instance for given mesh and index.
+   * @mesh subset-based mesh index
+   * @index mesh-based instance index
    */
   getMeshInstance (mesh: number, index: number) {
     return this.subset.getMeshInstance(mesh, index)
   }
 
   /**
-   * Returns the vim-relative mesh index at given index
+   * Returns the source-based mesh index at given index
    */
-  getMesh (index: number) {
-    return this.subset.getMesh(index)
+  getSourceMesh (index: number) {
+    return this.subset.getSourceMesh(index)
   }
 }

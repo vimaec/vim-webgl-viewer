@@ -65,7 +65,7 @@ export class LegacyMeshFactory {
 
     const count2 = subset.getMeshCount()
     for (let m = 0; m < count2; m++) {
-      const mesh = subset.getMesh(m)
+      const mesh = subset.getSourceMesh(m)
       const instances =
         subset.getMeshInstances(m) ?? this.g3d.meshInstances[mesh]
 

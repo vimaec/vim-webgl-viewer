@@ -88,11 +88,11 @@ export class LoadingSynchronizer {
       }
 
       if (!mergeDone && (uniqueMesh <= nonUniqueMesh || instanceDone)) {
-        uniqueMesh = this.uniques.getMesh(uniqueIndex)
+        uniqueMesh = this.uniques.getSourceMesh(uniqueIndex)
         promises.push(this.merge(uniqueMesh, uniqueIndex++))
       }
       if (!instanceDone && (nonUniqueMesh <= uniqueMesh || mergeDone)) {
-        nonUniqueMesh = this.nonUniques.getMesh(nonUniqueIndex)
+        nonUniqueMesh = this.nonUniques.getSourceMesh(nonUniqueIndex)
         promises.push(this.instance(nonUniqueMesh, nonUniqueIndex++))
       }
     }
