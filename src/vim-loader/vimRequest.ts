@@ -39,9 +39,8 @@ export class VimRequest {
 
   async send () {
     this.vim = this.settings.streamGeometry
-      ? await this.loader.loadRemote(this.bfast, this.settings)
-      : await this.loader.load(this.bfast, this.settings)
-    this.vim.source = this.url
+      ? await this.loader.loadRemote(this.bfast, this.settings, this.url)
+      : await this.loader.load(this.bfast, this.settings, this.url)
     this.vim.onDispose.sub(() => this.abort())
     this._onLoaded.dispatch(this.vim)
     return this.vim

@@ -1,10 +1,5 @@
-import { BFast, G3dMesh, RemoteBuffer, RemoteVimx } from 'vim-format'
 import * as VIM from './vim'
 import * as THREE from 'three'
-import { VimxLoader } from './vim-loader/progressive/vimxLoader'
-import { G3dSubset } from './vim-loader/progressive/g3dSubset'
-import { promises } from 'dns'
-import { CSS2DObject } from 'three/examples/jsm/renderers/CSS2DRenderer'
 
 // Parse URL for source file
 const params = new URLSearchParams(window.location.search)

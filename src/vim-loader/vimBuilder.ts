@@ -31,7 +31,7 @@ export class VimBuilder {
     this.sceneBuilder = new SceneBuilder(this.meshBuilder)
   }
 
-  async load (bfast: BFast, settings: VimSettings) {
+  async load (bfast: BFast, settings: VimSettings, source: string) {
     const getBim = async () => {
       const doc = await VimDocument.createFromBfast(bfast, true)
       const [instanceToElement, elementIds] = await Promise.all([
@@ -66,13 +66,15 @@ export class VimBuilder {
       scene,
       settings,
       mapping,
-      undefined
+      undefined,
+      source,
+      'vim'
     )
 
     return vim
   }
 
-  async loadRemote (bfast: BFast, settings: VimSettings) {
+  async loadRemote (bfast: BFast, settings: VimSettings, source: string) {
     const doc = await VimDocument.createFromBfast(bfast, settings.noStrings)
     const geometry = await bfast.getBfast('geometry')
     const remoteG3d: RemoteG3d = RemoteG3d.createFromBfast(geometry)
@@ -102,7 +104,17 @@ export class VimBuilder {
           elementIds!
       )
 
-    const vim = new Vim(header, doc, g3d, scene, settings, mapping, undefined)
+    const vim = new Vim(
+      header,
+      doc,
+      g3d,
+      scene,
+      settings,
+      mapping,
+      undefined,
+      source,
+      'vim'
+    )
 
     return vim
   }

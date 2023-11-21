@@ -112,10 +112,10 @@ export class VimxLoader {
       scene,
       settings,
       mapping,
-      builder
+      builder,
+      typeof source === 'string' ? source : undefined,
+      'vimx'
     )
-
-    vim.source = typeof source === 'string' ? source : undefined
 
     if (remoteVimx.bfast.source instanceof RemoteBuffer) {
       remoteVimx.bfast.source.onProgress = undefined
@@ -154,8 +154,17 @@ export class VimxLoader {
 
     // Return legacy vim
     const builder = new VimSubsetBuilder(factory)
-    const vim = new Vim(header, doc, g3d, scene, fullSettings, mapping, builder)
-    vim.source = typeof source === 'string' ? source : undefined
+    const vim = new Vim(
+      header,
+      doc,
+      g3d,
+      scene,
+      fullSettings,
+      mapping,
+      builder,
+      typeof source === 'string' ? source : undefined,
+      'vim'
+    )
 
     if (bfast.source instanceof RemoteBuffer) {
       bfast.source.onProgress = undefined

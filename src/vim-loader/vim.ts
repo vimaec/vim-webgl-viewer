@@ -17,29 +17,27 @@ import { G3dSubset } from './progressive/g3dSubset'
 import { SubsetBuilder } from './progressive/subsetBuilder'
 import { LoadPartialSettings } from './progressive/subsetRequest'
 
+type VimFormat = 'vim' | 'vimx'
+
 /**
  * Container for the built three meshes and the vim data from which it was built.
  * Dispenses Objects for high level scene manipulation
  */
 export class Vim {
-  source: string | undefined
-  scene: Scene
-  readonly builder: SubsetBuilder
+  readonly format: VimFormat = 'vim'
+  readonly source: string | undefined
 
-  readonly header: VimHeader
-  readonly bim: VimDocument
+  readonly header: VimHeader | undefined
+  readonly bim: VimDocument | undefined
   readonly g3d: G3d | undefined
   readonly settings: VimSettings
 
+  readonly scene: Scene
   readonly map: ElementMapping | ElementNoMapping | ElementMapping2
-
-  private readonly _elementToObject: Map<number, Object> = new Map<
-    number,
-    Object
-  >()
 
   private readonly _builder: SubsetBuilder
   private readonly _loadedInstances = new Set<number>()
+  private readonly _elementToObject = new Map<number, Object>()
 
   /** Dispatched whenever a subset begins or finishes loading. */
   get onLoadingUpdate () {
@@ -63,7 +61,9 @@ export class Vim {
     scene: Scene,
     settings: VimSettings,
     map: ElementMapping | ElementNoMapping | ElementMapping2,
-    builder: SubsetBuilder
+    builder: SubsetBuilder,
+    source: string,
+    format: VimFormat
   ) {
     this.header = header
     this.bim = document
@@ -74,6 +74,8 @@ export class Vim {
 
     this.map = map ?? new ElementNoMapping()
     this._builder = builder
+    this.source = source
+    this.format = format
   }
 
   /**
