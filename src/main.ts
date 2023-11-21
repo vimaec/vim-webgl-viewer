@@ -1,7 +1,10 @@
 import { BFast, G3dMesh, RemoteBuffer, RemoteVimx } from 'vim-format'
 import * as VIM from './vim'
 import * as THREE from 'three'
-import { VimXLoader } from './vim-loader/progressive/vimxLoader'
+import { VimxLoader } from './vim-loader/progressive/vimxLoader'
+import { G3dSubset } from './vim-loader/progressive/g3dSubset'
+import { promises } from 'dns'
+import { CSS2DObject } from 'three/examples/jsm/renderers/CSS2DRenderer'
 
 // Parse URL for source file
 const params = new URLSearchParams(window.location.search)
@@ -49,16 +52,27 @@ addLoadButton()
 
 async function test () {
   const vim = await load(url)
+  if (vim instanceof VIM.VimX) {
+  }
 }
 
 async function load (url: string | ArrayBuffer) {
   time = Date.now()
-  const vim = await VimXLoader.loadAny(
+  const vim = await VIM.VimxLoader.loadAny(
     // 'https://vimdevelopment01storage.blob.core.windows.net/split-mesh/_WHITELEYS-VIM-MAIN_detached.v1.2.42.vimx',
+    // 'https://vimdevelopment01storage.blob.core.windows.net/samples/residence.vim',
+    // '5001201_at_qq.com-tower.vimx',
+    // 'https://vimdevelopment01storage.blob.core.windows.net/split-mesh/residence.vimx',
+    // 'https://vimdevelopment01storage.blob.core.windows.net/split-mesh/tower.vimx',
     'https://vimdevelopment01storage.blob.core.windows.net/samples/residence.vim',
+    // 'https://vim02.azureedge.net/samples/residence.vim',
+    // './Damn.vim',
+    // 'https://vimdevelopment01storage.blob.core.windows.net/samples/TowerS-ARCHITECTURE-ALL.v1.2.50.vim',
     {
-      // filter: [...new Array(5).keys()], // .map((i) => i + 3500000),
+      // filter: [9969, 9970, 9971], // .map((i) => i + 3500000),
       // filterMode: 'instance',
+      // legacy: true,
+      // scale: 0.001,
       // legacy: true,
       progressive: true,
       refreshInterval: 200,
@@ -74,15 +88,49 @@ async function load (url: string | ArrayBuffer) {
 async function onVimLoaded (vim: VIM.Vim | VIM.VimX) {
   viewer.add(vim)
   if (vim instanceof VIM.Vim) {
-    console.log(`loaded in ${(Date.now() - time) / 1000} seconds`)
   }
 
   if (vim instanceof VIM.VimX) {
+    vim.onLoadingUpdate.sub(
+      () => (viewer.gizmos.loading.visible = vim.isLoading)
+    )
+    vim.clear()
+    await vim.loadFilter('instance', [0, 1, 2, 3, 4])
+    viewer.camera.do().frame('all', new THREE.Vector3(1, -1, 1))
+    await new Promise<void>((resolve, _) => setTimeout(() => resolve(), 1000))
+    vim.clear()
+    console.log(viewer)
+    await vim.loadFilter('instance', [5, 6, 7, 8, 9])
+    console.log(viewer)
+    viewer.camera.do().frame('all', new THREE.Vector3(1, -1, 1))
+    await new Promise<void>((resolve, _) => setTimeout(() => resolve(), 1000))
+    vim.clear()
+
+    await vim.loadFilter('instance', [10, 11, 12, 13, 14])
+    viewer.camera.do().frame('all', new THREE.Vector3(1, -1, 1))
+    await new Promise<void>((resolve, _) => setTimeout(() => resolve(), 1000))
+    vim.clear()
+    console.log(viewer.renderer)
     await vim.loadAll()
+    viewer.camera.do().frame('all', new THREE.Vector3(1, -1, 1))
+
     console.log(`loaded in ${(Date.now() - time) / 1000} seconds`)
   }
 
-  viewer.camera.do().frame('all')
+  async function loadContext (vim: VIM.VimX) {
+    vim.scene.material = viewer.materials.isolation
+    const subset = vim.getFullSet()
+    const count = Math.ceil(subset.getInstanceCount() * 0.1)
+    const largests = subset.filterLargests(count).reverse()
+    for (const obj of vim.vim.getObjectsInSubset(largests)) {
+      obj.visible = false
+    }
+    const load = vim.loadSubset(largests, { delayRender: false })
+    await load
+
+    // viewer.environment.groundPlane.visible = false
+  }
+
   globalThis.vim = vim
   globalThis.viewer = viewer
   globalThis.THREE = THREE
