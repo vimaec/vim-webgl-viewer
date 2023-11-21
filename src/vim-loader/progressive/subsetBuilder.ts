@@ -1,37 +1,38 @@
-import { getFullSettings, VimSettings } from '../vimSettings'
-import { Vim } from '../vim'
-import { LocalVimx, Scene, VimBuilder } from '../../vim'
+import { LocalVimx, Scene } from '../../vim'
 import { LegacyMeshFactory } from './legacyMeshFactory'
-
-import {
-  ElementMapping,
-  ElementMapping2,
-  ElementNoMapping
-} from '../elementMapping'
-import {
-  BFast,
-  RemoteBuffer,
-  VimDocument,
-  G3dMaterial,
-  RemoteVimx,
-  G3d,
-  requestHeader,
-  VimHeader,
-  G3dScene,
-  FilterMode,
-  IProgressLogs
-} from 'vim-format'
 import { LoadPartialSettings, SubsetRequest } from './subsetRequest'
 import { G3dSubset } from './g3dSubset'
-import { SignalDispatcher } from 'ste-signals'
-import { Renderer } from '../../vim-webgl-viewer/rendering/renderer'
+import { ISignal, SignalDispatcher } from 'ste-signals'
 
-export class VimSubsetBuilder {
+export interface SubsetBuilder {
+  /** Dispatched whenever a subset begins or finishes loading. */
+  onUpdate: ISignal
+
+  /** Returns true when some subset is being loaded. */
+  isLoading: boolean
+
+  /** Returns all instances as a subset */
+  getFullSet(): G3dSubset
+
+  /** Loads given subset with given options */
+  loadSubset(subset: G3dSubset, settings?: LoadPartialSettings)
+
+  /** Stops and clears all loading processes */
+  clear()
+
+  dispose()
+}
+
+/**
+ * Loads and builds subsets from a Vim file.
+ */
+export class VimSubsetBuilder implements SubsetBuilder {
   factory: LegacyMeshFactory
 
-  private _onLoading = new SignalDispatcher()
+  private _onUpdate = new SignalDispatcher()
+
   get onUpdate () {
-    return this._onLoading.asEvent()
+    return this._onUpdate.asEvent()
   }
 
   get isLoading () {
@@ -42,17 +43,13 @@ export class VimSubsetBuilder {
     this.factory = factory
   }
 
-  getSubset () {
+  getFullSet () {
     return new G3dSubset(this.factory.g3d)
   }
 
   loadSubset (subset: G3dSubset, settings?: LoadPartialSettings) {
     this.factory.add(subset)
-    this._onLoading.dispatch()
-  }
-
-  updateScene (scene: Scene) {
-    this.factory.scene = scene
+    this._onUpdate.dispatch()
   }
 
   clear () {}
@@ -60,46 +57,48 @@ export class VimSubsetBuilder {
   dispose () {}
 }
 
+/**
+ * Loads and builds subsets from a VimX file.
+ */
 export class VimxSubsetBuilder {
   private _localVimx: LocalVimx
-  private scene: Scene
-  private set = new Set<SubsetRequest>()
+  private _scene: Scene
+  private _set = new Set<SubsetRequest>()
 
-  private _activeRequests = new SignalDispatcher()
+  private _onUpdate = new SignalDispatcher()
   get onUpdate () {
-    return this._activeRequests.asEvent()
+    return this._onUpdate.asEvent()
   }
 
   get isLoading () {
-    return this.set.size > 0
+    return this._set.size > 0
   }
 
   constructor (localVimx: LocalVimx, scene: Scene) {
     this._localVimx = localVimx
-    this.scene = scene
+    this._scene = scene
   }
 
-  getSubset () {
+  getFullSet () {
     return new G3dSubset(this._localVimx.scene)
   }
 
   async loadSubset (subset: G3dSubset, settings?: LoadPartialSettings) {
-    const request = new SubsetRequest(this.scene, this._localVimx, subset)
-    this.set.add(request)
+    const request = new SubsetRequest(this._scene, this._localVimx, subset)
+    this._set.add(request)
+    this._onUpdate.dispatch()
     await request.start(settings)
-    this.set.delete(request)
-  }
-
-  updateScene (scene: Scene) {
-    this.scene = scene
+    this._set.delete(request)
+    this._onUpdate.dispatch()
   }
 
   clear () {
     this._localVimx.abort()
+    this._set.forEach((s) => s.dispose())
+    this._set.clear()
   }
 
   dispose () {
-    this.set.forEach((s) => s.dispose())
-    this.set.clear()
+    this.clear()
   }
 }

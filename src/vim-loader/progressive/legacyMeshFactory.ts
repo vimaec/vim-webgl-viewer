@@ -7,17 +7,17 @@ import { InstancedMeshFactory } from './instancedMeshFactory'
 import { G3dSubset } from './g3dSubset'
 
 export class LegacyMeshFactory {
-  g3d: G3d
-  materials: G3dMaterial
-  settings: VimSettings
-  instancedFactory: InstancedMeshFactory
-  scene: Scene
+  readonly g3d: G3d
+  private _materials: G3dMaterial
+  private _settings: VimSettings
+  private _instancedFactory: InstancedMeshFactory
+  private _scene: Scene
 
   constructor (g3d: G3d, materials: G3dMaterial, scene: Scene) {
     this.g3d = g3d
-    this.materials = materials
-    this.scene = scene
-    this.instancedFactory = new InstancedMeshFactory(materials)
+    this._materials = materials
+    this._scene = scene
+    this._instancedFactory = new InstancedMeshFactory(materials)
   }
 
   public add (subset: G3dSubset) {
@@ -25,22 +25,22 @@ export class LegacyMeshFactory {
     const nonUniques = subset.filterNonUniqueMeshes()
 
     // Create and add meshes to scene
-    this.addInstancedMeshes(this.scene, nonUniques)
-    this.addMergedMesh(this.scene, uniques)
+    this.addInstancedMeshes(this._scene, nonUniques)
+    this.addMergedMesh(this._scene, uniques)
   }
 
   createScene () {
     // Apply filters and split meshes to be instanced/merged
     const subset = new G3dSubset(this.g3d).filter(
-      this.settings.filterMode,
-      this.settings.filter
+      this._settings.filterMode,
+      this._settings.filter
     )
 
     const uniques = subset.filterUniqueMeshes()
     const nonUniques = subset.filterNonUniqueMeshes()
 
     // Create and add meshes to scene
-    const scene = new Scene(undefined, this.settings.matrix)
+    const scene = new Scene(undefined, this._settings.matrix)
     this.addInstancedMeshes(scene, nonUniques)
     this.addMergedMesh(scene, uniques)
     return scene
@@ -59,7 +59,7 @@ export class LegacyMeshFactory {
     transparent: boolean
   ) {
     const offsets = subset.getOffsets(section)
-    const opaque = new InsertableMesh(offsets, this.materials, transparent)
+    const opaque = new InsertableMesh(offsets, this._materials, transparent)
 
     const count = subset.getMeshCount()
     for (let m = 0; m < count; m++) {
@@ -71,16 +71,18 @@ export class LegacyMeshFactory {
   }
 
   private addInstancedMeshes (scene: Scene, subset: G3dSubset) {
-    const factory = new InstancedMeshFactory(this.materials)
-
     const count2 = subset.getMeshCount()
     for (let m = 0; m < count2; m++) {
       const mesh = subset.getSourceMesh(m)
       const instances =
         subset.getMeshInstances(m) ?? this.g3d.meshInstances[mesh]
 
-      const opaque = factory.createOpaqueFromVim(this.g3d, mesh, instances)
-      const transparent = factory.createTransparentFromVim(
+      const opaque = this._instancedFactory.createOpaqueFromVim(
+        this.g3d,
+        mesh,
+        instances
+      )
+      const transparent = this._instancedFactory.createTransparentFromVim(
         this.g3d,
         mesh,
         instances

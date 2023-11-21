@@ -156,7 +156,11 @@ export class Vim {
     return result
   }
 
-  clearObjectCache () {
+  /**
+   * Removes current geometry from renderer.
+   */
+  clear () {
     this._elementToObject.clear()
+    this.scene.clear()
   }
 }

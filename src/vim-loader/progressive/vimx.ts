@@ -24,7 +24,11 @@ import {
 } from 'vim-format'
 import { LoadPartialSettings, SubsetRequest } from './subsetRequest'
 import { G3dSubset } from './g3dSubset'
-import { VimxSubsetBuilder, VimSubsetBuilder } from './subsetBuilder'
+import {
+  VimxSubsetBuilder,
+  VimSubsetBuilder,
+  SubsetBuilder
+} from './subsetBuilder'
 
 export interface IRenderer {
   add(scene: Scene | THREE.Object3D)
@@ -36,17 +40,19 @@ export interface IRenderer {
 export class VimX {
   settings: VimSettings
   vim: Vim
-  private _builder: VimxSubsetBuilder | VimSubsetBuilder
+  private _builder: SubsetBuilder
   private _instances = new Set<number>()
 
   get scene () {
     return this.vim.scene
   }
 
+  /** Dispatched whenever a subset begins or finishes loading. */
   get onLoadingUpdate () {
     return this._builder.onUpdate
   }
 
+  /** True if there are subsets being loaded. */
   get isLoading () {
     return this._builder.isLoading
   }
@@ -162,20 +168,13 @@ export class VimX {
   }
 
   /**
-   * Unloads all loaded geometry to better add new one.
+   * Unloads all loaded geometry from renderer.
+   * New subsets can be loaded.
    */
   clear () {
     this._builder.clear()
-    this.vim.clearObjectCache()
-    const renderer = this.vim.scene.renderer
-    this.vim.scene.dispose()
-
-    // Create a new scene
-    this.vim.scene = new Scene(undefined, this.settings.matrix)
-    this.vim.scene.vim = this.vim
-    this._builder.updateScene(this.vim.scene)
-    renderer.add(this.vim.scene)
     this._instances.clear()
+    this.vim.clear()
   }
 
   getFullSet () {

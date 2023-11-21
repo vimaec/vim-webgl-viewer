@@ -63,11 +63,6 @@ export class Scene {
     this.insertables.forEach((mesh) => mesh.clearUpdate())
   }
 
-  eject () {
-    this._renderer?.remove(this)
-    this._renderer = null
-  }
-
   /**
    * Returns the scene bounding box. Returns undefined if scene is empty.
    */
@@ -205,14 +200,25 @@ export class Scene {
   }
 
   /**
-   * Disposes of all resources.
+   * Unloads and disposes all meshes and leaves the scene ready to add new ones.
    */
-  dispose () {
-    this.eject()
-    for (let i = 0; i < this.meshes.length; i++) {
-      this.meshes[i].mesh.geometry.dispose()
+  clear () {
+    this.renderer?.remove(this)
+
+    for (const m of this.meshes) {
+      m.mesh.geometry.dispose()
     }
     this.meshes.length = 0
     this._instanceToMeshes.clear()
+
+    this.renderer?.add(this)
+  }
+
+  /**
+   * Disposes of all resources.
+   */
+  dispose () {
+    this.clear()
+    this._renderer = null
   }
 }
