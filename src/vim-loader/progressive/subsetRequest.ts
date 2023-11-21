@@ -3,7 +3,7 @@ import { VimSettings } from '../vimSettings'
 import { Vim } from '../vim'
 import { InsertableMesh } from './insertableMesh'
 import { InstancedMeshFactory } from './instancedMeshFactory'
-import { LocalVimx, Scene } from '../../vim'
+import { Vimx, Scene } from '../../vim'
 
 import { G3dMesh } from 'vim-format'
 import { G3dSubset } from './g3dSubset'
@@ -50,7 +50,7 @@ export class SubsetRequest {
     return this._subset.getBoundingBox()
   }
 
-  constructor (scene: Scene, localVimx: LocalVimx, subset: G3dSubset) {
+  constructor (scene: Scene, localVimx: Vimx, subset: G3dSubset) {
     this._subset = subset
     this._scene = scene
 

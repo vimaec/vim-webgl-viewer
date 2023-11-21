@@ -3,7 +3,7 @@
  */
 
 import * as THREE from 'three'
-import { VimDocument, G3d, VimHeader } from 'vim-format'
+import { VimDocument, G3d, VimHeader, FilterMode } from 'vim-format'
 import { Scene } from './scene'
 import { VimSettings } from './vimSettings'
 import { Object } from './object'
@@ -14,6 +14,8 @@ import {
 } from './elementMapping'
 import { ISignal, SignalDispatcher } from 'ste-signals'
 import { G3dSubset } from './progressive/g3dSubset'
+import { SubsetBuilder } from './progressive/subsetBuilder'
+import { LoadPartialSettings } from './progressive/subsetRequest'
 
 /**
  * Container for the built three meshes and the vim data from which it was built.
@@ -21,15 +23,33 @@ import { G3dSubset } from './progressive/g3dSubset'
  */
 export class Vim {
   source: string | undefined
+  scene: Scene
+  readonly builder: SubsetBuilder
 
   readonly header: VimHeader
   readonly bim: VimDocument
   readonly g3d: G3d | undefined
   readonly settings: VimSettings
-  scene: Scene
+
   readonly map: ElementMapping | ElementNoMapping | ElementMapping2
 
-  private _elementToObject: Map<number, Object> = new Map<number, Object>()
+  private readonly _elementToObject: Map<number, Object> = new Map<
+    number,
+    Object
+  >()
+
+  private readonly _builder: SubsetBuilder
+  private readonly _loadedInstances = new Set<number>()
+
+  /** Dispatched whenever a subset begins or finishes loading. */
+  get onLoadingUpdate () {
+    return this._builder.onUpdate
+  }
+
+  /** True if there are subsets being loaded. */
+  get isLoading () {
+    return this._builder.isLoading
+  }
 
   private _onDispose = new SignalDispatcher()
   get onDispose () {
@@ -42,7 +62,8 @@ export class Vim {
     g3d: G3d | undefined,
     scene: Scene,
     settings: VimSettings,
-    map: ElementMapping | ElementNoMapping | ElementMapping2
+    map: ElementMapping | ElementNoMapping | ElementMapping2,
+    builder: SubsetBuilder
   ) {
     this.header = header
     this.bim = document
@@ -52,15 +73,7 @@ export class Vim {
     this.settings = settings
 
     this.map = map ?? new ElementNoMapping()
-  }
-
-  /**
-   * Disposes of all resources.
-   */
-  dispose () {
-    this._onDispose.dispatch()
-    this._onDispose.clear()
-    this.scene.dispose()
+    this._builder = builder
   }
 
   /**
@@ -92,7 +105,7 @@ export class Vim {
   }
 
   /**
-   * Returns vim object from given vim element index
+   * Returns vim object from given vim element index.
    * @param element vim element index
    */
   getObjectFromElement (element: number): Object | undefined {
@@ -127,7 +140,7 @@ export class Vim {
   }
 
   /**
-   * Enumerates all objects of the vim
+   * Enumerates all objects of the vim.
    */
   getObjects () {
     const result = new Array<Object>()
@@ -139,7 +152,7 @@ export class Vim {
   }
 
   /**
-   * Enumerates all objects of the vim
+   * Enumerates all objects of the vim.
    */
   getObjectsInSubset (subset: G3dSubset) {
     const set = new Set<Object>()
@@ -156,11 +169,63 @@ export class Vim {
     return result
   }
 
+  /** Returns all instances as a subset. */
+  getFullSet () {
+    return this._builder.getFullSet()
+  }
+
+  /** Starts loading process to load all instances. */
+  async loadAll (settings?: LoadPartialSettings) {
+    return this.loadSubset(this.getFullSet(), settings)
+  }
+
+  /** Starts loading process to load all instances. */
+  async loadSubset (subset: G3dSubset, settings?: LoadPartialSettings) {
+    subset = subset.except('instance', this._loadedInstances)
+    const count = subset.getInstanceCount()
+    for (let i = 0; i < count; i++) {
+      this._loadedInstances.add(subset.getVimInstance(i))
+    }
+
+    // Add box to rendering.
+    const box = subset.getBoundingBox()
+    this.scene.updateBox(box)
+
+    if (subset.getInstanceCount() === 0) {
+      console.log('Empty subset. Ignoring')
+      return
+    }
+    // Launch loading
+    await this._builder.loadSubset(subset, settings)
+  }
+
+  /** Starts loading process to for a filtered subset. */
+  async loadFilter (
+    filterMode: FilterMode,
+    filter: number[],
+    settings?: LoadPartialSettings
+  ) {
+    const subset = this.getFullSet().filter(filterMode, filter)
+    await this.loadSubset(subset, settings)
+  }
+
   /**
    * Removes current geometry from renderer.
    */
   clear () {
     this._elementToObject.clear()
     this.scene.clear()
+    this._builder.clear()
+    this._loadedInstances.clear()
+  }
+
+  /**
+   * Disposes of all resources.
+   */
+  dispose () {
+    this._builder.dispose()
+    this._onDispose.dispatch()
+    this._onDispose.clear()
+    this.scene.dispose()
   }
 }

@@ -59,7 +59,15 @@ export class VimBuilder {
           bim.elementIds!
       )
 
-    const vim = new Vim(header, bim.doc, g3d, scene, settings, mapping)
+    const vim = new Vim(
+      header,
+      bim.doc,
+      g3d,
+      scene,
+      settings,
+      mapping,
+      undefined
+    )
 
     return vim
   }
@@ -94,7 +102,7 @@ export class VimBuilder {
           elementIds!
       )
 
-    const vim = new Vim(header, doc, g3d, scene, settings, mapping)
+    const vim = new Vim(header, doc, g3d, scene, settings, mapping, undefined)
 
     return vim
   }

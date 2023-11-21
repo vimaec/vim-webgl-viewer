@@ -1,11 +1,25 @@
+// loader
 import {
   getFullSettings,
   VimPartialSettings,
   VimSettings
 } from '../vimSettings'
-import { Loader, VimX } from '../../vim'
+import { Vim } from '../vim'
+import { Loader, Vimx, Scene } from '../../vim'
 
-import { BFast, requestHeader, IProgressLogs } from 'vim-format'
+import { ElementMapping, ElementMapping2 } from '../elementMapping'
+import {
+  BFast,
+  RemoteBuffer,
+  RemoteVimx,
+  requestHeader,
+  IProgressLogs,
+  VimDocument,
+  G3d,
+  G3dMaterial
+} from 'vim-format'
+import { VimSubsetBuilder, VimxSubsetBuilder } from './subsetBuilder'
+import { LegacyMeshFactory } from './legacyMeshFactory'
 
 export class VimxLoader {
   /**
@@ -17,7 +31,7 @@ export class VimxLoader {
     onProgress?: (p: IProgressLogs) => void
   ) {
     const fullSettings = getFullSettings(settings)
-    const type = await this.determineFileType(source, fullSettings)
+    const type = await this.determineFileType(source, fullSettings)!
 
     if (fullSettings.legacy) {
       if (type === 'vimx') {
@@ -32,11 +46,11 @@ export class VimxLoader {
     }
 
     if (type === 'vim') {
-      return VimX.fromVim(source, fullSettings, onProgress)
+      return VimxLoader.loadFromVim(source, fullSettings, onProgress)
     }
 
     if (type === 'vimx') {
-      return VimX.fromVimX(source, fullSettings, onProgress)
+      return VimxLoader.loadFromVimX(source, fullSettings, onProgress)
     }
   }
 
@@ -62,5 +76,91 @@ export class VimxLoader {
     if (header.vimx !== undefined) return 'vimx'
 
     throw new Error('Cannot determine file type from header.')
+  }
+
+  /**
+   * Loads a Vimx file from source
+   */
+  static async loadFromVimX (
+    source: string | ArrayBuffer,
+    settings: VimSettings,
+    onProgress: (p: IProgressLogs) => void
+  ) {
+    // Fetch geometry data
+    const remoteVimx = new RemoteVimx(source)
+    if (remoteVimx.bfast.source instanceof RemoteBuffer) {
+      remoteVimx.bfast.source.onProgress = onProgress
+    }
+
+    console.log('Downloading Scene Index..')
+    const vimx = await Vimx.fromRemote(remoteVimx, !settings.progressive)
+    console.log('Scene Index Downloaded.')
+
+    // Create scene
+    const scene = new Scene(undefined, settings.matrix)
+    const mapping = new ElementMapping2(vimx.scene)
+
+    // wait for bim data.
+    // const bim = bimPromise ? await bimPromise : undefined
+
+    const builder = new VimxSubsetBuilder(vimx, scene)
+
+    const vim = new Vim(
+      vimx.header,
+      undefined,
+      undefined,
+      scene,
+      settings,
+      mapping,
+      builder
+    )
+
+    vim.source = typeof source === 'string' ? source : undefined
+
+    if (remoteVimx.bfast.source instanceof RemoteBuffer) {
+      remoteVimx.bfast.source.onProgress = undefined
+    }
+
+    return vim
+  }
+
+  /**
+   * Loads a Vim file from source
+   */
+  static async loadFromVim (
+    source: string | ArrayBuffer,
+    settings: VimSettings,
+    onProgress?: (p: IProgressLogs) => void
+  ) {
+    const fullSettings = getFullSettings(settings)
+    const bfast = new BFast(source)
+    if (bfast.source instanceof RemoteBuffer) {
+      bfast.source.onProgress = onProgress
+    }
+
+    // Fetch g3d data
+    const geometry = await bfast.getBfast('geometry')
+    const g3d = await G3d.createFromBfast(geometry)
+    const materials = new G3dMaterial(g3d.materialColors)
+
+    // Create scene
+    const scene = new Scene(undefined, settings.matrix)
+    const factory = new LegacyMeshFactory(g3d, materials, scene)
+
+    // Create legacy mapping
+    const doc = await VimDocument.createFromBfast(bfast, true)
+    const mapping = await ElementMapping.fromG3d(g3d, doc)
+    const header = await requestHeader(bfast)
+
+    // Return legacy vim
+    const builder = new VimSubsetBuilder(factory)
+    const vim = new Vim(header, doc, g3d, scene, fullSettings, mapping, builder)
+    vim.source = typeof source === 'string' ? source : undefined
+
+    if (bfast.source instanceof RemoteBuffer) {
+      bfast.source.onProgress = undefined
+    }
+
+    return vim
   }
 }

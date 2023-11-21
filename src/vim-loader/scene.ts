@@ -3,16 +3,19 @@
  */
 
 import * as THREE from 'three'
-import { Mesh, StandardSubmesh, Submesh } from './mesh'
+import { Mesh, Submesh } from './mesh'
 import { SceneBuilder } from './sceneBuilder'
 import { Vim } from './vim'
 import { estimateBytesUsed } from 'three/examples/jsm/utils/BufferGeometryUtils'
 import { InsertableMesh } from './progressive/insertableMesh'
-import { InsertableSubmesh } from './progressive/insertableSubmesh'
-import { SignalDispatcher } from 'ste-signals'
 import { InstancedMesh } from './progressive/instancedMesh'
-import { Renderer } from '../vim-webgl-viewer/rendering/renderer'
-import { IRenderer } from '../vim'
+
+export interface IRenderer {
+  add(scene: Scene | THREE.Object3D)
+  remove(scene: Scene)
+  updateBox(box: THREE.Box3)
+  notifySceneUpdate()
+}
 
 /**
  * A Scene regroups many Meshes

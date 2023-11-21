@@ -1,4 +1,4 @@
-import { LocalVimx, Scene } from '../../vim'
+import { Vimx, Scene } from '../../vim'
 import { LegacyMeshFactory } from './legacyMeshFactory'
 import { LoadPartialSettings, SubsetRequest } from './subsetRequest'
 import { G3dSubset } from './g3dSubset'
@@ -61,7 +61,7 @@ export class VimSubsetBuilder implements SubsetBuilder {
  * Loads and builds subsets from a VimX file.
  */
 export class VimxSubsetBuilder {
-  private _localVimx: LocalVimx
+  private _localVimx: Vimx
   private _scene: Scene
   private _set = new Set<SubsetRequest>()
 
@@ -74,7 +74,7 @@ export class VimxSubsetBuilder {
     return this._set.size > 0
   }
 
-  constructor (localVimx: LocalVimx, scene: Scene) {
+  constructor (localVimx: Vimx, scene: Scene) {
     this._localVimx = localVimx
     this._scene = scene
   }

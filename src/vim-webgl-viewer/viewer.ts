@@ -11,18 +11,11 @@ import { Input } from './inputs/input'
 import { Selection } from './selection'
 import { Environment, IEnvironment } from './environment'
 import { Raycaster } from './raycaster'
-import { GizmoOrbit } from './gizmos/gizmoOrbit'
-import { GizmoLoading } from './gizmos/gizmoLoading'
 import { RenderScene } from './rendering/renderScene'
 import { Viewport } from './viewport'
 import { Gizmos } from './gizmos/gizmos'
-import { GizmoAxes } from './gizmos/gizmoAxes'
-import { SectionBox } from './gizmos/sectionBox/sectionBox'
-import { Measure, IMeasure } from './gizmos/measure/measure'
-import { GizmoRectangle } from './gizmos/gizmoRectangle'
-import { VimX } from '../vim-loader/progressive/vimx'
 
-import { Vim, GizmoGrid, VimMaterials, createBoxes } from '../vim'
+import { Vim, VimMaterials } from '../vim'
 
 // loader
 import { Renderer } from './rendering/renderer'
@@ -94,7 +87,7 @@ export class Viewer {
   gizmos: Gizmos
 
   // State
-  private _vims = new Set<Vim | VimX>()
+  private _vims = new Set<Vim>()
   private _onVimLoaded = new SignalDispatcher()
   private _updateId: number
 
@@ -156,14 +149,7 @@ export class Viewer {
    * Returns an array with all loaded vims.
    */
   get vims () {
-    return this.vimxs.map((v) => (v instanceof VimX ? v.vim : v))
-  }
-
-  /**
-   * Returns an array with all loaded vims or vimxs.
-   */
-  get vimxs () {
-    return Array.from(this._vims)
+    return [...this._vims]
   }
 
   /**
@@ -173,7 +159,7 @@ export class Viewer {
     return this._vims.size
   }
 
-  add (vim: Vim | VimX) {
+  add (vim: Vim) {
     if (this._vims.has(vim)) {
       throw new Error('Vim cannot be added again, unless removed first.')
     }
@@ -190,7 +176,7 @@ export class Viewer {
   /**
    * Unload given vim from viewer.
    */
-  remove (vim: Vim | VimX) {
+  remove (vim: Vim) {
     if (!this._vims.has(vim)) {
       throw new Error('Cannot remove missing vim from viewer.')
     }
