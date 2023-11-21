@@ -1,7 +1,7 @@
 // loader
 import { getFullSettings, VimSettings } from '../vimSettings'
 import { Vim } from '../vim'
-import { Scene } from '../../vim'
+import { Scene, VimBuilder } from '../../vim'
 import { LegacyMeshFactory } from './legacyMeshFactory'
 
 import {
@@ -24,47 +24,41 @@ import {
 } from 'vim-format'
 import { LoadPartialSettings, SubsetRequest } from './subsetRequest'
 import { G3dSubset } from './g3dSubset'
-import { SignalDispatcher } from 'ste-signals'
+import { VimxSubsetBuilder, VimSubsetBuilder } from './subsetBuilder'
+
+export interface IRenderer {
+  add(scene: Scene | THREE.Object3D)
+  remove(scene: Scene)
+  updateBox(box: THREE.Box3)
+  notifySceneUpdate()
+}
 
 export class VimX {
   settings: VimSettings
-  bim: VimDocument | undefined
-  scene: Scene
   vim: Vim
-
-  renderer: IRenderer
-  private _localVimx: LocalVimx
+  private _builder: VimxSubsetBuilder | VimSubsetBuilder
   private _instances = new Set<number>()
 
-  private _activeRequests = new SignalSet<SubsetRequest>()
+  get scene () {
+    return this.vim.scene
+  }
+
   get onLoadingUpdate () {
-    return this._activeRequests.onUpdate
+    return this._builder.onUpdate
   }
 
   get isLoading () {
-    return this._activeRequests.size > 0
+    return this._builder.isLoading
   }
 
   constructor (
     settings: VimSettings,
-    localVimx: LocalVimx,
-    bim: VimDocument | undefined,
-    scene: Scene,
-    mapping: ElementMapping2 | ElementNoMapping
+    builder: VimxSubsetBuilder | VimSubsetBuilder,
+    vim: Vim
   ) {
-    this.scene = scene
     this.settings = settings
-    this.bim = bim
-    this._localVimx = localVimx
-
-    this.vim = new Vim(
-      localVimx.header,
-      bim,
-      undefined,
-      scene,
-      settings,
-      mapping
-    )
+    this._builder = builder
+    this.vim = vim
   }
 
   /**
@@ -98,7 +92,16 @@ export class VimX {
     // wait for bim data.
     // const bim = bimPromise ? await bimPromise : undefined
 
-    const vimx = new VimX(settings, localVimx, undefined, scene, mapping)
+    const builder = new VimxSubsetBuilder(localVimx, scene)
+    const vim = new Vim(
+      localVimx.header,
+      undefined,
+      undefined,
+      scene,
+      settings,
+      mapping
+    )
+    const vimx = new VimX(settings, builder, vim)
     vimx.vim.source = typeof source === 'string' ? source : undefined
 
     if (remoteVimx.bfast.source instanceof RemoteBuffer) {
@@ -137,8 +140,8 @@ export class VimX {
     const materials = new G3dMaterial(g3d.materialColors)
 
     // Create scene
-    const factory = new LegacyMeshFactory(g3d, materials, settings)
-    const scene = factory.createScene()
+    const scene = new Scene(undefined, settings.matrix)
+    const factory = new LegacyMeshFactory(g3d, materials, scene)
 
     // Create legacy mapping
     const doc = await VimDocument.createFromBfast(bfast, true)
@@ -153,31 +156,34 @@ export class VimX {
       bfast.source.onProgress = undefined
     }
 
-    return vim
+    const builder = new VimSubsetBuilder(factory)
+    const vimx = new VimX(settings, builder, vim)
+    return vimx
   }
 
+  /**
+   * Unloads all loaded geometry to better add new one.
+   */
   clear () {
-    this._localVimx.abort()
+    this._builder.clear()
     this.vim.clearObjectCache()
-    this.renderer?.remove(this.scene)
-    this.scene.dispose()
-    this._activeRequests.forEach((s) => s.dispose())
-    this._activeRequests.clear()
+    const renderer = this.vim.scene.renderer
+    this.vim.scene.dispose()
 
     // Create a new scene
-    this.scene = new Scene(undefined, this.settings.matrix)
-    this.scene.vim = this.vim
-    this.vim.scene = this.scene
-    this.renderer?.add(this.scene)
+    this.vim.scene = new Scene(undefined, this.settings.matrix)
+    this.vim.scene.vim = this.vim
+    this._builder.updateScene(this.vim.scene)
+    renderer.add(this.vim.scene)
     this._instances.clear()
   }
 
-  getSubset () {
-    return new G3dSubset(this._localVimx.scene)
+  getFullSet () {
+    return this._builder.getSubset()
   }
 
   async loadAll (settings?: LoadPartialSettings) {
-    return this.loadSubset(this.getSubset(), settings)
+    return this.loadSubset(this.getFullSet(), settings)
   }
 
   async loadSubset (subset: G3dSubset, settings?: LoadPartialSettings) {
@@ -189,17 +195,14 @@ export class VimX {
 
     // Add box to rendering.
     const box = subset.getBoundingBox()
-    this.scene.updateBox(box)
+    this.vim.scene.updateBox(box)
 
     if (subset.getInstanceCount() === 0) {
       console.log('Empty subset. Ignoring')
       return
     }
     // Launch loading
-    const request = new SubsetRequest(this.scene, this._localVimx, subset)
-    this._activeRequests.add(request)
-    await request.start(settings)
-    this._activeRequests.delete(request)
+    await this._builder.loadSubset(subset)
   }
 
   async loadFilter (
@@ -207,16 +210,13 @@ export class VimX {
     filter: number[],
     settings?: LoadPartialSettings
   ) {
-    const subset = this.getSubset().filter(filterMode, filter)
+    const subset = this.getFullSet().filter(filterMode, filter)
     await this.loadSubset(subset, settings)
   }
 
-  abort () {
-    // TODO
-  }
-
   dispose () {
-    this._localVimx.abort()
+    this.vim.dispose()
+    this._builder.clear()
   }
 }
 
@@ -257,44 +257,5 @@ export class LocalVimx {
 
   abort () {
     this.vimx.abort()
-  }
-}
-
-export interface IRenderer {
-  add(scene: Scene | THREE.Object3D)
-  remove(scene: Scene)
-  updateBox(box: THREE.Box3)
-  notifySceneUpdate()
-}
-
-class SignalSet<T> {
-  private _set = new Set<T>()
-  private _signal = new SignalDispatcher()
-
-  get onUpdate () {
-    return this._signal.asEvent()
-  }
-
-  get size () {
-    return this._set.size
-  }
-
-  add (value: T) {
-    this._set.add(value)
-    this._signal.dispatch()
-  }
-
-  delete (value: T) {
-    this._set.delete(value)
-    this._signal.dispatch()
-  }
-
-  clear () {
-    this._set.clear()
-    this._signal.dispatch()
-  }
-
-  forEach (action: (value: T) => void) {
-    this._set.forEach(action)
   }
 }

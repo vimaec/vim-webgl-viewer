@@ -11,12 +11,22 @@ export class LegacyMeshFactory {
   materials: G3dMaterial
   settings: VimSettings
   instancedFactory: InstancedMeshFactory
+  scene: Scene
 
-  constructor (g3d: G3d, materials: G3dMaterial, settings: VimSettings) {
+  constructor (g3d: G3d, materials: G3dMaterial, scene: Scene) {
     this.g3d = g3d
     this.materials = materials
-    this.settings = settings
+    this.scene = scene
     this.instancedFactory = new InstancedMeshFactory(materials)
+  }
+
+  public add (subset: G3dSubset) {
+    const uniques = subset.filterUniqueMeshes()
+    const nonUniques = subset.filterNonUniqueMeshes()
+
+    // Create and add meshes to scene
+    this.addInstancedMeshes(this.scene, nonUniques)
+    this.addMergedMesh(this.scene, uniques)
   }
 
   createScene () {
@@ -36,14 +46,14 @@ export class LegacyMeshFactory {
     return scene
   }
 
-  addMergedMesh (scene: Scene, subset: G3dSubset) {
+  private addMergedMesh (scene: Scene, subset: G3dSubset) {
     const opaque = this.createMergedMesh(subset, 'opaque', false)
     const transparents = this.createMergedMesh(subset, 'transparent', true)
     scene.addMesh(opaque)
     scene.addMesh(transparents)
   }
 
-  createMergedMesh (
+  private createMergedMesh (
     subset: G3dSubset,
     section: MeshSection,
     transparent: boolean
@@ -60,7 +70,7 @@ export class LegacyMeshFactory {
     return opaque
   }
 
-  addInstancedMeshes (scene: Scene, subset: G3dSubset) {
+  private addInstancedMeshes (scene: Scene, subset: G3dSubset) {
     const factory = new InstancedMeshFactory(this.materials)
 
     const count2 = subset.getMeshCount()

@@ -174,10 +174,6 @@ export class Viewer {
   }
 
   add (vim: Vim | VimX) {
-    if (vim instanceof VimX) {
-      vim.renderer = this.renderer
-    }
-
     if (this._vims.has(vim)) {
       throw new Error('Vim cannot be added again, unless removed first.')
     }

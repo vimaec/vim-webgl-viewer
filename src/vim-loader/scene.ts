@@ -63,6 +63,11 @@ export class Scene {
     this.insertables.forEach((mesh) => mesh.clearUpdate())
   }
 
+  eject () {
+    this._renderer?.remove(this)
+    this._renderer = null
+  }
+
   /**
    * Returns the scene bounding box. Returns undefined if scene is empty.
    */
@@ -203,6 +208,7 @@ export class Scene {
    * Disposes of all resources.
    */
   dispose () {
+    this.eject()
     for (let i = 0; i < this.meshes.length; i++) {
       this.meshes[i].mesh.geometry.dispose()
     }
