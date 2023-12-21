@@ -170,7 +170,7 @@ export class ElementMapping2 {
     this._instanceToElement = new Map<number, number>()
     this._instanceToElementId = new Map<number, BigInt>()
 
-    for (let i = 0; i < scene.instanceTransforms.length; i++) {
+    for (let i = 0; i < scene.instanceNodes.length; i++) {
       this._instanceToElement.set(
         scene.instanceNodes[i],
         scene.instanceGroups[i]

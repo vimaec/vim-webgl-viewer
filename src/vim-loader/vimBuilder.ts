@@ -3,14 +3,7 @@
  */
 
 import { SceneBuilder } from './sceneBuilder'
-import {
-  BFast,
-  G3d,
-  RemoteG3d,
-  VimDocument,
-  VimHeader,
-  requestHeader
-} from 'vim-format'
+import { BFast, G3d, VimDocument, VimHeader, requestHeader } from 'vim-format'
 import { VimSettings } from './vimSettings'
 import { VimMaterials } from './materials/materials'
 import { MeshBuilder } from './meshBuilder'
@@ -77,7 +70,7 @@ export class VimBuilder {
   async loadRemote (bfast: BFast, settings: VimSettings, source: string) {
     const doc = await VimDocument.createFromBfast(bfast, settings.noStrings)
     const geometry = await bfast.getBfast('geometry')
-    const remoteG3d: RemoteG3d = RemoteG3d.createFromBfast(geometry)
+    const g3d = await G3d.createFromBfast(geometry)
 
     const [header, instanceToElement, elementIds] = await Promise.all([
       settings.noHeader ? undefined : VimBuilder.requestHeader(bfast),
@@ -85,12 +78,8 @@ export class VimBuilder {
       settings.noMap ? undefined : this.getElementIds(doc)
     ])
 
-    const g3d = settings.instances
-      ? await remoteG3d?.filter(settings.instances)
-      : await remoteG3d?.toG3d()
-
     // Filtering already occured so we don't pass it to the builder.
-    const copy = { ...settings, instances: undefined } as VimSettings
+    const copy = { ...settings, instances: settings.instances } as VimSettings
 
     const scene = g3d
       ? this.sceneBuilder.createFromG3d(g3d, copy)

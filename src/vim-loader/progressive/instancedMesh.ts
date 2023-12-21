@@ -28,7 +28,7 @@ export class InstancedMesh {
     this.mesh.userData.vim = this
     this.bimInstances =
       g3d instanceof G3dMesh
-        ? instances.map((i) => g3d.getBimInstance(i))
+        ? instances.map((i) => g3d.scene.instanceNodes[i])
         : instances
     this.meshInstances = instances
 
@@ -97,8 +97,8 @@ export class InstancedMesh {
     for (let i = 0; i < this.meshInstances.length; i++) {
       const box = new THREE.Box3()
       const instance = this.meshInstances[i]
-      box.min.fromArray(this.g3dMesh.getInstanceMin(instance))
-      box.max.fromArray(this.g3dMesh.getInstanceMax(instance))
+      box.min.fromArray(this.g3dMesh.scene.getInstanceMin(instance))
+      box.max.fromArray(this.g3dMesh.scene.getInstanceMax(instance))
       boxes[i] = box
     }
     return boxes

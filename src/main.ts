@@ -55,20 +55,22 @@ async function load (url: string | ArrayBuffer) {
     // 'https://vimdevelopment01storage.blob.core.windows.net/split-mesh/_WHITELEYS-VIM-MAIN_detached.v1.2.42.vimx',
     // 'https://vimdevelopment01storage.blob.core.windows.net/samples/residence.vim',
     // '5001201_at_qq.com-tower.vimx',
-    'https://vimdevelopment01storage.blob.core.windows.net/split-mesh/residence.vimx',
+    // 'https://vimdevelopment01storage.blob.core.windows.net/split-mesh/residence.vimx',
     // 'https://vimdevelopment01storage.blob.core.windows.net/split-mesh/tower.vimx',
     // 'https://vimdevelopment01storage.blob.core.windows.net/samples/residence.vim',
     // 'https://vim02.azureedge.net/samples/residence.vim',
-    // './Damn.vim',
+    './residence.vimx',
+    // 'residence_mamacos.vimx',
     // 'https://vimdevelopment01storage.blob.core.windows.net/samples/TowerS-ARCHITECTURE-ALL.v1.2.50.vim',
+    // 'https://vimdevelopment01storage.blob.core.windows.net/split-mesh/nbk2.vimx',
     {
-      // filter: [9969, 9970, 9971], // .map((i) => i + 3500000),
-      // filterMode: 'instance',
+      filter: [...new Array<number>(100).keys()], // .map((i) => i + 3500000),
+      filterMode: 'instance',
       // legacy: true,
       // scale: 0.001,
       // legacy: true,
       progressive: true,
-      refreshInterval: 200,
+      refreshInterval: 400,
       loadRooms: true,
       rotation: new VIM.THREE.Vector3(270, 0, 0)
     }
@@ -81,8 +83,11 @@ async function load (url: string | ArrayBuffer) {
 async function onVimLoaded (vim: VIM.Vim) {
   viewer.add(vim)
   vim.onLoadingUpdate.sub(() => (viewer.gizmos.loading.visible = vim.isLoading))
+
+  // const load = vim.loadFilter('mesh', [0, 10])
   const load = vim.loadAll()
   viewer.camera.do().frame('all', new THREE.Vector3(1, -1, 1))
+
   await load
 
   console.log(`loaded in ${(Date.now() - time) / 1000} seconds`)

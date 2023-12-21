@@ -2,6 +2,7 @@ import * as THREE from 'three'
 import { G3d, G3dMesh, G3dMaterial } from 'vim-format'
 import { Scene } from '../scene'
 import { G3dMeshOffsets } from './g3dOffsets'
+import { assert } from 'console'
 
 // TODO Merge both submeshes class.
 export class GeometrySubmesh {
@@ -82,15 +83,15 @@ export class InsertableGeometry {
   }
 
   // TODO: remove the need for mesh argument.
-  insert (g3d: G3dMesh, mesh: number) {
+  insert (mesh: G3dMesh, at: number) {
     const added = new Array<number>()
     const section = this.offsets.section
-    const indexStart = g3d.getIndexStart(section)
-    const indexEnd = g3d.getIndexEnd(section)
+    const indexStart = mesh.getIndexStart(section)
+    const indexEnd = mesh.getIndexEnd(section)
 
     // Skip empty mesh
     if (indexStart === indexEnd) {
-      this._meshToUpdate.add(mesh)
+      this._meshToUpdate.add(at)
       return added
     }
 
@@ -98,27 +99,31 @@ export class InsertableGeometry {
     const matrix = new THREE.Matrix4()
     const vector = new THREE.Vector3()
 
-    const vertexStart = g3d.getVertexStart(section)
-    const vertexEnd = g3d.getVertexEnd(section)
+    const vertexStart = mesh.getVertexStart(section)
+    const vertexEnd = mesh.getVertexEnd(section)
     const vertexCount = vertexEnd - vertexStart
-    const sectionOffset = g3d.getVertexStart(section)
+    const sectionOffset = mesh.getVertexStart(section)
 
-    const subStart = g3d.getSubmeshStart(section)
-    const subEnd = g3d.getSubmeshEnd(section)
+    const subStart = mesh.getSubmeshStart(section)
+    const subEnd = mesh.getSubmeshEnd(section)
 
-    const indexOffset = this.offsets.getIndexOffset(mesh)
-    const vertexOffset = this.offsets.getVertexOffset(mesh)
+    const indexOffset = this.offsets.getIndexOffset(at)
+    const vertexOffset = this.offsets.getVertexOffset(at)
 
     let indexOut = 0
     let vertexOut = 0
     let colorOut = 0
 
-    const instanceCount = this.offsets.getMeshInstanceCount(mesh)
+    const instanceCount = this.offsets.getMeshInstanceCount(at)
     for (let instance_i = 0; instance_i < instanceCount; instance_i++) {
-      const instance = this.offsets.getMeshInstance(mesh, instance_i)
-      matrix.fromArray(g3d.getInstanceMatrix(instance))
+      const instance = this.offsets.getMeshInstance(at, instance_i)
+      const arr1 = mesh.scene.getInstanceMatrix(instance)
+      // console.assert(this.float32ArraysAreEqual(arr1, arr2))
+
+      // matrix.fromArray(this.offsets.subset.getTransform(instance))
+      matrix.fromArray(arr1)
       const submesh = new GeometrySubmesh()
-      submesh.instance = g3d.getBimInstance(instance)
+      submesh.instance = mesh.scene.instanceNodes[instance]
 
       // Append indices
       submesh.start = indexOffset + indexOut
@@ -126,7 +131,10 @@ export class InsertableGeometry {
       for (let index = indexStart; index < indexEnd; index++) {
         this.setIndex(
           indexOffset + indexOut,
-          vertexOffset + vertexMergeOffset + g3d.indices[index] - sectionOffset
+          vertexOffset +
+            vertexMergeOffset +
+            mesh.chunk.indices[index] -
+            sectionOffset
         )
         indexOut++
       }
@@ -134,7 +142,7 @@ export class InsertableGeometry {
 
       // Append vertices
       for (let vertex = vertexStart; vertex < vertexEnd; vertex++) {
-        vector.fromArray(g3d.positions, vertex * G3d.POSITION_SIZE)
+        vector.fromArray(mesh.chunk.positions, vertex * G3d.POSITION_SIZE)
         vector.applyMatrix4(matrix)
         this.setVertex(vertexOffset + vertexOut, vector)
         // submesh.expandBox(vector)
@@ -143,21 +151,40 @@ export class InsertableGeometry {
 
       // Append Colors
       for (let sub = subStart; sub < subEnd; sub++) {
-        const color = this.materials.getMaterialColor(g3d.submeshMaterial[sub])
-        const vertexCount = g3d.getSubmeshVertexCount(sub)
+        const color = this.materials.getMaterialColor(
+          mesh.chunk.submeshMaterial[sub]
+        )
+        const vertexCount = mesh.getSubmeshVertexCount(sub)
         for (let v = 0; v < vertexCount; v++) {
           this.setColor(vertexOffset + colorOut, color, 0.25)
           colorOut++
         }
       }
 
-      submesh.boundingBox.min.fromArray(g3d.getInstanceMin(instance))
-      submesh.boundingBox.max.fromArray(g3d.getInstanceMax(instance))
+      submesh.boundingBox.min.fromArray(mesh.scene.getInstanceMin(instance))
+      submesh.boundingBox.max.fromArray(mesh.scene.getInstanceMax(instance))
       this.submeshes.push(submesh)
       added.push(this.submeshes.length - 1)
     }
-    this._meshToUpdate.add(mesh)
+    this._meshToUpdate.add(at)
     return added
+  }
+
+  float32ArraysAreEqual (array1: Float32Array, array2: Float32Array): boolean {
+    // Check if arrays have the same length
+    if (array1.length !== array2.length) {
+      return false
+    }
+
+    // Check if each element is equal
+    for (let i = 0; i < array1.length; i++) {
+      if (array1[i] !== array2[i]) {
+        return false
+      }
+    }
+
+    // Arrays are equal
+    return true
   }
 
   insertFromG3d (g3d: G3d, mesh: number) {
