@@ -25,11 +25,11 @@ export class Object {
   private _boundingBox: THREE.Box3 | undefined
   private _meshes: Submesh[] | undefined
 
-  private outlineAttribute: ObjectAttribute<boolean>
-  private visibleAttribute: ObjectAttribute<boolean>
-  private coloredAttribute: ObjectAttribute<boolean>
-  private focusedAttribute: ObjectAttribute<boolean>
-  private colorAttribute: ColorAttribute
+  private _outlineAttribute: ObjectAttribute<boolean>
+  private _visibleAttribute: ObjectAttribute<boolean>
+  private _coloredAttribute: ObjectAttribute<boolean>
+  private _focusedAttribute: ObjectAttribute<boolean>
+  private _colorAttribute: ColorAttribute
 
   constructor (
     vim: Vim,
@@ -42,7 +42,7 @@ export class Object {
     this.instances = instances
     this._meshes = meshes
 
-    this.outlineAttribute = new ObjectAttribute(
+    this._outlineAttribute = new ObjectAttribute(
       false,
       'selected',
       'selected',
@@ -50,7 +50,7 @@ export class Object {
       (v) => (v ? 1 : 0)
     )
 
-    this.visibleAttribute = new ObjectAttribute(
+    this._visibleAttribute = new ObjectAttribute(
       true,
       'ignore',
       'ignore',
@@ -58,7 +58,7 @@ export class Object {
       (v) => (v ? 0 : 1)
     )
 
-    this.focusedAttribute = new ObjectAttribute(
+    this._focusedAttribute = new ObjectAttribute(
       false,
       'focused',
       'focused',
@@ -66,7 +66,7 @@ export class Object {
       (v) => (v ? 1 : 0)
     )
 
-    this.coloredAttribute = new ObjectAttribute(
+    this._coloredAttribute = new ObjectAttribute(
       false,
       'colored',
       'colored',
@@ -74,7 +74,7 @@ export class Object {
       (v) => (v ? 1 : 0)
     )
 
-    this.colorAttribute = new ColorAttribute(meshes, undefined, vim)
+    this._colorAttribute = new ColorAttribute(meshes, undefined, vim)
   }
 
   private get meshBuilder () {
@@ -93,11 +93,11 @@ export class Object {
    * @param value true to show object, false to hide object.
    */
   get outline () {
-    return this.outlineAttribute.value
+    return this._outlineAttribute.value
   }
 
   set outline (value: boolean) {
-    if (this.outlineAttribute.apply(value)) {
+    if (this._outlineAttribute.apply(value)) {
       if (value) this.vim.scene.addOutline()
       else this.vim.scene.removeOutline()
     }
@@ -108,11 +108,11 @@ export class Object {
    * @param value true to highlight object.
    */
   get focused () {
-    return this.focusedAttribute.value
+    return this._focusedAttribute.value
   }
 
   set focused (value: boolean) {
-    if (this.focusedAttribute.apply(value)) {
+    if (this._focusedAttribute.apply(value)) {
       this.vim.scene.setDirty()
     }
   }
@@ -122,11 +122,11 @@ export class Object {
    * @param value true to show object, false to hide object.
    */
   get visible () {
-    return this.visibleAttribute.value
+    return this._visibleAttribute.value
   }
 
   set visible (value: boolean) {
-    if (this.visibleAttribute.apply(value)) {
+    if (this._visibleAttribute.apply(value)) {
       this.vim.scene.setDirty()
     }
   }
@@ -143,8 +143,8 @@ export class Object {
     this._color = color
     this.vim.scene.setDirty()
     this._color = this._color
-    this.coloredAttribute.apply(this._color !== undefined)
-    this.colorAttribute.apply(this._color)
+    this._coloredAttribute.apply(this._color !== undefined)
+    this._colorAttribute.apply(this._color)
   }
 
   /**
@@ -154,11 +154,11 @@ export class Object {
     this._meshes = meshes
     this.vim.scene.setDirty()
 
-    this.outlineAttribute.updateMeshes(meshes)
-    this.visibleAttribute.updateMeshes(meshes)
-    this.focusedAttribute.updateMeshes(meshes)
-    this.coloredAttribute.updateMeshes(meshes)
-    this.colorAttribute.updateMeshes(meshes)
+    this._outlineAttribute.updateMeshes(meshes)
+    this._visibleAttribute.updateMeshes(meshes)
+    this._focusedAttribute.updateMeshes(meshes)
+    this._coloredAttribute.updateMeshes(meshes)
+    this._colorAttribute.updateMeshes(meshes)
   }
 
   /**
