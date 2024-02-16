@@ -5,7 +5,7 @@ import { Submesh } from '../../../vim-loader/mesh'
 import { Viewer } from '../../viewer'
 import * as THREE from 'three'
 
-export class GizmoMarker implements Object {
+export class GizmoMarker {
   private _viewer: Viewer
   private _sprite: THREE.Sprite
 
