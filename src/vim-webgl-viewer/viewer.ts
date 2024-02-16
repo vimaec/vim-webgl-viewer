@@ -118,7 +118,6 @@ export class Viewer {
     this.renderer.onBoxUpdated.subscribe((_) => {
       const box = this.renderer.getBoundingBox()
       this._environment.adaptToContent(box)
-      this.gizmos.section.fitBox(box)
     })
 
     // Input and Selection
