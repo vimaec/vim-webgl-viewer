@@ -250,7 +250,6 @@ export class MouseHandler extends InputHandler {
 
   private onMouseUp = (event: MouseEvent) => {
     event.stopImmediatePropagation()
-    this.resetIdle()
     const btn = this.getButton(event)
     if (btn === this._buttonDown) return // the active button is still down.
 
