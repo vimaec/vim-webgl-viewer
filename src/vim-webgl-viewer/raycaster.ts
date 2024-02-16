@@ -9,6 +9,7 @@ import { RenderScene } from './rendering/renderScene'
 import { Viewport } from './viewport'
 import { Camera } from './camera/camera'
 import { Renderer } from './rendering/renderer'
+import { GizmoMarker } from './gizmos/markers/gizmoMarker'
 
 /**
  * Type alias for THREE intersection array
@@ -24,14 +25,21 @@ export type ActionModifier = 'none' | 'shift' | 'ctrl'
  * Highlevel aggregate of information about a raycast result
  */
 export class RaycastResult {
-  object: Object | undefined
+  object: Object | GizmoMarker | undefined
   intersections: ThreeIntersectionList
   firstHit: THREE.Intersection | undefined
 
   constructor (intersections: ThreeIntersectionList) {
     this.intersections = intersections
-    const [hit, obj] = this.GetFirstVimHit(intersections)
-    this.firstHit = hit
+    const [markerHit, marker] = this.GetFirstMarkerHit(intersections)
+    if (marker) {
+      this.object = marker
+      this.firstHit = markerHit
+      return
+    }
+
+    const [objectHit, obj] = this.GetFirstVimHit(intersections)
+    this.firstHit = objectHit
     this.object = obj
   }
 
@@ -41,6 +49,20 @@ export class RaycastResult {
     for (let i = 0; i < intersections.length; i++) {
       const obj = this.getVimObjectFromHit(intersections[i])
       if (obj?.visible) return [intersections[i], obj]
+    }
+    return []
+  }
+
+  private GetFirstMarkerHit (
+    intersections: ThreeIntersectionList
+  ): [THREE.Intersection, GizmoMarker] | [] {
+    for (let i = 0; i < intersections.length; i++) {
+      if (intersections[i].object instanceof THREE.Sprite) {
+        const sprite = intersections[i].object as THREE.Sprite
+        if (sprite.userData.vim instanceof GizmoMarker) {
+          return [intersections[i], sprite.userData.vim as GizmoMarker]
+        }
+      }
     }
     return []
   }

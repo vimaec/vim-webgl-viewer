@@ -6,6 +6,7 @@ import { GizmoOrbit } from './gizmoOrbit'
 import { GizmoRectangle } from './gizmoRectangle'
 import { Measure } from './measure/measure'
 import { SectionBox } from './sectionBox/sectionBox'
+import { GizmoMarkers } from './markers/gizmoMarkers'
 
 export class Gizmos {
   viewer: Viewer
@@ -16,6 +17,7 @@ export class Gizmos {
   orbit: GizmoOrbit
   rectangle: GizmoRectangle
   axes: GizmoAxes
+  markers: GizmoMarkers
 
   constructor (viewer: Viewer) {
     this.viewer = viewer
@@ -31,6 +33,7 @@ export class Gizmos {
     )
     this.rectangle = new GizmoRectangle(viewer)
     this.axes = new GizmoAxes(viewer.camera, viewer.settings.axes)
+    this.markers = new GizmoMarkers(viewer)
     viewer.viewport.canvas.parentElement?.prepend(this.axes.canvas)
   }
 
