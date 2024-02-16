@@ -1,13 +1,15 @@
 import { VimDocument, IElement } from 'vim-format'
 import { ElementParameter } from 'vim-format/dist/vimHelpers'
-import { Object, Vim } from '../../../vim'
+import { Vim } from '../../../vim-loader/vim'
 import { Submesh } from '../../../vim-loader/mesh'
 import { Viewer } from '../../viewer'
 import * as THREE from 'three'
+import { IObject } from '../../../vim-loader/object'
 
-export class GizmoMarker {
+export class GizmoMarker implements IObject {
   private _viewer: Viewer
   private _sprite: THREE.Sprite
+  private _material : THREE.SpriteMaterial
 
   vim: Vim
   document: VimDocument
@@ -16,11 +18,9 @@ export class GizmoMarker {
 
   constructor (viewer: Viewer) {
     const map = new THREE.TextureLoader().load('dot.png')
-    const material = new THREE.SpriteMaterial({ map, depthTest: false })
-    const sprite = new THREE.Sprite(material)
-    sprite.userData.vim = this
-
-    this._sprite = sprite
+    this._material = new THREE.SpriteMaterial({ map, depthTest: false })
+    this._sprite = new THREE.Sprite(this._material)
+    this._sprite.userData.vim = this
     this._viewer = viewer
     this.focused = false
     
@@ -43,11 +43,11 @@ export class GizmoMarker {
   }
 
   get outline (): boolean {
-    throw new Error('Method not implemented.')
+    return !this.color.equals(new THREE.Color('white'))
   }
 
   set outline (value: boolean) {
-    throw new Error('Method not implemented.')
+    this.color = value ? new THREE.Color('red') : new THREE.Color('white')
   }
 
   get focused (): boolean {
@@ -72,11 +72,12 @@ export class GizmoMarker {
   }
 
   get color (): THREE.Color {
-    throw new Error('Method not implemented.')
+    return this._material.color
   }
 
   set color (color: THREE.Color) {
-    throw new Error('Method not implemented.')
+    this._material.color.copy(color)
+    this._viewer.renderer.needsUpdate = true
   }
 
   addMesh (mesh: Submesh): void {
@@ -96,21 +97,10 @@ export class GizmoMarker {
   }
 
   getBoundingBox (): THREE.Box3 {
-    throw new Error('Method not implemented.')
+    return new THREE.Box3().setFromCenterAndSize(this.position.clone(), new THREE.Vector3(1,1,1))
   }
 
   public getCenter (target?: THREE.Vector3): THREE.Vector3 {
-    throw new Error('Method not implemented.')
-  }
-
-  createWireframe (): THREE.LineSegments<
-    THREE.WireframeGeometry<THREE.BufferGeometry>,
-    THREE.LineBasicMaterial
-    > {
-    throw new Error('Method not implemented.')
-  }
-
-  createGeometry (): THREE.BufferGeometry {
-    throw new Error('Method not implemented.')
+    return (target ?? new THREE.Vector3()).copy(this.position)
   }
 }

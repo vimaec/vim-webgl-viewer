@@ -4,7 +4,7 @@
 
 import * as THREE from 'three'
 import { Vim, VimMaterials, Settings } from '../vim'
-import { Object } from '../vim-loader/object'
+import { IObject } from '../vim-loader/object'
 import { SignalDispatcher } from 'ste-signals'
 import { Renderer } from './rendering/renderer'
 
@@ -17,8 +17,8 @@ export class Selection {
   private _materials: VimMaterials
 
   // State
-  private _objects = new Set<Object>()
-  private _focusedObject: Object | undefined
+  private _objects = new Set<IObject>()
+  private _focusedObject: IObject | undefined
   private _vim: Vim | undefined
   private _lastFocusTime: number = new Date().getTime()
   private _animationId: number = -1
@@ -83,7 +83,7 @@ export class Selection {
    * Adds focus highlight to a single object.
    * Pass undefined to remove highlight
    */
-  focus (object: Object | undefined) {
+  focus (object: IObject | undefined) {
     if (this._focusedObject === object) return
 
     if (this._focusedObject) this._focusedObject.focused = false
@@ -97,9 +97,9 @@ export class Selection {
    * Select given objects and unselect all other objects
    * using no or undefined as argument will clear selection.
    */
-  select (object: Object | Object[] | undefined) {
+  select (object: IObject | IObject[] | undefined) {
     object =
-      object === undefined ? [] : object instanceof Object ? [object] : object
+      object === undefined ? [] : Array.isArray(object) ? object : [object]
 
     object = object.filter((o) => o)
     if (
@@ -125,7 +125,7 @@ export class Selection {
   /**
    * Returns true if given object is currently selected
    */
-  has (object: Object) {
+  has (object: IObject) {
     return this._objects.has(object)
   }
 
@@ -139,7 +139,7 @@ export class Selection {
   /**
    * Adds given objects to the current selection
    */
-  add (...objects: Object[]) {
+  add (...objects: IObject[]) {
     if (!objects) return
     if (objects.length === 0) return
     const count = this._objects.size
@@ -157,7 +157,7 @@ export class Selection {
   /**
    * Remove given objects from the current selection
    */
-  remove (...objects: Object[]) {
+  remove (...objects: IObject[]) {
     if (!objects) return
     if (objects.length === 0) return
     const count = this._objects.size
@@ -177,7 +177,7 @@ export class Selection {
    * Adds unselected elements of given objects to the selection
    * Remove selected elements of given objects from the selection
    */
-  toggle (...objects: Object[]) {
+  toggle (...objects: IObject []) {
     if (!objects) return
     if (objects.length === 0) return
     const count = this._objects.size
