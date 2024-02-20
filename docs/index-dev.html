@@ -26,11 +26,10 @@
   </head>
   <body>
     <script src="https://unpkg.com/three@0.143"></script>
-    <script src="https://unpkg.com/vim-webgl-viewer@1.5.9-dev.2"></script>
+    <script src="https://unpkg.com/vim-webgl-viewer@1.5.11"></script>
     <script>
       // Parse URL for source file
       const params = new URLSearchParams(window.location.search)
-      // Edge server doesn't serve http ranges properly
       const url = params.has('vim')
         ? params.get('vim')
         : 'https://vim02.azureedge.net/samples/residence.v1.2.75.vim'

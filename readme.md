@@ -20,8 +20,8 @@ https://vimaec.github.io/vim-webgl-viewer/api/
 - [JsFiddle - Measure](https://jsfiddle.net/simon_vimaec/anLh63tv/)
 - [JsFiddle - Section Box](https://jsfiddle.net/simon_vimaec/ryeu9L40/)
 - [Small Model Demo - Residence](https://vimaec.github.io/vim-webgl-viewer)
-- [Medium Model Demo - Medical Tower](https://vimaec.github.io/vim-webgl-viewer?vim=https://vim.azureedge.net/samples/skanska.vim)
-- [Large Model Demo - Stadium](https://vimaec.github.io/vim-webgl-viewer?vim=https://vim.azureedge.net/samples/stadium.vim) (_Warning_: slow download times)
+- [Medium Model Demo - Medical Tower](https://vimaec.github.io/vim-webgl-viewer?vim=https://vim02.azureedge.net/samples/skanska.vim)
+- [Large Model Demo - Stadium](https://vimaec.github.io/vim-webgl-viewer?vim=https://vim02.azureedge.net/samples/stadium.vim) (_Warning_: slow download times)
 
 # Overview
 
