@@ -17,11 +17,11 @@ export class GizmoMarker implements IObject {
   instances: number[]
 
   constructor (viewer: Viewer) {
-    const map = new THREE.TextureLoader().load('dot.png')
+    this._viewer = viewer
+    const map = new THREE.TextureLoader().load('dot.png',() => this._viewer.renderer.needsUpdate = true)
     this._material = new THREE.SpriteMaterial({ map, depthTest: false })
     this._sprite = new THREE.Sprite(this._material)
     this._sprite.userData.vim = this
-    this._viewer = viewer
     this.focused = false
     
   }
