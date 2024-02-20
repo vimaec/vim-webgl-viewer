@@ -12,6 +12,7 @@ https://vimaec.github.io/vim-webgl-viewer/api/
 - [JsFiddle - General usage](https://jsfiddle.net/simon_vimaec/5hL06tvp/)
 - [JsFiddle - Custom http request](https://jsfiddle.net/simon_vimaec/k5jn9sd8/)
 - [JsFiddle - Embedding](https://jsfiddle.net/simon_vimaec/wd4zr6hq)
+- [JsFiddle - Plan View](https://jsfiddle.net/simon_vimaec/hLp62f50/)
 - [JsFiddle - Coloring](https://jsfiddle.net/simon_vimaec/pcLdzvne/)
 - [JsFiddle - Visibility](https://jsfiddle.net/simon_vimaec/j5uhyp7k)
 - [JsFiddle - Outlines](https://jsfiddle.net/simon_vimaec/nfLsab8k/)
@@ -19,8 +20,8 @@ https://vimaec.github.io/vim-webgl-viewer/api/
 - [JsFiddle - Measure](https://jsfiddle.net/simon_vimaec/anLh63tv/)
 - [JsFiddle - Section Box](https://jsfiddle.net/simon_vimaec/ryeu9L40/)
 - [Small Model Demo - Residence](https://vimaec.github.io/vim-webgl-viewer)
-- [Medium Model Demo - Medical Tower](https://vimaec.github.io/vim-webgl-viewer?vim=https://vim.azureedge.net/samples/skanska.vim)
-- [Large Model Demo - Stadium](https://vimaec.github.io/vim-webgl-viewer?vim=https://vim.azureedge.net/samples/stadium.vim) (_Warning_: slow download times)
+- [Medium Model Demo - Medical Tower](https://vimaec.github.io/vim-webgl-viewer?vim=https://vim02.azureedge.net/samples/skanska.vim)
+- [Large Model Demo - Stadium](https://vimaec.github.io/vim-webgl-viewer?vim=https://vim02.azureedge.net/samples/stadium.vim) (_Warning_: slow download times)
 
 # Overview
 
