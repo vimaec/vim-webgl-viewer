@@ -326,7 +326,8 @@ export class Camera {
   private getVelocityMultiplier () {
     const rotated = !this._lastQuaternion.equals(this.quaternion)
     const mod = rotated ? 1 : 1.66
-    return Math.pow(1.25, this.speed) * this._moveSpeed * mod * 100
+    const frustrum = this.frustrumSizeAt(this.target).length()
+    return Math.pow(1.25, this.speed) * this._moveSpeed * mod * frustrum
   }
 
   private checkForMovement () {

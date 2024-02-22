@@ -15,7 +15,6 @@ type Modifier = 'ctrl' | 'shift' | 'none'
 export class MouseHandler extends InputHandler {
   private readonly _idleDelayMs = 150
   zoomSpeed = 1
-  panSpeed = 100
   rotateSpeed = 1
   orbitSpeed = 1
 
@@ -199,7 +198,7 @@ export class MouseHandler extends InputHandler {
         this.camera.do().rotate(this.toRotation(delta, this.rotateSpeed))
         break
       case 'pan':
-        this.camera.do().move2(delta.multiplyScalar(this.panSpeed), 'XY')
+        this.pan(delta)
         break
       case 'zoom':
         this.camera.do().zoom(1 + delta.y * this.zoomSpeed)
@@ -214,8 +213,15 @@ export class MouseHandler extends InputHandler {
   }
 
   private onMouseMiddleDrag (delta: THREE.Vector2) {
-    this.camera.do().move2(delta.multiplyScalar(100), 'XY')
+    this.pan(delta)
   }
+
+  private pan(delta: THREE.Vector2){
+    const size = this.camera.frustrumSizeAt(this.camera.target)
+    size.multiply(delta).multiplyScalar(2)
+    this.camera.do().move2(size, 'XY')
+  }
+
 
   private onMouseRightDrag (delta: THREE.Vector2) {
     this.camera.do().rotate(this.toRotation(delta, this.rotateSpeed))
@@ -233,7 +239,7 @@ export class MouseHandler extends InputHandler {
     if (event.ctrlKey) {
       this.camera.speed -= scrollValue
     } else {
-      const zoom = Math.pow(1.3, scrollValue)
+      const zoom = Math.pow(1.5, scrollValue)
       this.camera.lerp(0.75).zoom(zoom)
     }
   }
