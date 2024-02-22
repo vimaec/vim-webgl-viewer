@@ -4,9 +4,10 @@ import { Vim } from '../../../vim-loader/vim'
 import { Submesh } from '../../../vim-loader/mesh'
 import { Viewer } from '../../viewer'
 import * as THREE from 'three'
-import { IObject } from '../../../vim-loader/object'
+import { IObject, ObjectType } from '../../../vim-loader/objectInterface'
 
 export class GizmoMarker implements IObject {
+  public readonly type: ObjectType = "Marker"
   private _viewer: Viewer
   private _sprite: THREE.Sprite
   private _material : THREE.SpriteMaterial
@@ -23,7 +24,6 @@ export class GizmoMarker implements IObject {
     this._sprite = new THREE.Sprite(this._material)
     this._sprite.userData.vim = this
     this.focused = false
-    
   }
 
   get position() {

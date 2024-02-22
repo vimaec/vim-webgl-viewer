@@ -310,7 +310,6 @@ export class MouseHandler extends InputHandler {
       position,
       this.raycaster
     )
-
     this._viewer.inputs.MainAction(action)
   }
 

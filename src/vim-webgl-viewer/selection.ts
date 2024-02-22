@@ -4,7 +4,7 @@
 
 import * as THREE from 'three'
 import { Vim, VimMaterials, Settings } from '../vim'
-import { IObject } from '../vim-loader/object'
+import { IObject } from '../vim-loader/objectInterface'
 import { SignalDispatcher } from 'ste-signals'
 import { Renderer } from './rendering/renderer'
 

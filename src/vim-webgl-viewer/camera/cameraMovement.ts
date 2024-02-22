@@ -3,7 +3,8 @@
  */
 
 import { Camera } from './camera'
-import { Object, IObject } from '../../vim-loader/object'
+import { Object } from '../../vim-loader/object'
+import { IObject } from '../../vim-loader/objectInterface'
 import * as THREE from 'three'
 import { GizmoMarker } from '../gizmos/markers/gizmoMarker'
 
