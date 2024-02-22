@@ -5,7 +5,7 @@ import * as THREE from 'three'
 const params = new URLSearchParams(window.location.search)
 // Edge server doesn't serve http ranges properly
 const url = params.has('vim')
-  ? params.get('vim')
+  ? params.get('vim') // : './test_vim.vim.gz'
   : 'https://vim02.azureedge.net/samples/residence.v1.2.75.vim'
 
 // Parse URL for transparency mode
@@ -37,42 +37,70 @@ if (params.has('selection')) {
   selection = p?.split('+').map((s) => Number.parseInt(s))
 }
 
+let time: number
 const viewer = new VIM.Viewer()
+let request: VIM.VimRequest
+test()
+addLoadButton()
 
-async function load (source: string | ArrayBuffer) {
-  const loader = new VIM.Loader()
-  const request = loader.createRequest(source, {
-    rotation: new THREE.Vector3(270, 0, 0),
-    transparency
-  })
-  request.onProgress.sub((progress) => {
-    console.log(`Loading : ${progress.loaded} / ${progress.total}`)
-  })
-  const vim = await request.send()
-
-  viewer.add(vim)
+async function test () {
+  const vim = await load(url)
 }
-load(url)
 
-const input = document.createElement('input')
-input.type = 'file'
-document.body.prepend(input)
+async function load (url: string | ArrayBuffer) {
+  time = Date.now()
+  const vim = await VIM.VimxLoader.loadAny(url,
+    {
+      filter: [...new Array<number>(100).keys()], // .map((i) => i + 3500000),
+      filterMode: 'instance',
+      // legacy: true,
+      // scale: 0.001,
+      // legacy: true,
+      progressive: true,
+      refreshInterval: 400,
+      loadRooms: true,
+      rotation: new VIM.THREE.Vector3(270, 0, 0)
+    }
+  )
 
-input.onchange = (e: any) => {
-  viewer.clear()
-  // getting a hold of the file reference
-  const file = e.target.files[0]
+  await onVimLoaded(vim)
+  return vim
+}
 
-  // setting up the reader
-  const reader = new FileReader()
-  reader.readAsArrayBuffer(file)
+async function onVimLoaded (vim: VIM.Vim) {
+  viewer.add(vim)
+  vim.onLoadingUpdate.sub(() => (viewer.gizmos.loading.visible = vim.isLoading))
+  const load = vim.loadAll()
+  viewer.camera.do().frame('all', new THREE.Vector3(1, -1, 1))
 
-  // here we tell the reader what to do when it's done reading...
-  reader.onload = (readerEvent) => {
-    const content = readerEvent?.target?.result // this is the content!
-    if (content) load(content)
+  await load
+
+  console.log(`loaded in ${(Date.now() - time) / 1000} seconds`)
+
+  globalThis.vim = vim
+  globalThis.viewer = viewer
+  globalThis.THREE = THREE
+}
+
+function addLoadButton () {
+  const input = document.createElement('input')
+  input.type = 'file'
+  document.body.prepend(input)
+
+  input.onchange = (e: any) => {
+    viewer.clear()
+    request?.abort()
+    // getting a hold of the file reference
+    const file = e.target.files[0]
+
+    // setting up the reader
+    const reader = new FileReader()
+    reader.readAsArrayBuffer(file)
+
+    // here we tell the reader what to do when it's done reading...
+    reader.onload = (readerEvent) => {
+      const content = readerEvent?.target?.result // this is the content!
+      if (content) load(content)
+    }
   }
 }
-
-globalThis.viewer = viewer
-globalThis.THREE = THREE
