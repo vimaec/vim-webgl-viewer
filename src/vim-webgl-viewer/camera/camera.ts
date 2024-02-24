@@ -93,16 +93,16 @@ export class Camera {
   private _allowedRotation = new THREE.Vector2(1, 1)
 
   // Default Forward
-  private _defaultForward = new THREE.Vector3(0, 0, 1)
+  private _defaultForward = new THREE.Vector3(1, -1, 1).normalize()
   get defaultForward () {
     return this._defaultForward
   }
 
   set defaultForward (value: THREE.Vector3) {
     if (value.x === 0 && value.y === 0 && value.z === 0) {
-      this._defaultForward.set(0, 0, 1)
+      this._defaultForward.set(1, -1, 1).normalize()
     } else {
-      this._defaultForward.copy(value)
+      this._defaultForward.copy(value).normalize()
     }
   }
 
@@ -123,9 +123,11 @@ export class Camera {
     this._scene = scene
     this._viewport = viewport
 
+
     this.applySettings(settings)
-    this.do().orbitTowards(this._defaultForward)
-    this.do().setDistance(-1000)
+    this.do(true).setDistance(-1000)
+    this.do(true).orbitTowards(this._defaultForward)
+    
   }
 
   /**
@@ -217,7 +219,8 @@ export class Camera {
 
   applySettings (settings: Settings) {
     // Camera
-    this._defaultForward = new THREE.Vector3().copy(settings.camera.forward)
+
+    this.defaultForward = settings.camera.forward
     this._orthographic = settings.camera.orthographic
     this.allowedMovement = settings.camera.allowedMovement
     this.allowedRotation = settings.camera.allowedRotation

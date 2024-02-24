@@ -172,7 +172,7 @@ const defaultConfig: Settings = {
     fov: 50,
     zoom: 1,
     // 45 deg down looking down z.
-    forward: new THREE.Vector3(0, -0.707, 0.707),
+    forward: new THREE.Vector3(1, -1, 1),
     controls: {
       orbit: true,
       rotateSpeed: 1,
