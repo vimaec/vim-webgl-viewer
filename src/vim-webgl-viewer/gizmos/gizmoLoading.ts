@@ -38,7 +38,7 @@ export class GizmoLoading {
       this._visible = true
     }
     if (this._visible && !value) {
-      this._viewer.viewport.canvas.parentElement.removeChild(this._spinner)
+      this._spinner.parentElement.removeChild(this._spinner)
       this._visible = false
     }
   }
