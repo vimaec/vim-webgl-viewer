@@ -15,18 +15,8 @@ export class GizmoLoading {
 
   constructor (viewer: Viewer) {
     this._viewer = viewer
-    // this._spinner = this.createSpinner()
     this._spinner = this.createBar()
-    this._viewer.viewport.canvas.parentElement.appendChild(this._spinner)
-  }
-
-  private createSpinner () {
-    const div = document.createElement('div')
-    div.className = 'lds-roller'
-    for (let i = 0; i < 8; i++) {
-      div.appendChild(document.createElement('div'))
-    }
-    return div
+    this. _visible = false
   }
 
   private createBar () {
