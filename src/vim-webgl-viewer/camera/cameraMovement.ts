@@ -7,6 +7,7 @@ import { Object } from '../../vim-loader/object'
 import { IObject } from '../../vim-loader/objectInterface'
 import * as THREE from 'three'
 import { GizmoMarker } from '../gizmos/markers/gizmoMarker'
+import { Vim } from '../../vim-loader/vim'
 
 export abstract class CameraMovement {
   protected _camera: Camera
@@ -89,12 +90,15 @@ export abstract class CameraMovement {
   abstract set(position: THREE.Vector3, target?: THREE.Vector3)
 
     frame (
-    target: IObject | THREE.Sphere | THREE.Box3 | 'all' | undefined,
+    target: IObject | Vim | THREE.Sphere | THREE.Box3 | 'all' | undefined,
     forward?: THREE.Vector3
   ): void {
     
     if ((target instanceof GizmoMarker) || (target instanceof Object)) {
       target = target.getBoundingBox()
+    }
+    if ((target instanceof Vim) ) {
+      target = target.scene.getBoundingBox()
     }
     if (target === 'all') {
       target = this._camera._scene.getBoundingBox()
