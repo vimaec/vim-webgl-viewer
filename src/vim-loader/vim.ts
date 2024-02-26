@@ -24,6 +24,7 @@ type VimFormat = 'vim' | 'vimx'
  * Dispenses Objects for high level scene manipulation
  */
 export class Vim {
+  readonly isLegacy: boolean
   readonly format: VimFormat = 'vim'
   readonly source: string | undefined
 
@@ -63,7 +64,8 @@ export class Vim {
     map: ElementMapping | ElementNoMapping | ElementMapping2,
     builder: SubsetBuilder,
     source: string,
-    format: VimFormat
+    format: VimFormat,
+    isLegacy: boolean
   ) {
     this.header = header
     this.bim = document
@@ -76,6 +78,7 @@ export class Vim {
     this._builder = builder
     this.source = source
     this.format = format
+    this.isLegacy = isLegacy
   }
 
   /**
@@ -173,16 +176,31 @@ export class Vim {
 
   /** Returns all instances as a subset. */
   getFullSet () {
+    if(this.isLegacy){
+      console.log("getFullSet Not supported in legacy loading. Ignoring.")
+      return 
+    }
     return this._builder.getFullSet()
   }
 
   /** Starts loading process to load all instances. */
   async loadAll (settings?: LoadPartialSettings) {
+    if(this.isLegacy){
+      this._builder.onUpdate
+      console.log("loadAll Not supported in legacy loading. Ignoring.")
+      return 
+    }
+
     return this.loadSubset(this.getFullSet(), settings)
   }
 
   /** Starts loading process to load all instances. */
   async loadSubset (subset: G3dSubset, settings?: LoadPartialSettings) {
+    if(this.isLegacy){
+      console.log("loadSubset Not supported in legacy loading. Ignoring.")
+      return
+    }
+
     subset = subset.except('instance', this._loadedInstances)
     const count = subset.getInstanceCount()
     for (let i = 0; i < count; i++) {
@@ -207,6 +225,11 @@ export class Vim {
     filter: number[],
     settings?: LoadPartialSettings
   ) {
+    if(this.isLegacy){
+      console.log("loadFilter Not supported in legacy loading. Ignoring.")
+      return
+    }
+
     const subset = this.getFullSet().filter(filterMode, filter)
     await this.loadSubset(subset, settings)
   }
