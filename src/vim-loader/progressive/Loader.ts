@@ -4,8 +4,10 @@ import {
   VimPartialSettings,
   VimSettings
 } from '../vimSettings'
+
 import { Vim } from '../vim'
-import { LegacyLoader, Vimx, Scene } from '../../vim'
+import { Scene } from '../scene'
+import { Vimx } from './vimx'
 
 import { ElementMapping, ElementMapping2 } from '../elementMapping'
 import {
@@ -19,7 +21,8 @@ import {
   G3dMaterial
 } from 'vim-format'
 import { VimSubsetBuilder, VimxSubsetBuilder } from './subsetBuilder'
-import { LegacyMeshFactory } from './legacyMeshFactory'
+import { VimMeshFactory } from './legacyMeshFactory'
+import { LegacyLoader} from '../legacy/legacyLoader'
 
 export class Loader {
   /**
@@ -148,7 +151,7 @@ export class Loader {
 
     // Create scene
     const scene = new Scene(undefined, settings.matrix)
-    const factory = new LegacyMeshFactory(g3d, materials, scene)
+    const factory = new VimMeshFactory(g3d, materials, scene)
 
     // Create legacy mapping
     const doc = await VimDocument.createFromBfast(bfast, true)

@@ -1,5 +1,5 @@
 import { Vimx, Scene } from '../../vim'
-import { LegacyMeshFactory } from './legacyMeshFactory'
+import { VimMeshFactory } from './legacyMeshFactory'
 import { LoadPartialSettings, LoadSettings, SubsetRequest } from './subsetRequest'
 import { G3dSubset } from './g3dSubset'
 import { ISignal, ISignalHandler, SignalDispatcher } from 'ste-signals'
@@ -28,7 +28,7 @@ export interface SubsetBuilder {
  * Loads and builds subsets from a Vim file.
  */
 export class VimSubsetBuilder implements SubsetBuilder {
-  factory: LegacyMeshFactory
+  factory: VimMeshFactory
 
   private _onUpdate = new SignalDispatcher()
 
@@ -40,7 +40,7 @@ export class VimSubsetBuilder implements SubsetBuilder {
     return false
   }
 
-  constructor (factory: LegacyMeshFactory) {
+  constructor (factory: VimMeshFactory) {
     this.factory = factory
   }
 
