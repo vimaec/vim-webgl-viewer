@@ -106,7 +106,7 @@ export class Vim {
     const elements = this.map.getElementsFromElementId(id)
     return elements
       ?.map((e) => this.getObjectFromElement(e))
-      .filter((o): o is Object => o !== undefined)
+      .filter((o): o is Object => o !== undefined) ?? []
   }
 
   /**
