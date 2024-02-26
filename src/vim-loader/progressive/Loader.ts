@@ -21,11 +21,11 @@ import {
 import { VimSubsetBuilder, VimxSubsetBuilder } from './subsetBuilder'
 import { LegacyMeshFactory } from './legacyMeshFactory'
 
-export class VimxLoader {
+export class Loader {
   /**
    * Loads given vim or vimx file using progressive pipeline unless the legacy flag is true.
    */
-  static async loadAny (
+  static async load (
     source: string | ArrayBuffer,
     settings: VimPartialSettings,
     onProgress?: (p: IProgressLogs) => void
@@ -46,11 +46,11 @@ export class VimxLoader {
     }
 
     if (type === 'vim') {
-      return VimxLoader.loadFromVim(source, fullSettings, onProgress)
+      return Loader.loadFromVim(source, fullSettings, onProgress)
     }
 
     if (type === 'vimx') {
-      return VimxLoader.loadFromVimX(source, fullSettings, onProgress)
+      return Loader.loadFromVimX(source, fullSettings, onProgress)
     }
 
     throw new Error('Cannot determine the appropriate loading strategy.')
