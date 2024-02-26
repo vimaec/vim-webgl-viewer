@@ -4,12 +4,13 @@
 
 import { SceneBuilder } from './sceneBuilder'
 import { BFast, G3d, VimDocument, VimHeader, requestHeader } from 'vim-format'
-import { VimSettings } from './vimSettings'
-import { VimMaterials } from './materials/materials'
+import { VimSettings } from '../vimSettings'
+import { VimMaterials } from '../materials/materials'
 import { MeshBuilder } from './meshBuilder'
-import { Scene } from './scene'
-import { ElementMapping } from './elementMapping'
-import { Vim } from './vim'
+import { Scene } from '../scene'
+import { ElementMapping } from '../elementMapping'
+import { Vim } from '../vim'
+import { DummySubsetBuilder } from '../progressive/subsetBuilder'
 
 /**
  * Loader for the Vim File format.
@@ -59,9 +60,10 @@ export class VimBuilder {
       scene,
       settings,
       mapping,
-      undefined,
+      new DummySubsetBuilder(),
       source,
-      'vim'
+      'vim',
+       true
     )
 
     return vim
@@ -102,7 +104,8 @@ export class VimBuilder {
       mapping,
       undefined,
       source,
-      'vim'
+      'vim',
+      true
     )
 
     return vim

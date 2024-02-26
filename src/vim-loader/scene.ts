@@ -4,7 +4,7 @@
 
 import * as THREE from 'three'
 import { Mesh, Submesh } from './mesh'
-import { SceneBuilder } from './sceneBuilder'
+import { SceneBuilder } from './legacy/sceneBuilder'
 import { Vim } from './vim'
 import { estimateBytesUsed } from 'three/examples/jsm/utils/BufferGeometryUtils'
 import { InsertableMesh } from './progressive/insertableMesh'

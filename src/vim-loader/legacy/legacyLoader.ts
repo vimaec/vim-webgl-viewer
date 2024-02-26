@@ -1,11 +1,13 @@
 import { setRemoteBufferMaxConcurency } from 'vim-format'
-import { getFullSettings, VimPartialSettings } from './vimSettings'
+import { getFullSettings, VimPartialSettings } from '../vimSettings'
 import { VimRequest } from './vimRequest'
 import { VimBuilder } from './vimBuilder'
 
 setRemoteBufferMaxConcurency(20)
 
-export class Loader {
+// The original VIM Loader.
+// As of 2024 this is being phased out and replaced with the AdvancedLoader.
+export class LegacyLoader {
   private _builder: VimBuilder = new VimBuilder()
 
   /**

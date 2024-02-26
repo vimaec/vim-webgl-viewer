@@ -3,10 +3,10 @@
  */
 
 import { G3d, MeshSection } from 'vim-format'
-import { MergeArgs, Transparency } from './geometry'
+import { MergeArgs, Transparency } from '../geometry'
 import { InstancingArgs, MeshBuilder } from './meshBuilder'
-import { Scene } from './scene'
-import { VimSettings, VimPartialSettings } from './vimSettings'
+import { Scene } from '../scene'
+import { VimSettings, VimPartialSettings } from '../vimSettings'
 
 /**
  * Creates meshes and returns them as a scene from a g3d.

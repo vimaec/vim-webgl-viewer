@@ -4,9 +4,9 @@
 
 import * as THREE from 'three'
 import { G3d, MeshSection } from 'vim-format'
-import { Geometry, Transparency, MergeArgs } from './geometry'
-import { VimMaterials } from './materials/materials'
-import { Mesh } from './mesh'
+import { Geometry, Transparency, MergeArgs } from '../geometry'
+import { VimMaterials } from '../materials/materials'
+import { Mesh } from '../mesh'
 
 export type InstancingArgs = {
   matrix: THREE.Matrix4

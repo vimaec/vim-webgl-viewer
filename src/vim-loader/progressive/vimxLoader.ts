@@ -5,7 +5,7 @@ import {
   VimSettings
 } from '../vimSettings'
 import { Vim } from '../vim'
-import { Loader, Vimx, Scene } from '../../vim'
+import { LegacyLoader, Vimx, Scene } from '../../vim'
 
 import { ElementMapping, ElementMapping2 } from '../elementMapping'
 import {
@@ -38,7 +38,7 @@ export class VimxLoader {
         throw new Error('Cannot open a vimx using legacy pipeline.')
       }
 
-      const request = new Loader().createRequest(source, settings)
+      const request = new LegacyLoader().createRequest(source, settings)
       const unsub = request.onProgress.sub(onProgress)
       const vim = await request.send()
       unsub()
@@ -52,6 +52,8 @@ export class VimxLoader {
     if (type === 'vimx') {
       return VimxLoader.loadFromVimX(source, fullSettings, onProgress)
     }
+
+    throw new Error('Cannot determine the appropriate loading strategy.')
   }
 
   private static async determineFileType (
@@ -114,7 +116,8 @@ export class VimxLoader {
       mapping,
       builder,
       typeof source === 'string' ? source : undefined,
-      'vimx'
+      'vimx',
+      false
     )
 
     if (remoteVimx.bfast.source instanceof RemoteBuffer) {
@@ -163,7 +166,8 @@ export class VimxLoader {
       mapping,
       builder,
       typeof source === 'string' ? source : undefined,
-      'vim'
+      'vim',
+      false
     )
 
     if (bfast.source instanceof RemoteBuffer) {
