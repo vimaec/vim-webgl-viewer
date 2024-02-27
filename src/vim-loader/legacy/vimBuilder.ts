@@ -29,14 +29,14 @@ export class VimBuilder {
     const getBim = async () => {
       const doc = await VimDocument.createFromBfast(bfast, true)
       const [instanceToElement, elementIds] = await Promise.all([
-        settings.noMap ? undefined : doc.node.getAllElementIndex(),
-        settings.noMap ? undefined : this.getElementIds(doc)
+        settings.legacyNoMap ? undefined : doc.node.getAllElementIndex(),
+        settings.legacyNoMap ? undefined : this.getElementIds(doc)
       ])
       return { doc, instanceToElement, elementIds }
     }
 
     const [header, g3d, bim] = await Promise.all([
-      settings.noHeader ? undefined : VimBuilder.requestHeader(bfast),
+      settings.legacyNoHeader ? undefined : VimBuilder.requestHeader(bfast),
       VimBuilder.requestG3d(bfast),
       getBim()
     ])
@@ -45,7 +45,7 @@ export class VimBuilder {
       ? this.sceneBuilder.createFromG3d(g3d, settings)
       : new Scene(this.sceneBuilder, settings.matrix)
 
-    const mapping = settings.noMap
+    const mapping = settings.legacyNoMap
       ? undefined
       : new ElementMapping(
         Array.from(g3d.instanceNodes),
@@ -70,24 +70,24 @@ export class VimBuilder {
   }
 
   async loadRemote (bfast: BFast, settings: VimSettings, source: string) {
-    const doc = await VimDocument.createFromBfast(bfast, settings.noStrings)
+    const doc = await VimDocument.createFromBfast(bfast, settings.legacyNoStrings)
     const geometry = await bfast.getBfast('geometry')
     const g3d = await G3d.createFromBfast(geometry)
 
     const [header, instanceToElement, elementIds] = await Promise.all([
-      settings.noHeader ? undefined : VimBuilder.requestHeader(bfast),
-      settings.noMap ? undefined : doc.node.getAllElementIndex(),
-      settings.noMap ? undefined : this.getElementIds(doc)
+      settings.legacyNoHeader ? undefined : VimBuilder.requestHeader(bfast),
+      settings.legacyNoMap ? undefined : doc.node.getAllElementIndex(),
+      settings.legacyNoMap ? undefined : this.getElementIds(doc)
     ])
 
     // Filtering already occured so we don't pass it to the builder.
-    const copy = { ...settings, instances: settings.instances } as VimSettings
+    const copy = { ...settings, legacyInstances: settings.legacyInstances } as VimSettings
 
     const scene = g3d
       ? this.sceneBuilder.createFromG3d(g3d, copy)
       : new Scene(this.sceneBuilder, copy.matrix)
 
-    const mapping = settings.noMap
+    const mapping = settings.legacyNoMap
       ? undefined
       : new ElementMapping(
         Array.from(g3d.instanceNodes),

@@ -1,6 +1,7 @@
 import { ISimpleEvent, SimpleEventDispatcher } from 'ste-simple-events'
 import { BFast, IProgressLogs, RemoteBuffer, Requester } from 'vim-format'
 import { VimBuilder, Vim, VimSettings } from '../../vim'
+import { DefaultLog } from 'vim-format/dist/logging'
 
 export class VimRequest {
   loader: VimBuilder
@@ -30,7 +31,10 @@ export class VimRequest {
     this.settings = settings
     if (typeof source === 'string') {
       this.url = source
-      this.buffer = new RemoteBuffer(source, settings.loghttp)
+      this.buffer = new RemoteBuffer(source)
+      if(settings.verboseHttp){
+        this.buffer.logs = new DefaultLog()
+      }
       this.buffer.onProgress = (log) => this._onProgress.dispatch(log)
     } else this.buffer = source
     this.bfast = new BFast(this.buffer, 0, 'vim')
@@ -38,9 +42,7 @@ export class VimRequest {
   }
 
   async send () {
-    this.vim = this.settings.streamGeometry
-      ? await this.loader.loadRemote(this.bfast, this.settings, this.url)
-      : await this.loader.load(this.bfast, this.settings, this.url)
+    this.vim = await this.loader.load(this.bfast, this.settings, this.url)
     this.vim.onDispose.sub(() => this.abort())
     this._onLoaded.dispatch(this.vim)
     return this.vim

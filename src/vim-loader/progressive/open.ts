@@ -23,19 +23,19 @@ import {
 import { VimSubsetBuilder, VimxSubsetBuilder } from './subsetBuilder'
 import { VimMeshFactory } from './legacyMeshFactory'
 import { LegacyLoader} from '../legacy/legacyLoader'
+import { DefaultLog } from 'vim-format/dist/logging'
 
-export class Loader {
   /**
    * Loads given vim or vimx file using progressive pipeline unless the legacy flag is true.
    */
-  static async load (
+  export async function open (
     source: string | ArrayBuffer,
     settings: VimPartialSettings,
     onProgress?: (p: IProgressLogs) => void
   ) {
     const fullSettings = getFullSettings(settings)
-    const type = await this.determineFileType(source, fullSettings)!
-
+    const type = await determineFileType(source, fullSettings)!
+    
     if (fullSettings.legacy) {
       if (type === 'vimx') {
         throw new Error('Cannot open a vimx using legacy pipeline.')
@@ -49,26 +49,26 @@ export class Loader {
     }
 
     if (type === 'vim') {
-      return Loader.loadFromVim(source, fullSettings, onProgress)
+      return loadFromVim(source, fullSettings, onProgress)
     }
 
     if (type === 'vimx') {
-      return Loader.loadFromVimX(source, fullSettings, onProgress)
+      return loadFromVimX(source, fullSettings, onProgress)
     }
 
     throw new Error('Cannot determine the appropriate loading strategy.')
   }
 
-  private static async determineFileType (
+  async function determineFileType (
     vimPath: string | ArrayBuffer,
     settings: VimSettings
   ) {
     if (settings?.fileType === 'vim') return 'vim'
     if (settings?.fileType === 'vimx') return 'vimx'
-    return this.requestFileType(vimPath)
+    return requestFileType(vimPath)
   }
 
-  static async requestFileType (vimPath: string | ArrayBuffer) {
+  async function requestFileType (vimPath: string | ArrayBuffer) {
     if (typeof vimPath === 'string') {
       if (vimPath.endsWith('vim')) return 'vim'
       if (vimPath.endsWith('vimx')) return 'vimx'
@@ -86,7 +86,7 @@ export class Loader {
   /**
    * Loads a Vimx file from source
    */
-  static async loadFromVimX (
+  async function loadFromVimX (
     source: string | ArrayBuffer,
     settings: VimSettings,
     onProgress: (p: IProgressLogs) => void
@@ -133,7 +133,7 @@ export class Loader {
   /**
    * Loads a Vim file from source
    */
-  static async loadFromVim (
+  async function loadFromVim (
     source: string | ArrayBuffer,
     settings: VimSettings,
     onProgress?: (p: IProgressLogs) => void
@@ -141,7 +141,11 @@ export class Loader {
     const fullSettings = getFullSettings(settings)
     const bfast = new BFast(source)
     if (bfast.source instanceof RemoteBuffer) {
+      
       bfast.source.onProgress = onProgress
+      if(settings.verboseHttp){
+        bfast.source.logs = new DefaultLog()
+      }
     }
 
     // Fetch g3d data
@@ -179,4 +183,3 @@ export class Loader {
 
     return vim
   }
-}

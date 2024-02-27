@@ -219,7 +219,7 @@ export class Vim {
     await this._builder.loadSubset(subset, settings)
   }
 
-  /** Starts loading process to for a filtered subset. */
+  /** Starts the loading process for a filtered subset. */
   async loadFilter (
     filterMode: FilterMode,
     filter: number[],

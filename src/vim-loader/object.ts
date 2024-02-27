@@ -261,8 +261,8 @@ export class Object implements IObject {
       matrix: this.vim.settings.matrix,
       section: 'all',
       transparent: false,
-      instances: this.instances,
-      loadRooms: true
+      legacyInstances: this.instances,
+      legacyLoadRooms: true
     })
     geometry?.applyMatrix4(this.vim.getMatrix())
     return geometry

@@ -3,7 +3,7 @@ import './style.css'
 export * as THREE from 'three'
 export * as Format from 'vim-format'
 
-export * from './vim-loader/progressive/Loader'
+export * from './vim-loader/progressive/open'
 export * from './vim-loader/progressive/vimx'
 export * from './vim-webgl-viewer/viewer'
 export * from './vim-loader/legacy/vimRequest'

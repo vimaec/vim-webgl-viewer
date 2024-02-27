@@ -10,8 +10,8 @@ import { Mesh } from '../mesh'
 
 export type InstancingArgs = {
   matrix: THREE.Matrix4
-  instances: number[]
-  loadRooms: boolean
+  legacyInstances: number[]
+  legacyLoadRooms: boolean
   transparency: Transparency.Mode
 }
 
@@ -35,7 +35,7 @@ export class MeshBuilder {
    */
   createInstancedMeshes (g3d: G3d, args: InstancingArgs) {
     const result: (Mesh | undefined)[] = []
-    const set = args.instances ? new Set(args.instances) : undefined
+    const set = args.legacyInstances ? new Set(args.legacyInstances) : undefined
 
     for (let mesh = 0; mesh < g3d.getMeshCount(); mesh++) {
       let meshInstances = g3d.meshInstances[mesh]
@@ -44,7 +44,7 @@ export class MeshBuilder {
       if (set) {
         meshInstances = meshInstances.filter((i) => set.has(i))
       }
-      if (!args.loadRooms) {
+      if (!args.legacyLoadRooms) {
         meshInstances = meshInstances.filter(
           (i) => !g3d.getInstanceHasFlag(i, 1)
         )
@@ -135,7 +135,7 @@ export class MeshBuilder {
    * @returns a VIM.Mesh or undefined if the mesh would be empty
    */
   createMergedMesh (g3d: G3d, args: MergeArgs) {
-    const merge = args.instances
+    const merge = args.legacyInstances
       ? Geometry.mergeInstanceMeshes(g3d, args)
       : Geometry.mergeUniqueMeshes(g3d, args)
     if (!merge) return
@@ -161,8 +161,8 @@ export class MeshBuilder {
       matrix: new THREE.Matrix4(),
       section: 'all',
       transparent: false,
-      instances,
-      loadRooms: true
+      legacyInstances: instances,
+      legacyLoadRooms: true
     })
     if (!geometry) return
     const wireframe = new THREE.WireframeGeometry(geometry)

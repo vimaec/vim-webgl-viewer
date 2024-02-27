@@ -5,16 +5,14 @@
 import deepmerge from 'deepmerge'
 import { Transparency } from './geometry'
 import * as THREE from 'three'
-import { FilterMode } from 'vim-format'
 
 export type FileType = 'vim' | 'vimx' | undefined
 
 /**
- * Config object for loading a vim
+ * Represents settings for configuring the behavior and rendering of a vim object.
  */
 export type VimSettings = {
-  /** Instance indices of objects to load. All objects are loaded if no value provided. */
-  instances: number[]
+  
   /**
    * Position offset for the vim
    */
@@ -29,7 +27,8 @@ export type VimSettings = {
   scale: number
 
   /**
-   * Matrix representation of position, rotation scale
+   * Matrix representation of position, rotation and scale
+   * Setting this will override position, rotation and scale
    */
   matrix: THREE.Matrix4
 
@@ -38,75 +37,61 @@ export type VimSettings = {
    */
   transparency: Transparency.Mode
 
-  /**
-   * Set to true to load room geometry.
-   */
-  loadRooms: boolean
-
   /** Set to true to get verbose http logs. */
-  loghttp: boolean
+  verboseHttp: boolean
+  
+
+  // VIMX
 
   /**
-   * Forces the viewer to download the whole data at once.
-   * Otherwise bim data will be requested only when needed.
-   */
-  streamBim: boolean
-
-  /** EXPERIMENTAL: Set to true to use legacy loading pipeline. */
-  legacy: boolean
-  /** EXPERIMENTAL: Set to true to stream geometry to the scene. */
-  progressive: boolean
-  /** EXPERIMENTAL: URL of a legacy vim from which to get bim. */
-  bimPath: string
-  /** EXPERIMENTAL: Only geometry satisfying filter will be loaded. */
-  filter: number[]
-  /** EXPERIMENTAL: Defines what property to use as the filter. */
-  filterMode: FilterMode
-
-  /**
-   * EXPERIMENTAL: Defines the time in miliseconds between each scene refresh in progressive loading.
-   */
-  refreshInterval: number
-
-  /**
-   * EXPERIMENTAL: Scecifies file type if file type cannot or should not be infered from file extension.
+   * Specifies file type (vim or vimx) if it cannot or should not be infered from file extension.
    */
   fileType: FileType
 
-  /** EXPERIMENTAL: Set to true to stream geometry. Can be really slow on big models. */
-  streamGeometry: boolean
-  /** EXPERIMENTAL: Set to true to not download strings. */
-  noStrings: boolean
-  /** EXPERIMENTAL: Set to true to not download element/geometry map */
-  noMap: boolean
-  /** EXPERIMENTAL: Set to true to not download header. */
-  noHeader: boolean
+  /** Set to true to stream geometry to the scene. Only supported with vimx file. */
+  progressive: boolean
+
+  /**
+   * Defines the time in miliseconds between each scene refresh in progressive loading.
+   */
+  progressiveInterval: number
+
+  // LEGACY
+
+  /** Set to true to use legacy loading pipeline. */
+  legacy: boolean
+  /** Instance indices of objects to load. All objects are loaded if no value provided in legacy pipeline. */
+  legacyInstances: number[]
+  /** Set to true to not download strings in legacy pipeline. */
+  legacyNoStrings: boolean
+  /** Set to true to not download element/geometry map in legacy pipeline */
+  legacyNoMap: boolean
+  /** Set to true to not download header in legacy pipeline. */
+  legacyNoHeader: boolean
+/** Set to true to load and display rooms. */
+  legacyLoadRooms: boolean
 }
 
 export const defaultConfig: VimSettings = {
-  instances: undefined,
-  loadRooms: false,
+  legacyInstances: undefined,
   position: new THREE.Vector3(),
   rotation: new THREE.Vector3(),
   scale: 1,
-  matrix: new THREE.Matrix4(),
+  matrix: undefined,
   transparency: 'all',
+  verboseHttp: false,
 
   // progressive
   fileType: undefined,
   legacy: false,
   progressive: false,
-  bimPath: undefined,
-  filter: undefined,
-  filterMode: undefined,
-  refreshInterval: 1000,
+  progressiveInterval: 1000,
 
-  streamBim: false,
-  streamGeometry: false,
-  noStrings: false,
-  noMap: false,
-  noHeader: false,
-  loghttp: false
+  legacyNoStrings: false,
+  legacyNoMap: false,
+  legacyNoHeader: false,
+  legacyLoadRooms: false
+  
 }
 
 export type VimPartialSettings = Partial<VimSettings>
@@ -124,7 +109,8 @@ export function getFullSettings (options?: VimPartialSettings) {
     ? merge.transparency
     : 'all'
 
-  merge.matrix = new THREE.Matrix4().compose(
+    console.log(merge.matrix)
+  merge.matrix = merge.matrix ?? new THREE.Matrix4().compose(
     merge.position,
     new THREE.Quaternion().setFromEuler(
       new THREE.Euler(
