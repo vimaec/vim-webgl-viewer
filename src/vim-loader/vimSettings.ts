@@ -109,7 +109,6 @@ export function getFullSettings (options?: VimPartialSettings) {
     ? merge.transparency
     : 'all'
 
-    console.log(merge.matrix)
   merge.matrix = merge.matrix ?? new THREE.Matrix4().compose(
     merge.position,
     new THREE.Quaternion().setFromEuler(
