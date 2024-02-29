@@ -60,9 +60,9 @@ export class Vim {
   readonly settings: VimSettings
 
   /**
-   * Internal - The scene this in which the vim geometry is added.
+   * Mostly Internal - The scene this in which the vim geometry is added.
    */
-  readonly _scene: Scene
+  readonly scene: Scene
 
   /**
    * The mapping from Bim to Geometry for this vim.
@@ -127,7 +127,7 @@ export class Vim {
     this.bim = document
     this.g3d = g3d
     scene.vim = this
-    this._scene = scene
+    this.scene = scene
     this.settings = settings
 
     this.map = map ?? new ElementNoMapping()
@@ -181,7 +181,7 @@ export class Vim {
     }
 
     const instances = this.map.getInstancesFromElement(element)
-    const meshes = this._scene.getMeshesFromInstances(instances)
+    const meshes = this.scene.getMeshesFromInstances(instances)
 
     const result = new Object(this, element, instances, meshes)
     this._elementToObject.set(element, result)
@@ -284,7 +284,7 @@ export class Vim {
 
     // Add box to rendering.
     const box = subset.getBoundingBox()
-    this._scene.updateBox(box)
+    this.scene.updateBox(box)
 
     if (subset.getInstanceCount() === 0) {
       console.log('Empty subset. Ignoring')
@@ -319,7 +319,7 @@ export class Vim {
    */
   clear () {
     this._elementToObject.clear()
-    this._scene.clear()
+    this.scene.clear()
     this._builder.clear()
     this._loadedInstances.clear()
   }
@@ -331,6 +331,6 @@ export class Vim {
     this._builder.dispose()
     this._onDispose.dispatch()
     this._onDispose.clear()
-    this._scene.dispose()
+    this.scene.dispose()
   }
 }

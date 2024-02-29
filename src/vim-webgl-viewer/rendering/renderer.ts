@@ -103,7 +103,7 @@ export class Renderer implements IRenderer {
       logarithmicDepthBuffer: true
     })
 
-    this.textRenderer = this._viewport.createTextRenderer()
+    this.textRenderer = this._viewport.textRenderer
     this.textEnabled = true
 
     this._composer = new RenderingComposer(

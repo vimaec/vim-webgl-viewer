@@ -150,7 +150,7 @@ export abstract class CameraMovement {
       target = target.getBoundingBox()
     }
     if ((target instanceof Vim) ) {
-      target = target._scene.getBoundingBox()
+      target = target.scene.getBoundingBox()
     }
     if (target === 'all') {
       target = this._camera._scene.getBoundingBox()

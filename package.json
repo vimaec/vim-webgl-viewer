@@ -1,12 +1,12 @@
 {
   "name": "vim-webgl-viewer",
-  "version": "1.6.0",
+  "version": "1.6.2",
   "description": "A high-performance 3D viewer and VIM file loader built on top of Three.JS.",
   "files": [
     "dist"
   ],
   "main": "./dist/vim-webgl-viewer.iife.js",
-  "types": "./dist/types/vim.d.ts",
+  "types": "./dist/types/index.d.ts",
   "module": "/dist/vim-webgl-viewer.mjs",
   "homepage": "https://github.com/vimaec/vim-webgl-viewer.git",
   "bugs": {

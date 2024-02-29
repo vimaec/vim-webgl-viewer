@@ -175,7 +175,7 @@ export class Viewer {
       throw new Error('Vim cannot be added again, unless removed first.')
     }
 
-    const success = this.renderer.add(vim._scene)
+    const success = this.renderer.add(vim.scene)
     if (!success) {
       throw new Error('Could not load vim. Max geometry memory reached.')
     }
@@ -194,7 +194,7 @@ export class Viewer {
       throw new Error('Cannot remove missing vim from viewer.')
     }
     this._vims.delete(vim)
-    this.renderer.remove(vim._scene)
+    this.renderer.remove(vim.scene)
     if (this.selection.vim === vim) {
       this.selection.clear()
     }

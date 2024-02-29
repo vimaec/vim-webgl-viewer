@@ -76,7 +76,7 @@ export class InsertableMesh {
     }
 
     for (const i of added) {
-      this.vim._scene.addSubmesh(new InsertableSubmesh(this, i))
+      this.vim.scene.addSubmesh(new InsertableSubmesh(this, i))
     }
   }
 

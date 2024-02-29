@@ -13,7 +13,11 @@ export class Viewport {
    */
   readonly canvas: HTMLCanvasElement
   /** HTML Element in which text is rendered */
-  private _text: HTMLElement | undefined
+  readonly textRenderer : CSS2DRenderer
+
+  get text(){
+    return this.textRenderer.domElement
+  }
 
   private _unregisterResize: Function | undefined
   private _ownedCanvas: boolean
@@ -33,6 +37,7 @@ export class Viewport {
   constructor (settings: Settings) {
     const { canvas, owned } = Viewport.getOrCreateCanvas(settings.canvas.id)
     this.canvas = canvas
+    this.textRenderer = this.createTextRenderer()
     this._ownedCanvas = owned
     this.watchResize(settings.canvas.resizeDelay)
   }
@@ -60,7 +65,7 @@ export class Viewport {
   }
 
   /** Returns a text renderer that will render html in an html element sibbling to canvas */
-  createTextRenderer () {
+  private createTextRenderer () {
     if (!this.canvas.parentElement) {
       throw new Error('Cannot create text renderer without a canvas')
     }
@@ -68,13 +73,13 @@ export class Viewport {
     const size = this.getParentSize()
     const renderer = new CSS2DRenderer()
     renderer.setSize(size.x, size.y)
-    this._text = renderer.domElement
+    const text = renderer.domElement
 
-    this._text.className = 'vim-text-renderer'
-    this._text.style.position = 'absolute'
-    this._text.style.top = '0px'
-    this._text.style.pointerEvents = 'none'
-    this.canvas.parentElement.append(this._text)
+    text.className = 'vim-text-renderer'
+    text.style.position = 'absolute'
+    text.style.top = '0px'
+    text.style.pointerEvents = 'none'
+    this.canvas.parentElement.append(this.text)
     return renderer
   }
 

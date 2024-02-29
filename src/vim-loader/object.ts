@@ -116,8 +116,8 @@ export class Object implements IObject {
 
   set outline (value: boolean) {
     if (this._outlineAttribute.apply(value)) {
-      if (value) this.vim._scene.addOutline()
-      else this.vim._scene.removeOutline()
+      if (value) this.vim.scene.addOutline()
+      else this.vim.scene.removeOutline()
     }
   }
 
@@ -130,7 +130,7 @@ export class Object implements IObject {
 
   set focused (value: boolean) {
     if (this._focusedAttribute.apply(value)) {
-      this.vim._scene.setDirty()
+      this.vim.scene.setDirty()
     }
   }
 
@@ -143,7 +143,7 @@ export class Object implements IObject {
 
   set visible (value: boolean) {
     if (this._visibleAttribute.apply(value)) {
-      this.vim._scene.setDirty()
+      this.vim.scene.setDirty()
     }
   }
 
@@ -158,7 +158,7 @@ export class Object implements IObject {
 
   set color (color: THREE.Color | undefined) {
     this._color = color
-    this.vim._scene.setDirty()
+    this.vim.scene.setDirty()
     this._color = this._color
     this._coloredAttribute.apply(this._color !== undefined)
     this._colorAttribute.apply(this._color)
@@ -169,7 +169,7 @@ export class Object implements IObject {
    */
   private updateMeshes (meshes: Submesh[] | undefined) {
     this._meshes = meshes
-    this.vim._scene.setDirty()
+    this.vim.scene.setDirty()
 
     this._outlineAttribute.updateMeshes(meshes)
     this._visibleAttribute.updateMeshes(meshes)

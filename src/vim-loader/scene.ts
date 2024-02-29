@@ -25,6 +25,7 @@ export interface IRenderer {
  * Represents a scene that contains multiple meshes.
  * It tracks the global bounding box as meshes are added and maintains a mapping between g3d instance indices and meshes.
  */
+//TODO: Only expose what should be public to vim.scene
 export class Scene {
   // Dependencies
   readonly builder: SceneBuilder
