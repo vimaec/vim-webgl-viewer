@@ -102,8 +102,6 @@ The following is an example of the simplest usage of the VIM viewer:
 
 ```
 
-You can also [try it out in a JsFiddle](https://jsfiddle.net/simon_vimaec/oym1L2ar/)!
-
 # Running Locally
 
 - Checkout repo
