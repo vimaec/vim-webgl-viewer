@@ -17,8 +17,6 @@ https://vimaec.github.io/vim-webgl-viewer/api/
 ## JsFiddle
 - [JsFiddle - Hello World](https://jsfiddle.net/simon_vimaec/oym1L2ar/)
 - [JsFiddle - General usage](https://jsfiddle.net/simon_vimaec/5hL06tvp/)
-- [JsFiddle - Custom http request](https://jsfiddle.net/simon_vimaec/k5jn9sd8/)
-- [JsFiddle - Embedding](https://jsfiddle.net/simon_vimaec/wd4zr6hq)
 - [JsFiddle - Plan View](https://jsfiddle.net/simon_vimaec/hLp62f50/)
 - [JsFiddle - Coloring](https://jsfiddle.net/simon_vimaec/pcLdzvne/)
 - [JsFiddle - Visibility](https://jsfiddle.net/simon_vimaec/j5uhyp7k)
@@ -26,6 +24,8 @@ https://vimaec.github.io/vim-webgl-viewer/api/
 - [JsFiddle - Isolation](https://jsfiddle.net/simon_vimaec/amp65cb8/)
 - [JsFiddle - Measure](https://jsfiddle.net/simon_vimaec/anLh63tv/)
 - [JsFiddle - Section Box](https://jsfiddle.net/simon_vimaec/ryeu9L40/)
+- [JsFiddle - Embedding](https://jsfiddle.net/simon_vimaec/wd4zr6hq)
+- [JsFiddle - Custom http request](https://jsfiddle.net/simon_vimaec/k5jn9sd8/)
 - [JsFiddle - Custom Input](https://jsfiddle.net/simon_vimaec/ow82jmLv/)
 
 
