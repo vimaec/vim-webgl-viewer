@@ -159,6 +159,7 @@ export class SectionBox {
    * @param {number} [padding=1] - The padding to apply to the box.
    */
   public fitBox (box: THREE.Box3, padding = 1) {
+    if(!box) return
     const b = box.expandByScalar(padding)
     this._cube.fitBox(b)
     this._outline.fitBox(b)
