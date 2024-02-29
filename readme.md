@@ -74,7 +74,7 @@ The following is an example of the simplest usage of the VIM viewer:
 		// Create a new viewer. 
 		const viewer = new VIM.Viewer()
 
-		// Open the vim file
+		// Open the vim file.
 		const vim = await VIM.open(
 		  'https://vim02.azureedge.net/samples/residence.v1.2.75.vim',
 		  {
