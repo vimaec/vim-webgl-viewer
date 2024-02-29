@@ -9,10 +9,12 @@ https://vimaec.github.io/vim-webgl-viewer/api/
 
 # Live Demo
 
+## Web
 - [Small Model Demo - Residence](https://vimaec.github.io/vim-webgl-viewer)
 - [Medium Model Demo - Medical Tower](https://vimaec.github.io/vim-webgl-viewer?vim=https://vim02.azureedge.net/samples/skanska.vim)
 - [Large Model Demo - Stadium](https://vimaec.github.io/vim-webgl-viewer?vim=https://vim02.azureedge.net/samples/stadium.vim) (_Warning_: slow download times)
 
+## JsFiddle
 - [JsFiddle - Hello World](https://jsfiddle.net/simon_vimaec/oym1L2ar/)
 - [JsFiddle - General usage](https://jsfiddle.net/simon_vimaec/5hL06tvp/)
 - [JsFiddle - Custom http request](https://jsfiddle.net/simon_vimaec/k5jn9sd8/)
