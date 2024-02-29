@@ -5,6 +5,7 @@ import { Submesh } from '../../../vim-loader/mesh'
 import { Viewer } from '../../viewer'
 import * as THREE from 'three'
 import { IObject, ObjectType } from '../../../vim-loader/objectInterface'
+import { dot } from '../../../images'
 
 export class GizmoMarker implements IObject {
   public readonly type: ObjectType = "Marker"
@@ -19,11 +20,23 @@ export class GizmoMarker implements IObject {
 
   constructor (viewer: Viewer) {
     this._viewer = viewer
-    const map = new THREE.TextureLoader().load('dot.png',() => this._viewer.renderer.needsUpdate = true)
-    this._material = new THREE.SpriteMaterial({ map, depthTest: false })
+
+    const texture = this.loadTexture(dot)
+    this._material = new THREE.SpriteMaterial({ map:texture, depthTest: false })
     this._sprite = new THREE.Sprite(this._material)
     this._sprite.userData.vim = this
     this.focused = false
+  }
+
+  private loadTexture(data: string){
+    const image = new Image()
+    image.src = data
+    const texture = new THREE.Texture()
+    texture.image = image
+    image.onload = () => {
+      texture.needsUpdate = true
+    }
+    return texture
   }
 
   get position() {
