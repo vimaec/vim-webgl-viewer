@@ -3,7 +3,7 @@
  */
 
 import * as THREE from 'three'
-import { VimMaterials } from '../../vim-loader/materials/materials'
+import { ViewerMaterials } from '../../vim-loader/materials/viewerMaterials'
 import { Renderer } from './renderer'
 
 /**
@@ -12,7 +12,7 @@ import { Renderer } from './renderer'
 export class RenderingSection {
   private _renderer: Renderer
 
-  private _materials: VimMaterials
+  private _materials: ViewerMaterials
   private _active: boolean = true
 
   /**
@@ -38,13 +38,14 @@ export class RenderingSection {
     this.minZ
   ]
 
-  constructor (renderer: Renderer, materials: VimMaterials) {
+  constructor (renderer: Renderer, materials: ViewerMaterials) {
     this._renderer = renderer
     this._materials = materials
   }
 
   /**
-   * Resize section box to match provided box.
+   * Resizes the section box to match the dimensions of the provided bounding box.
+   * @param box The bounding box to match the section box to.
    */
   fitBox (box: THREE.Box3) {
     this.maxX.constant = box.max.x
@@ -59,7 +60,7 @@ export class RenderingSection {
   }
 
   /**
-   * Objects outside the section box will be culled when this is true.
+   * Determines wether objecets outside the section box will be culled or not.
    */
   set active (value: boolean) {
     this._materials.clippingPlanes = this.planes

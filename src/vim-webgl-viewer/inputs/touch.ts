@@ -16,7 +16,15 @@ export class TouchHandler extends InputHandler {
   private readonly TAP_MAX_MOVE_PIXEL = 5
   private readonly ZOOM_SPEED = 1
   private readonly MOVE_SPEED = 100
+
+  /**
+   * Speed factor for rotation movements
+   */
   rotateSpeed = 1
+
+   /**
+   * Speed factor for orbit movements
+   */
   orbitSpeed = 1
 
   constructor (viewer: Viewer) {

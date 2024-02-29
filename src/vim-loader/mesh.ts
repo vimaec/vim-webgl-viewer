@@ -3,12 +3,7 @@
  */
 
 import * as THREE from 'three'
-import { G3d, MeshSection } from 'vim-format'
-import { Geometry, Transparency } from './geometry'
-import { InsertableGeometry } from './progressive/insertableGeometry'
 import { InsertableSubmesh } from './progressive/insertableSubmesh'
-import { InstancedMesh } from './progressive/instancedMesh'
-import { VimMaterials } from './materials/materials'
 import { Vim } from './vim'
 import { InstancedSubmesh } from './progressive/instancedSubmesh'
 

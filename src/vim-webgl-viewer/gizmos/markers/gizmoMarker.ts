@@ -13,7 +13,7 @@ export class GizmoMarker implements IObject {
   private _material : THREE.SpriteMaterial
 
   vim: Vim
-  document: VimDocument
+  bim: VimDocument
   element: number
   instances: number[]
 

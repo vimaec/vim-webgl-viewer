@@ -16,9 +16,128 @@ import { CameraMovementDo } from './cameraMovementDo'
 import { CameraMovement } from './cameraMovement'
 
 /**
+ * Interface representing a camera with various properties and methods for controlling its behavior.
+ */
+export interface ICamera {
+  /**
+   * A signal that is dispatched when camera settings change.
+   */
+  onSettingsChanged: ISignal
+
+  /**
+   * A signal that is dispatched when camera moves.
+   */
+  onMoved: ISignal
+
+  /**
+   * True if the camera has moved this frame.
+   */
+  get hasMoved() : boolean
+
+  /**
+   * Represents allowed movement along each axis using a Vector3 object.
+   * Each component of the Vector3 should be either 0 or 1 to enable/disable movement along the corresponding axis.
+   */
+  allowedMovement : THREE.Vector3
+
+  /**
+   * Represents allowed rotation using a Vector2 object.
+   * Each component of the Vector2 should be either 0 or 1 to enable/disable rotation around the corresponding axis.
+   */
+  allowedRotation : THREE.Vector2
+
+  /**
+   * The default forward direction that can be used to initialize the camera.
+   */
+  defaultForward : THREE.Vector3
+
+  /**
+   * Interface for instantaneously moving the camera.
+   * @param {boolean} [force=false] - Set to true to ignore locked axis and rotation.
+   * @returns {CameraMovement} The camera movement api.
+   */
+  do (force?: boolean) : CameraMovement
+
+  /**
+   * Interface for smoothly moving the camera over time.
+   * @param {number} [duration=1] - The duration of the camera movement animation.
+   * @param {boolean} [force=false] - Set to true to ignore locked axis and rotation.
+   * @returns {CameraMovement} The camera movement api.
+   */
+  lerp (duration: number, force?: boolean) : CameraMovement
+
+  /**
+   * Calculates the frustum size at a given point in the scene.
+   * @param {THREE.Vector3} point - The point in the scene to calculate the frustum size at.
+   * @returns {number} The frustum size at the specified point.
+   */
+  frustrumSizeAt (point: THREE.Vector3) : THREE.Vector2
+
+  /**
+   * The current THREE Camera
+   */
+  get three () : THREE.Camera
+
+  /**
+   * The quaternion representing the orientation of the object.
+   */
+  get quaternion ()  : THREE.Quaternion
+
+   /**
+   * The position of the camera.
+   */
+  get position () : THREE.Vector3
+
+  /**
+   * The matrix representing the transformation of the camera.
+   */
+  get matrix () : THREE.Matrix4
+
+  /**
+   * The forward direction of the camera.
+   */
+  get forward () : THREE.Vector3
+
+  /**
+   * The camera speed factor.
+   */
+  speed : number
+
+  /**
+   * The current or target velocity of the camera.
+   */
+  localVelocity : THREE.Vector3
+
+  /**
+   * Immediately stops the camera movement.
+   */
+  stop () : void
+
+  /**
+   * The target at which the camera is looking at and around which it rotates.
+   */
+  get target () : THREE.Vector3
+
+  /**
+   * The distance from the camera to the target.
+   */
+  get orbitDistance () : number
+
+  /**
+   * Saves current camera orientation to restore on next reset.
+   */
+  save () : void
+
+  /**
+   * Represents whether the camera projection is orthographic.
+   */
+  orthographic : boolean
+}
+
+/**
  * Manages viewer camera movement and position
  */
-export class Camera {
+export class Camera implements ICamera {
   camPerspective: PerspectiveWrapper
   camOrthographic: OrthographicWrapper
 
@@ -45,27 +164,40 @@ export class Camera {
   _savedPosition: THREE.Vector3 = new THREE.Vector3(0, 0, -5)
   _savedTarget: THREE.Vector3 = new THREE.Vector3(0, 0, 0)
 
-  private _onValueChanged = new SignalDispatcher()
-
-  get onValueChanged () {
+  
+  /**
+   * A signal that is dispatched when camera settings change.
+   */
+  get onSettingsChanged () {
     return this._onValueChanged.asEvent()
   }
+  private _onValueChanged = new SignalDispatcher()
 
-  private _hasMoved: boolean
-  get hasMoved () {
+  
+  /**
+   * True if the camera has moved this frame.
+   */
+  get hasMoved() {
     return this._hasMoved
   }
+  private _hasMoved: boolean
 
-  private _onMoved = new SignalDispatcher()
+  
+  /**
+   * A signal that is dispatched when the camera is moved.
+   */
   get onMoved (): ISignal {
     return this._onMoved.asEvent()
   }
+  private _onMoved = new SignalDispatcher()
 
   /** Ignore movement permissions when true */
   private _force: boolean = false
 
-  // Allowed Movement
-  /** Vector3 of 0 or 1 to enable/disable movement along each axis */
+  /**
+   * Represents allowed movement along each axis using a Vector3 object.
+   * Each component of the Vector3 should be either 0 or 1 to enable/disable movement along the corresponding axis.
+   */
   private _allowedMovement = new THREE.Vector3(1, 1, 1)
   get allowedMovement () {
     return this._force ? new THREE.Vector3(1, 1, 1) : this._allowedMovement
@@ -78,8 +210,10 @@ export class Camera {
     this._allowedMovement.z = this._allowedMovement.z === 0 ? 0 : 1
   }
 
-  // Allowed Rotation
-  /** Vector2 of 0 or 1 to enable/disable rotation around x or y. */
+  /**
+   * Represents allowed rotation using a Vector2 object.
+   * Each component of the Vector2 should be either 0 or 1 to enable/disable rotation around the corresponding axis.
+   */
   get allowedRotation () {
     return this._force ? new THREE.Vector2(1, 1) : this._allowedRotation
   }
@@ -92,7 +226,9 @@ export class Camera {
 
   private _allowedRotation = new THREE.Vector2(1, 1)
 
-  // Default Forward
+  /**
+   * The default forward direction that can be used to initialize the camera.
+   */
   private _defaultForward = new THREE.Vector3(1, -1, 1).normalize()
   get defaultForward () {
     return this._defaultForward
@@ -127,22 +263,24 @@ export class Camera {
     this.applySettings(settings)
     this.do(true).setDistance(-1000)
     this.do(true).orbitTowards(this._defaultForward)
-    
   }
 
   /**
-   * Interface to move camera instantaneously
-   * @param force Set to true to ignore locked axis and rotation.
+   * Interface for instantaneously moving the camera.
+   * @param {boolean} [force=false] - Set to true to ignore locked axis and rotation.
+   * @returns {CameraMovement} The camera movement api.
    */
-  do (force: boolean = false) {
+  do (force: boolean = false) : CameraMovement {
     this._force = force
     this._lerp.cancel()
     return this._movement as CameraMovement
   }
 
-  /**
-   * Interface to move camera over time
-   * @param force Set to true to ignore locked axis and rotation.
+/**
+   * Interface for smoothly moving the camera over time.
+   * @param {number} [duration=1] - The duration of the camera movement animation.
+   * @param {boolean} [force=false] - Set to true to ignore locked axis and rotation.
+   * @returns {CameraMovement} The camera movement api.
    */
   lerp (duration: number = 1, force: boolean = false) {
     this.stop()
@@ -151,38 +289,56 @@ export class Camera {
     return this._lerp as CameraMovement
   }
 
+  /**
+   * Calculates the frustum size at a given point in the scene.
+   * @param {THREE.Vector3} point - The point in the scene to calculate the frustum size at.
+   * @returns {number} The frustum size at the specified point.
+   */
   frustrumSizeAt (point: THREE.Vector3) {
     return this.camPerspective.frustrumSizeAt(point)
   }
 
-  notifyMovement () {
-    this._hasMoved = true
-    this._onMoved.dispatch()
-  }
-
+   /**
+   * The current THREE Camera
+   */
   get three () {
     return this._orthographic
       ? this.camOrthographic.camera
       : this.camPerspective.camera
   }
 
+  /**
+   * The quaternion representing the orientation of the object.
+   */
   get quaternion () {
     return this.camPerspective.camera.quaternion
   }
 
+  /**
+   * The position of the camera.
+   */
   get position () {
     return this.camPerspective.camera.position
   }
 
+  /**
+   * The matrix representing the transformation of the camera.
+   */
   get matrix () {
     this.camPerspective.camera.updateMatrix()
     return this.camPerspective.camera.matrix
   }
 
+  /**
+   * The forward direction of the camera.
+   */
   get forward () {
     return this.camPerspective.camera.getWorldDirection(new THREE.Vector3())
   }
 
+  /**
+   * The camera speed factor.
+   */
   get speed () {
     return this._speed
   }
@@ -192,6 +348,9 @@ export class Camera {
     this._onValueChanged.dispatch()
   }
 
+   /**
+   * The current or target velocity of the camera.
+   */
   get localVelocity () {
     const result = this._velocity.clone()
     result.applyQuaternion(this.quaternion.clone().invert())
@@ -200,7 +359,7 @@ export class Camera {
   }
 
   /**
-   * Set current velocity of the camera.
+   * The current or target velocity of the camera.
    */
   set localVelocity (vector: THREE.Vector3) {
     this._lerp.cancel()
@@ -208,11 +367,18 @@ export class Camera {
     this._inputVelocity.setZ(-this._inputVelocity.z)
   }
 
+  
+  /**
+   * Immediately stops the camera movement.
+   */
   stop () {
     this._inputVelocity.set(0, 0, 0)
     this._velocity.set(0, 0, 0)
   }
 
+  /**
+   * The target at which the camera is looking at and around which it rotates.
+   */
   get target () {
     return this._target
   }
@@ -234,24 +400,26 @@ export class Camera {
     this._onValueChanged.dispatch()
   }
 
+  /**
+   * The distance from the camera to the target.
+   */
   get orbitDistance () {
     return this.position.distanceTo(this._target)
   }
 
+  /**
+   * Saves current camera orientation to restore on next reset.
+   */
   save () {
     this._lerp.cancel()
     this._savedPosition.copy(this.position)
     this._savedTarget.copy(this._target)
   }
 
-  private updateProjection () {
-    const aspect = this._viewport.getAspectRatio()
-    this.camPerspective.updateProjection(aspect)
-
-    const size = this.camPerspective.frustrumSizeAt(this.target)
-    this.camOrthographic.updateProjection(size, aspect)
-  }
-
+  
+  /**
+   * Represents whether the camera projection is orthographic.
+   */
   get orthographic () {
     return this._orthographic
   }
@@ -274,6 +442,14 @@ export class Camera {
     }
     this.updateProjection()
     return moved
+  }
+
+  private updateProjection () {
+    const aspect = this._viewport.getAspectRatio()
+    this.camPerspective.updateProjection(aspect)
+
+    const size = this.camPerspective.frustrumSizeAt(this.target)
+    this.camOrthographic.updateProjection(size, aspect)
   }
 
   private applyVelocity (deltaTime: number) {

@@ -10,6 +10,10 @@ import { estimateBytesUsed } from 'three/examples/jsm/utils/BufferGeometryUtils'
 import { InsertableMesh } from './progressive/insertableMesh'
 import { InstancedMesh } from './progressive/instancedMesh'
 
+
+/**
+ * Interface for a renderer object, providing methods to add and remove objects from a scene, update bounding boxes, and notify scene updates.
+ */
 export interface IRenderer {
   add(scene: Scene | THREE.Object3D)
   remove(scene: Scene)
@@ -18,9 +22,8 @@ export interface IRenderer {
 }
 
 /**
- * A Scene regroups many Meshes
- * It keep tracks of the global bounding box as Meshes are added
- * It keeps a map from g3d instance indices to Meshes and vice versa
+ * Represents a scene that contains multiple meshes.
+ * It tracks the global bounding box as meshes are added and maintains a mapping between g3d instance indices and meshes.
  */
 export class Scene {
   // Dependencies
@@ -137,7 +140,7 @@ export class Scene {
     this.setDirty()
     if (this.vim) {
       const obj = this.vim.getObjectFromInstance(submesh.instance)
-      obj.addMesh(submesh)
+      obj._addMesh(submesh)
     }
   }
 

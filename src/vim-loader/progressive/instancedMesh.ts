@@ -1,5 +1,9 @@
+/**
+ * @module vim-loader
+ */
+
 import * as THREE from 'three'
-import { Vim } from '../../vim'
+import { Vim } from '../../vim-loader/vim'
 import { InstancedSubmesh } from './instancedSubmesh'
 import { G3d, G3dMesh } from 'vim-format'
 

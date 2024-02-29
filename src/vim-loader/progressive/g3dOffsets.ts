@@ -1,3 +1,7 @@
+/**
+ * @module vim-loader
+ */
+
 import { MeshSection } from 'vim-format'
 import { G3dSubset } from './g3dSubset'
 

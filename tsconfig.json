@@ -9,5 +9,5 @@
     "lib": ["esnext", "dom"],
     "allowSyntheticDefaultImports": true
   },
-  "files": ["src/vim.ts"]
+  "files": ["src/index.ts"]
 }

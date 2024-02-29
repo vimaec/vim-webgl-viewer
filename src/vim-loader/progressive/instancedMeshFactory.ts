@@ -1,7 +1,12 @@
+/**
+ * @module vim-loader
+ */
+
 import * as THREE from 'three'
 import { G3d, G3dMesh, G3dMaterial, MeshSection, G3dScene } from 'vim-format'
-import { Geometry, Settings, Vim, VimMaterials, VimSettings } from '../../vim'
 import { InstancedMesh } from './instancedMesh'
+import { ViewerMaterials } from '../materials/viewerMaterials'
+import { Geometry } from '../geometry'
 
 export class InstancedMeshFactory {
   materials: G3dMaterial
@@ -43,8 +48,8 @@ export class InstancedMeshFactory {
     )
 
     const material = transparent
-      ? VimMaterials.getInstance().transparent
-      : VimMaterials.getInstance().opaque
+      ? ViewerMaterials.getInstance().transparent
+      : ViewerMaterials.getInstance().opaque
 
     const threeMesh = new THREE.InstancedMesh(
       geometry,
@@ -71,8 +76,8 @@ export class InstancedMeshFactory {
       transparent
     )
     const material = transparent
-      ? VimMaterials.getInstance().transparent
-      : VimMaterials.getInstance().opaque
+      ? ViewerMaterials.getInstance().transparent
+      : ViewerMaterials.getInstance().opaque
 
     const threeMesh = new THREE.InstancedMesh(
       geometry,

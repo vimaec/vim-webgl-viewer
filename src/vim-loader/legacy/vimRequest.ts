@@ -1,7 +1,9 @@
 import { ISimpleEvent, SimpleEventDispatcher } from 'ste-simple-events'
 import { BFast, IProgressLogs, RemoteBuffer, Requester } from 'vim-format'
-import { VimBuilder, Vim, VimSettings } from '../../vim'
 import { DefaultLog } from 'vim-format/dist/logging'
+import { VimBuilder } from './vimBuilder'
+import { VimSettings } from '../vimSettings'
+import { Vim } from '../..'
 
 export class VimRequest {
   loader: VimBuilder

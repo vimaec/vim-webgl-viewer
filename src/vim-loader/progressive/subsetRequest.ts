@@ -1,9 +1,10 @@
-// loader
-import { VimSettings } from '../vimSettings'
-import { Vim } from '../vim'
+/**
+ * @module vim-loader
+ */
+
 import { InsertableMesh } from './insertableMesh'
 import { InstancedMeshFactory } from './instancedMeshFactory'
-import { Vimx, Scene } from '../../vim'
+import { Vimx, Scene } from '../..'
 
 import { G3dMesh } from 'vim-format'
 import { G3dSubset } from './g3dSubset'

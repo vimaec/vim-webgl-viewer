@@ -14,8 +14,20 @@ type Modifier = 'ctrl' | 'shift' | 'none'
  */
 export class MouseHandler extends InputHandler {
   private readonly _idleDelayMs = 150
+
+  /**
+   * The speed factor for zoom movements.
+   */
   zoomSpeed = 1
+
+  /**
+   * The speed factor for rotations movements.
+   */
   rotateSpeed = 1
+  
+  /**
+   * The speed factor for orbit movements.
+   */
   orbitSpeed = 1
 
   // State

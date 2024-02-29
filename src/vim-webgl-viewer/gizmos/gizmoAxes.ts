@@ -73,29 +73,35 @@ export class GizmoOptions {
 }
 
 /**
- * Axes gizmo with user interaction.
- * It draws on its own canvas.
+ * The axis gizmos of the viewer.
  */
 export class GizmoAxes {
   // settings
-  options: GizmoOptions
-  axes: Axis[]
+  private options: GizmoOptions
+  private axes: Axis[]
 
   // dependencies
-  camera: Camera
-  canvas: HTMLCanvasElement
-  context: CanvasRenderingContext2D
-  rect: DOMRect
+  private camera: Camera
+  private _canvas: HTMLCanvasElement
+  private context: CanvasRenderingContext2D
+  private rect: DOMRect
 
   // state
-  isDragging: boolean
-  isDragSignificant: boolean
-  dragStart: THREE.Vector2
-  dragLast: THREE.Vector2
-  pointer: THREE.Vector3
-  center: THREE.Vector3
-  invRotMat: THREE.Matrix4 = new THREE.Matrix4()
-  selectedAxis: Axis | null
+  private isDragging: boolean
+  private isDragSignificant: boolean
+  private dragStart: THREE.Vector2
+  private dragLast: THREE.Vector2
+  private pointer: THREE.Vector3
+  private center: THREE.Vector3
+  private invRotMat: THREE.Matrix4 = new THREE.Matrix4()
+  private selectedAxis: Axis | null
+
+  /**
+   * The canvas on which the axes are drawn.
+   */
+  get canvas() {
+    return this._canvas
+  }
 
   constructor (camera: Camera, options?: Partial<GizmoOptions>) {
     this.options = new GizmoOptions(options)
@@ -113,21 +119,21 @@ export class GizmoAxes {
     this.isDragging = false
     this.isDragSignificant = false
 
-    this.canvas = this.createCanvas()
-    this.context = this.canvas.getContext('2d')!
-    this.rect = this.canvas.getBoundingClientRect()
+    this._canvas = this.createCanvas()
+    this.context = this._canvas.getContext('2d')!
+    this.rect = this._canvas.getBoundingClientRect()
     this.context.imageSmoothingEnabled = true
     this.context.imageSmoothingQuality = 'high'
 
     this.animate()
   }
 
-  animate () {
+  private animate () {
     this.update()
     requestAnimationFrame(() => this.animate())
   }
 
-  createAxes () {
+  private createAxes () {
     return [
       new Axis({
         axis: 'x',
@@ -193,7 +199,7 @@ export class GizmoAxes {
     ]
   }
 
-  createCanvas () {
+  private createCanvas () {
     const canvas = document.createElement('canvas')
     canvas.width = this.options.size
     canvas.height = this.options.size
@@ -208,23 +214,13 @@ export class GizmoAxes {
     return canvas
   }
 
-  onTouchStart = (e: TouchEvent) => {
-    e.preventDefault()
-    if (e.touches.length > 1) return
-    const touch = e.touches[0]
-    this.initDrag(touch.clientX, touch.clientY)
-
-    window.addEventListener('touchmove', this.onTouchMove, false)
-    window.addEventListener('touchend', this.onTouchEnd, false)
-  }
-
-  onTouchMove = (e: TouchEvent) => {
+  private onTouchMove = (e: TouchEvent) => {
     if (e.touches.length > 1) return
     const touch = e.touches[0]
     this.updateDrag(touch.clientX, touch.clientY)
   }
 
-  onTouchEnd = (e: TouchEvent) => {
+  private onTouchEnd = (e: TouchEvent) => {
     e.preventDefault()
     this.endDrag()
     this.selectedAxis = null
@@ -232,14 +228,14 @@ export class GizmoAxes {
     window.removeEventListener('touchend', this.onTouchEnd, false)
   }
 
-  onPointerDown = (e: MouseEvent) => {
+  private onPointerDown = (e: MouseEvent) => {
     this.initDrag(e.clientX, e.clientY)
 
     window.addEventListener('pointermove', this.onPointerDrag, false)
     window.addEventListener('pointerup', this.onPointerUp, false)
   }
 
-  onPointerUp = (event: PointerEvent) => {
+  private onPointerUp = (event: PointerEvent) => {
     this.endDrag()
     if (event.pointerType !== 'mouse') {
       this.pointer.set(0, 0, 0)
@@ -249,12 +245,12 @@ export class GizmoAxes {
     window.removeEventListener('pointerup', this.onPointerUp, false)
   }
 
-  onPointerEnter = () => {
-    this.rect = this.canvas.getBoundingClientRect()
+  private onPointerEnter = () => {
+    this.rect = this._canvas.getBoundingClientRect()
   }
 
   // Hover
-  onPointerMove = (e: MouseEvent) => {
+  private onPointerMove = (e: MouseEvent) => {
     if (this.isDragging) return
 
     if (e) {
@@ -262,27 +258,27 @@ export class GizmoAxes {
     }
   }
 
-  toMouseVector (e: MouseEvent, target: THREE.Vector3) {
+  private  toMouseVector (e: MouseEvent, target: THREE.Vector3) {
     return target.set(e.clientX - this.rect.left, e.clientY - this.rect.top, 0)
   }
 
   // Drag
-  onPointerDrag = (e: MouseEvent) => {
+  private onPointerDrag = (e: MouseEvent) => {
     this.updateDrag(e.clientX, e.clientY)
   }
 
-  initDrag (x: number, y: number) {
+  private initDrag (x: number, y: number) {
     this.dragStart.set(x, y)
     this.dragLast.set(x, y)
     this.isDragging = true
     this.isDragSignificant = false
 
     if (!this.isDragging) {
-      this.canvas.classList.add('dragging')
+      this._canvas.classList.add('dragging')
     }
   }
 
-  updateDrag (x: number, y: number) {
+  private updateDrag (x: number, y: number) {
     if (new THREE.Vector2(x, y).sub(this.dragStart).length() > 3) {
       this.isDragSignificant = true
     }
@@ -290,23 +286,23 @@ export class GizmoAxes {
     const drag = new THREE.Vector2(x, y).sub(this.dragLast)
     this.dragLast.set(x, y)
 
-    const rotX = drag.y / this.canvas.height
-    const rotY = drag.x / this.canvas.width
+    const rotX = drag.y / this._canvas.height
+    const rotY = drag.x / this._canvas.width
 
     this.camera.do().rotate(new THREE.Vector2(rotX * -180, rotY * -180))
   }
 
-  endDrag () {
+  private endDrag () {
     this.isDragging = false
     if (!this.isDragSignificant) {
       this.onMouseClick()
       this.isDragSignificant = false
     }
 
-    this.canvas.classList.remove('dragging')
+    this._canvas.classList.remove('dragging')
   }
 
-  onMouseClick = () => {
+  private onMouseClick = () => {
     if (this.isDragging || !this.selectedAxis) return
     this.camera
       .lerp(1)
@@ -314,7 +310,7 @@ export class GizmoAxes {
     this.selectedAxis = null
   }
 
-  update = () => {
+  private update = () => {
     this.invRotMat.extractRotation(this.camera.matrix).invert()
 
     for (let i = 0, length = this.axes.length; i < length; i++) {
@@ -333,9 +329,9 @@ export class GizmoAxes {
     }
   }
 
-  drawLayers (clear: boolean) {
+  private drawLayers (clear: boolean) {
     if (clear) {
-      this.context.clearRect(0, 0, this.canvas.width, this.canvas.height)
+      this.context.clearRect(0, 0, this._canvas.width, this._canvas.height)
     }
 
     // For each layer, draw the axis
@@ -369,7 +365,7 @@ export class GizmoAxes {
     }
   }
 
-  drawCircle (pos: THREE.Vector3, radius = 10, color = '#FF0000') {
+  private drawCircle (pos: THREE.Vector3, radius = 10, color = '#FF0000') {
     this.context.beginPath()
     this.context.arc(pos.x, pos.y, radius, 0, 2 * Math.PI, false)
     this.context.fillStyle = color
@@ -377,7 +373,7 @@ export class GizmoAxes {
     this.context.closePath()
   }
 
-  drawLine (
+  private drawLine (
     p1: THREE.Vector2,
     p2: THREE.Vector2,
     width: number = 1,
@@ -392,7 +388,7 @@ export class GizmoAxes {
     this.context.closePath()
   }
 
-  setAxisPosition (axis: Axis) {
+  private setAxisPosition (axis: Axis) {
     const position = axis.direction.clone().applyMatrix4(this.invRotMat)
     const size = axis.size
     axis.position.set(
@@ -418,13 +414,16 @@ export class GizmoAxes {
     if (currentAxis !== this.selectedAxis) this.drawLayers(false)
   }
 
-  dispose = () => {
-    this.canvas.removeEventListener('pointerdown', this.onPointerDown, false)
-    this.canvas.removeEventListener('pointerenter', this.onPointerEnter, false)
-    this.canvas.removeEventListener('pointermove', this.onPointerDrag, false)
+  /**
+   * Disposes of the gizmo, removing event listeners and cleaning up resources.
+   */
+  dispose(){
+    this._canvas.removeEventListener('pointerdown', this.onPointerDown, false)
+    this._canvas.removeEventListener('pointerenter', this.onPointerEnter, false)
+    this._canvas.removeEventListener('pointermove', this.onPointerDrag, false)
     window.removeEventListener('pointermove', this.onPointerDrag, false)
     window.removeEventListener('pointerup', this.onPointerUp, false)
-    this.canvas.remove()
+    this._canvas.remove()
   }
 }
 

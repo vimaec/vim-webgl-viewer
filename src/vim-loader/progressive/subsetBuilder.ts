@@ -1,9 +1,14 @@
-import { Vimx, Scene } from '../../vim'
+/**
+ * @module vim-loader
+ */
+
 import { VimMeshFactory } from './legacyMeshFactory'
 import { LoadPartialSettings, LoadSettings, SubsetRequest } from './subsetRequest'
 import { G3dSubset } from './g3dSubset'
 import { ISignal, ISignalHandler, SignalDispatcher } from 'ste-signals'
 import { ISubscribable, SubscriptionChangeEventHandler } from 'ste-core'
+import { Vimx } from './vimx'
+import { Scene } from '../scene'
 
 export interface SubsetBuilder {
   /** Dispatched whenever a subset begins or finishes loading. */

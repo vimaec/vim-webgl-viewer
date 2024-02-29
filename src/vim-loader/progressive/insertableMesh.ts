@@ -1,10 +1,14 @@
+/**
+ * @module vim-loader
+ */
+
 import * as THREE from 'three'
 import { G3d, G3dMesh, G3dMaterial } from 'vim-format'
-import { Vim, VimMaterials, VimSettings } from '../../vim'
-import { SignalDispatcher } from 'ste-signals'
 import { InsertableGeometry } from './insertableGeometry'
 import { InsertableSubmesh } from './insertableSubmesh'
 import { G3dMeshOffsets } from './g3dOffsets'
+import { Vim } from '../../vim-loader/vim'
+import { ViewerMaterials } from '../materials/viewerMaterials'
 
 export class InsertableMesh {
   offsets: G3dMeshOffsets
@@ -53,8 +57,8 @@ export class InsertableMesh {
     this.geometry = new InsertableGeometry(offsets, materials, transparent)
 
     this._material = transparent
-      ? VimMaterials.getInstance().transparent.material
-      : VimMaterials.getInstance().opaque.material
+      ? ViewerMaterials.getInstance().transparent.material
+      : ViewerMaterials.getInstance().opaque.material
 
     this.mesh = new THREE.Mesh(this.geometry.geometry, this._material)
     this.mesh.userData.vim = this
@@ -72,7 +76,7 @@ export class InsertableMesh {
     }
 
     for (const i of added) {
-      this.vim.scene.addSubmesh(new InsertableSubmesh(this, i))
+      this.vim._scene.addSubmesh(new InsertableSubmesh(this, i))
     }
   }
 

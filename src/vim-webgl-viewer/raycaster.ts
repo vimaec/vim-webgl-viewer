@@ -120,7 +120,8 @@ export class Raycaster {
   }
 
   /**
-   * Raycast projecting a ray from camera position to screen position
+   * Performs a raycast by projecting a ray from the camera position to a screen position.
+   * @param {THREE.Vector2} position - The screen position for raycasting.
    */
   raycast2 (position: THREE.Vector2) {
     this._raycaster = this.fromPoint2(position, this._raycaster)
@@ -136,7 +137,8 @@ export class Raycaster {
   }
 
   /**
-   * Raycast projecting a ray from camera position to world position
+   * Performs a raycast by projecting a ray from the camera position to a world position.
+   * @param {THREE.Vector3} position - The world position for raycasting.
    */
   raycast3 (position: THREE.Vector3) {
     this._raycaster = this.fromPoint3(position, this._raycaster)
@@ -146,7 +148,7 @@ export class Raycaster {
   }
 
   /**
-   * Raycast projecting a ray from camera center
+   * Performs a raycast by projecting a ray from the camera center.
    */
   raycastForward () {
     return this.raycast3(this._camera.target)
@@ -167,7 +169,9 @@ export class Raycaster {
   }
 
   /**
-   * Returns a THREE.Raycaster projecting a ray from camera position to world position
+   * Returns a THREE.Raycaster projecting a ray from the camera position to a screen position.
+   * @param {THREE.Vector2} position - The screen position for raycasting.
+   * @returns {THREE.Raycaster} A raycaster object for performing raycasting.
    */
   fromPoint3 (
     position: THREE.Vector3,
@@ -204,14 +208,14 @@ export class InputAction {
   private _raycast: RaycastResult | undefined
 
   /**
-   * Returns a raycaster that can be used for custom raycast.
+   * A THREE.Raycaster object for custom raycasting.
    */
   get raycaster () {
     return this._raycaster.fromPoint2(this.position)
   }
 
   /**
-   * Raycast for VIM Ojbjects at current point. Can be computationally expensive. Lazy evaluation for performance.
+   * Performs raycasting for VIM objects at the current point. This operation can be computationally expensive.
    */
   get raycast () {
     return (
@@ -220,7 +224,7 @@ export class InputAction {
   }
 
   /**
-   * Returns the object at current point. This can cause a computationally expensive raycast evaluation.
+   * Returns the object at the current point. This operation can cause a computationally expensive raycast evaluation.
    */
   get object () {
     return this.raycast.object

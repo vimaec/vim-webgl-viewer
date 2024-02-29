@@ -5,7 +5,7 @@
 import * as THREE from 'three'
 import { G3d, MeshSection } from 'vim-format'
 import { Geometry, Transparency, MergeArgs } from '../geometry'
-import { VimMaterials } from '../materials/materials'
+import { ViewerMaterials } from '../materials/viewerMaterials'
 import { Mesh } from '../mesh'
 
 export type InstancingArgs = {
@@ -20,10 +20,10 @@ export type InstancingArgs = {
  * Allows to reuse the same material for all new built meshes
  */
 export class MeshBuilder {
-  readonly materials: VimMaterials
+  readonly materials: ViewerMaterials
 
-  constructor (materials?: VimMaterials) {
-    this.materials = materials ?? new VimMaterials()
+  constructor (materials?: ViewerMaterials) {
+    this.materials = materials ?? new ViewerMaterials()
   }
 
   /**

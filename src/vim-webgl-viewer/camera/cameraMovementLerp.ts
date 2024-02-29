@@ -4,7 +4,7 @@
 
 import * as THREE from 'three'
 import { Camera } from './camera'
-import { Object } from '../../vim'
+import { Object } from '../../vim-loader/object'
 import { CameraMovementDo } from './cameraMovementDo'
 import { CameraMovement } from './cameraMovement'
 

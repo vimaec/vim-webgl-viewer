@@ -5,7 +5,7 @@
 import { SceneBuilder } from './sceneBuilder'
 import { BFast, G3d, VimDocument, VimHeader, requestHeader } from 'vim-format'
 import { VimSettings } from '../vimSettings'
-import { VimMaterials } from '../materials/materials'
+import { ViewerMaterials } from '../materials/viewerMaterials'
 import { MeshBuilder } from './meshBuilder'
 import { Scene } from '../scene'
 import { ElementMapping } from '../elementMapping'
@@ -21,7 +21,7 @@ export class VimBuilder {
   readonly meshBuilder: MeshBuilder
 
   constructor () {
-    this.meshBuilder = new MeshBuilder(VimMaterials.getInstance())
+    this.meshBuilder = new MeshBuilder(ViewerMaterials.getInstance())
     this.sceneBuilder = new SceneBuilder(this.meshBuilder)
   }
 

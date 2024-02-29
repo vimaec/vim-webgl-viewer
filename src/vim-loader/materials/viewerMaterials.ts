@@ -8,23 +8,22 @@ import { createMaskMaterial } from './maskMaterial'
 import { createIsolationMaterial } from './isolationMaterial'
 import { OutlineMaterial } from './outlineMaterial'
 import { Settings } from '../../vim-webgl-viewer/viewerSettings'
-import { createMergeMaterial, MergeMaterial } from './mergeMaterial'
+import { MergeMaterial } from './mergeMaterial'
 import { SignalDispatcher } from 'ste-signals'
-import { createGridMaterial } from './gridMaterial'
 
 /**
  * Defines the materials to be used by the vim loader and allows for material injection.
  */
-export class VimMaterials {
-  static instance: VimMaterials
+export class ViewerMaterials {
+  static instance: ViewerMaterials
 
-  static createInstance (instance: VimMaterials) {
+  static createInstance (instance: ViewerMaterials) {
     this.instance = instance
   }
 
   static getInstance () {
     if (!this.instance) {
-      this.instance = new VimMaterials()
+      this.instance = new ViewerMaterials()
     }
     return this.instance
   }
@@ -59,11 +58,6 @@ export class VimMaterials {
    */
   merge: MergeMaterial
 
-  /**
-   * Material used for grid gizmo.
-   */
-  grid: THREE.ShaderMaterial
-
   private _clippingPlanes: THREE.Plane[] | undefined
   private _sectionStrokeWitdh: number = 0.01
   private _sectionStrokeFallof: number = 0.75
@@ -89,10 +83,12 @@ export class VimMaterials {
     this.mask = mask ?? createMaskMaterial()
     this.outline = outline ?? new OutlineMaterial()
     this.merge = merge ?? new MergeMaterial()
-    this.grid = grid ?? createGridMaterial()
   }
 
-  /** Update material settings from config */
+  /**
+   * Updates material settings based on the provided configuration.
+   * @param {Settings} settings - The settings to apply to the materials.
+   */
   applySettings (settings: Settings) {
     this.isolationOpacity = settings.materials.isolation.opacity
     this.isolationColor = settings.materials.isolation.color
@@ -110,10 +106,16 @@ export class VimMaterials {
     this.outlineColor = settings.materials.outline.color
   }
 
+  /**
+   * A signal dispatched whenever a material is modified.
+   */
   get onUpdate () {
     return this._onUpdate.asEvent()
   }
 
+  /**
+   * Determines the opacity of the isolation material.
+   */
   get isolationOpacity () {
     return this.isolation.opacity
   }
@@ -125,6 +127,9 @@ export class VimMaterials {
     this._onUpdate.dispatch()
   }
 
+  /**
+   * Determines the color of the isolation material.
+   */
   get isolationColor (): THREE.Color {
     const mat = this.isolation as THREE.ShaderMaterial
     return mat.uniforms.fillColor.value
@@ -137,8 +142,8 @@ export class VimMaterials {
     this._onUpdate.dispatch()
   }
 
-  /**
-   * Color intensity of focus effect on hover.
+   /**
+   * Determines the color intensity of the highlight effect on mouse hover.
    */
   get focusIntensity () {
     return this._focusIntensity
@@ -153,7 +158,7 @@ export class VimMaterials {
   }
 
   /**
-   * Color of focus effect on hover.
+   * Determines the color of the highlight effect on mouse hover.
    */
   get focusColor () {
     return this._focusColor
@@ -168,7 +173,7 @@ export class VimMaterials {
   }
 
   /**
-   * Default color for wireframe meshes.
+   * Determines the color of wireframe meshes.
    */
   get wireframeColor () {
     return this.wireframe.color
@@ -181,7 +186,7 @@ export class VimMaterials {
   }
 
   /**
-   * Default opacity for wireframe meshes.
+   * Determines the opacity of wireframe meshes.
    */
   get wireframeOpacity () {
     return this.wireframe.opacity
@@ -195,7 +200,7 @@ export class VimMaterials {
   }
 
   /**
-   * Applies clipping planes to all relevent materials
+   * The clipping planes applied to all relevent materials
    */
   get clippingPlanes () {
     return this._clippingPlanes
@@ -209,12 +214,11 @@ export class VimMaterials {
     this.wireframe.clippingPlanes = value ?? null
     this.isolation.clippingPlanes = value ?? null
     this.mask.clippingPlanes = value ?? null
-    this.grid.clippingPlanes = value ?? null
     this._onUpdate.dispatch()
   }
 
   /**
-   * Width of the stroke effect where the section box intersects the model.
+   * The width of the stroke effect where the section box intersects the model.
    */
   get sectionStrokeWitdh () {
     return this._sectionStrokeWitdh
@@ -259,7 +263,7 @@ export class VimMaterials {
   }
 
   /**
-   * Color of the the selection outline effect
+   * Color of the selection outline effect.
    */
   get outlineColor () {
     return this.merge.color
@@ -272,7 +276,7 @@ export class VimMaterials {
   }
 
   /**
-   * Size of the blur convolution on on the selection outline effect
+   * Size of the blur convolution on the selection outline effect.
    */
   get outlineBlur () {
     return this.outline.strokeBlur
@@ -285,7 +289,7 @@ export class VimMaterials {
   }
 
   /**
-   * Gradient of the the selection outline effect
+   * Gradient of the the selection outline effect.
    */
   get outlineFalloff () {
     return this.outline.strokeBias
@@ -298,7 +302,7 @@ export class VimMaterials {
   }
 
   /**
-   * Intensity of the the selection outline effect
+   * Intensity of the the selection outline effect.
    */
   get outlineIntensity () {
     return this.outline.strokeMultiplier
@@ -322,8 +326,8 @@ export class VimMaterials {
 }
 
 /**
- * Creates a non-custom instance of phong material as used by the vim loader
- * @returns a THREE.MeshPhongMaterial
+ * Creates a new instance of the default loader opaque material.
+ * @returns {THREE.MeshPhongMaterial} A new instance of MeshPhongMaterial with transparency.
  */
 export function createOpaque () {
   return new THREE.MeshPhongMaterial({
@@ -336,8 +340,8 @@ export function createOpaque () {
 }
 
 /**
- * Creates a new instance of the default loader transparent material
- * @returns a THREE.MeshPhongMaterial
+ * Creates a new instance of the default loader transparent material.
+ * @returns {THREE.MeshPhongMaterial} A new instance of MeshPhongMaterial with transparency.
  */
 export function createTransparent () {
   const mat = createOpaque()
@@ -347,8 +351,8 @@ export function createTransparent () {
 }
 
 /**
- * Creates a new instance of the default wireframe material
- * @returns a THREE.LineBasicMaterial
+ * Creates a new instance of the default wireframe material.
+ * @returns {THREE.LineBasicMaterial} A new instance of LineBasicMaterial.
  */
 export function createWireframe () {
   const material = new THREE.LineBasicMaterial({

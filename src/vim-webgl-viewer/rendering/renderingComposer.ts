@@ -11,7 +11,7 @@ import { ShaderPass } from 'three/examples/jsm/postprocessing/ShaderPass.js'
 
 import { Viewport } from '../viewport'
 import { RenderScene } from './renderScene'
-import { VimMaterials } from '../../vim-loader/materials/materials'
+import { ViewerMaterials } from '../../vim-loader/materials/viewerMaterials'
 import { OutlinePass } from './outlinePass'
 import { MergePass } from './mergePass'
 import { TransferPass } from './transferPass'
@@ -33,7 +33,7 @@ import { Camera } from '../camera/camera'
 export class RenderingComposer {
   private _renderer: THREE.WebGLRenderer
   private _scene: RenderScene
-  private _materials: VimMaterials
+  private _materials: ViewerMaterials
   private _camera: THREE.PerspectiveCamera | THREE.OrthographicCamera
   private _samples: number = 4
   private _size: THREE.Vector2
@@ -59,7 +59,7 @@ export class RenderingComposer {
     renderer: THREE.WebGLRenderer,
     scene: RenderScene,
     viewport: Viewport,
-    materials: VimMaterials,
+    materials: ViewerMaterials,
     camera: Camera
   ) {
     this._samples = renderer.capabilities.isWebGL2

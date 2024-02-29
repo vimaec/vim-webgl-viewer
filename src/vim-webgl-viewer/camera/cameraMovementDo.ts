@@ -3,7 +3,7 @@
  */
 
 import { CameraMovement } from './cameraMovement'
-import { Object } from '../../vim'
+import { Object } from '../../vim-loader/object'
 import * as THREE from 'three'
 
 export class CameraMovementDo extends CameraMovement {

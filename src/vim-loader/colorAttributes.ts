@@ -1,5 +1,9 @@
+/**
+ * @module vim-loader
+ */
+
 import * as THREE from 'three'
-import { MergedSubmesh, StandardSubmesh, Submesh } from './mesh'
+import { MergedSubmesh, Submesh } from './mesh'
 import { Vim } from './vim'
 import { InsertableSubmesh } from './progressive/insertableSubmesh'
 

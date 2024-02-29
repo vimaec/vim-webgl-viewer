@@ -1,3 +1,7 @@
+/**
+ * @module vim-loader
+ */
+
 import { G3d, MeshSection, G3dScene, FilterMode } from 'vim-format'
 import { G3dMeshOffsets, G3dMeshCounts } from './g3dOffsets'
 import * as THREE from 'three'

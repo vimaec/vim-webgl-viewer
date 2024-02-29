@@ -1,6 +1,10 @@
+/**
+ * @module vim-loader
+ */
+
 import * as THREE from 'three';
 import { Vim } from './vim';
-import { VimDocument, IElement, VimHelpers } from 'vim-format';
+import { IElement, VimHelpers } from 'vim-format';
 
 export type ObjectType = "Architectural" | "Marker"
 
@@ -10,7 +14,6 @@ export type ObjectType = "Architectural" | "Marker"
 export interface IObject {
   type: ObjectType;
   vim: Vim;
-  document: VimDocument;
   element: number;
   elementId: BigInt;
   instances: number[] | undefined;

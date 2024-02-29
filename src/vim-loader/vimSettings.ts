@@ -14,66 +14,90 @@ export type FileType = 'vim' | 'vimx' | undefined
 export type VimSettings = {
   
   /**
-   * Position offset for the vim
+   * The positional offset for the vim object.
    */
   position: THREE.Vector3
+  
   /**
-   * Rotation for the vim
+   * The scaling factor applied to the vim object.
    */
   rotation: THREE.Vector3
+
   /**
    * Scale factor for the vim
    */
   scale: number
 
   /**
-   * Matrix representation of position, rotation and scale
-   * Setting this will override position, rotation and scale
+   * The matrix representation of the vim object's position, rotation, and scale.
+   * Setting this will override individual position, rotation, and scale properties.
    */
   matrix: THREE.Matrix4
 
   /**
-   * Defines how to draw or not to draw objects according to their transparency
+   * Determines whether objects are drawn based on their transparency.
    */
   transparency: Transparency.Mode
 
-  /** Set to true to get verbose http logs. */
+  /** 
+   * Set to true to enable verbose HTTP logging.
+   */
   verboseHttp: boolean
   
-
   // VIMX
 
   /**
-   * Specifies file type (vim or vimx) if it cannot or should not be infered from file extension.
+   * Specifies the file type (vim or vimx) if it cannot or should not be inferred from the file extension.
    */
   fileType: FileType
 
-  /** Set to true to stream geometry to the scene. Only supported with vimx file. */
+  /** 
+   * Set to true to stream geometry to the scene. Only supported with vimx files.
+   */
   progressive: boolean
 
   /**
-   * Defines the time in miliseconds between each scene refresh in progressive loading.
+   * The time in milliseconds between each scene refresh during progressive loading.
    */
   progressiveInterval: number
 
   // LEGACY
 
-  /** Set to true to use legacy loading pipeline. */
+  /** 
+   * Set to true to use the legacy loading pipeline.
+   */
   legacy: boolean
-  /** Instance indices of objects to load. All objects are loaded if no value provided in legacy pipeline. */
+
+  /** 
+   * The instance indices of objects to load. All objects are loaded if no value is provided in the legacy pipeline.
+   */
   legacyInstances: number[]
-  /** Set to true to not download strings in legacy pipeline. */
+
+  /** 
+   * Set to true to prevent downloading strings in the legacy pipeline.
+   */
   legacyNoStrings: boolean
-  /** Set to true to not download element/geometry map in legacy pipeline */
+
+  /** 
+   * Set to true to prevent downloading the element/geometry map in the legacy pipeline.
+   */
   legacyNoMap: boolean
-  /** Set to true to not download header in legacy pipeline. */
+
+  /** 
+   * Set to true to prevent downloading the header in the legacy pipeline.
+   */
   legacyNoHeader: boolean
-/** Set to true to load and display rooms. */
+
+  /** 
+   * Set to true to load and display rooms in the legacy pipeline.
+   */
   legacyLoadRooms: boolean
 }
 
+/**
+ * Default configuration settings for a vim object.
+ */
 export const defaultConfig: VimSettings = {
-  legacyInstances: undefined,
   position: new THREE.Vector3(),
   rotation: new THREE.Vector3(),
   scale: 1,
@@ -83,22 +107,27 @@ export const defaultConfig: VimSettings = {
 
   // progressive
   fileType: undefined,
-  legacy: false,
   progressive: false,
   progressiveInterval: 1000,
 
+  //legacy
+  legacy: false,
+  legacyInstances: undefined,
   legacyNoStrings: false,
   legacyNoMap: false,
   legacyNoHeader: false,
   legacyLoadRooms: false
-  
 }
 
-export type VimPartialSettings = Partial<VimSettings>
 /**
- * <p>Wrapper around Vim Options.</p>
- * <p>Casts options values into related THREE.js type</p>
- * <p>Provides default values for options</p>
+ * Represents a partial configuration of settings for a vim object.
+ */
+export type VimPartialSettings = Partial<VimSettings>
+
+/**
+ * Wraps Vim options, converting values to related THREE.js types and providing default values.
+ * @param {VimPartialSettings} [options] - Optional partial settings for the Vim object.
+ * @returns {VimSettings} The complete settings for the Vim object, including defaults.
  */
 export function getFullSettings (options?: VimPartialSettings) {
   const merge = options

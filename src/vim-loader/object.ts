@@ -6,9 +6,8 @@
 import * as THREE from 'three'
 
 // Vim
-import { Geometry } from './geometry'
 import { Vim } from './vim'
-import { VimDocument, IElement, VimHelpers } from 'vim-format'
+import { IElement, VimHelpers } from 'vim-format'
 import { ObjectAttribute } from './objectAttributes'
 import { ColorAttribute } from './colorAttributes'
 import { Submesh } from './mesh'
@@ -18,11 +17,25 @@ import { IObject, ObjectType } from './objectInterface'
  * High level api to interact with the loaded vim geometry and data.
  */
 export class Object implements IObject {
+  /**
+   * Indicate wether this object is architectural or markup.
+   */
   public readonly type: ObjectType = "Architectural"
-  vim: Vim
-  document: VimDocument
-  element: number
-  instances: number[] | undefined
+  /**
+   * The vim object from which this object came from.
+   */
+  readonly vim: Vim
+
+  /**
+   * The bim element index associated with this object.
+   */
+  readonly element: number
+
+  /**
+   * The geometry instances  associated with this object.
+   */
+  readonly instances: number[] | undefined
+  
   private _color: THREE.Color | undefined
   private _boundingBox: THREE.Box3 | undefined
   private _meshes: Submesh[] | undefined
@@ -33,6 +46,13 @@ export class Object implements IObject {
   private _focusedAttribute: ObjectAttribute<boolean>
   private _colorAttribute: ColorAttribute
 
+  /**
+   * Constructs a new instance of Object.
+   * @param {Vim} vim The Vim instance.
+   * @param {number} element The element index.
+   * @param {number[] | undefined} instances An optional array of instance numbers.
+   * @param {Submesh[] | undefined} meshes An optional array of submeshes.
+   */
   constructor (
     vim: Vim,
     element: number,
@@ -79,21 +99,16 @@ export class Object implements IObject {
     this._colorAttribute = new ColorAttribute(meshes, undefined, vim)
   }
   
-
-  private get meshBuilder () {
-    return this.vim.scene.builder.meshBuilder
-  }
-
   /**
-   * Returns true if this object has geometry
+   * Checks if this object has associated geometry.
+   * @returns {boolean} True if this object has geometry, otherwise false.
    */
   get hasMesh () {
     return (this._meshes?.length ?? 0) > 0
   }
 
   /**
-   * Toggles selection outline for this object.
-   * @param value true to show object, false to hide object.
+   * Determines wether to render selection outline for this object or not.
    */
   get outline () {
     return this._outlineAttribute.value
@@ -101,14 +116,13 @@ export class Object implements IObject {
 
   set outline (value: boolean) {
     if (this._outlineAttribute.apply(value)) {
-      if (value) this.vim.scene.addOutline()
-      else this.vim.scene.removeOutline()
+      if (value) this.vim._scene.addOutline()
+      else this.vim._scene.removeOutline()
     }
   }
 
   /**
-   * Toggles focused highlight for this object.
-   * @param value true to highlight object.
+   * Determines wether to render focus highlight for this object or not.
    */
   get focused () {
     return this._focusedAttribute.value
@@ -116,13 +130,12 @@ export class Object implements IObject {
 
   set focused (value: boolean) {
     if (this._focusedAttribute.apply(value)) {
-      this.vim.scene.setDirty()
+      this.vim._scene.setDirty()
     }
   }
 
-  /**
-   * Toggles visibility of this object.
-   * @param value true to show object, false to hide object.
+   /**
+   * Determines wether to render this object or not.
    */
   get visible () {
     return this._visibleAttribute.value
@@ -130,13 +143,14 @@ export class Object implements IObject {
 
   set visible (value: boolean) {
     if (this._visibleAttribute.apply(value)) {
-      this.vim.scene.setDirty()
+      this.vim._scene.setDirty()
     }
   }
 
   /**
-   * Changes the display color of this object.
-   * @param color Color to apply, undefined to revert to default color.
+   * Gets or sets the display color of this object.
+   * @param {THREE.Color | undefined} color The color to apply. Pass undefined to revert to the default color.
+   * @returns {THREE.Color} The current color of the object.
    */
   get color () {
     return this._color
@@ -144,7 +158,7 @@ export class Object implements IObject {
 
   set color (color: THREE.Color | undefined) {
     this._color = color
-    this.vim.scene.setDirty()
+    this.vim._scene.setDirty()
     this._color = this._color
     this._coloredAttribute.apply(this._color !== undefined)
     this._colorAttribute.apply(this._color)
@@ -155,7 +169,7 @@ export class Object implements IObject {
    */
   private updateMeshes (meshes: Submesh[] | undefined) {
     this._meshes = meshes
-    this.vim.scene.setDirty()
+    this.vim._scene.setDirty()
 
     this._outlineAttribute.updateMeshes(meshes)
     this._visibleAttribute.updateMeshes(meshes)
@@ -165,9 +179,11 @@ export class Object implements IObject {
   }
 
   /**
-   * Internal - Replace this object meshes and apply color as needed.
+   * Internal method used to replace this object's meshes and apply color as needed.
+   * @param {Submesh} mesh The new mesh to be added.
+   * @throws {Error} Throws an error if the provided mesh instance does not match any existing instances.
    */
-  addMesh (mesh: Submesh) {
+  _addMesh (mesh: Submesh) {
     if (this.instances.findIndex((i) => i === mesh.instance) < 0) {
       throw new Error('Cannot update mismatched instance')
     }
@@ -184,30 +200,32 @@ export class Object implements IObject {
   }
 
   /**
-   * Returns Bim data for the element associated with this object.
-   * Returns undefined if no associated bim
+   * Asynchronously retrieves Bim data for the element associated with this object.
+   * @returns {IElement} An object containing the bim data for this element.
    */
-  getBimElement (): Promise<IElement> {
+  async getBimElement (): Promise<IElement> {
     return this.vim.bim.element.get(this.element)
   }
 
   /**
-   * Returns Bim data for the element associated with this object.
+   * Asynchronously retrieves Bim parameters for the element associated with this object.
+   * @returns {VimHelpers.ElementParameter[]} An array of all bim parameters for this elements.
    */
-  getBimParameters (): Promise<VimHelpers.ElementParameter[]> {
+  async getBimParameters (): Promise<VimHelpers.ElementParameter[]> {
     return VimHelpers.getElementParameters(this.vim.bim, this.element)
   }
 
   /**
-   * Returns the element id of the element associated with this object
+   * The ID of the element associated with this object.
    */
-  get elementId () {
+  get elementId () : bigint {
     return this.vim.map.getElementId(this.element)
   }
 
   /**
-   * returns the bounding box of the object from cache or computed if needed.
-   * Returns undefined if object has no geometry.
+   * Retrieves the bounding box of the object from cache or computes it if needed.
+   * Returns undefined if the object has no geometry.
+   * @returns {THREE.Box3 | undefined} The bounding box of the object, or undefined if the object has no geometry.
    */
   getBoundingBox () {
     if (!this.instances || !this._meshes) return
@@ -228,44 +246,13 @@ export class Object implements IObject {
   }
 
   /**
-   * Returns the center position of this object
-   * @param target Vector3 where to copy data. A new instance is created if none provided.
-   * Returns undefined if object has no geometry.
+   * Retrieves the center position of this object.
+   * @param {THREE.Vector3} [target=new THREE.Vector3()] Optional parameter specifying where to copy the center position data.
+   * A new instance is created if none is provided.
+   * @returns {THREE.Vector3 | undefined} The center position of the object, or undefined if the object has no geometry.
    */
   public getCenter (target: THREE.Vector3 = new THREE.Vector3()) {
     return this.getBoundingBox()?.getCenter(target)
-  }
-
-  /**
-   * Creates a new three wireframe Line object from the object geometry
-   */
-  createWireframe () {
-    if (!this.instances || !this.vim.g3d) return
-
-    const wireframe = this.meshBuilder.createWireframe(
-      this.vim.g3d,
-      this.instances
-    )
-    wireframe?.applyMatrix4(this.vim.getMatrix())
-    return wireframe
-  }
-
-  /**
-   * Creates a new THREE.BufferGeometry for this object
-   * Returns undefined if object has no geometry.
-   */
-  createGeometry () {
-    if (!this.instances || !this.vim.g3d) return
-
-    const geometry = Geometry.createGeometryFromInstances(this.vim.g3d, {
-      matrix: this.vim.settings.matrix,
-      section: 'all',
-      transparent: false,
-      legacyInstances: this.instances,
-      legacyLoadRooms: true
-    })
-    geometry?.applyMatrix4(this.vim.getMatrix())
-    return geometry
   }
 }
 

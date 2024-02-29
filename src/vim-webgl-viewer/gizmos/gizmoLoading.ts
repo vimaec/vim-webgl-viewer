@@ -4,8 +4,9 @@
 
 import { Viewer } from '../viewer'
 
+
 /**
- * Gizmo for section box, it acts as a proxy between renderer and user.
+ * The loading indicator gizmo.
  */
 export class GizmoLoading {
   // dependencies
@@ -26,7 +27,7 @@ export class GizmoLoading {
   }
 
   /**
-   * When true the loading gizmo will be rendered
+   * Indicates whether the loading gizmo will be rendered.
    */
   get visible () {
     return this._visible
@@ -43,7 +44,9 @@ export class GizmoLoading {
     }
   }
 
-  /** Removes gizmo from rendering and inputs and dispose all resources. */
+  /**
+   * Disposes of all resources.
+   */
   dispose () {
     this.visible = false
   }

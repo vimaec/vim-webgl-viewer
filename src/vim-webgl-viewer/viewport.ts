@@ -8,19 +8,28 @@ import { CSS2DRenderer } from 'three/examples/jsm/renderers/CSS2DRenderer'
 import { Settings } from './viewerSettings'
 
 export class Viewport {
-  /** HTML Canvas on which the model is rendered */
-  canvas: HTMLCanvasElement
+  /**
+   *  HTML Canvas on which the model is rendered
+   */
+  readonly canvas: HTMLCanvasElement
   /** HTML Element in which text is rendered */
-  text: HTMLElement | undefined
+  private _text: HTMLElement | undefined
 
   private _unregisterResize: Function | undefined
   private _ownedCanvas: boolean
   private _onResize: SignalDispatcher = new SignalDispatcher()
 
+  /**
+   * Signal dispatched when the canvas is resized.
+   */
   get onResize () {
     return this._onResize.asEvent()
   }
 
+  /**
+   * Constructs a new instance of the class with the provided settings.
+   * @param {Settings} settings The settings object defining viewer configurations.
+   */
   constructor (settings: Settings) {
     const { canvas, owned } = Viewport.getOrCreateCanvas(settings.canvas.id)
     this.canvas = canvas
@@ -59,17 +68,19 @@ export class Viewport {
     const size = this.getParentSize()
     const renderer = new CSS2DRenderer()
     renderer.setSize(size.x, size.y)
-    this.text = renderer.domElement
+    this._text = renderer.domElement
 
-    this.text.className = 'vim-text-renderer'
-    this.text.style.position = 'absolute'
-    this.text.style.top = '0px'
-    this.text.style.pointerEvents = 'none'
-    this.canvas.parentElement.append(this.text)
+    this._text.className = 'vim-text-renderer'
+    this._text.style.position = 'absolute'
+    this._text.style.top = '0px'
+    this._text.style.pointerEvents = 'none'
+    this.canvas.parentElement.append(this._text)
     return renderer
   }
 
-  /** Removes canvas if owned */
+  /**
+   * Removes the canvas if it's owned by the viewer.
+   */
   dispose () {
     this._unregisterResize?.()
     this._unregisterResize = undefined
@@ -79,6 +90,7 @@ export class Viewport {
 
   /**
    * Returns the pixel size of the parent element.
+   * @returns {THREE.Vector2} The pixel size of the parent element.
    */
   getParentSize () {
     return new THREE.Vector2(
@@ -89,19 +101,23 @@ export class Viewport {
 
   /**
    * Returns the pixel size of the canvas.
+   * @returns {THREE.Vector2} The pixel size of the canvas.
    */
   getSize () {
     return new THREE.Vector2(this.canvas.clientWidth, this.canvas.clientHeight)
   }
 
-  /** Returns x/y of the parent size */
+  /**
+   * Calculates and returns the aspect ratio of the parent element.
+   * @returns {number} The aspect ratio (width divided by height) of the parent element.
+   */
   getAspectRatio () {
     const size = this.getParentSize()
     return size.x / size.y
   }
 
   /**
-   * Resizes canvas and update camera to match new parent dimensions.
+   * Resizes the canvas and updates the camera to match new parent dimensions.
    */
   ResizeToParent () {
     this._onResize.dispatch()

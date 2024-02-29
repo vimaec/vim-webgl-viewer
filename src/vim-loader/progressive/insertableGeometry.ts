@@ -1,8 +1,11 @@
+/**
+ * @module vim-loader
+ */
+
 import * as THREE from 'three'
 import { G3d, G3dMesh, G3dMaterial } from 'vim-format'
 import { Scene } from '../scene'
 import { G3dMeshOffsets } from './g3dOffsets'
-import { assert } from 'console'
 
 // TODO Merge both submeshes class.
 export class GeometrySubmesh {
