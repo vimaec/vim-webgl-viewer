@@ -79,7 +79,7 @@ export class Viewport {
     text.style.position = 'absolute'
     text.style.top = '0px'
     text.style.pointerEvents = 'none'
-    this.canvas.parentElement.append(this.text)
+    this.canvas.parentElement.append(text)
     return renderer
   }
 
