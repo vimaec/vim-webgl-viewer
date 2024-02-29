@@ -70,29 +70,32 @@ The following is an example of the simplest usage of the VIM viewer:
     <script src="https://unpkg.com/three@0.143.0"></script>
     <script src="https://unpkg.com/vim-webgl-viewer@1.6.0"></script>
     <script>
-	  async function load(){
-		// Create a new viewer. 
-		const viewer = new VIM.Viewer()
+    
+      async function load(){
+        // Create a new viewer. 
+        const viewer = new VIM.Viewer()
 
-		// Open the vim file.
-		const vim = await VIM.open(
-		  'https://vim02.azureedge.net/samples/residence.v1.2.75.vim',
-		  {
-		    rotation: new VIM.THREE.Vector3(270, 0, 0)
-		  }
-		)
-		  
-		// Load all geometry from vim file.
-		await vim.loadAll()
+        // Open the vim file.
+        const vim = await VIM.open(
+          'https://vim02.azureedge.net/samples/residence.v1.2.75.vim',
+          {
+            rotation: new VIM.THREE.Vector3(270, 0, 0)
+          }     
+        )
+          
+        // Load all geometry from vim file.
+        await vim.loadAll()
 
-		// Add loaded vim to the viewer.
-		viewer.add(vim)
+        // Add loaded vim to the viewer.
+        viewer.add(vim)
 
-		// Immediately frame loaded vim.
-		viewer.camera.do().frame(vim)
-	  }
-	  // Need function because you can't have top level async
-	  load()
+        // Immediately frame loaded vim.
+        viewer.camera.do().frame(vim)
+      }
+      
+      // Need function because you can't have top level async
+      load()
+      
     </script>
   </body>
 </html>
