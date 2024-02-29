@@ -21,7 +21,7 @@
 <ul class="tsd-hierarchy">
 <li><span class="target">Raycaster</span></li></ul></section><aside class="tsd-sources">
 <ul>
-<li>Defined in <a href="https://github.com/vimaec/vim-webgl-viewer/blob/2023d14/src/vim-webgl-viewer/raycaster.ts#L81">src/vim-webgl-viewer/raycaster.ts:81</a></li></ul></aside>
+<li>Defined in <a href="https://github.com/vimaec/vim-webgl-viewer/blob/1b2bd9b/src/vim-webgl-viewer/raycaster.ts#L102">src/vim-webgl-viewer/raycaster.ts:102</a></li></ul></aside>
 <section class="tsd-panel-group tsd-index-group">
 <section class="tsd-panel tsd-index-panel">
 <details class="tsd-index-content tsd-index-accordion" open><summary class="tsd-accordion-summary tsd-index-summary">
@@ -59,7 +59,7 @@
 <h5>renderer: <a href="viw_webgl_viewer_rendering.Renderer.html" class="tsd-signature-type" data-tsd-kind="Class">Renderer</a></h5></li></ul></div>
 <h4 class="tsd-returns-title">Returns <a href="viw_webgl_viewer.Raycaster.html" class="tsd-signature-type" data-tsd-kind="Class">Raycaster</a></h4><aside class="tsd-sources">
 <ul>
-<li>Defined in <a href="https://github.com/vimaec/vim-webgl-viewer/blob/2023d14/src/vim-webgl-viewer/raycaster.ts#L89">src/vim-webgl-viewer/raycaster.ts:89</a></li></ul></aside></li></ul></section></section>
+<li>Defined in <a href="https://github.com/vimaec/vim-webgl-viewer/blob/1b2bd9b/src/vim-webgl-viewer/raycaster.ts#L110">src/vim-webgl-viewer/raycaster.ts:110</a></li></ul></aside></li></ul></section></section>
 <section class="tsd-panel-group tsd-member-group">
 <h2>Methods</h2>
 <section class="tsd-panel tsd-member tsd-kind-method tsd-parent-kind-class"><a id="fromPoint2" class="tsd-anchor"></a>
@@ -78,64 +78,72 @@
 <h5>target: <span class="tsd-signature-type">Raycaster</span><span class="tsd-signature-symbol"> = ...</span></h5></li></ul></div>
 <h4 class="tsd-returns-title">Returns <span class="tsd-signature-type">Raycaster</span></h4><aside class="tsd-sources">
 <ul>
-<li>Defined in <a href="https://github.com/vimaec/vim-webgl-viewer/blob/2023d14/src/vim-webgl-viewer/raycaster.ts#L137">src/vim-webgl-viewer/raycaster.ts:137</a></li></ul></aside></li></ul></section>
+<li>Defined in <a href="https://github.com/vimaec/vim-webgl-viewer/blob/1b2bd9b/src/vim-webgl-viewer/raycaster.ts#L160">src/vim-webgl-viewer/raycaster.ts:160</a></li></ul></aside></li></ul></section>
 <section class="tsd-panel tsd-member tsd-kind-method tsd-parent-kind-class"><a id="fromPoint3" class="tsd-anchor"></a>
 <h3 class="tsd-anchor-link"><span>from<wbr/>Point3</span><a href="#fromPoint3" aria-label="Permalink" class="tsd-anchor-icon"><svg class="icon icon-tabler icon-tabler-link" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" fill="none" stroke-linecap="round" stroke-linejoin="round"><use href="#icon-anchor-a"></use><use href="#icon-anchor-b"></use><use href="#icon-anchor-c"></use></svg></a></h3>
 <ul class="tsd-signatures tsd-kind-method tsd-parent-kind-class">
 <li class="tsd-signature tsd-anchor-link" id="fromPoint3.fromPoint3-1">from<wbr/>Point3<span class="tsd-signature-symbol">(</span>position<span class="tsd-signature-symbol">: </span><span class="tsd-signature-type">Vector3</span>, target<span class="tsd-signature-symbol">?: </span><span class="tsd-signature-type">Raycaster</span><span class="tsd-signature-symbol">)</span><span class="tsd-signature-symbol">: </span><span class="tsd-signature-type">Raycaster</span><a href="#fromPoint3.fromPoint3-1" aria-label="Permalink" class="tsd-anchor-icon"><svg class="icon icon-tabler icon-tabler-link" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" fill="none" stroke-linecap="round" stroke-linejoin="round"><use href="#icon-anchor-a"></use><use href="#icon-anchor-b"></use><use href="#icon-anchor-c"></use></svg></a></li>
 <li class="tsd-description">
-<div class="tsd-comment tsd-typography"><p>Returns a THREE.Raycaster projecting a ray from camera position to world position</p>
+<div class="tsd-comment tsd-typography"><p>Returns a THREE.Raycaster projecting a ray from the camera position to a screen position.</p>
+
+<h3>Returns</h3><p>A raycaster object for performing raycasting.</p>
 </div>
 <div class="tsd-parameters">
 <h4 class="tsd-parameters-title">Parameters</h4>
 <ul class="tsd-parameter-list">
 <li>
-<h5>position: <span class="tsd-signature-type">Vector3</span></h5></li>
+<h5>position: <span class="tsd-signature-type">Vector3</span></h5>
+<div class="tsd-comment tsd-typography"><p>The screen position for raycasting.</p>
+</div></li>
 <li>
 <h5>target: <span class="tsd-signature-type">Raycaster</span><span class="tsd-signature-symbol"> = ...</span></h5></li></ul></div>
 <h4 class="tsd-returns-title">Returns <span class="tsd-signature-type">Raycaster</span></h4><aside class="tsd-sources">
 <ul>
-<li>Defined in <a href="https://github.com/vimaec/vim-webgl-viewer/blob/2023d14/src/vim-webgl-viewer/raycaster.ts#L151">src/vim-webgl-viewer/raycaster.ts:151</a></li></ul></aside></li></ul></section>
+<li>Defined in <a href="https://github.com/vimaec/vim-webgl-viewer/blob/1b2bd9b/src/vim-webgl-viewer/raycaster.ts#L176">src/vim-webgl-viewer/raycaster.ts:176</a></li></ul></aside></li></ul></section>
 <section class="tsd-panel tsd-member tsd-kind-method tsd-parent-kind-class"><a id="raycast2" class="tsd-anchor"></a>
 <h3 class="tsd-anchor-link"><span>raycast2</span><a href="#raycast2" aria-label="Permalink" class="tsd-anchor-icon"><svg class="icon icon-tabler icon-tabler-link" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" fill="none" stroke-linecap="round" stroke-linejoin="round"><use href="#icon-anchor-a"></use><use href="#icon-anchor-b"></use><use href="#icon-anchor-c"></use></svg></a></h3>
 <ul class="tsd-signatures tsd-kind-method tsd-parent-kind-class">
 <li class="tsd-signature tsd-anchor-link" id="raycast2.raycast2-1">raycast2<span class="tsd-signature-symbol">(</span>position<span class="tsd-signature-symbol">: </span><span class="tsd-signature-type">Vector2</span><span class="tsd-signature-symbol">)</span><span class="tsd-signature-symbol">: </span><a href="viw_webgl_viewer.RaycastResult.html" class="tsd-signature-type" data-tsd-kind="Class">RaycastResult</a><a href="#raycast2.raycast2-1" aria-label="Permalink" class="tsd-anchor-icon"><svg class="icon icon-tabler icon-tabler-link" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" fill="none" stroke-linecap="round" stroke-linejoin="round"><use href="#icon-anchor-a"></use><use href="#icon-anchor-b"></use><use href="#icon-anchor-c"></use></svg></a></li>
 <li class="tsd-description">
-<div class="tsd-comment tsd-typography"><p>Raycast projecting a ray from camera position to screen position</p>
+<div class="tsd-comment tsd-typography"><p>Performs a raycast by projecting a ray from the camera position to a screen position.</p>
 </div>
 <div class="tsd-parameters">
 <h4 class="tsd-parameters-title">Parameters</h4>
 <ul class="tsd-parameter-list">
 <li>
-<h5>position: <span class="tsd-signature-type">Vector2</span></h5></li></ul></div>
+<h5>position: <span class="tsd-signature-type">Vector2</span></h5>
+<div class="tsd-comment tsd-typography"><p>The screen position for raycasting.</p>
+</div></li></ul></div>
 <h4 class="tsd-returns-title">Returns <a href="viw_webgl_viewer.RaycastResult.html" class="tsd-signature-type" data-tsd-kind="Class">RaycastResult</a></h4><aside class="tsd-sources">
 <ul>
-<li>Defined in <a href="https://github.com/vimaec/vim-webgl-viewer/blob/2023d14/src/vim-webgl-viewer/raycaster.ts#L104">src/vim-webgl-viewer/raycaster.ts:104</a></li></ul></aside></li></ul></section>
+<li>Defined in <a href="https://github.com/vimaec/vim-webgl-viewer/blob/1b2bd9b/src/vim-webgl-viewer/raycaster.ts#L126">src/vim-webgl-viewer/raycaster.ts:126</a></li></ul></aside></li></ul></section>
 <section class="tsd-panel tsd-member tsd-kind-method tsd-parent-kind-class"><a id="raycast3" class="tsd-anchor"></a>
 <h3 class="tsd-anchor-link"><span>raycast3</span><a href="#raycast3" aria-label="Permalink" class="tsd-anchor-icon"><svg class="icon icon-tabler icon-tabler-link" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" fill="none" stroke-linecap="round" stroke-linejoin="round"><use href="#icon-anchor-a"></use><use href="#icon-anchor-b"></use><use href="#icon-anchor-c"></use></svg></a></h3>
 <ul class="tsd-signatures tsd-kind-method tsd-parent-kind-class">
 <li class="tsd-signature tsd-anchor-link" id="raycast3.raycast3-1">raycast3<span class="tsd-signature-symbol">(</span>position<span class="tsd-signature-symbol">: </span><span class="tsd-signature-type">Vector3</span><span class="tsd-signature-symbol">)</span><span class="tsd-signature-symbol">: </span><a href="viw_webgl_viewer.RaycastResult.html" class="tsd-signature-type" data-tsd-kind="Class">RaycastResult</a><a href="#raycast3.raycast3-1" aria-label="Permalink" class="tsd-anchor-icon"><svg class="icon icon-tabler icon-tabler-link" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" fill="none" stroke-linecap="round" stroke-linejoin="round"><use href="#icon-anchor-a"></use><use href="#icon-anchor-b"></use><use href="#icon-anchor-c"></use></svg></a></li>
 <li class="tsd-description">
-<div class="tsd-comment tsd-typography"><p>Raycast projecting a ray from camera position to world position</p>
+<div class="tsd-comment tsd-typography"><p>Performs a raycast by projecting a ray from the camera position to a world position.</p>
 </div>
 <div class="tsd-parameters">
 <h4 class="tsd-parameters-title">Parameters</h4>
 <ul class="tsd-parameter-list">
 <li>
-<h5>position: <span class="tsd-signature-type">Vector3</span></h5></li></ul></div>
+<h5>position: <span class="tsd-signature-type">Vector3</span></h5>
+<div class="tsd-comment tsd-typography"><p>The world position for raycasting.</p>
+</div></li></ul></div>
 <h4 class="tsd-returns-title">Returns <a href="viw_webgl_viewer.RaycastResult.html" class="tsd-signature-type" data-tsd-kind="Class">RaycastResult</a></h4><aside class="tsd-sources">
 <ul>
-<li>Defined in <a href="https://github.com/vimaec/vim-webgl-viewer/blob/2023d14/src/vim-webgl-viewer/raycaster.ts#L120">src/vim-webgl-viewer/raycaster.ts:120</a></li></ul></aside></li></ul></section>
+<li>Defined in <a href="https://github.com/vimaec/vim-webgl-viewer/blob/1b2bd9b/src/vim-webgl-viewer/raycaster.ts#L143">src/vim-webgl-viewer/raycaster.ts:143</a></li></ul></aside></li></ul></section>
 <section class="tsd-panel tsd-member tsd-kind-method tsd-parent-kind-class"><a id="raycastForward" class="tsd-anchor"></a>
 <h3 class="tsd-anchor-link"><span>raycast<wbr/>Forward</span><a href="#raycastForward" aria-label="Permalink" class="tsd-anchor-icon"><svg class="icon icon-tabler icon-tabler-link" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" fill="none" stroke-linecap="round" stroke-linejoin="round"><use href="#icon-anchor-a"></use><use href="#icon-anchor-b"></use><use href="#icon-anchor-c"></use></svg></a></h3>
 <ul class="tsd-signatures tsd-kind-method tsd-parent-kind-class">
 <li class="tsd-signature tsd-anchor-link" id="raycastForward.raycastForward-1">raycast<wbr/>Forward<span class="tsd-signature-symbol">(</span><span class="tsd-signature-symbol">)</span><span class="tsd-signature-symbol">: </span><a href="viw_webgl_viewer.RaycastResult.html" class="tsd-signature-type" data-tsd-kind="Class">RaycastResult</a><a href="#raycastForward.raycastForward-1" aria-label="Permalink" class="tsd-anchor-icon"><svg class="icon icon-tabler icon-tabler-link" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" fill="none" stroke-linecap="round" stroke-linejoin="round"><use href="#icon-anchor-a"></use><use href="#icon-anchor-b"></use><use href="#icon-anchor-c"></use></svg></a></li>
 <li class="tsd-description">
-<div class="tsd-comment tsd-typography"><p>Raycast projecting a ray from camera center</p>
+<div class="tsd-comment tsd-typography"><p>Performs a raycast by projecting a ray from the camera center.</p>
 </div>
 <h4 class="tsd-returns-title">Returns <a href="viw_webgl_viewer.RaycastResult.html" class="tsd-signature-type" data-tsd-kind="Class">RaycastResult</a></h4><aside class="tsd-sources">
 <ul>
-<li>Defined in <a href="https://github.com/vimaec/vim-webgl-viewer/blob/2023d14/src/vim-webgl-viewer/raycaster.ts#L130">src/vim-webgl-viewer/raycaster.ts:130</a></li></ul></aside></li></ul></section></section></div>
+<li>Defined in <a href="https://github.com/vimaec/vim-webgl-viewer/blob/1b2bd9b/src/vim-webgl-viewer/raycaster.ts#L153">src/vim-webgl-viewer/raycaster.ts:153</a></li></ul></aside></li></ul></section></section></div>
 <div class="col-4 col-menu menu-sticky-wrap menu-highlight">
 <div class="tsd-navigation settings">
 <details class="tsd-index-accordion"><summary class="tsd-accordion-summary">
@@ -160,9 +168,13 @@
 <ul>
 <li class="tsd-kind-namespace tsd-parent-kind-module"><a href="../modules/vim_loader.Geometry.html">Geometry</a></li>
 <li class="tsd-kind-namespace tsd-parent-kind-module"><a href="../modules/vim_loader.Transparency.html">Transparency</a></li></ul></li>
-<li class="tsd-kind-module"><a href="../modules/vim_loader_loader.html">vim-<wbr/>loader/loader</a></li>
+<li class="tsd-kind-module"><a href="../modules/vim_loader_legacy_legacyLoader.html">vim-<wbr/>loader/legacy/legacy<wbr/>Loader</a></li>
+<li class="tsd-kind-module"><a href="../modules/vim_loader_legacy_vimRequest.html">vim-<wbr/>loader/legacy/vim<wbr/>Request</a></li>
 <li class="tsd-kind-module"><a href="../modules/vim_loader_materials.html">vim-<wbr/>loader/materials</a></li>
-<li class="tsd-kind-module"><a href="../modules/vim_loader_vimRequest.html">vim-<wbr/>loader/vim<wbr/>Request</a></li>
+<li class="tsd-kind-module"><a href="../modules/vim_loader_progressive_open.html">vim-<wbr/>loader/progressive/open</a></li>
+<li class="tsd-kind-module"><a href="../modules/vim_webgl_viewer_gizmos_gizmos.html">vim-<wbr/>webgl-<wbr/>viewer/gizmos/gizmos</a></li>
+<li class="tsd-kind-module"><a href="../modules/vim_webgl_viewer_gizmos_markers_gizmoMarker.html">vim-<wbr/>webgl-<wbr/>viewer/gizmos/markers/gizmo<wbr/>Marker</a></li>
+<li class="tsd-kind-module"><a href="../modules/vim_webgl_viewer_gizmos_markers_gizmoMarkers.html">vim-<wbr/>webgl-<wbr/>viewer/gizmos/markers/gizmo<wbr/>Markers</a></li>
 <li class="current tsd-kind-module"><a href="../modules/viw_webgl_viewer.html">viw-<wbr/>webgl-<wbr/>viewer</a></li>
 <li class="tsd-kind-module"><a href="../modules/viw_webgl_viewer_camera.html">viw-<wbr/>webgl-<wbr/>viewer/camera</a></li>
 <li class="tsd-kind-module"><a href="../modules/viw_webgl_viewer_gizmos.html">viw-<wbr/>webgl-<wbr/>viewer/gizmos</a></li>
