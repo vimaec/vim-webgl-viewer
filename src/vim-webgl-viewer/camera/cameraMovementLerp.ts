@@ -4,12 +4,12 @@
 
 import * as THREE from 'three'
 import { Camera } from './camera'
-import { Object } from '../../vim'
-import { CameraMovementDo } from './cameraMovementDo'
+import { Object } from '../../vim-loader/object'
+import { CameraMovementSnap } from './cameraMovementSnap'
 import { CameraMovement } from './cameraMovement'
 
 export class CameraLerp extends CameraMovement {
-  _movement: CameraMovementDo
+  _movement: CameraMovementSnap
   _clock = new THREE.Clock()
 
   // position
@@ -17,7 +17,7 @@ export class CameraLerp extends CameraMovement {
 
   _duration = 1
 
-  constructor (camera: Camera, movement: CameraMovementDo) {
+  constructor (camera: Camera, movement: CameraMovementSnap) {
     super(camera)
     this._movement = movement
   }

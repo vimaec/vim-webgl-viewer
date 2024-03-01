@@ -1,7 +1,12 @@
+/**
+ * @module vim-loader
+ */
+
 import * as THREE from 'three'
-import { G3d, G3dMesh, G3dMaterial, MeshSection } from 'vim-format'
-import { Geometry, Settings, Vim, VimMaterials, VimSettings } from '../../vim'
+import { G3d, G3dMesh, G3dMaterial, MeshSection, G3dScene } from 'vim-format'
 import { InstancedMesh } from './instancedMesh'
+import { ViewerMaterials } from '../materials/viewerMaterials'
+import { Geometry } from '../geometry'
 
 export class InstancedMeshFactory {
   materials: G3dMaterial
@@ -28,7 +33,7 @@ export class InstancedMeshFactory {
 
   createFromVimx (
     mesh: G3dMesh,
-    instances: number[] | undefined,
+    instances: number[],
     section: MeshSection,
     transparent: boolean
   ) {
@@ -43,16 +48,16 @@ export class InstancedMeshFactory {
     )
 
     const material = transparent
-      ? VimMaterials.getInstance().transparent
-      : VimMaterials.getInstance().opaque
+      ? ViewerMaterials.getInstance().transparent
+      : ViewerMaterials.getInstance().opaque
 
     const threeMesh = new THREE.InstancedMesh(
       geometry,
       material.material,
-      instances?.length ?? mesh.getInstanceCount()
+      instances.length
     )
 
-    this.setMatricesFromVimx(threeMesh, mesh, instances)
+    this.setMatricesFromVimx(threeMesh, mesh.scene, instances)
     const result = new InstancedMesh(mesh, threeMesh, instances)
     return result
   }
@@ -71,8 +76,8 @@ export class InstancedMeshFactory {
       transparent
     )
     const material = transparent
-      ? VimMaterials.getInstance().transparent
-      : VimMaterials.getInstance().opaque
+      ? ViewerMaterials.getInstance().transparent
+      : ViewerMaterials.getInstance().opaque
 
     const threeMesh = new THREE.InstancedMesh(
       geometry,
@@ -103,7 +108,7 @@ export class InstancedMeshFactory {
     const vertexOffset = mesh.getVertexStart(section)
     const indices = new Uint32Array(indexCount)
     for (let i = 0; i < indexCount; i++) {
-      indices[i] = mesh.indices[indexStart + i] - vertexOffset
+      indices[i] = mesh.chunk.indices[indexStart + i] - vertexOffset
     }
     return new THREE.Uint32BufferAttribute(indices, 1)
   }
@@ -111,7 +116,7 @@ export class InstancedMeshFactory {
   private computeVertices (mesh: G3dMesh, section: MeshSection) {
     const vertexStart = mesh.getVertexStart(section)
     const vertexEnd = mesh.getVertexEnd(section)
-    const vertices = mesh.positions.subarray(
+    const vertices = mesh.chunk.positions.subarray(
       vertexStart * G3d.POSITION_SIZE,
       vertexEnd * G3d.POSITION_SIZE
     )
@@ -129,7 +134,7 @@ export class InstancedMeshFactory {
     const submeshStart = mesh.getSubmeshStart(section)
     const submeshEnd = mesh.getSubmeshEnd(section)
     for (let sub = submeshStart; sub < submeshEnd; sub++) {
-      const mat = mesh.submeshMaterial[sub]
+      const mat = mesh.chunk.submeshMaterial[sub]
       const color = this.materials.getMaterialColor(mat)
       const subVertexCount = mesh.getSubmeshVertexCount(sub)
 
@@ -148,27 +153,14 @@ export class InstancedMeshFactory {
 
   private setMatricesFromVimx (
     three: THREE.InstancedMesh,
-    source: G3dMesh | G3d,
-    instances: number[] | undefined
+    source: G3dScene | G3d,
+    instances: number[]
   ) {
     const matrix = new THREE.Matrix4()
-    const setMatrix = (instance: number, at: number) => {
-      const array = source.getInstanceMatrix(instance)
+    for (let i = 0; i < instances.length; i++) {
+      const array = source.getInstanceMatrix(instances[i])
       matrix.fromArray(array)
-      three.setMatrixAt(at, matrix)
-    }
-    if (instances) {
-      for (let i = 0; i < instances.length; i++) {
-        setMatrix(instances[i], i)
-      }
-    } else {
-      for (let i = 0; i < source.instanceTransforms.length; i++) {
-        setMatrix(i, i)
-      }
+      three.setMatrixAt(i, matrix)
     }
   }
-}
-
-function pick (array: ArrayLike<number>, at: number[] | undefined) {
-  return at?.map((i) => array[i]) ?? array
 }

@@ -3,13 +3,11 @@
  */
 
 import * as THREE from 'three'
-import { Scene } from '../../vim-loader/scene'
+import { IRenderer, Scene } from '../../vim-loader/scene'
 import { Viewport } from '../viewport'
 import { RenderScene } from './renderScene'
-import { VimMaterials } from '../../vim-loader/materials/materials'
+import { ViewerMaterials } from '../../vim-loader/materials/viewerMaterials'
 import { CSS2DRenderer } from 'three/examples/jsm/renderers/CSS2DRenderer'
-import { SimpleEventDispatcher } from 'ste-simple-events'
-import { IRenderer, Vim } from '../../vim'
 
 import { Camera } from '../camera/camera'
 import { RenderingSection } from './renderingSection'
@@ -22,21 +20,22 @@ import { SignalDispatcher } from 'ste-signals'
  */
 export class Renderer implements IRenderer {
   /**
-   * Three webgl renderer
+   * The THREE WebGL renderer.
    */
-  renderer: THREE.WebGLRenderer
+  readonly renderer: THREE.WebGLRenderer
+  
   /**
-   * Three sample ui renderer
+   * The THREE sample ui renderer
    */
-  textRenderer: CSS2DRenderer
+  readonly textRenderer: CSS2DRenderer
 
   /**
    * Interface to interact with section box directly without using the gizmo.
    */
-  section: RenderingSection
+  readonly section: RenderingSection
 
   /**
-   * Set to false to disable antialiasing. Default is true.
+   * Determines whether antialias will be applied to rendering or not.
    */
   antialias: boolean = true
 
@@ -44,7 +43,7 @@ export class Renderer implements IRenderer {
   private _viewport: Viewport
   private _camera: Camera
   private _composer: RenderingComposer
-  private _materials: VimMaterials
+  private _materials: ViewerMaterials
   private _renderText: boolean | undefined
 
   private _skipAntialias: boolean
@@ -56,9 +55,10 @@ export class Renderer implements IRenderer {
 
   // 3GB
   private maxMemory = 3 * Math.pow(10, 9)
+  
   /**
-   * Set this to true to cause a re-render of the scene.
-   * Can only be set to true, Cleared on each render.
+   * Indicates whether the scene needs to be re-rendered.
+   * Can only be set to true. Cleared on each render.
    */
   get needsUpdate () {
     return this._needsUpdate
@@ -69,10 +69,10 @@ export class Renderer implements IRenderer {
   }
 
   /**
-   * Set this to true to cause the next render to ignore antialiasing
-   * Useful for expensive operations such as section box.
-   * Can only be set to true, Cleared on each render.
-   */
+ * Indicates whether the next render should skip antialiasing.
+ * Useful for expensive operations such as the section box.
+ * Can only be set to true. Cleared on each render.
+ */
   get skipAntialias () {
     return this._skipAntialias
   }
@@ -84,7 +84,7 @@ export class Renderer implements IRenderer {
   constructor (
     scene: RenderScene,
     viewport: Viewport,
-    materials: VimMaterials,
+    materials: ViewerMaterials,
     camera: Camera,
     settings: Settings
   ) {
@@ -103,7 +103,7 @@ export class Renderer implements IRenderer {
       logarithmicDepthBuffer: true
     })
 
-    this.textRenderer = this._viewport.createTextRenderer()
+    this.textRenderer = this._viewport.textRenderer
     this.textEnabled = true
 
     this._composer = new RenderingComposer(
@@ -119,7 +119,7 @@ export class Renderer implements IRenderer {
 
     this.fitViewport()
     this._viewport.onResize.subscribe(() => this.fitViewport())
-    this._camera.onValueChanged.sub(() => {
+    this._camera.onSettingsChanged.sub(() => {
       this._composer.camera = this._camera.three
       this.needsUpdate = true
     })
@@ -128,7 +128,7 @@ export class Renderer implements IRenderer {
   }
 
   /**
-   * Removes all objects from rendering and dispose the WEBGL Context
+   * Removes all objects from rendering and disposes the WebGL context.
    */
   dispose () {
     this.clear()
@@ -139,6 +139,9 @@ export class Renderer implements IRenderer {
     this._composer.dispose()
   }
 
+  /**
+   * Gets or sets the background color or texture of the scene.
+   */ 
   get background () {
     return this._scene.scene.background
   }
@@ -149,20 +152,22 @@ export class Renderer implements IRenderer {
   }
 
   /**
-   * Event called at the end of frame if a scene was updated such as visibility change.
+   * Signal dispatched at the end of each frame if the scene was updated, such as visibility changes.
    */
-  get onSceneUpdated () {
-    return this._onSceneUpdate.asEvent()
+  get onSceneUpdated() {
+    return this._onSceneUpdate.asEvent();
   }
 
   /**
-   * Event called when bounding box is updated.
+   * Signal dispatched when bounding box is updated.
    */
   get onBoxUpdated () {
     return this._onBoxUpdated.asEvent()
   }
 
-  /** 2D renderer will render to screen when this is true. */
+  /**
+   * Determines whether text rendering is enabled or not.
+   */
   get textEnabled () {
     return this._renderText ?? false
   }
@@ -175,24 +180,32 @@ export class Renderer implements IRenderer {
   }
 
   /**
-   * Returns the bounding box encompasing all rendererd objects.
-   * @param target box in which to copy result, a new instance is created if undefined.
+   * Returns the bounding box encompassing all rendered objects.
+   * @param target - Box in which to copy the result. A new instance is created if undefined.
+   * @returns The bounding box encompassing all rendered objects.
    */
   getBoundingBox (target: THREE.Box3 = new THREE.Box3()) {
     return this._scene.getBoundingBox(target)
   }
 
+  /**
+   * Updates the global rendering bounding box.
+   * @param box - The new bounding box.
+   */
   updateBox (box: THREE.Box3) {
     this._scene.updateBox(box)
   }
 
+  /**
+   * Notifies that a scene was updated this frame.
+   */
   notifySceneUpdate () {
     this._sceneUpdated = true
     this.needsUpdate = true
   }
 
   /**
-   * Render what is in camera.
+   * Renders what is in the camera's view.
    */
   render () {
     if (this._scene.boxUpdated) {
@@ -221,7 +234,8 @@ export class Renderer implements IRenderer {
   }
 
   /**
-   * Add object to be rendered
+   * Adds an object to be rendered.
+   * @param target The object or scene to add for rendering.
    */
   add (target: Scene | THREE.Object3D) {
     if (target instanceof Scene) {
@@ -240,7 +254,8 @@ export class Renderer implements IRenderer {
   }
 
   /**
-   * Remove object from rendering
+   * Removes an object from rendering.
+   * @param target The object or scene to remove from rendering.
    */
   remove (target: Scene | THREE.Object3D) {
     this._scene.remove(target)
@@ -248,18 +263,24 @@ export class Renderer implements IRenderer {
   }
 
   /**
-   * Removes all rendered objects
+   * Clears all objects from rendering.
    */
   clear () {
     this._scene.clear()
     this._needsUpdate = true
   }
 
+  /**
+   * Returns an estimate of the memory used by the renderer.
+   */
   get estimatedMemory () {
     return this._scene.estimatedMemory
   }
 
-  /** Set the target sample count on the rendering target. Higher number will increase quality. */
+  /**
+   * Determines the target sample count on the rendering target.
+   * Higher number increases quality.
+   */
   get samples () {
     return this._composer.samples
   }

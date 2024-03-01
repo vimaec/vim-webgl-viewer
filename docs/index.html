@@ -26,58 +26,68 @@
   </head>
   <body>
     <script src="https://unpkg.com/three@0.143"></script>
-    <script src="https://unpkg.com/vim-webgl-viewer@1.5.2"></script>
+    <script src="https://unpkg.com/vim-webgl-viewer@2.0.0"></script>
     <script>
-      // Parse URL
+
+      // Parse URL for source file
       const params = new URLSearchParams(window.location.search)
       const url = params.has('vim')
         ? params.get('vim')
-        : 'https://vim.azureedge.net/samples/residence.vim'
+        : null
 
-      let transparency = 'all'
-      if (params.has('transparency')) {
-        const t = params.get('transparency')
-        transparency = geometry.transparencyIsValid(t) ? t : 'all'
-      }
-
-      // Create Viewer
+      let time
       const viewer = new VIM.Viewer()
 
-      // Load function string | arrayBuffer
-      function load(vim) {
-        viewer.loadVim(
-          vim,
+      load(url ?? "https://vim02.azureedge.net/samples/residence.v1.2.75.vim")
+      // load(url ?? "https://vim02.azureedge.net/samples/residence.v1.2.75.vimx")
+      addLoadButton()
+
+      async function load (url) {
+        time = Date.now()
+        viewer.gizmos.loading.visible = true
+
+        const vim = await VIM.open(url,
           {
-            rotation: new THREE.Vector3(270, 0, 0),
-            transparency: transparency,
-          }
-        )
+            legacy : true,
+            rotation: new VIM.THREE.Vector3(270, 0, 0)
+          }, (p) => console.log(`Downloading Vim (${(p.loaded / 1000).toFixed(0)} kb)`) 
+        ) 
+        viewer.add(vim)
+
+        vim.loadAll().then(() =>{
+          viewer.gizmos.loading.visible = false
+          console.log(`loaded in ${(Date.now() - time) / 1000} seconds`)
+        })
+        
+        viewer.camera.snap(true).frame(vim)
+
+        // Useful for debuging in console.
+        globalThis.vim = vim
+        globalThis.viewer = viewer
+        globalThis.THREE = THREE
       }
 
-      // Add load file button
-      const input = document.createElement('input')
-      input.type = 'file'
-      document.body.prepend(input)
+      function addLoadButton () {
+        const input = document.createElement('input')
+        input.type = 'file'
+        document.body.prepend(input)
 
-      input.onchange = (e) => {
-        viewer.clear()
-        // getting a hold of the file reference
-        const file = e.target.files[0]
+        input.onchange = (e) => {
+          viewer.clear()
+          // getting a hold of the file reference
+          const file = e.target.files[0]
 
-        // setting up the reader
-        const reader = new FileReader()
-        reader.readAsArrayBuffer(file)
+          // setting up the reader
+          const reader = new FileReader()
+          reader.readAsArrayBuffer(file)
 
-        // Load vim once file is read.
-        reader.onload = (readerEvent) => {
-          load(readerEvent.target.result)
+          // here we tell the reader what to do when it's done reading...
+          reader.onload = (readerEvent) => {
+            const content = readerEvent?.target?.result // this is the content!
+            if (content) load(content)
+          }
         }
       }
-
-      // load default model
-      load(url)
-
-      globalThis.viewer = viewer
     </script>
   </body>
 </html>

@@ -1,3 +1,7 @@
+/**
+ * @module vim-loader
+ */
+
 import { Submesh } from '../mesh'
 import { InstancedMesh } from './instancedMesh'
 

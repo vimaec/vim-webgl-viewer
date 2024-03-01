@@ -1,6 +1,8 @@
-// loader
+/**
+ * @module vim-loader
+ */
 
-import { RemoteVimx, G3dMesh } from 'vim-format'
+import { G3dMesh } from 'vim-format'
 import { G3dSubset } from './g3dSubset'
 
 /**

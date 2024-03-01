@@ -10,7 +10,6 @@ import { MouseHandler } from './mouse'
 import { InputAction } from '../raycaster'
 import { SignalDispatcher } from 'ste-signals'
 import { SimpleEventDispatcher } from 'ste-simple-events'
-import { GizmoRectangle } from '../gizmos/gizmoRectangle'
 export { KEYS } from './keyboard'
 
 /** Pointers mode supported by the viewer */

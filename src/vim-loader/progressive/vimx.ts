@@ -1,3 +1,7 @@
+/**
+ * @module vim-loader
+ */
+
 import { G3dMaterial, RemoteVimx, VimHeader, G3dScene } from 'vim-format'
 
 /**

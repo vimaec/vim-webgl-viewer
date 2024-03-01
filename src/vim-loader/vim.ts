@@ -20,40 +20,97 @@ import { LoadPartialSettings } from './progressive/subsetRequest'
 type VimFormat = 'vim' | 'vimx'
 
 /**
- * Container for the built three meshes and the vim data from which it was built.
- * Dispenses Objects for high level scene manipulation
+ * Represents a container for the built three.js meshes and the vim data from which they were constructed.
+ * Facilitates high-level scene manipulation by providing access to objects.
  */
 export class Vim {
-  readonly format: VimFormat = 'vim'
+  /**
+   * Indicates whether the vim was opened using the legacy pipeline or not.
+   */
+  readonly isLegacy: boolean
+
+  /**
+   * Indicates whether the vim was opened from a vim or vimx file.
+   */
+  readonly format: VimFormat
+
+  /**
+   * Indicates the url this vim came from if applicable.
+   */
   readonly source: string | undefined
 
+   /**
+   * The header for this vim.
+   */
   readonly header: VimHeader | undefined
+
+  /**
+   * The interface to access bim data related to this vim if available.
+   */
   readonly bim: VimDocument | undefined
+
+  /**
+   * The raw g3d geometry scene definition.
+   */
   readonly g3d: G3d | undefined
+
+  /**
+   * The settings used when this vim was opened.
+   */
   readonly settings: VimSettings
 
+  /**
+   * Mostly Internal - The scene in which the vim geometry is added.
+   */
   readonly scene: Scene
+
+  /**
+   * The mapping from Bim to Geometry for this vim.
+   */
   readonly map: ElementMapping | ElementNoMapping | ElementMapping2
 
   private readonly _builder: SubsetBuilder
   private readonly _loadedInstances = new Set<number>()
   private readonly _elementToObject = new Map<number, Object>()
 
-  /** Dispatched whenever a subset begins or finishes loading. */
+  /**
+   * Getter for accessing the event dispatched whenever a subset begins or finishes loading.
+   * @returns {ISignal} The event dispatcher for loading updates.
+   */
   get onLoadingUpdate () {
     return this._builder.onUpdate
   }
 
-  /** True if there are subsets being loaded. */
+  /**
+   * Indicates whether there are subsets currently being loaded.
+   * @returns {boolean} True if subsets are being loaded; otherwise, false.
+   */
   get isLoading () {
     return this._builder.isLoading
   }
 
-  private _onDispose = new SignalDispatcher()
+  /**
+   * Getter for accessing the signal dispatched when the object is disposed.
+   * @returns {ISignal} The signal for disposal events.
+   */
   get onDispose () {
     return this._onDispose as ISignal
   }
+  private _onDispose = new SignalDispatcher()
 
+  /**
+ * Constructs a new instance of a Vim object with the provided parameters.
+ * @param {VimHeader | undefined} header - The Vim header, if available.
+ * @param {VimDocument} document - The Vim document.
+ * @param {G3d | undefined} g3d - The G3d object, if available.
+ * @param {Scene} scene - The scene containing the vim's geometry.
+ * @param {VimSettings} settings - The settings used to open this vim.
+ * @param {ElementMapping | ElementNoMapping | ElementMapping2} map - The element mapping.
+ * @param {SubsetBuilder} builder - The subset builder for constructing subsets of the Vim object.
+ * @param {string} source - The source of the Vim object.
+ * @param {VimFormat} format - The format of the Vim object.
+ * @param {boolean} isLegacy - Indicates whether the Vim object uses a legacy loading pipeline.
+ */
   constructor (
     header: VimHeader | undefined,
     document: VimDocument,
@@ -63,7 +120,8 @@ export class Vim {
     map: ElementMapping | ElementNoMapping | ElementMapping2,
     builder: SubsetBuilder,
     source: string,
-    format: VimFormat
+    format: VimFormat,
+    isLegacy: boolean
   ) {
     this.header = header
     this.bim = document
@@ -76,39 +134,44 @@ export class Vim {
     this._builder = builder
     this.source = source
     this.format = format
+    this.isLegacy = isLegacy
   }
 
   /**
-   * Returns vim matrix
+   * Retrieves the matrix representation of the Vim object's position, rotation, and scale.
+   * @returns {THREE.Matrix4} The matrix representing the Vim object's transformation.
    */
   getMatrix () {
     return this.settings.matrix
   }
 
   /**
-   * Returns vim object from given instance
-   * @param instance g3d instance index
+   * Retrieves the object associated with the specified instance number.
+   * @param {number} instance - The instance number of the object.
+   * @returns {THREE.Object3D | undefined} The object corresponding to the instance, or undefined if not found.
    */
   getObjectFromInstance (instance: number) {
-    const element = this.map?.getElementFromInstance(instance)
+    const element = this.map.getElementFromInstance(instance)
     if (element === undefined) return
     return this.getObjectFromElement(element)
   }
 
   /**
-   * Returns an array of vim objects matching given vim element Id
-   * @param id vim element Id
+   * Retrieves the objects associated with the specified element ID.
+   * @param {number} id - The element ID to retrieve objects for.
+   * @returns {THREE.Object3D[]} An array of objects corresponding to the element ID, or an empty array if none are found.
    */
   getObjectsFromElementId (id: number) {
     const elements = this.map.getElementsFromElementId(id)
     return elements
       ?.map((e) => this.getObjectFromElement(e))
-      .filter((o): o is Object => o !== undefined)
+      .filter((o): o is Object => o !== undefined) ?? []
   }
 
   /**
-   * Returns vim object from given vim element index.
-   * @param element vim element index
+   * Retrieves the Vim object associated with the given Vim element index.
+   * @param {number} element - The index of the Vim element.
+   * @returns {Object | undefined} The Vim object corresponding to the element index, or undefined if not found.
    */
   getObjectFromElement (element: number): Object | undefined {
     if (!this.map.hasElement(element)) return
@@ -126,7 +189,9 @@ export class Vim {
   }
 
   /**
-   * Returns an array with all vim objects strictly contained in given box.
+   * Retrieves an array containing all Vim objects strictly contained within the specified bounding box.
+   * @param {THREE.Box3} box - The bounding box to search within.
+   * @returns {Object[]} An array of Vim objects strictly contained within the bounding box.
    */
   getObjectsInBox (box: THREE.Box3) {
     const result: Object[] = []
@@ -142,7 +207,8 @@ export class Vim {
   }
 
   /**
-   * Enumerates all objects of the vim.
+   * Retrieves an array of all objects within the Vim.
+   * @returns {Object[]} An array containing all objects within the Vim.
    */
   getObjects () {
     const result = new Array<Object>()
@@ -154,7 +220,9 @@ export class Vim {
   }
 
   /**
-   * Enumerates all objects of the vim.
+   * Retrieves an array containing all objects within the specified subset.
+   * @param {G3dSubset} subset - The subset to retrieve objects from.
+   * @returns {Object[]} An array of objects within the specified subset.
    */
   getObjectsInSubset (subset: G3dSubset) {
     const set = new Set<Object>()
@@ -171,18 +239,43 @@ export class Vim {
     return result
   }
 
-  /** Returns all instances as a subset. */
-  getFullSet () {
+  /**
+   * Retrieves all instances as a subset.
+   * @returns {G3dSubset} A subset containing all instances.
+   */
+  getFullSet (): G3dSubset {
+    if(this.isLegacy){
+      console.log("getFullSet Not supported in legacy loading. Ignoring.")
+      return 
+    }
     return this._builder.getFullSet()
   }
 
-  /** Starts loading process to load all instances. */
+  /**
+   * Asynchronously loads all geometry according to the provided settings.
+   * @param {LoadPartialSettings} [settings] - Optional settings for the loading process.
+   */
   async loadAll (settings?: LoadPartialSettings) {
+    if(this.isLegacy){
+      this._builder.onUpdate
+      console.log("loadAll Not supported in legacy loading. Ignoring.")
+      return 
+    }
+
     return this.loadSubset(this.getFullSet(), settings)
   }
 
-  /** Starts loading process to load all instances. */
+  /**
+   * Asynchronously loads geometry for the specified subset according to the provided settings.
+   * @param {G3dSubset} subset - The subset to load resources for.
+   * @param {LoadPartialSettings} [settings] - Optional settings for the loading process.
+   */
   async loadSubset (subset: G3dSubset, settings?: LoadPartialSettings) {
+    if(this.isLegacy){
+      console.log("loadSubset Not supported in legacy loading. Ignoring.")
+      return
+    }
+
     subset = subset.except('instance', this._loadedInstances)
     const count = subset.getInstanceCount()
     for (let i = 0; i < count; i++) {
@@ -201,18 +294,28 @@ export class Vim {
     await this._builder.loadSubset(subset, settings)
   }
 
-  /** Starts loading process to for a filtered subset. */
+  /**
+   * Asynchronously loads geometry based on a specified filter mode and criteria.
+   * @param {FilterMode} filterMode - The mode of filtering to apply.
+   * @param {number[]} filter - The filter criteria.
+   * @param {LoadPartialSettings} [settings] - Optional settings for the loading process.
+   */
   async loadFilter (
     filterMode: FilterMode,
     filter: number[],
     settings?: LoadPartialSettings
   ) {
+    if(this.isLegacy){
+      console.log("loadFilter Not supported in legacy loading. Ignoring.")
+      return
+    }
+
     const subset = this.getFullSet().filter(filterMode, filter)
     await this.loadSubset(subset, settings)
   }
 
   /**
-   * Removes current geometry from renderer.
+   * Removes the current geometry from the renderer.
    */
   clear () {
     this._elementToObject.clear()
@@ -222,7 +325,7 @@ export class Vim {
   }
 
   /**
-   * Disposes of all resources.
+   * Cleans up and releases resources associated with the vim.
    */
   dispose () {
     this._builder.dispose()

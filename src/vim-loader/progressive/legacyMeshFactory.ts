@@ -1,15 +1,19 @@
-// loader
-import { VimSettings } from '../vimSettings'
+/**
+ * @module vim-loader
+ */
+
 import { InsertableMesh } from './insertableMesh'
-import { Scene } from '../../vim'
+import { Scene } from '../../vim-loader/scene'
 import { G3dMaterial, G3d, MeshSection } from 'vim-format'
 import { InstancedMeshFactory } from './instancedMeshFactory'
 import { G3dSubset } from './g3dSubset'
 
-export class LegacyMeshFactory {
+/**
+ * Mesh factory to load a standard vim using the progressive pipeline.
+ */
+export class VimMeshFactory {
   readonly g3d: G3d
   private _materials: G3dMaterial
-  private _settings: VimSettings
   private _instancedFactory: InstancedMeshFactory
   private _scene: Scene
 
@@ -20,6 +24,9 @@ export class LegacyMeshFactory {
     this._instancedFactory = new InstancedMeshFactory(materials)
   }
 
+  /**
+   * Adds all instances from subset to the scene
+   */
   public add (subset: G3dSubset) {
     const uniques = subset.filterUniqueMeshes()
     const nonUniques = subset.filterNonUniqueMeshes()
@@ -27,23 +34,6 @@ export class LegacyMeshFactory {
     // Create and add meshes to scene
     this.addInstancedMeshes(this._scene, nonUniques)
     this.addMergedMesh(this._scene, uniques)
-  }
-
-  createScene () {
-    // Apply filters and split meshes to be instanced/merged
-    const subset = new G3dSubset(this.g3d).filter(
-      this._settings.filterMode,
-      this._settings.filter
-    )
-
-    const uniques = subset.filterUniqueMeshes()
-    const nonUniques = subset.filterNonUniqueMeshes()
-
-    // Create and add meshes to scene
-    const scene = new Scene(undefined, this._settings.matrix)
-    this.addInstancedMeshes(scene, nonUniques)
-    this.addMergedMesh(scene, uniques)
-    return scene
   }
 
   private addMergedMesh (scene: Scene, subset: G3dSubset) {

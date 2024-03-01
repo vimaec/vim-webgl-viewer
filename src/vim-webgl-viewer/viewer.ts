@@ -6,7 +6,7 @@ import * as THREE from 'three'
 
 // internal
 import { Settings, getSettings, PartialSettings } from './viewerSettings'
-import { Camera } from './camera/camera'
+import { Camera, ICamera } from './camera/camera'
 import { Input } from './inputs/input'
 import { Selection } from './selection'
 import { Environment, IEnvironment } from './environment'
@@ -15,76 +15,82 @@ import { RenderScene } from './rendering/renderScene'
 import { Viewport } from './viewport'
 import { Gizmos } from './gizmos/gizmos'
 
-import { Vim, VimMaterials } from '../vim'
 
 // loader
 import { Renderer } from './rendering/renderer'
-import { SignalDispatcher } from 'ste-signals'
+import { ISignal, SignalDispatcher } from 'ste-signals'
+import { ViewerMaterials } from '../vim-loader/materials/viewerMaterials'
+import { Vim } from '../vim-loader/vim'
 
 /**
  * Viewer and loader for vim files.
  */
 export class Viewer {
   /**
-   * Current viewer settings.
+   * The settings configuration used by the viewer.
    */
-  settings: Settings
+  readonly settings: Settings
 
   /**
-   * Interface to manage objects to be rendered.
+   * The renderer used by the viewer for rendering scenes.
    */
-  renderer: Renderer
+  readonly renderer: Renderer
 
   /**
-   * Interface to manage html canvas.
+   * The interface for managing the HTML canvas viewport.
    */
-  viewport: Viewport
+
+  readonly viewport: Viewport
 
   /**
-   * Interface to manage viewer selection.
+   * The interface for managing viewer selection.
    */
-  selection: Selection
+  readonly selection: Selection
 
   /**
-   * Interface to manipulate default viewer inputs.
+   * The interface for manipulating default viewer inputs.
    */
-  inputs: Input
+  readonly inputs: Input
 
   /**
-   * Interface to raycast into the scene to find objects.
+   * The interface for performing raycasting into the scene to find objects.
    */
-  raycaster: Raycaster
+  readonly raycaster: Raycaster
 
   /**
-   * Interface to interact with viewer materials
+   * The materials used by the viewer to render the vims.
    */
-  materials: VimMaterials
+  readonly materials: ViewerMaterials
 
   /**
-   * Interface to manipulate the viewer camera.
+   * The interface for manipulating the viewer's camera.
    */
   get camera () {
-    return this._camera
+    return this._camera as ICamera
   }
 
   /**
-   * Interface to manipulate THREE elements not directly related to vim.
+   * The interface for manipulating THREE elements that are not directly related to Vim objects.
    */
   get environment () {
     return this._environment as IEnvironment
   }
 
   /**
-   * Signal dispatched when a new vim is loaded or unloaded.
+   * The collection of gizmos available for visualization and interaction within the viewer.
    */
-  get onVimLoaded () {
+  gizmos: Gizmos
+
+  /**
+   * A signal that is dispatched when a new Vim object is loaded or unloaded.
+   */
+  get onVimLoaded () : ISignal{
     return this._onVimLoaded.asEvent()
   }
 
-  private _environment: Environment
   private _camera: Camera
+  private _environment: Environment
   private _clock = new THREE.Clock()
-  gizmos: Gizmos
 
   // State
   private _vims = new Set<Vim>()
@@ -94,7 +100,7 @@ export class Viewer {
   constructor (options?: PartialSettings) {
     this.settings = getSettings(options)
 
-    this.materials = VimMaterials.getInstance()
+    this.materials = ViewerMaterials.getInstance()
 
     const scene = new RenderScene()
     this.viewport = new Viewport(this.settings)
@@ -108,17 +114,15 @@ export class Viewer {
     )
 
     this.inputs = new Input(this)
-
-    this.gizmos = new Gizmos(this)
+    this.gizmos = new Gizmos(this, this._camera)
     this.materials.applySettings(this.settings)
 
-    // TODO add options
+    // Ground plane and lights 
     this._environment = new Environment(this.settings)
     this._environment.getObjects().forEach((o) => this.renderer.add(o))
     this.renderer.onBoxUpdated.subscribe((_) => {
       const box = this.renderer.getBoundingBox()
       this._environment.adaptToContent(box)
-      this.gizmos.section.fitBox(box)
     })
 
     // Input and Selection
@@ -146,19 +150,26 @@ export class Viewer {
   }
 
   /**
-   * Returns an array with all loaded vims.
+   * Retrieves an array containing all currently loaded Vim objects.
+   * @returns {Vim[]} An array of all Vim objects currently loaded in the viewer.
    */
   get vims () {
     return [...this._vims]
   }
 
   /**
-   * Current loaded vim count
+   * The number of Vim objects currently loaded in the viewer.
    */
   get vimCount () {
     return this._vims.size
   }
 
+
+  /**
+   * Adds a Vim object to the renderer, triggering the appropriate actions and dispatching events upon successful addition.
+   * @param {Vim} vim - The Vim object to add to the renderer.
+   * @throws {Error} If the Vim object is already added or if loading the Vim would exceed maximum geometry memory.
+   */
   add (vim: Vim) {
     if (this._vims.has(vim)) {
       throw new Error('Vim cannot be added again, unless removed first.')
@@ -174,7 +185,9 @@ export class Viewer {
   }
 
   /**
-   * Unload given vim from viewer.
+   * Unloads the given Vim object from the viewer, updating the scene and triggering necessary actions.
+   * @param {Vim} vim - The Vim object to remove from the viewer.
+   * @throws {Error} If attempting to remove a Vim object that is not present in the viewer.
    */
   remove (vim: Vim) {
     if (!this._vims.has(vim)) {
@@ -189,14 +202,14 @@ export class Viewer {
   }
 
   /**
-   * Unloads all vim from viewer.
+   * Removes all Vim objects from the viewer, clearing the scene.
    */
   clear () {
     this.vims.forEach((v) => this.remove(v))
   }
 
   /**
-   * Disposes all resources.
+   * Cleans up and releases resources associated with the viewer.
    */
   dispose () {
     cancelAnimationFrame(this._updateId)

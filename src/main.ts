@@ -1,92 +1,41 @@
-import * as VIM from './vim'
+import * as VIM from '.'
 import * as THREE from 'three'
 
 // Parse URL for source file
 const params = new URLSearchParams(window.location.search)
-// Edge server doesn't serve http ranges properly
 const url = params.has('vim')
-  ? params.get('vim') // : './test_vim.vim.gz'
-  : 'https://vim02.azureedge.net/samples/residence.vim'
-// 'https://vim02.azureedge.net/samples/test_vim.vim.gz'
-// : 'https://vimdevelopment01storage.blob.core.windows.net/samples/TowerS-ARCHITECTURE-ALL.v1.2.50.vim'
-
-// Parse URL for transparency mode
-let transparency: VIM.Transparency.Mode = 'all'
-if (params.has('transparency')) {
-  const t = params.get('transparency')
-  transparency = VIM.Transparency.isValid(t) ? t : 'all'
-}
-
-// Parse URL for streaming method
-let streamBim: boolean = false
-let streamGeometry: boolean = false
-if (params.has('download')) {
-  const t = params.get('download')
-  const [bim, geo] =
-    t === 'geometry'
-      ? [true, false]
-      : t === 'stream'
-        ? [true, true]
-        : [false, false]
-  streamBim = bim
-  streamGeometry = geo
-}
-
-// Parse URL for initial selection
-let selection: number[] = []
-if (params.has('selection')) {
-  const p = params.get('selection')!
-  selection = p?.split('+').map((s) => Number.parseInt(s))
-}
+  ? params.get('vim')
+  : null
 
 let time: number
 const viewer = new VIM.Viewer()
-let request: VIM.VimRequest
-test()
+
+load(url ?? "https://vim02.azureedge.net/samples/residence.v1.2.75.vim")
+// load(url ?? "https://vim02.azureedge.net/samples/residence.v1.2.75.vimx")
 addLoadButton()
 
-async function test () {
-  const vim = await load(url)
-}
 
 async function load (url: string | ArrayBuffer) {
   time = Date.now()
-  const vim = await VIM.VimxLoader.loadAny(
-    // 'https://vimdevelopment01storage.blob.core.windows.net/split-mesh/_WHITELEYS-VIM-MAIN_detached.v1.2.42.vimx',
-    // 'https://vimdevelopment01storage.blob.core.windows.net/samples/residence.vim',
-    // '5001201_at_qq.com-tower.vimx',
-    'https://vimdevelopment01storage.blob.core.windows.net/split-mesh/residence.vimx',
-    // 'https://vimdevelopment01storage.blob.core.windows.net/split-mesh/tower.vimx',
-    // 'https://vimdevelopment01storage.blob.core.windows.net/samples/residence.vim',
-    // 'https://vim02.azureedge.net/samples/residence.vim',
-    // './Damn.vim',
-    // 'https://vimdevelopment01storage.blob.core.windows.net/samples/TowerS-ARCHITECTURE-ALL.v1.2.50.vim',
+  viewer.gizmos.loading.visible = true
+
+  const vim = await VIM.open(url,
     {
-      // filter: [9969, 9970, 9971], // .map((i) => i + 3500000),
-      // filterMode: 'instance',
-      // legacy: true,
-      // scale: 0.001,
-      // legacy: true,
-      progressive: true,
-      refreshInterval: 200,
-      loadRooms: true,
+      legacy : true,
       rotation: new VIM.THREE.Vector3(270, 0, 0)
-    }
-  )
-
-  await onVimLoaded(vim)
-  return vim
-}
-
-async function onVimLoaded (vim: VIM.Vim) {
+    }, (p) => console.log(`Downloading Vim (${(p.loaded / 1000).toFixed(0)} kb)`) 
+  ) 
   viewer.add(vim)
-  vim.onLoadingUpdate.sub(() => (viewer.gizmos.loading.visible = vim.isLoading))
-  const load = vim.loadAll()
-  viewer.camera.do().frame('all', new THREE.Vector3(1, -1, 1))
-  await load
+  
 
-  console.log(`loaded in ${(Date.now() - time) / 1000} seconds`)
+  vim.loadAll().then(() =>{
+    viewer.gizmos.loading.visible = false
+    console.log(`loaded in ${(Date.now() - time) / 1000} seconds`)
+  })
+  
+  viewer.camera.snap(true).frame(vim)
 
+  // Useful for debuging in console.
   globalThis.vim = vim
   globalThis.viewer = viewer
   globalThis.THREE = THREE
@@ -99,7 +48,6 @@ function addLoadButton () {
 
   input.onchange = (e: any) => {
     viewer.clear()
-    request?.abort()
     // getting a hold of the file reference
     const file = e.target.files[0]
 

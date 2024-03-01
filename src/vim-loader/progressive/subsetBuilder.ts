@@ -1,8 +1,14 @@
-import { Vimx, Scene } from '../../vim'
-import { LegacyMeshFactory } from './legacyMeshFactory'
-import { LoadPartialSettings, SubsetRequest } from './subsetRequest'
+/**
+ * @module vim-loader
+ */
+
+import { VimMeshFactory } from './legacyMeshFactory'
+import { LoadPartialSettings, LoadSettings, SubsetRequest } from './subsetRequest'
 import { G3dSubset } from './g3dSubset'
-import { ISignal, SignalDispatcher } from 'ste-signals'
+import { ISignal, ISignalHandler, SignalDispatcher } from 'ste-signals'
+import { ISubscribable, SubscriptionChangeEventHandler } from 'ste-core'
+import { Vimx } from './vimx'
+import { Scene } from '../scene'
 
 export interface SubsetBuilder {
   /** Dispatched whenever a subset begins or finishes loading. */
@@ -27,7 +33,7 @@ export interface SubsetBuilder {
  * Loads and builds subsets from a Vim file.
  */
 export class VimSubsetBuilder implements SubsetBuilder {
-  factory: LegacyMeshFactory
+  factory: VimMeshFactory
 
   private _onUpdate = new SignalDispatcher()
 
@@ -39,7 +45,7 @@ export class VimSubsetBuilder implements SubsetBuilder {
     return false
   }
 
-  constructor (factory: LegacyMeshFactory) {
+  constructor (factory: VimMeshFactory) {
     this.factory = factory
   }
 
@@ -101,4 +107,44 @@ export class VimxSubsetBuilder {
   dispose () {
     this.clear()
   }
+}
+
+export class DummySubsetBuilder implements SubsetBuilder {
+  get onUpdate () {
+    
+    return new AlwaysTrueSignal()
+  }
+  get isLoading() {
+    return false
+  }
+
+  getFullSet(): G3dSubset {
+    throw new Error('Method not implemented.')
+  }
+  loadSubset(subset: G3dSubset, settings?: Partial<LoadSettings>) {}
+  clear() {  }
+  dispose() {  }
+}
+
+class AlwaysTrueSignal implements ISignal{
+  count: number
+  subscribe(fn: ISignalHandler): () => void {
+    fn(null)
+    return () =>{}
+  }
+  sub(fn: ISignalHandler): () => void {
+    fn(null)
+    return () =>{}
+  }
+  unsubscribe(fn: ISignalHandler): void {}
+  unsub(fn: ISignalHandler): void {}
+  one(fn: ISignalHandler): () => void {
+    fn(null)
+    return () =>{}
+  }
+  has(fn: ISignalHandler): boolean {
+    return false
+  }
+  clear(): void {}
+  onSubscriptionChange: ISubscribable<SubscriptionChangeEventHandler>
 }

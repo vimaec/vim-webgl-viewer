@@ -21,10 +21,10 @@
 <ul class="tsd-hierarchy">
 <li><span class="target">CameraMovement</span>
 <ul class="tsd-hierarchy">
-<li><a href="viw_webgl_viewer_camera.CameraMovementDo.html" class="tsd-signature-type" data-tsd-kind="Class">CameraMovementDo</a></li>
-<li><a href="viw_webgl_viewer_camera.CameraLerp.html" class="tsd-signature-type" data-tsd-kind="Class">CameraLerp</a></li></ul></li></ul></section><aside class="tsd-sources">
+<li><a href="viw_webgl_viewer_camera.CameraLerp.html" class="tsd-signature-type" data-tsd-kind="Class">CameraLerp</a></li>
+<li><a href="viw_webgl_viewer_camera.CameraMovementSnap.html" class="tsd-signature-type" data-tsd-kind="Class">CameraMovementSnap</a></li></ul></li></ul></section><aside class="tsd-sources">
 <ul>
-<li>Defined in <a href="https://github.com/vimaec/vim-webgl-viewer/blob/2023d14/src/vim-webgl-viewer/camera/cameraMovement.ts#L9">src/vim-webgl-viewer/camera/cameraMovement.ts:9</a></li></ul></aside>
+<li>Defined in <a href="https://github.com/vimaec/vim-webgl-viewer/blob/150d102/src/vim-webgl-viewer/camera/cameraMovement.ts#L12">src/vim-webgl-viewer/camera/cameraMovement.ts:12</a></li></ul></aside>
 <section class="tsd-panel-group tsd-index-group">
 <section class="tsd-panel tsd-index-panel">
 <details class="tsd-index-content tsd-index-accordion" open><summary class="tsd-accordion-summary tsd-index-summary">
@@ -68,35 +68,41 @@
 <h5>camera: <a href="viw_webgl_viewer_camera.Camera.html" class="tsd-signature-type" data-tsd-kind="Class">Camera</a></h5></li></ul></div>
 <h4 class="tsd-returns-title">Returns <a href="viw_webgl_viewer_camera.CameraMovement.html" class="tsd-signature-type" data-tsd-kind="Class">CameraMovement</a></h4><aside class="tsd-sources">
 <ul>
-<li>Defined in <a href="https://github.com/vimaec/vim-webgl-viewer/blob/2023d14/src/vim-webgl-viewer/camera/cameraMovement.ts#L12">src/vim-webgl-viewer/camera/cameraMovement.ts:12</a></li></ul></aside></li></ul></section></section>
+<li>Defined in <a href="https://github.com/vimaec/vim-webgl-viewer/blob/150d102/src/vim-webgl-viewer/camera/cameraMovement.ts#L15">src/vim-webgl-viewer/camera/cameraMovement.ts:15</a></li></ul></aside></li></ul></section></section>
 <section class="tsd-panel-group tsd-member-group">
 <h2>Properties</h2>
 <section class="tsd-panel tsd-member tsd-kind-property tsd-parent-kind-class tsd-is-protected"><a id="_camera" class="tsd-anchor"></a>
 <h3 class="tsd-anchor-link"><code class="tsd-tag ts-flagProtected">Protected</code> <span>_camera</span><a href="#_camera" aria-label="Permalink" class="tsd-anchor-icon"><svg class="icon icon-tabler icon-tabler-link" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" fill="none" stroke-linecap="round" stroke-linejoin="round"><use href="#icon-anchor-a"></use><use href="#icon-anchor-b"></use><use href="#icon-anchor-c"></use></svg></a></h3>
 <div class="tsd-signature">_camera<span class="tsd-signature-symbol">:</span> <a href="viw_webgl_viewer_camera.Camera.html" class="tsd-signature-type" data-tsd-kind="Class">Camera</a></div><aside class="tsd-sources">
 <ul>
-<li>Defined in <a href="https://github.com/vimaec/vim-webgl-viewer/blob/2023d14/src/vim-webgl-viewer/camera/cameraMovement.ts#L10">src/vim-webgl-viewer/camera/cameraMovement.ts:10</a></li></ul></aside></section></section>
+<li>Defined in <a href="https://github.com/vimaec/vim-webgl-viewer/blob/150d102/src/vim-webgl-viewer/camera/cameraMovement.ts#L13">src/vim-webgl-viewer/camera/cameraMovement.ts:13</a></li></ul></aside></section></section>
 <section class="tsd-panel-group tsd-member-group">
 <h2>Methods</h2>
 <section class="tsd-panel tsd-member tsd-kind-method tsd-parent-kind-class"><a id="frame" class="tsd-anchor"></a>
 <h3 class="tsd-anchor-link"><span>frame</span><a href="#frame" aria-label="Permalink" class="tsd-anchor-icon"><svg class="icon icon-tabler icon-tabler-link" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" fill="none" stroke-linecap="round" stroke-linejoin="round"><use href="#icon-anchor-a"></use><use href="#icon-anchor-b"></use><use href="#icon-anchor-c"></use></svg></a></h3>
 <ul class="tsd-signatures tsd-kind-method tsd-parent-kind-class">
-<li class="tsd-signature tsd-anchor-link" id="frame.frame-1">frame<span class="tsd-signature-symbol">(</span>target<span class="tsd-signature-symbol">: </span><span class="tsd-signature-type">&quot;all&quot;</span><span class="tsd-signature-symbol"> | </span><span class="tsd-signature-type">Box3</span><span class="tsd-signature-symbol"> | </span><span class="tsd-signature-type">Sphere</span><span class="tsd-signature-symbol"> | </span><a href="vim_loader.Object.html" class="tsd-signature-type" data-tsd-kind="Class">Object</a>, forward<span class="tsd-signature-symbol">?: </span><span class="tsd-signature-type">Vector3</span><span class="tsd-signature-symbol">)</span><span class="tsd-signature-symbol">: </span><span class="tsd-signature-type">void</span><a href="#frame.frame-1" aria-label="Permalink" class="tsd-anchor-icon"><svg class="icon icon-tabler icon-tabler-link" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" fill="none" stroke-linecap="round" stroke-linejoin="round"><use href="#icon-anchor-a"></use><use href="#icon-anchor-b"></use><use href="#icon-anchor-c"></use></svg></a></li>
+<li class="tsd-signature tsd-anchor-link" id="frame.frame-1">frame<span class="tsd-signature-symbol">(</span>target<span class="tsd-signature-symbol">: </span><span class="tsd-signature-type">&quot;all&quot;</span><span class="tsd-signature-symbol"> | </span><span class="tsd-signature-type">Box3</span><span class="tsd-signature-symbol"> | </span><span class="tsd-signature-type">Sphere</span><span class="tsd-signature-symbol"> | </span><a href="vim_loader.Vim.html" class="tsd-signature-type" data-tsd-kind="Class">Vim</a><span class="tsd-signature-symbol"> | </span><a href="../interfaces/vim_loader.IObject.html" class="tsd-signature-type" data-tsd-kind="Interface">IObject</a>, forward<span class="tsd-signature-symbol">?: </span><span class="tsd-signature-type">Vector3</span><span class="tsd-signature-symbol">)</span><span class="tsd-signature-symbol">: </span><span class="tsd-signature-type">void</span><a href="#frame.frame-1" aria-label="Permalink" class="tsd-anchor-icon"><svg class="icon icon-tabler icon-tabler-link" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" fill="none" stroke-linecap="round" stroke-linejoin="round"><use href="#icon-anchor-a"></use><use href="#icon-anchor-b"></use><use href="#icon-anchor-c"></use></svg></a></li>
 <li class="tsd-description">
+<div class="tsd-comment tsd-typography"><p>Sets the camera&#39;s orientation and position to focus on the specified target.</p>
+</div>
 <div class="tsd-parameters">
 <h4 class="tsd-parameters-title">Parameters</h4>
 <ul class="tsd-parameter-list">
 <li>
-<h5>target: <span class="tsd-signature-type">&quot;all&quot;</span><span class="tsd-signature-symbol"> | </span><span class="tsd-signature-type">Box3</span><span class="tsd-signature-symbol"> | </span><span class="tsd-signature-type">Sphere</span><span class="tsd-signature-symbol"> | </span><a href="vim_loader.Object.html" class="tsd-signature-type" data-tsd-kind="Class">Object</a></h5></li>
+<h5>target: <span class="tsd-signature-type">&quot;all&quot;</span><span class="tsd-signature-symbol"> | </span><span class="tsd-signature-type">Box3</span><span class="tsd-signature-symbol"> | </span><span class="tsd-signature-type">Sphere</span><span class="tsd-signature-symbol"> | </span><a href="vim_loader.Vim.html" class="tsd-signature-type" data-tsd-kind="Class">Vim</a><span class="tsd-signature-symbol"> | </span><a href="../interfaces/vim_loader.IObject.html" class="tsd-signature-type" data-tsd-kind="Interface">IObject</a></h5>
+<div class="tsd-comment tsd-typography"><p>The target object, or &#39;all&#39; to frame all objects.</p>
+</div></li>
 <li>
-<h5><code class="tsd-tag ts-flagOptional">Optional</code> forward: <span class="tsd-signature-type">Vector3</span></h5></li></ul></div>
+<h5><code class="tsd-tag ts-flagOptional">Optional</code> forward: <span class="tsd-signature-type">Vector3</span></h5>
+<div class="tsd-comment tsd-typography"><p>Optional forward direction after framing.</p>
+</div></li></ul></div>
 <h4 class="tsd-returns-title">Returns <span class="tsd-signature-type">void</span></h4><aside class="tsd-sources">
 <ul>
-<li>Defined in <a href="https://github.com/vimaec/vim-webgl-viewer/blob/2023d14/src/vim-webgl-viewer/camera/cameraMovement.ts#L71">src/vim-webgl-viewer/camera/cameraMovement.ts:71</a></li></ul></aside></li></ul></section>
+<li>Defined in <a href="https://github.com/vimaec/vim-webgl-viewer/blob/150d102/src/vim-webgl-viewer/camera/cameraMovement.ts#L144">src/vim-webgl-viewer/camera/cameraMovement.ts:144</a></li></ul></aside></li></ul></section>
 <section class="tsd-panel tsd-member tsd-kind-method tsd-parent-kind-class tsd-is-protected"><a id="frameSphere" class="tsd-anchor"></a>
 <h3 class="tsd-anchor-link"><code class="tsd-tag ts-flagProtected">Protected</code> <span>frame<wbr/>Sphere</span><a href="#frameSphere" aria-label="Permalink" class="tsd-anchor-icon"><svg class="icon icon-tabler icon-tabler-link" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" fill="none" stroke-linecap="round" stroke-linejoin="round"><use href="#icon-anchor-a"></use><use href="#icon-anchor-b"></use><use href="#icon-anchor-c"></use></svg></a></h3>
 <ul class="tsd-signatures tsd-kind-method tsd-parent-kind-class tsd-is-protected">
-<li class="tsd-signature tsd-anchor-link" id="frameSphere.frameSphere-1">frame<wbr/>Sphere<span class="tsd-signature-symbol">(</span>sphere<span class="tsd-signature-symbol">: </span><span class="tsd-signature-type">Sphere</span>, forward<span class="tsd-signature-symbol">: </span><span class="tsd-signature-type">Vector3</span><span class="tsd-signature-symbol">)</span><span class="tsd-signature-symbol">: </span><span class="tsd-signature-type">void</span><a href="#frameSphere.frameSphere-1" aria-label="Permalink" class="tsd-anchor-icon"><svg class="icon icon-tabler icon-tabler-link" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" fill="none" stroke-linecap="round" stroke-linejoin="round"><use href="#icon-anchor-a"></use><use href="#icon-anchor-b"></use><use href="#icon-anchor-c"></use></svg></a></li>
+<li class="tsd-signature tsd-anchor-link" id="frameSphere.frameSphere-1">frame<wbr/>Sphere<span class="tsd-signature-symbol">(</span>sphere<span class="tsd-signature-symbol">: </span><span class="tsd-signature-type">Sphere</span>, forward<span class="tsd-signature-symbol">?: </span><span class="tsd-signature-type">Vector3</span><span class="tsd-signature-symbol">)</span><span class="tsd-signature-symbol">: </span><span class="tsd-signature-type">void</span><a href="#frameSphere.frameSphere-1" aria-label="Permalink" class="tsd-anchor-icon"><svg class="icon icon-tabler icon-tabler-link" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" fill="none" stroke-linecap="round" stroke-linejoin="round"><use href="#icon-anchor-a"></use><use href="#icon-anchor-b"></use><use href="#icon-anchor-c"></use></svg></a></li>
 <li class="tsd-description">
 <div class="tsd-parameters">
 <h4 class="tsd-parameters-title">Parameters</h4>
@@ -104,154 +110,202 @@
 <li>
 <h5>sphere: <span class="tsd-signature-type">Sphere</span></h5></li>
 <li>
-<h5>forward: <span class="tsd-signature-type">Vector3</span></h5></li></ul></div>
+<h5><code class="tsd-tag ts-flagOptional">Optional</code> forward: <span class="tsd-signature-type">Vector3</span></h5></li></ul></div>
 <h4 class="tsd-returns-title">Returns <span class="tsd-signature-type">void</span></h4><aside class="tsd-sources">
 <ul>
-<li>Defined in <a href="https://github.com/vimaec/vim-webgl-viewer/blob/2023d14/src/vim-webgl-viewer/camera/cameraMovement.ts#L89">src/vim-webgl-viewer/camera/cameraMovement.ts:89</a></li></ul></aside></li></ul></section>
+<li>Defined in <a href="https://github.com/vimaec/vim-webgl-viewer/blob/150d102/src/vim-webgl-viewer/camera/cameraMovement.ts#L166">src/vim-webgl-viewer/camera/cameraMovement.ts:166</a></li></ul></aside></li></ul></section>
 <section class="tsd-panel tsd-member tsd-kind-method tsd-parent-kind-class"><a id="move1" class="tsd-anchor"></a>
 <h3 class="tsd-anchor-link"><span>move1</span><a href="#move1" aria-label="Permalink" class="tsd-anchor-icon"><svg class="icon icon-tabler icon-tabler-link" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" fill="none" stroke-linecap="round" stroke-linejoin="round"><use href="#icon-anchor-a"></use><use href="#icon-anchor-b"></use><use href="#icon-anchor-c"></use></svg></a></h3>
 <ul class="tsd-signatures tsd-kind-method tsd-parent-kind-class">
 <li class="tsd-signature tsd-anchor-link" id="move1.move1-1">move1<span class="tsd-signature-symbol">(</span>amount<span class="tsd-signature-symbol">: </span><span class="tsd-signature-type">number</span>, axis<span class="tsd-signature-symbol">: </span><span class="tsd-signature-type">&quot;X&quot;</span><span class="tsd-signature-symbol"> | </span><span class="tsd-signature-type">&quot;Y&quot;</span><span class="tsd-signature-symbol"> | </span><span class="tsd-signature-type">&quot;Z&quot;</span><span class="tsd-signature-symbol">)</span><span class="tsd-signature-symbol">: </span><span class="tsd-signature-type">void</span><a href="#move1.move1-1" aria-label="Permalink" class="tsd-anchor-icon"><svg class="icon icon-tabler icon-tabler-link" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" fill="none" stroke-linecap="round" stroke-linejoin="round"><use href="#icon-anchor-a"></use><use href="#icon-anchor-b"></use><use href="#icon-anchor-c"></use></svg></a></li>
 <li class="tsd-description">
+<div class="tsd-comment tsd-typography"><p>Moves the camera along a specified axis by a given amount.</p>
+</div>
 <div class="tsd-parameters">
 <h4 class="tsd-parameters-title">Parameters</h4>
 <ul class="tsd-parameter-list">
 <li>
-<h5>amount: <span class="tsd-signature-type">number</span></h5></li>
+<h5>amount: <span class="tsd-signature-type">number</span></h5>
+<div class="tsd-comment tsd-typography"><p>The amount to move the camera.</p>
+</div></li>
 <li>
-<h5>axis: <span class="tsd-signature-type">&quot;X&quot;</span><span class="tsd-signature-symbol"> | </span><span class="tsd-signature-type">&quot;Y&quot;</span><span class="tsd-signature-symbol"> | </span><span class="tsd-signature-type">&quot;Z&quot;</span></h5></li></ul></div>
+<h5>axis: <span class="tsd-signature-type">&quot;X&quot;</span><span class="tsd-signature-symbol"> | </span><span class="tsd-signature-type">&quot;Y&quot;</span><span class="tsd-signature-symbol"> | </span><span class="tsd-signature-type">&quot;Z&quot;</span></h5>
+<div class="tsd-comment tsd-typography"><p>The axis along which to move the camera (&#39;X&#39;, &#39;Y&#39;, or &#39;Z&#39;).</p>
+</div></li></ul></div>
 <h4 class="tsd-returns-title">Returns <span class="tsd-signature-type">void</span></h4><aside class="tsd-sources">
 <ul>
-<li>Defined in <a href="https://github.com/vimaec/vim-webgl-viewer/blob/2023d14/src/vim-webgl-viewer/camera/cameraMovement.ts#L29">src/vim-webgl-viewer/camera/cameraMovement.ts:29</a></li></ul></aside></li></ul></section>
+<li>Defined in <a href="https://github.com/vimaec/vim-webgl-viewer/blob/150d102/src/vim-webgl-viewer/camera/cameraMovement.ts#L46">src/vim-webgl-viewer/camera/cameraMovement.ts:46</a></li></ul></aside></li></ul></section>
 <section class="tsd-panel tsd-member tsd-kind-method tsd-parent-kind-class"><a id="move2" class="tsd-anchor"></a>
 <h3 class="tsd-anchor-link"><span>move2</span><a href="#move2" aria-label="Permalink" class="tsd-anchor-icon"><svg class="icon icon-tabler icon-tabler-link" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" fill="none" stroke-linecap="round" stroke-linejoin="round"><use href="#icon-anchor-a"></use><use href="#icon-anchor-b"></use><use href="#icon-anchor-c"></use></svg></a></h3>
 <ul class="tsd-signatures tsd-kind-method tsd-parent-kind-class">
 <li class="tsd-signature tsd-anchor-link" id="move2.move2-1">move2<span class="tsd-signature-symbol">(</span>vector<span class="tsd-signature-symbol">: </span><span class="tsd-signature-type">Vector2</span>, axes<span class="tsd-signature-symbol">: </span><span class="tsd-signature-type">&quot;XY&quot;</span><span class="tsd-signature-symbol"> | </span><span class="tsd-signature-type">&quot;XZ&quot;</span><span class="tsd-signature-symbol">)</span><span class="tsd-signature-symbol">: </span><span class="tsd-signature-type">void</span><a href="#move2.move2-1" aria-label="Permalink" class="tsd-anchor-icon"><svg class="icon icon-tabler icon-tabler-link" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" fill="none" stroke-linecap="round" stroke-linejoin="round"><use href="#icon-anchor-a"></use><use href="#icon-anchor-b"></use><use href="#icon-anchor-c"></use></svg></a></li>
 <li class="tsd-description">
+<div class="tsd-comment tsd-typography"><p>Moves the camera in a specified 2D direction within a plane defined by the given axes.</p>
+</div>
 <div class="tsd-parameters">
 <h4 class="tsd-parameters-title">Parameters</h4>
 <ul class="tsd-parameter-list">
 <li>
-<h5>vector: <span class="tsd-signature-type">Vector2</span></h5></li>
+<h5>vector: <span class="tsd-signature-type">Vector2</span></h5>
+<div class="tsd-comment tsd-typography"><p>The 2D vector representing the direction of movement.</p>
+</div></li>
 <li>
-<h5>axes: <span class="tsd-signature-type">&quot;XY&quot;</span><span class="tsd-signature-symbol"> | </span><span class="tsd-signature-type">&quot;XZ&quot;</span></h5></li></ul></div>
+<h5>axes: <span class="tsd-signature-type">&quot;XY&quot;</span><span class="tsd-signature-symbol"> | </span><span class="tsd-signature-type">&quot;XZ&quot;</span></h5>
+<div class="tsd-comment tsd-typography"><p>The axes defining the plane of movement (&#39;XY&#39; or &#39;XZ&#39;).</p>
+</div></li></ul></div>
 <h4 class="tsd-returns-title">Returns <span class="tsd-signature-type">void</span></h4><aside class="tsd-sources">
 <ul>
-<li>Defined in <a href="https://github.com/vimaec/vim-webgl-viewer/blob/2023d14/src/vim-webgl-viewer/camera/cameraMovement.ts#L18">src/vim-webgl-viewer/camera/cameraMovement.ts:18</a></li></ul></aside></li></ul></section>
+<li>Defined in <a href="https://github.com/vimaec/vim-webgl-viewer/blob/150d102/src/vim-webgl-viewer/camera/cameraMovement.ts#L30">src/vim-webgl-viewer/camera/cameraMovement.ts:30</a></li></ul></aside></li></ul></section>
 <section class="tsd-panel tsd-member tsd-kind-method tsd-parent-kind-class"><a id="move3" class="tsd-anchor"></a>
 <h3 class="tsd-anchor-link"><code class="tsd-tag ts-flagAbstract">Abstract</code> <span>move3</span><a href="#move3" aria-label="Permalink" class="tsd-anchor-icon"><svg class="icon icon-tabler icon-tabler-link" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" fill="none" stroke-linecap="round" stroke-linejoin="round"><use href="#icon-anchor-a"></use><use href="#icon-anchor-b"></use><use href="#icon-anchor-c"></use></svg></a></h3>
 <ul class="tsd-signatures tsd-kind-method tsd-parent-kind-class">
 <li class="tsd-signature tsd-anchor-link" id="move3.move3-1">move3<span class="tsd-signature-symbol">(</span>vector<span class="tsd-signature-symbol">: </span><span class="tsd-signature-type">Vector3</span><span class="tsd-signature-symbol">)</span><span class="tsd-signature-symbol">: </span><span class="tsd-signature-type">void</span><a href="#move3.move3-1" aria-label="Permalink" class="tsd-anchor-icon"><svg class="icon icon-tabler icon-tabler-link" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" fill="none" stroke-linecap="round" stroke-linejoin="round"><use href="#icon-anchor-a"></use><use href="#icon-anchor-b"></use><use href="#icon-anchor-c"></use></svg></a></li>
 <li class="tsd-description">
+<div class="tsd-comment tsd-typography"><p>Moves the camera by the specified 3D vector.</p>
+</div>
 <div class="tsd-parameters">
 <h4 class="tsd-parameters-title">Parameters</h4>
 <ul class="tsd-parameter-list">
 <li>
-<h5>vector: <span class="tsd-signature-type">Vector3</span></h5></li></ul></div>
+<h5>vector: <span class="tsd-signature-type">Vector3</span></h5>
+<div class="tsd-comment tsd-typography"><p>The 3D vector representing the direction and distance of movement.</p>
+</div></li></ul></div>
 <h4 class="tsd-returns-title">Returns <span class="tsd-signature-type">void</span></h4><aside class="tsd-sources">
 <ul>
-<li>Defined in <a href="https://github.com/vimaec/vim-webgl-viewer/blob/2023d14/src/vim-webgl-viewer/camera/cameraMovement.ts#L16">src/vim-webgl-viewer/camera/cameraMovement.ts:16</a></li></ul></aside></li></ul></section>
+<li>Defined in <a href="https://github.com/vimaec/vim-webgl-viewer/blob/150d102/src/vim-webgl-viewer/camera/cameraMovement.ts#L23">src/vim-webgl-viewer/camera/cameraMovement.ts:23</a></li></ul></aside></li></ul></section>
 <section class="tsd-panel tsd-member tsd-kind-method tsd-parent-kind-class"><a id="orbit" class="tsd-anchor"></a>
 <h3 class="tsd-anchor-link"><code class="tsd-tag ts-flagAbstract">Abstract</code> <span>orbit</span><a href="#orbit" aria-label="Permalink" class="tsd-anchor-icon"><svg class="icon icon-tabler icon-tabler-link" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" fill="none" stroke-linecap="round" stroke-linejoin="round"><use href="#icon-anchor-a"></use><use href="#icon-anchor-b"></use><use href="#icon-anchor-c"></use></svg></a></h3>
 <ul class="tsd-signatures tsd-kind-method tsd-parent-kind-class">
 <li class="tsd-signature tsd-anchor-link" id="orbit.orbit-1">orbit<span class="tsd-signature-symbol">(</span>vector<span class="tsd-signature-symbol">: </span><span class="tsd-signature-type">Vector2</span><span class="tsd-signature-symbol">)</span><span class="tsd-signature-symbol">: </span><span class="tsd-signature-type">void</span><a href="#orbit.orbit-1" aria-label="Permalink" class="tsd-anchor-icon"><svg class="icon icon-tabler icon-tabler-link" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" fill="none" stroke-linecap="round" stroke-linejoin="round"><use href="#icon-anchor-a"></use><use href="#icon-anchor-b"></use><use href="#icon-anchor-c"></use></svg></a></li>
 <li class="tsd-description">
+<div class="tsd-comment tsd-typography"><p>Orbits the camera around its target by the given angle while maintaining the distance.</p>
+</div>
 <div class="tsd-parameters">
 <h4 class="tsd-parameters-title">Parameters</h4>
 <ul class="tsd-parameter-list">
 <li>
-<h5>vector: <span class="tsd-signature-type">Vector2</span></h5></li></ul></div>
+<h5>vector: <span class="tsd-signature-type">Vector2</span></h5>
+<div class="tsd-comment tsd-typography"><p>The 2D vector representing the orbit angles around the X and Y axes.</p>
+</div></li></ul></div>
 <h4 class="tsd-returns-title">Returns <span class="tsd-signature-type">void</span></h4><aside class="tsd-sources">
 <ul>
-<li>Defined in <a href="https://github.com/vimaec/vim-webgl-viewer/blob/2023d14/src/vim-webgl-viewer/camera/cameraMovement.ts#L45">src/vim-webgl-viewer/camera/cameraMovement.ts:45</a></li></ul></aside></li></ul></section>
+<li>Defined in <a href="https://github.com/vimaec/vim-webgl-viewer/blob/150d102/src/vim-webgl-viewer/camera/cameraMovement.ts#L78">src/vim-webgl-viewer/camera/cameraMovement.ts:78</a></li></ul></aside></li></ul></section>
 <section class="tsd-panel tsd-member tsd-kind-method tsd-parent-kind-class"><a id="orbitTowards" class="tsd-anchor"></a>
 <h3 class="tsd-anchor-link"><span>orbit<wbr/>Towards</span><a href="#orbitTowards" aria-label="Permalink" class="tsd-anchor-icon"><svg class="icon icon-tabler icon-tabler-link" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" fill="none" stroke-linecap="round" stroke-linejoin="round"><use href="#icon-anchor-a"></use><use href="#icon-anchor-b"></use><use href="#icon-anchor-c"></use></svg></a></h3>
 <ul class="tsd-signatures tsd-kind-method tsd-parent-kind-class">
 <li class="tsd-signature tsd-anchor-link" id="orbitTowards.orbitTowards-1">orbit<wbr/>Towards<span class="tsd-signature-symbol">(</span>direction<span class="tsd-signature-symbol">: </span><span class="tsd-signature-type">Vector3</span><span class="tsd-signature-symbol">)</span><span class="tsd-signature-symbol">: </span><span class="tsd-signature-type">void</span><a href="#orbitTowards.orbitTowards-1" aria-label="Permalink" class="tsd-anchor-icon"><svg class="icon icon-tabler icon-tabler-link" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" fill="none" stroke-linecap="round" stroke-linejoin="round"><use href="#icon-anchor-a"></use><use href="#icon-anchor-b"></use><use href="#icon-anchor-c"></use></svg></a></li>
 <li class="tsd-description">
+<div class="tsd-comment tsd-typography"><p>Orbits the camera around its target to align with the given direction.</p>
+</div>
 <div class="tsd-parameters">
 <h4 class="tsd-parameters-title">Parameters</h4>
 <ul class="tsd-parameter-list">
 <li>
-<h5>direction: <span class="tsd-signature-type">Vector3</span></h5></li></ul></div>
+<h5>direction: <span class="tsd-signature-type">Vector3</span></h5>
+<div class="tsd-comment tsd-typography"><p>The direction towards which the camera should be oriented.</p>
+</div></li></ul></div>
 <h4 class="tsd-returns-title">Returns <span class="tsd-signature-type">void</span></h4><aside class="tsd-sources">
 <ul>
-<li>Defined in <a href="https://github.com/vimaec/vim-webgl-viewer/blob/2023d14/src/vim-webgl-viewer/camera/cameraMovement.ts#L47">src/vim-webgl-viewer/camera/cameraMovement.ts:47</a></li></ul></aside></li></ul></section>
+<li>Defined in <a href="https://github.com/vimaec/vim-webgl-viewer/blob/150d102/src/vim-webgl-viewer/camera/cameraMovement.ts#L84">src/vim-webgl-viewer/camera/cameraMovement.ts:84</a></li></ul></aside></li></ul></section>
 <section class="tsd-panel tsd-member tsd-kind-method tsd-parent-kind-class"><a id="reset" class="tsd-anchor"></a>
 <h3 class="tsd-anchor-link"><code class="tsd-tag ts-flagAbstract">Abstract</code> <span>reset</span><a href="#reset" aria-label="Permalink" class="tsd-anchor-icon"><svg class="icon icon-tabler icon-tabler-link" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" fill="none" stroke-linecap="round" stroke-linejoin="round"><use href="#icon-anchor-a"></use><use href="#icon-anchor-b"></use><use href="#icon-anchor-c"></use></svg></a></h3>
 <ul class="tsd-signatures tsd-kind-method tsd-parent-kind-class">
 <li class="tsd-signature tsd-anchor-link" id="reset.reset-1">reset<span class="tsd-signature-symbol">(</span><span class="tsd-signature-symbol">)</span><span class="tsd-signature-symbol">: </span><span class="tsd-signature-type">void</span><a href="#reset.reset-1" aria-label="Permalink" class="tsd-anchor-icon"><svg class="icon icon-tabler icon-tabler-link" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" fill="none" stroke-linecap="round" stroke-linejoin="round"><use href="#icon-anchor-a"></use><use href="#icon-anchor-b"></use><use href="#icon-anchor-c"></use></svg></a></li>
 <li class="tsd-description">
+<div class="tsd-comment tsd-typography"><p>Resets the camera to its last saved position and orientation.</p>
+</div>
 <h4 class="tsd-returns-title">Returns <span class="tsd-signature-type">void</span></h4><aside class="tsd-sources">
 <ul>
-<li>Defined in <a href="https://github.com/vimaec/vim-webgl-viewer/blob/2023d14/src/vim-webgl-viewer/camera/cameraMovement.ts#L67">src/vim-webgl-viewer/camera/cameraMovement.ts:67</a></li></ul></aside></li></ul></section>
+<li>Defined in <a href="https://github.com/vimaec/vim-webgl-viewer/blob/150d102/src/vim-webgl-viewer/camera/cameraMovement.ts#L129">src/vim-webgl-viewer/camera/cameraMovement.ts:129</a></li></ul></aside></li></ul></section>
 <section class="tsd-panel tsd-member tsd-kind-method tsd-parent-kind-class"><a id="rotate" class="tsd-anchor"></a>
 <h3 class="tsd-anchor-link"><code class="tsd-tag ts-flagAbstract">Abstract</code> <span>rotate</span><a href="#rotate" aria-label="Permalink" class="tsd-anchor-icon"><svg class="icon icon-tabler icon-tabler-link" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" fill="none" stroke-linecap="round" stroke-linejoin="round"><use href="#icon-anchor-a"></use><use href="#icon-anchor-b"></use><use href="#icon-anchor-c"></use></svg></a></h3>
 <ul class="tsd-signatures tsd-kind-method tsd-parent-kind-class">
 <li class="tsd-signature tsd-anchor-link" id="rotate.rotate-1">rotate<span class="tsd-signature-symbol">(</span>angle<span class="tsd-signature-symbol">: </span><span class="tsd-signature-type">Vector2</span><span class="tsd-signature-symbol">)</span><span class="tsd-signature-symbol">: </span><span class="tsd-signature-type">void</span><a href="#rotate.rotate-1" aria-label="Permalink" class="tsd-anchor-icon"><svg class="icon icon-tabler icon-tabler-link" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" fill="none" stroke-linecap="round" stroke-linejoin="round"><use href="#icon-anchor-a"></use><use href="#icon-anchor-b"></use><use href="#icon-anchor-c"></use></svg></a></li>
 <li class="tsd-description">
+<div class="tsd-comment tsd-typography"><p>Rotates the camera by the specified angles.</p>
+</div>
 <div class="tsd-parameters">
 <h4 class="tsd-parameters-title">Parameters</h4>
 <ul class="tsd-parameter-list">
 <li>
-<h5>angle: <span class="tsd-signature-type">Vector2</span></h5></li></ul></div>
+<h5>angle: <span class="tsd-signature-type">Vector2</span></h5>
+<div class="tsd-comment tsd-typography"><p>The 2D vector representing the rotation angles around the X and Y axes.</p>
+</div></li></ul></div>
 <h4 class="tsd-returns-title">Returns <span class="tsd-signature-type">void</span></h4><aside class="tsd-sources">
 <ul>
-<li>Defined in <a href="https://github.com/vimaec/vim-webgl-viewer/blob/2023d14/src/vim-webgl-viewer/camera/cameraMovement.ts#L39">src/vim-webgl-viewer/camera/cameraMovement.ts:39</a></li></ul></aside></li></ul></section>
+<li>Defined in <a href="https://github.com/vimaec/vim-webgl-viewer/blob/150d102/src/vim-webgl-viewer/camera/cameraMovement.ts#L60">src/vim-webgl-viewer/camera/cameraMovement.ts:60</a></li></ul></aside></li></ul></section>
 <section class="tsd-panel tsd-member tsd-kind-method tsd-parent-kind-class"><a id="set" class="tsd-anchor"></a>
 <h3 class="tsd-anchor-link"><code class="tsd-tag ts-flagAbstract">Abstract</code> <span>set</span><a href="#set" aria-label="Permalink" class="tsd-anchor-icon"><svg class="icon icon-tabler icon-tabler-link" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" fill="none" stroke-linecap="round" stroke-linejoin="round"><use href="#icon-anchor-a"></use><use href="#icon-anchor-b"></use><use href="#icon-anchor-c"></use></svg></a></h3>
 <ul class="tsd-signatures tsd-kind-method tsd-parent-kind-class">
 <li class="tsd-signature tsd-anchor-link" id="set.set-1">set<span class="tsd-signature-symbol">(</span>position<span class="tsd-signature-symbol">: </span><span class="tsd-signature-type">Vector3</span>, target<span class="tsd-signature-symbol">?: </span><span class="tsd-signature-type">Vector3</span><span class="tsd-signature-symbol">)</span><span class="tsd-signature-symbol">: </span><span class="tsd-signature-type">any</span><a href="#set.set-1" aria-label="Permalink" class="tsd-anchor-icon"><svg class="icon icon-tabler icon-tabler-link" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" fill="none" stroke-linecap="round" stroke-linejoin="round"><use href="#icon-anchor-a"></use><use href="#icon-anchor-b"></use><use href="#icon-anchor-c"></use></svg></a></li>
 <li class="tsd-description">
+<div class="tsd-comment tsd-typography"><p>Moves both the camera and its target to the given positions.</p>
+</div>
 <div class="tsd-parameters">
 <h4 class="tsd-parameters-title">Parameters</h4>
 <ul class="tsd-parameter-list">
 <li>
-<h5>position: <span class="tsd-signature-type">Vector3</span></h5></li>
+<h5>position: <span class="tsd-signature-type">Vector3</span></h5>
+<div class="tsd-comment tsd-typography"><p>The new position of the camera.</p>
+</div></li>
 <li>
-<h5><code class="tsd-tag ts-flagOptional">Optional</code> target: <span class="tsd-signature-type">Vector3</span></h5></li></ul></div>
+<h5><code class="tsd-tag ts-flagOptional">Optional</code> target: <span class="tsd-signature-type">Vector3</span></h5>
+<div class="tsd-comment tsd-typography"><p>The new position of the target (optional).</p>
+</div></li></ul></div>
 <h4 class="tsd-returns-title">Returns <span class="tsd-signature-type">any</span></h4><aside class="tsd-sources">
 <ul>
-<li>Defined in <a href="https://github.com/vimaec/vim-webgl-viewer/blob/2023d14/src/vim-webgl-viewer/camera/cameraMovement.ts#L69">src/vim-webgl-viewer/camera/cameraMovement.ts:69</a></li></ul></aside></li></ul></section>
+<li>Defined in <a href="https://github.com/vimaec/vim-webgl-viewer/blob/150d102/src/vim-webgl-viewer/camera/cameraMovement.ts#L136">src/vim-webgl-viewer/camera/cameraMovement.ts:136</a></li></ul></aside></li></ul></section>
 <section class="tsd-panel tsd-member tsd-kind-method tsd-parent-kind-class"><a id="setDistance" class="tsd-anchor"></a>
 <h3 class="tsd-anchor-link"><code class="tsd-tag ts-flagAbstract">Abstract</code> <span>set<wbr/>Distance</span><a href="#setDistance" aria-label="Permalink" class="tsd-anchor-icon"><svg class="icon icon-tabler icon-tabler-link" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" fill="none" stroke-linecap="round" stroke-linejoin="round"><use href="#icon-anchor-a"></use><use href="#icon-anchor-b"></use><use href="#icon-anchor-c"></use></svg></a></h3>
 <ul class="tsd-signatures tsd-kind-method tsd-parent-kind-class">
 <li class="tsd-signature tsd-anchor-link" id="setDistance.setDistance-1">set<wbr/>Distance<span class="tsd-signature-symbol">(</span>dist<span class="tsd-signature-symbol">: </span><span class="tsd-signature-type">number</span><span class="tsd-signature-symbol">)</span><span class="tsd-signature-symbol">: </span><span class="tsd-signature-type">void</span><a href="#setDistance.setDistance-1" aria-label="Permalink" class="tsd-anchor-icon"><svg class="icon icon-tabler icon-tabler-link" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" fill="none" stroke-linecap="round" stroke-linejoin="round"><use href="#icon-anchor-a"></use><use href="#icon-anchor-b"></use><use href="#icon-anchor-c"></use></svg></a></li>
 <li class="tsd-description">
+<div class="tsd-comment tsd-typography"><p>Sets the distance between the camera and its target to the specified value.</p>
+</div>
 <div class="tsd-parameters">
 <h4 class="tsd-parameters-title">Parameters</h4>
 <ul class="tsd-parameter-list">
 <li>
-<h5>dist: <span class="tsd-signature-type">number</span></h5></li></ul></div>
+<h5>dist: <span class="tsd-signature-type">number</span></h5>
+<div class="tsd-comment tsd-typography"><p>The new distance between the camera and its target.</p>
+</div></li></ul></div>
 <h4 class="tsd-returns-title">Returns <span class="tsd-signature-type">void</span></h4><aside class="tsd-sources">
 <ul>
-<li>Defined in <a href="https://github.com/vimaec/vim-webgl-viewer/blob/2023d14/src/vim-webgl-viewer/camera/cameraMovement.ts#L43">src/vim-webgl-viewer/camera/cameraMovement.ts:43</a></li></ul></aside></li></ul></section>
+<li>Defined in <a href="https://github.com/vimaec/vim-webgl-viewer/blob/150d102/src/vim-webgl-viewer/camera/cameraMovement.ts#L72">src/vim-webgl-viewer/camera/cameraMovement.ts:72</a></li></ul></aside></li></ul></section>
 <section class="tsd-panel tsd-member tsd-kind-method tsd-parent-kind-class"><a id="target" class="tsd-anchor"></a>
 <h3 class="tsd-anchor-link"><code class="tsd-tag ts-flagAbstract">Abstract</code> <span>target</span><a href="#target" aria-label="Permalink" class="tsd-anchor-icon"><svg class="icon icon-tabler icon-tabler-link" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" fill="none" stroke-linecap="round" stroke-linejoin="round"><use href="#icon-anchor-a"></use><use href="#icon-anchor-b"></use><use href="#icon-anchor-c"></use></svg></a></h3>
 <ul class="tsd-signatures tsd-kind-method tsd-parent-kind-class">
 <li class="tsd-signature tsd-anchor-link" id="target.target-1">target<span class="tsd-signature-symbol">(</span>target<span class="tsd-signature-symbol">: </span><span class="tsd-signature-type">Vector3</span><span class="tsd-signature-symbol"> | </span><a href="vim_loader.Object.html" class="tsd-signature-type" data-tsd-kind="Class">Object</a><span class="tsd-signature-symbol">)</span><span class="tsd-signature-symbol">: </span><span class="tsd-signature-type">void</span><a href="#target.target-1" aria-label="Permalink" class="tsd-anchor-icon"><svg class="icon icon-tabler icon-tabler-link" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" fill="none" stroke-linecap="round" stroke-linejoin="round"><use href="#icon-anchor-a"></use><use href="#icon-anchor-b"></use><use href="#icon-anchor-c"></use></svg></a></li>
 <li class="tsd-description">
+<div class="tsd-comment tsd-typography"><p>Rotates the camera without moving so that it looks at the specified target.</p>
+</div>
 <div class="tsd-parameters">
 <h4 class="tsd-parameters-title">Parameters</h4>
 <ul class="tsd-parameter-list">
 <li>
-<h5>target: <span class="tsd-signature-type">Vector3</span><span class="tsd-signature-symbol"> | </span><a href="vim_loader.Object.html" class="tsd-signature-type" data-tsd-kind="Class">Object</a></h5></li></ul></div>
+<h5>target: <span class="tsd-signature-type">Vector3</span><span class="tsd-signature-symbol"> | </span><a href="vim_loader.Object.html" class="tsd-signature-type" data-tsd-kind="Class">Object</a></h5>
+<div class="tsd-comment tsd-typography"><p>The target object or position to look at.</p>
+</div></li></ul></div>
 <h4 class="tsd-returns-title">Returns <span class="tsd-signature-type">void</span></h4><aside class="tsd-sources">
 <ul>
-<li>Defined in <a href="https://github.com/vimaec/vim-webgl-viewer/blob/2023d14/src/vim-webgl-viewer/camera/cameraMovement.ts#L65">src/vim-webgl-viewer/camera/cameraMovement.ts:65</a></li></ul></aside></li></ul></section>
+<li>Defined in <a href="https://github.com/vimaec/vim-webgl-viewer/blob/150d102/src/vim-webgl-viewer/camera/cameraMovement.ts#L124">src/vim-webgl-viewer/camera/cameraMovement.ts:124</a></li></ul></aside></li></ul></section>
 <section class="tsd-panel tsd-member tsd-kind-method tsd-parent-kind-class"><a id="zoom" class="tsd-anchor"></a>
 <h3 class="tsd-anchor-link"><code class="tsd-tag ts-flagAbstract">Abstract</code> <span>zoom</span><a href="#zoom" aria-label="Permalink" class="tsd-anchor-icon"><svg class="icon icon-tabler icon-tabler-link" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" fill="none" stroke-linecap="round" stroke-linejoin="round"><use href="#icon-anchor-a"></use><use href="#icon-anchor-b"></use><use href="#icon-anchor-c"></use></svg></a></h3>
 <ul class="tsd-signatures tsd-kind-method tsd-parent-kind-class">
 <li class="tsd-signature tsd-anchor-link" id="zoom.zoom-1">zoom<span class="tsd-signature-symbol">(</span>amount<span class="tsd-signature-symbol">: </span><span class="tsd-signature-type">number</span><span class="tsd-signature-symbol">)</span><span class="tsd-signature-symbol">: </span><span class="tsd-signature-type">void</span><a href="#zoom.zoom-1" aria-label="Permalink" class="tsd-anchor-icon"><svg class="icon icon-tabler icon-tabler-link" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" fill="none" stroke-linecap="round" stroke-linejoin="round"><use href="#icon-anchor-a"></use><use href="#icon-anchor-b"></use><use href="#icon-anchor-c"></use></svg></a></li>
 <li class="tsd-description">
+<div class="tsd-comment tsd-typography"><p>Changes the distance between the camera and its target by a specified factor.</p>
+</div>
 <div class="tsd-parameters">
 <h4 class="tsd-parameters-title">Parameters</h4>
 <ul class="tsd-parameter-list">
 <li>
-<h5>amount: <span class="tsd-signature-type">number</span></h5></li></ul></div>
+<h5>amount: <span class="tsd-signature-type">number</span></h5>
+<div class="tsd-comment tsd-typography"><p>The factor by which to change the distance (e.g., 0.5 for halving the distance, 2 for doubling the distance).</p>
+</div></li></ul></div>
 <h4 class="tsd-returns-title">Returns <span class="tsd-signature-type">void</span></h4><aside class="tsd-sources">
 <ul>
-<li>Defined in <a href="https://github.com/vimaec/vim-webgl-viewer/blob/2023d14/src/vim-webgl-viewer/camera/cameraMovement.ts#L41">src/vim-webgl-viewer/camera/cameraMovement.ts:41</a></li></ul></aside></li></ul></section></section></div>
+<li>Defined in <a href="https://github.com/vimaec/vim-webgl-viewer/blob/150d102/src/vim-webgl-viewer/camera/cameraMovement.ts#L66">src/vim-webgl-viewer/camera/cameraMovement.ts:66</a></li></ul></aside></li></ul></section></section></div>
 <div class="col-4 col-menu menu-sticky-wrap menu-highlight">
 <div class="tsd-navigation settings">
 <details class="tsd-index-accordion"><summary class="tsd-accordion-summary">
@@ -276,9 +330,13 @@
 <ul>
 <li class="tsd-kind-namespace tsd-parent-kind-module"><a href="../modules/vim_loader.Geometry.html">Geometry</a></li>
 <li class="tsd-kind-namespace tsd-parent-kind-module"><a href="../modules/vim_loader.Transparency.html">Transparency</a></li></ul></li>
-<li class="tsd-kind-module"><a href="../modules/vim_loader_loader.html">vim-<wbr/>loader/loader</a></li>
+<li class="tsd-kind-module"><a href="../modules/vim_loader_legacy_legacyLoader.html">vim-<wbr/>loader/legacy/legacy<wbr/>Loader</a></li>
+<li class="tsd-kind-module"><a href="../modules/vim_loader_legacy_vimRequest.html">vim-<wbr/>loader/legacy/vim<wbr/>Request</a></li>
 <li class="tsd-kind-module"><a href="../modules/vim_loader_materials.html">vim-<wbr/>loader/materials</a></li>
-<li class="tsd-kind-module"><a href="../modules/vim_loader_vimRequest.html">vim-<wbr/>loader/vim<wbr/>Request</a></li>
+<li class="tsd-kind-module"><a href="../modules/vim_loader_progressive_open.html">vim-<wbr/>loader/progressive/open</a></li>
+<li class="tsd-kind-module"><a href="../modules/vim_webgl_viewer_gizmos_gizmos.html">vim-<wbr/>webgl-<wbr/>viewer/gizmos/gizmos</a></li>
+<li class="tsd-kind-module"><a href="../modules/vim_webgl_viewer_gizmos_markers_gizmoMarker.html">vim-<wbr/>webgl-<wbr/>viewer/gizmos/markers/gizmo<wbr/>Marker</a></li>
+<li class="tsd-kind-module"><a href="../modules/vim_webgl_viewer_gizmos_markers_gizmoMarkers.html">vim-<wbr/>webgl-<wbr/>viewer/gizmos/markers/gizmo<wbr/>Markers</a></li>
 <li class="tsd-kind-module"><a href="../modules/viw_webgl_viewer.html">viw-<wbr/>webgl-<wbr/>viewer</a></li>
 <li class="current tsd-kind-module"><a href="../modules/viw_webgl_viewer_camera.html">viw-<wbr/>webgl-<wbr/>viewer/camera</a></li>
 <li class="tsd-kind-module"><a href="../modules/viw_webgl_viewer_gizmos.html">viw-<wbr/>webgl-<wbr/>viewer/gizmos</a></li>

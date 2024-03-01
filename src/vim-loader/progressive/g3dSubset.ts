@@ -1,3 +1,7 @@
+/**
+ * @module vim-loader
+ */
+
 import { G3d, MeshSection, G3dScene, FilterMode } from 'vim-format'
 import { G3dMeshOffsets, G3dMeshCounts } from './g3dOffsets'
 import * as THREE from 'three'
@@ -38,17 +42,20 @@ export class G3dSubset {
     }
     this._instances = instances
 
+    const map2 = new Map<number, Array<number>>()
+    for (const instance of instances) {
+    }
+
     // Compute mesh data.
     this._meshes = new Array<number>()
     const map = new Map<number, Array<number>>()
     for (const instance of instances) {
       const mesh = source.instanceMeshes[instance]
-      const index = this.getSourceInstance(instance)
       if (!map.has(mesh)) {
         this._meshes.push(mesh)
-        map.set(mesh, [index])
+        map.set(mesh, [instance])
       } else {
-        map.get(mesh)?.push(index)
+        map.get(mesh)?.push(instance)
       }
     }
 
@@ -56,12 +63,6 @@ export class G3dSubset {
     for (let i = 0; i < this._meshes.length; i++) {
       this._meshInstances[i] = map.get(this._meshes[i])
     }
-  }
-
-  private getSourceInstance (index: number) {
-    return this._source instanceof G3dScene
-      ? this._source.instanceTransforms[index]
-      : index
   }
 
   /**
