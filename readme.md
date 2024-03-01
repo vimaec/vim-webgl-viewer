@@ -68,7 +68,7 @@ The following is an example of the simplest usage of the VIM viewer:
     </style>
   <body>
     <script src="https://unpkg.com/three@0.143.0"></script>
-    <script src="https://unpkg.com/vim-webgl-viewer@1.6.0"></script>
+    <script src="https://unpkg.com/vim-webgl-viewer@2.0.0"></script>
     <script>
     
       async function load(){
@@ -90,7 +90,7 @@ The following is an example of the simplest usage of the VIM viewer:
         viewer.add(vim)
 
         // Immediately frame loaded vim.
-        viewer.camera.do().frame(vim)
+        viewer.camera.snap().frame(vim)
       }
       
       // Need function because you can't have top level async
