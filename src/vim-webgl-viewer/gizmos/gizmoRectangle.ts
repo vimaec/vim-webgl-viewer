@@ -58,19 +58,22 @@ export class GizmoRectangle {
     ;(this.line.material as THREE.Material).dispose()
   }
 
-  /** Gizmo gets renderer if true */
+  /** 
+   * Indicates whether the gizmo is visible.
+   */
   get visible () {
     return this.line.visible
   }
 
-  /** Gizmo gets rendered if true */
   set visible (value: boolean) {
     this.viewer.renderer.needsUpdate = true
     this.line.visible = value
   }
 
   /**
-   * Sets the 2 corner points defining the rectangle.
+   * Sets the two corner points defining the rectangle.
+   * @param {THREE.Vector2} posA - The position of the first corner.
+   * @param {THREE.Vector2} posB - The position of the second corner.
    */
   setCorners (posA: THREE.Vector2, posB: THREE.Vector2) {
     // Plane perpedicular to camera
@@ -132,11 +135,12 @@ export class GizmoRectangle {
 
   /**
    * Returns the bounding box of the selection.
-   * The bouding box will be the projection of the selection rectangle
-   * on the plane coplanar to the closest hit of 5 raycasts as follow:
-   * X-----X
+   * The bounding box is the projection of the selection rectangle
+   * onto the plane coplanar to the closest hit of 5 raycasts: one in each corner and one in the center.
+   * X-----X 
    * |  X  |
-   * X-----X
+   * X-----X 
+   * @returns {THREE.Box3} The bounding box of the selection.
    */
   getBoundingBox (target: THREE.Box3 = new THREE.Box3()) {
     const position = this.getClosestHit()
@@ -146,7 +150,8 @@ export class GizmoRectangle {
   }
 
   /**
-   * Raycast from camera through the five interest points, return closest hit position.
+   * Performs a raycast from the camera through the five interest points and returns the closest hit position.
+   * @returns {THREE.Vector3} The position of the closest hit.
    */
   getClosestHit () {
     if (!this.points) return

@@ -3,10 +3,9 @@
  */
 
 import * as THREE from 'three'
-import { Vim, VimMaterials, Settings } from '../vim'
-import { Object } from '../vim-loader/object'
+import { Vim, ViewerMaterials } from '..'
+import { IObject } from '../vim-loader/objectInterface'
 import { SignalDispatcher } from 'ste-signals'
-import { Renderer } from './rendering/renderer'
 
 /**
  * Provides selection behaviour for the viewer
@@ -14,11 +13,11 @@ import { Renderer } from './rendering/renderer'
  */
 export class Selection {
   // dependencies
-  private _materials: VimMaterials
+  private _materials: ViewerMaterials
 
   // State
-  private _objects = new Set<Object>()
-  private _focusedObject: Object | undefined
+  private _objects = new Set<IObject>()
+  private _focusedObject: IObject | undefined
   private _vim: Vim | undefined
   private _lastFocusTime: number = new Date().getTime()
   private _animationId: number = -1
@@ -27,7 +26,7 @@ export class Selection {
   private _onValueChanged = new SignalDispatcher()
   private _unsub: (() => void)[] = []
 
-  constructor (materials: VimMaterials) {
+  constructor (materials: ViewerMaterials) {
     this._materials = materials
     this.animate()
   }
@@ -40,8 +39,8 @@ export class Selection {
   }
 
   /**
-   * Returns the vim from which elements are selected.
-   * Cross-vim selection is not supported.
+   * Returns the Vim instance from which elements are selected.
+   * Cross-Vim selection is not supported.
    */
   get vim () {
     return this._vim
@@ -55,8 +54,9 @@ export class Selection {
   }
 
   /**
-   * Returns the bounding box of the selection or undefined if no selection.
-   * @param target box to use for result.
+   * Retrieves the bounding box of the selection. Returns `undefined` if there's no selection.
+   * @param {THREE.Box3} [target] Optional parameter to specify a box to use for the result.
+   * @returns {THREE.Box3 | undefined} The bounding box of the selection or `undefined` if no selection exists.
    */
   getBoundingBox (
     target: THREE.Box3 = new THREE.Box3()
@@ -80,10 +80,10 @@ export class Selection {
   }
 
   /**
-   * Adds focus highlight to a single object.
-   * Pass undefined to remove highlight
+   * Adds focus highlight to a single object. Pass `undefined` to remove the highlight.
+   * @param {IObject | undefined} object The object to focus on, or `undefined` to remove the highlight.
    */
-  focus (object: Object | undefined) {
+  focus (object: IObject | undefined) {
     if (this._focusedObject === object) return
 
     if (this._focusedObject) this._focusedObject.focused = false
@@ -94,12 +94,14 @@ export class Selection {
   }
 
   /**
-   * Select given objects and unselect all other objects
-   * using no or undefined as argument will clear selection.
+   * Selects the given objects and unselects all other objects. 
+   * Pass `null`, `undefined`, or an empty array as argument to clear selection.
+   * @param {IObject | IObject[] | undefined} object The object or array of objects to select, 
+   *        or `null`, `undefined`, or an empty array to clear the selection.
    */
-  select (object: Object | Object[] | undefined) {
+  select (object: IObject | IObject[] | undefined) {
     object =
-      object === undefined ? [] : object instanceof Object ? [object] : object
+      object === undefined ? [] : Array.isArray(object) ? object : [object]
 
     object = object.filter((o) => o)
     if (
@@ -123,23 +125,26 @@ export class Selection {
   }
 
   /**
-   * Returns true if given object is currently selected
+   * Returns true if the given object is currently selected.
+   * @param {IObject} object The object to check for selection.
+   * @returns {boolean} True if the object is selected, false otherwise.
    */
-  has (object: Object) {
+  has (object: IObject) {
     return this._objects.has(object)
   }
 
   /**
-   * Returns current selection object count
+   * Returns the current count of selected objects.
    */
   get count () {
     return this._objects.size
   }
 
   /**
-   * Adds given objects to the current selection
+   * Adds the given objects to the current selection.
+   * @param {...IObject[]} objects The objects to add to the selection.
    */
-  add (...objects: Object[]) {
+  add (...objects: IObject[]) {
     if (!objects) return
     if (objects.length === 0) return
     const count = this._objects.size
@@ -155,9 +160,10 @@ export class Selection {
   }
 
   /**
-   * Remove given objects from the current selection
+   * Removes the given objects from the current selection.
+   * @param {...IObject[]} objects The objects to remove from the selection.
    */
-  remove (...objects: Object[]) {
+  remove (...objects: IObject[]) {
     if (!objects) return
     if (objects.length === 0) return
     const count = this._objects.size
@@ -174,10 +180,12 @@ export class Selection {
   }
 
   /**
-   * Adds unselected elements of given objects to the selection
-   * Remove selected elements of given objects from the selection
+   * Toggles the selection state of the given objects:
+   * - Adds unselected elements of the given objects to the selection.
+   * - Removes selected elements of the given objects from the selection.
+   * @param {...IObject[]} objects The objects to toggle selection for.
    */
-  toggle (...objects: Object[]) {
+  toggle (...objects: IObject []) {
     if (!objects) return
     if (objects.length === 0) return
     const count = this._objects.size
@@ -197,7 +205,7 @@ export class Selection {
   }
 
   /**
-   * Clears selection
+   * Clears the current selection.
    */
   clear () {
     this._vim = undefined
@@ -208,7 +216,7 @@ export class Selection {
   }
 
   /**
-   * Disposes all resources and stops animations.
+   * Disposes of all resources and stops animations.
    */
   dispose () {
     cancelAnimationFrame(this._animationId)

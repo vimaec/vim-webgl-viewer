@@ -6,9 +6,10 @@ import * as THREE from 'three'
 import { G3d, MeshSection } from 'vim-format'
 
 export type MergeArgs = {
+  matrix: THREE.Matrix4
   section: MeshSection
-  instances: number[]
-  loadRooms: boolean
+  legacyInstances: number[]
+  legacyLoadRooms: boolean
   transparent: boolean
 }
 
@@ -205,7 +206,7 @@ export namespace Geometry {
       if (!meshInstances || meshInstances.length !== 1) continue
 
       const instance = meshInstances[0]
-      if (!args.loadRooms && g3d.getInstanceHasFlag(instance, 1)) continue
+      if (!args.legacyLoadRooms && g3d.getInstanceHasFlag(instance, 1)) continue
 
       const count = g3d.getMeshIndexCount(mesh, args.section)
       if (count <= 0) continue
@@ -232,9 +233,9 @@ export namespace Geometry {
     let indexCount = 0
     const instancesFiltered = []
 
-    for (let i = 0; i < args.instances.length; i++) {
-      const instance = args.instances[i]
-      if (!args.loadRooms && g3d.getInstanceHasFlag(instance, 1)) {
+    for (let i = 0; i < args.legacyInstances.length; i++) {
+      const instance = args.legacyInstances[i]
+      if (!args.legacyLoadRooms && g3d.getInstanceHasFlag(instance, 1)) {
         continue
       }
       const mesh = g3d.instanceMeshes[instance]

@@ -19,7 +19,6 @@ export class GizmoOrbit {
 
   // Settings
   private _size: number = 1
-  private _fov: number = 50
   private _color: THREE.Color = new THREE.Color('blue')
   private _opacity: number = 0.2
   private _opacityAlways: number = 0.5
@@ -58,7 +57,7 @@ export class GizmoOrbit {
       this.onUpdate()
     )
     const onMove = this._camera.onMoved.subscribe(() => this.onUpdate())
-    const onChange = this._camera.onValueChanged.subscribe(() =>
+    const onChange = this._camera.onSettingsChanged.subscribe(() =>
       this.onUpdate()
     )
     this._disconnectCamera = () => {
@@ -74,31 +73,9 @@ export class GizmoOrbit {
     this.show(true)
   }
 
+  
   /**
-   * Disposes all resources.
-   */
-  dispose () {
-    cancelAnimationFrame(this._animation)
-    clearTimeout(this._timeout)
-    this._box?.dispose()
-    this._wireframe?.dispose()
-    this._material?.dispose()
-    this._materialAlways?.dispose()
-    this._disconnectCamera?.()
-    this._box = undefined
-    this._wireframe = undefined
-    this._material = undefined
-    this._materialAlways = undefined
-    this._disconnectCamera = undefined
-
-    if (this._gizmos) {
-      this._renderer.remove(this._gizmos)
-      this._gizmos = undefined
-    }
-  }
-
-  /**
-   * Orbit gizmo will only show when enabled is true.
+   * Determines whether the orbit gizmo is enabled.
    */
   get enabled () {
     return this._active
@@ -109,7 +86,8 @@ export class GizmoOrbit {
   }
 
   /**
-   * Show/Hide the gizmo for a brief delay if the gizmo is actives.
+   * Show or hide the gizmo for a brief delay if the gizmo is active.
+   * @param {boolean} [show=true] - Whether to show or hide the gizmo.
    */
   show (show: boolean = true) {
     if (!this._active) return
@@ -124,6 +102,47 @@ export class GizmoOrbit {
     if (show) {
       this._timeout = setTimeout(() => this.fadeOut(), this._showDurationMs)
     }
+  }
+
+  /**
+   * Updates the position of the orbit gizmo.
+   * @param {THREE.Vector3} position - The new position of the orbit gizmo.
+   */
+  setPosition (position: THREE.Vector3) {
+    this._gizmos?.position.copy(position)
+    this.updateScale()
+  }
+
+  /**
+   * Updates the size of the orbit gizmo.
+   * @param {number} size - The new size of the orbit gizmo.
+   */
+  setSize (size: number) {
+    this._size = size
+  }
+
+  /**
+   * Updates the opacity of the orbit gizmo.
+   * @param {number} opacity - The opacity of the non-occluded part.
+   * @param {number} opacityAlways - The opacity of the occluded part.
+   */
+  setOpacity (opacity: number, opacityAlways: number) {
+    this._opacity = opacity
+    this._opacityAlways = opacityAlways
+    if (!this._gizmos) return
+    this._material!.opacity = opacity
+    this._materialAlways!.opacity = opacityAlways
+  }
+
+  /**
+   * Updates the color of the orbit gizmo.
+   * @param {THREE.Color} color - The new color for the orbit gizmo.
+   */
+  setColor (color: THREE.Color) {
+    this._color = color
+    if (!this._gizmos) return
+    this._material!.color = color
+    this._materialAlways!.color = color
   }
 
   private fadeOut (fading?: boolean) {
@@ -148,47 +167,8 @@ export class GizmoOrbit {
     this._renderer.needsUpdate = true
   }
 
-  /**
-   * Updates the position of the orbit gizmo
-   */
-  setPosition (position: THREE.Vector3) {
-    this._gizmos?.position.copy(position)
-    this.updateScale()
-  }
-
-  /**
-   * Updates the size of the orbit gizmo
-   */
-  setSize (size: number) {
-    this._size = size
-  }
-
-  /**
-   * Updates opacity of the orbit gizmo
-   * @opacity opacity of the non occluded part.
-   * @opacityAlways opacity of the occluded part.
-   */
-  setOpacity (opacity: number, opacityAlways: number) {
-    this._opacity = opacity
-    this._opacityAlways = opacityAlways
-    if (!this._gizmos) return
-    this._material!.opacity = opacity
-    this._materialAlways!.opacity = opacityAlways
-  }
-
-  /**
-   * Updates color of the orbit gizmo
-   */
-  setColor (color: THREE.Color) {
-    this._color = color
-    if (!this._gizmos) return
-    this._material!.color = color
-    this._materialAlways!.color = color
-  }
-
-  applySettings (settings: Settings) {
+  private applySettings (settings: Settings) {
     this._active = settings.camera.gizmo.enable
-    this._fov = settings.camera.fov
     this.setColor(settings.camera.gizmo.color)
     this.setSize(settings.camera.gizmo.size)
 
@@ -235,4 +215,28 @@ export class GizmoOrbit {
     this._renderer.add(this._gizmos)
     this.updateScale()
   }
+
+  /**
+   * Disposes of all resources.
+   */
+  dispose () {
+    cancelAnimationFrame(this._animation)
+    clearTimeout(this._timeout)
+    this._box?.dispose()
+    this._wireframe?.dispose()
+    this._material?.dispose()
+    this._materialAlways?.dispose()
+    this._disconnectCamera?.()
+    this._box = undefined
+    this._wireframe = undefined
+    this._material = undefined
+    this._materialAlways = undefined
+    this._disconnectCamera = undefined
+
+    if (this._gizmos) {
+      this._renderer.remove(this._gizmos)
+      this._gizmos = undefined
+    }
+  }
+
 }

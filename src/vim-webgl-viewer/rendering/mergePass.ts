@@ -4,7 +4,7 @@
 
 import THREE from 'three'
 import { FullScreenQuad, Pass } from 'three/examples/jsm/postprocessing/Pass'
-import { VimMaterials } from '../../vim'
+import { ViewerMaterials } from '../../vim-loader/materials/viewerMaterials'
 import { MergeMaterial } from '../../vim-loader/materials/mergeMaterial'
 
 /**
@@ -14,7 +14,7 @@ export class MergePass extends Pass {
   private _fsQuad: FullScreenQuad
   private _material: MergeMaterial
 
-  constructor (source: THREE.Texture, materials?: VimMaterials) {
+  constructor (source: THREE.Texture, materials?: ViewerMaterials) {
     super()
 
     this._fsQuad = new FullScreenQuad()

@@ -68,22 +68,33 @@ export type Settings = {
       orbit: boolean
       /** Camera rotation speed factor */
       rotateSpeed: number
+      /** Orbit speed. */
       orbitSpeed: number
       /** Camera movement speed factor */
       moveSpeed: number
     }
     /** Camera gizmo related options */
     gizmo: {
+      /** Enables/Disables camera gizmo. */
       enable: boolean
+      /** Size of camera gizmo. */
       size: number
+      /** Color of camera gizmo. */
       color: THREE.Color
+      /** Opacity of camera gizmo. */
       opacity: number
+      /** Opacity always shown. */
       opacityAlways: number
     }
   }
-  // background: Partial<BackgroundOptions>
   /**
-   * Plane under scene related options
+   * Rendering background options
+   */
+  background: {
+    color: THREE.Color
+  }
+  /**
+   * Ground plane under the scene options.
    */
   groundPlane: {
     /** Enables/Disables plane under scene */
@@ -102,8 +113,11 @@ export type Settings = {
    * Skylight (hemisphere light) options
    */
   skylight: {
+    /** Skylight sky Color. */
     skyColor: THREE.Color
+    /** Skylight ground color. */
     groundColor: THREE.Color
+    /** Skylight intensity. */
     intensity: number
   }
 
@@ -111,24 +125,40 @@ export type Settings = {
    * Object highlight on click options
    */
   materials: {
+    /** Highlight on hover options */
     highlight: {
+      /** Highlight color */
       color: THREE.Color
+      /** Highlight opacity */
       opacity: number
     }
+
+    /** Isolation materials options */
     isolation: {
+      /** Isolation materials color */
       color: THREE.Color
+      /** Isolation materials opacity */
       opacity: number
     }
+    /** Section box intersection highlight options */
     section: {
-      strokeWidth: number
-      strokeFalloff: number
-      strokeColor: THREE.Color
+      /** Intersection highlight stroke width. */
+      strokeWidth: number;
+      /** Intersection highlight stroke  falloff. */
+      strokeFalloff: number;
+      /** Intersection highlight stroke  color. */
+      strokeColor: THREE.Color;
     }
+    /** Selection outline options */
     outline: {
-      intensity: number
-      falloff: number
-      blur: number
-      color: THREE.Color
+      /** Selection outline intensity. */
+      intensity: number;
+      /** Selection outline falloff. */
+      falloff: number;
+      /** Selection outline blur. */
+      blur: number;
+      /** Selecetion outline color. */
+      color: THREE.Color;
     }
   }
 
@@ -141,12 +171,16 @@ export type Settings = {
    * Sunlight (directional light) options
    */
   sunLights: {
-    position: THREE.Vector3
-    color: THREE.Color
-    intensity: number
+    /** Light position. */
+    position: THREE.Vector3;
+    /** Light color. */
+    color: THREE.Color;
+    /** Light intensity. */
+    intensity: number;
   }[]
 
   rendering: {
+    /** Enable on-demand rendering. */
     onDemand: boolean
   }
 }
@@ -167,13 +201,14 @@ const defaultConfig: Settings = {
     fov: 50,
     zoom: 1,
     // 45 deg down looking down z.
-    forward: new THREE.Vector3(0, -0.707, 0.707),
+    forward: new THREE.Vector3(1, -1, 1),
     controls: {
       orbit: true,
       rotateSpeed: 1,
       orbitSpeed: 1,
       moveSpeed: 1
     },
+
     gizmo: {
       enable: true,
       size: 0.01,
@@ -182,6 +217,7 @@ const defaultConfig: Settings = {
       opacityAlways: 0.125
     }
   },
+  background: { color: new THREE.Color('#96999f') },
   groundPlane: {
     visible: true,
     encoding: 'base64',
@@ -213,8 +249,8 @@ const defaultConfig: Settings = {
       opacity: 0.5
     },
     isolation: {
-      color: new THREE.Color(0x40, 0x40, 0x40),
-      opacity: 0.1
+      color: new THREE.Color('#4E525C'),
+      opacity: 0.08
     },
     section: {
       strokeWidth: 0.01,

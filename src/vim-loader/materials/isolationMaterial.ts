@@ -8,13 +8,14 @@ import * as THREE from 'three'
  * Material for isolation mode
  * Non visible item appear as transparent.
  * Visible items are flat shaded with a basic pseudo lighting.
- * Supports object coloring but in which.
+ * Supports object coloring for visible objects.
+ * Non-visible objects use fillColor.
  */
 export function createIsolationMaterial () {
   return new THREE.ShaderMaterial({
     uniforms: {
       opacity: { value: 0.1 },
-      fillColor: { value: new THREE.Vector3(0.5, 0.5, 0.5) }
+      fillColor: { value: new THREE.Vector3(0, 0, 0) }
     },
     vertexColors: true,
     transparent: true,

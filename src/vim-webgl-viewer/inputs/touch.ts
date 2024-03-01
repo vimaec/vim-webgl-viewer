@@ -16,7 +16,15 @@ export class TouchHandler extends InputHandler {
   private readonly TAP_MAX_MOVE_PIXEL = 5
   private readonly ZOOM_SPEED = 1
   private readonly MOVE_SPEED = 100
+
+  /**
+   * Speed factor for rotation movements
+   */
   rotateSpeed = 1
+
+   /**
+   * Speed factor for orbit movements
+   */
   orbitSpeed = 1
 
   constructor (viewer: Viewer) {
@@ -96,22 +104,22 @@ export class TouchHandler extends InputHandler {
 
   private onDrag = (delta: THREE.Vector2) => {
     if (this._viewer.inputs.pointerActive === 'orbit') {
-      this.camera.do().orbit(this.toRotation(delta, this.orbitSpeed))
+      this.camera.snap().orbit(this.toRotation(delta, this.orbitSpeed))
     } else {
-      this.camera.do().rotate(this.toRotation(delta, this.rotateSpeed))
+      this.camera.snap().rotate(this.toRotation(delta, this.rotateSpeed))
     }
   }
 
   private onDoubleDrag = (delta: THREE.Vector2) => {
     const move = delta.clone().multiplyScalar(this.MOVE_SPEED)
-    this.camera.do().move2(move, 'XY')
+    this.camera.snap().move2(move, 'XY')
   }
 
   private onPinchOrSpread = (delta: number) => {
     if (this._viewer.inputs.pointerActive === 'orbit') {
-      this.camera.do().zoom(1 + delta * this.ZOOM_SPEED)
+      this.camera.snap().zoom(1 + delta * this.ZOOM_SPEED)
     } else {
-      this.camera.do().move1(delta * this.ZOOM_SPEED, 'Z')
+      this.camera.snap().move1(delta * this.ZOOM_SPEED, 'Z')
     }
   }
 

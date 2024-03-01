@@ -12,6 +12,8 @@ export class RenderScene {
   scene: THREE.Scene
 
   // state
+  boxUpdated = false
+
   private _scenes: Scene[] = []
   private _boundingBox: THREE.Box3 | undefined
   private _memory: number = 0
@@ -22,15 +24,6 @@ export class RenderScene {
 
   get estimatedMemory () {
     return this._memory
-  }
-
-  /** Returns an array of all the scenes that were updated since last clearUpdateFlags */
-  getUpdatedScenes () {
-    const result: Scene[] = []
-    for (const s of this._scenes) {
-      if (s.updated) result.push(s)
-    }
-    return result
   }
 
   hasOutline () {
@@ -89,16 +82,19 @@ export class RenderScene {
   private addScene (scene: Scene) {
     this._scenes.push(scene)
     scene.meshes.forEach((m) => {
-      this.scene.add(m.three)
+      this.scene.add(m.mesh)
     })
 
-    // Recompute bounding box
-    this._boundingBox = this._boundingBox
-      ? this._boundingBox.union(scene.getBoundingBox())
-      : scene.getBoundingBox()
+    this.updateBox(scene.getBoundingBox())
 
     // Memory
     this._memory += scene.getMemory()
+  }
+
+  updateBox (box: THREE.Box3 | undefined) {
+    if (!box) return
+    this.boxUpdated = true
+    this._boundingBox = this._boundingBox ? this._boundingBox.union(box) : box
   }
 
   private removeScene (scene: Scene) {
@@ -107,7 +103,7 @@ export class RenderScene {
 
     // Remove all meshes from three scene
     for (let i = 0; i < scene.meshes.length; i++) {
-      this.scene.remove(scene.meshes[i].three)
+      this.scene.remove(scene.meshes[i].mesh)
     }
 
     // Recompute bounding box

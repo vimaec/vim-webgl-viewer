@@ -12,20 +12,139 @@ import { ISignal, SignalDispatcher } from 'ste-signals'
 import { PerspectiveWrapper } from './perspective'
 import { OrthographicWrapper } from './orthographic'
 import { CameraLerp } from './cameraMovementLerp'
-import { CameraMovementDo } from './cameraMovementDo'
+import { CameraMovementSnap } from './cameraMovementSnap'
 import { CameraMovement } from './cameraMovement'
+
+/**
+ * Interface representing a camera with various properties and methods for controlling its behavior.
+ */
+export interface ICamera {
+  /**
+   * A signal that is dispatched when camera settings change.
+   */
+  onSettingsChanged: ISignal
+
+  /**
+   * A signal that is dispatched when camera moves.
+   */
+  onMoved: ISignal
+
+  /**
+   * True if the camera has moved this frame.
+   */
+  get hasMoved() : boolean
+
+  /**
+   * Represents allowed movement along each axis using a Vector3 object.
+   * Each component of the Vector3 should be either 0 or 1 to enable/disable movement along the corresponding axis.
+   */
+  allowedMovement : THREE.Vector3
+
+  /**
+   * Represents allowed rotation using a Vector2 object.
+   * Each component of the Vector2 should be either 0 or 1 to enable/disable rotation around the corresponding axis.
+   */
+  allowedRotation : THREE.Vector2
+
+  /**
+   * The default forward direction that can be used to initialize the camera.
+   */
+  defaultForward : THREE.Vector3
+
+  /**
+   * Interface for instantaneously moving the camera.
+   * @param {boolean} [force=false] - Set to true to ignore locked axis and rotation.
+   * @returns {CameraMovement} The camera movement api.
+   */
+  snap (force?: boolean) : CameraMovement
+
+  /**
+   * Interface for smoothly moving the camera over time.
+   * @param {number} [duration=1] - The duration of the camera movement animation.
+   * @param {boolean} [force=false] - Set to true to ignore locked axis and rotation.
+   * @returns {CameraMovement} The camera movement api.
+   */
+  lerp (duration: number, force?: boolean) : CameraMovement
+
+  /**
+   * Calculates the frustum size at a given point in the scene.
+   * @param {THREE.Vector3} point - The point in the scene to calculate the frustum size at.
+   * @returns {number} The frustum size at the specified point.
+   */
+  frustrumSizeAt (point: THREE.Vector3) : THREE.Vector2
+
+  /**
+   * The current THREE Camera
+   */
+  get three () : THREE.Camera
+
+  /**
+   * The quaternion representing the orientation of the object.
+   */
+  get quaternion ()  : THREE.Quaternion
+
+   /**
+   * The position of the camera.
+   */
+  get position () : THREE.Vector3
+
+  /**
+   * The matrix representing the transformation of the camera.
+   */
+  get matrix () : THREE.Matrix4
+
+  /**
+   * The forward direction of the camera.
+   */
+  get forward () : THREE.Vector3
+
+  /**
+   * The camera speed factor.
+   */
+  speed : number
+
+  /**
+   * The current or target velocity of the camera.
+   */
+  localVelocity : THREE.Vector3
+
+  /**
+   * Immediately stops the camera movement.
+   */
+  stop () : void
+
+  /**
+   * The target at which the camera is looking at and around which it rotates.
+   */
+  get target () : THREE.Vector3
+
+  /**
+   * The distance from the camera to the target.
+   */
+  get orbitDistance () : number
+
+  /**
+   * Saves current camera orientation to restore on next reset.
+   */
+  save () : void
+
+  /**
+   * Represents whether the camera projection is orthographic.
+   */
+  orthographic : boolean
+}
 
 /**
  * Manages viewer camera movement and position
  */
-export class Camera {
+export class Camera implements ICamera {
   camPerspective: PerspectiveWrapper
   camOrthographic: OrthographicWrapper
 
   private _viewport: Viewport
   _scene: RenderScene // make private again
   private _lerp: CameraLerp
-  private _movement: CameraMovementDo
+  private _movement: CameraMovementSnap
 
   // movements
   private _inputVelocity = new THREE.Vector3()
@@ -45,26 +164,40 @@ export class Camera {
   _savedPosition: THREE.Vector3 = new THREE.Vector3(0, 0, -5)
   _savedTarget: THREE.Vector3 = new THREE.Vector3(0, 0, 0)
 
-  private _onValueChanged = new SignalDispatcher()
-
-  get onValueChanged () {
+  
+  /**
+   * A signal that is dispatched when camera settings change.
+   */
+  get onSettingsChanged () {
     return this._onValueChanged.asEvent()
   }
+  private _onValueChanged = new SignalDispatcher()
 
-  private _hasMoved: boolean
-  get hasMoved () {
+  
+  /**
+   * True if the camera has moved this frame.
+   */
+  get hasMoved() {
     return this._hasMoved
   }
+  private _hasMoved: boolean
 
-  private _onMoved = new SignalDispatcher()
+  
+  /**
+   * A signal that is dispatched when the camera is moved.
+   */
   get onMoved (): ISignal {
     return this._onMoved.asEvent()
   }
+  private _onMoved = new SignalDispatcher()
 
   /** Ignore movement permissions when true */
   private _force: boolean = false
 
-  /** Vector3 of 0 or 1 to enable/disable movement along each axis */
+  /**
+   * Represents allowed movement along each axis using a Vector3 object.
+   * Each component of the Vector3 should be either 0 or 1 to enable/disable movement along the corresponding axis.
+   */
   private _allowedMovement = new THREE.Vector3(1, 1, 1)
   get allowedMovement () {
     return this._force ? new THREE.Vector3(1, 1, 1) : this._allowedMovement
@@ -77,7 +210,10 @@ export class Camera {
     this._allowedMovement.z = this._allowedMovement.z === 0 ? 0 : 1
   }
 
-  /** Vector2 of 0 or 1 to enable/disable rotation around x or y. */
+  /**
+   * Represents allowed rotation using a Vector2 object.
+   * Each component of the Vector2 should be either 0 or 1 to enable/disable rotation around the corresponding axis.
+   */
   get allowedRotation () {
     return this._force ? new THREE.Vector2(1, 1) : this._allowedRotation
   }
@@ -90,7 +226,21 @@ export class Camera {
 
   private _allowedRotation = new THREE.Vector2(1, 1)
 
-  defaultForward: THREE.Vector3
+  /**
+   * The default forward direction that can be used to initialize the camera.
+   */
+  private _defaultForward = new THREE.Vector3(1, -1, 1).normalize()
+  get defaultForward () {
+    return this._defaultForward
+  }
+
+  set defaultForward (value: THREE.Vector3) {
+    if (value.x === 0 && value.y === 0 && value.z === 0) {
+      this._defaultForward.set(1, -1, 1).normalize()
+    } else {
+      this._defaultForward.copy(value).normalize()
+    }
+  }
 
   // Settings
   private _velocityBlendFactor: number = 0.0001
@@ -103,23 +253,35 @@ export class Camera {
       new THREE.OrthographicCamera()
     )
 
-    this._movement = new CameraMovementDo(this)
+    this._movement = new CameraMovementSnap(this)
     this._lerp = new CameraLerp(this, this._movement)
 
     this._scene = scene
     this._viewport = viewport
 
+
     this.applySettings(settings)
-    this.do().orbitTowards(this.defaultForward)
-    this.do().setDistance(-1000)
+    this.snap(true).setDistance(-1000)
+    this.snap(true).orbitTowards(this._defaultForward)
   }
 
-  do (force: boolean = false) {
+  /**
+   * Interface for instantaneously moving the camera.
+   * @param {boolean} [force=false] - Set to true to ignore locked axis and rotation.
+   * @returns {CameraMovement} The camera movement api.
+   */
+  snap (force: boolean = false) : CameraMovement {
     this._force = force
     this._lerp.cancel()
     return this._movement as CameraMovement
   }
 
+/**
+   * Interface for smoothly moving the camera over time.
+   * @param {number} [duration=1] - The duration of the camera movement animation.
+   * @param {boolean} [force=false] - Set to true to ignore locked axis and rotation.
+   * @returns {CameraMovement} The camera movement api.
+   */
   lerp (duration: number = 1, force: boolean = false) {
     this.stop()
     this._force = force
@@ -127,38 +289,56 @@ export class Camera {
     return this._lerp as CameraMovement
   }
 
+  /**
+   * Calculates the frustum size at a given point in the scene.
+   * @param {THREE.Vector3} point - The point in the scene to calculate the frustum size at.
+   * @returns {number} The frustum size at the specified point.
+   */
   frustrumSizeAt (point: THREE.Vector3) {
     return this.camPerspective.frustrumSizeAt(point)
   }
 
-  notifyMovement () {
-    this._hasMoved = true
-    this._onMoved.dispatch()
-  }
-
+   /**
+   * The current THREE Camera
+   */
   get three () {
     return this._orthographic
       ? this.camOrthographic.camera
       : this.camPerspective.camera
   }
 
+  /**
+   * The quaternion representing the orientation of the object.
+   */
   get quaternion () {
     return this.camPerspective.camera.quaternion
   }
 
+  /**
+   * The position of the camera.
+   */
   get position () {
     return this.camPerspective.camera.position
   }
 
+  /**
+   * The matrix representing the transformation of the camera.
+   */
   get matrix () {
     this.camPerspective.camera.updateMatrix()
     return this.camPerspective.camera.matrix
   }
 
+  /**
+   * The forward direction of the camera.
+   */
   get forward () {
     return this.camPerspective.camera.getWorldDirection(new THREE.Vector3())
   }
 
+  /**
+   * The camera speed factor.
+   */
   get speed () {
     return this._speed
   }
@@ -168,6 +348,9 @@ export class Camera {
     this._onValueChanged.dispatch()
   }
 
+   /**
+   * The current or target velocity of the camera.
+   */
   get localVelocity () {
     const result = this._velocity.clone()
     result.applyQuaternion(this.quaternion.clone().invert())
@@ -176,7 +359,7 @@ export class Camera {
   }
 
   /**
-   * Set current velocity of the camera.
+   * The current or target velocity of the camera.
    */
   set localVelocity (vector: THREE.Vector3) {
     this._lerp.cancel()
@@ -184,18 +367,26 @@ export class Camera {
     this._inputVelocity.setZ(-this._inputVelocity.z)
   }
 
+  
+  /**
+   * Immediately stops the camera movement.
+   */
   stop () {
     this._inputVelocity.set(0, 0, 0)
     this._velocity.set(0, 0, 0)
   }
 
+  /**
+   * The target at which the camera is looking at and around which it rotates.
+   */
   get target () {
     return this._target
   }
 
   applySettings (settings: Settings) {
     // Camera
-    this.defaultForward = new THREE.Vector3().copy(settings.camera.forward)
+
+    this.defaultForward = settings.camera.forward
     this._orthographic = settings.camera.orthographic
     this.allowedMovement = settings.camera.allowedMovement
     this.allowedRotation = settings.camera.allowedRotation
@@ -209,24 +400,26 @@ export class Camera {
     this._onValueChanged.dispatch()
   }
 
+  /**
+   * The distance from the camera to the target.
+   */
   get orbitDistance () {
     return this.position.distanceTo(this._target)
   }
 
+  /**
+   * Saves current camera orientation to restore on next reset.
+   */
   save () {
     this._lerp.cancel()
     this._savedPosition.copy(this.position)
     this._savedTarget.copy(this._target)
   }
 
-  private updateProjection () {
-    const aspect = this._viewport.getAspectRatio()
-    this.camPerspective.updateProjection(aspect)
-
-    const size = this.camPerspective.frustrumSizeAt(this.target)
-    this.camOrthographic.updateProjection(size, aspect)
-  }
-
+  
+  /**
+   * Represents whether the camera projection is orthographic.
+   */
   get orthographic () {
     return this._orthographic
   }
@@ -249,6 +442,14 @@ export class Camera {
     }
     this.updateProjection()
     return moved
+  }
+
+  private updateProjection () {
+    const aspect = this._viewport.getAspectRatio()
+    this.camPerspective.updateProjection(aspect)
+
+    const size = this.camPerspective.frustrumSizeAt(this.target)
+    this.camOrthographic.updateProjection(size, aspect)
   }
 
   private applyVelocity (deltaTime: number) {
@@ -281,7 +482,7 @@ export class Camera {
       .clone()
       .multiplyScalar(deltaTime * this.getVelocityMultiplier())
 
-    this.do().move3(deltaPosition)
+    this.snap().move3(deltaPosition)
     return true
   }
 
@@ -304,7 +505,8 @@ export class Camera {
   private getVelocityMultiplier () {
     const rotated = !this._lastQuaternion.equals(this.quaternion)
     const mod = rotated ? 1 : 1.66
-    return Math.pow(1.25, this.speed) * this._moveSpeed * mod * 100
+    const frustrum = this.frustrumSizeAt(this.target).length()
+    return Math.pow(1.25, this.speed) * this._moveSpeed * mod * frustrum
   }
 
   private checkForMovement () {

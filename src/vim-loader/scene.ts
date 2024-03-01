@@ -4,39 +4,52 @@
 
 import * as THREE from 'three'
 import { Mesh, Submesh } from './mesh'
-import { SceneBuilder } from './sceneBuilder'
+import { SceneBuilder } from './legacy/sceneBuilder'
 import { Vim } from './vim'
 import { estimateBytesUsed } from 'three/examples/jsm/utils/BufferGeometryUtils'
+import { InsertableMesh } from './progressive/insertableMesh'
+import { InstancedMesh } from './progressive/instancedMesh'
+
 
 /**
- * A Scene regroups many Meshes
- * It keep tracks of the global bounding box as Meshes are added
- * It keeps a map from g3d instance indices to Meshes and vice versa
+ * Interface for a renderer object, providing methods to add and remove objects from a scene, update bounding boxes, and notify scene updates.
  */
+export interface IRenderer {
+  add(scene: Scene | THREE.Object3D)
+  remove(scene: Scene)
+  updateBox(box: THREE.Box3)
+  notifySceneUpdate()
+}
+
+/**
+ * Represents a scene that contains multiple meshes.
+ * It tracks the global bounding box as meshes are added and maintains a mapping between g3d instance indices and meshes.
+ */
+//TODO: Only expose what should be public to vim.scene
 export class Scene {
   // Dependencies
   readonly builder: SceneBuilder
+  private _renderer: IRenderer
+  private _vim: Vim | undefined
+  private _matrix = new THREE.Matrix4()
 
   // State
-  meshes: Mesh[] = []
-  private _vim: Vim | undefined
-  private _updated: boolean = false
-  private _outlineCount: number = 0
+  insertables = new Array<InsertableMesh>()
+  meshes: (Mesh | InsertableMesh | InstancedMesh)[] = []
 
-  private _boundingBox: THREE.Box3 = new THREE.Box3()
+  private _outlineCount: number = 0
+  private _boundingBox: THREE.Box3
+
   private _instanceToMeshes: Map<number, Submesh[]> = new Map()
   private _material: THREE.Material | undefined
 
-  constructor (builder: SceneBuilder) {
+  constructor (builder: SceneBuilder | undefined, matrix: THREE.Matrix4) {
+    this._matrix = matrix
     this.builder = builder
   }
 
-  get updated () {
-    return this._updated
-  }
-
-  set updated (value: boolean) {
-    this._updated = this._updated || value
+  setDirty () {
+    this.renderer?.notifySceneUpdate()
   }
 
   hasOutline () {
@@ -45,28 +58,36 @@ export class Scene {
 
   addOutline () {
     this._outlineCount++
-    this.updated = true
+    this.setDirty()
   }
 
   removeOutline () {
     this._outlineCount--
-    this.updated = true
+    this.setDirty()
   }
 
   clearUpdateFlag () {
-    this._updated = false
+    this.insertables.forEach((mesh) => mesh.clearUpdate())
   }
 
   /**
-   * Returns the scene bounding box.
+   * Returns the scene bounding box. Returns undefined if scene is empty.
    */
   getBoundingBox (target: THREE.Box3 = new THREE.Box3()) {
-    return target.copy(this._boundingBox)
+    return this._boundingBox ? target.copy(this._boundingBox) : undefined
+  }
+
+  updateBox (box: THREE.Box3) {
+    if (box !== undefined) {
+      const b = box.clone().applyMatrix4(this._matrix)
+      this._boundingBox = this._boundingBox?.union(b) ?? b
+      this.renderer?.updateBox(this._boundingBox)
+    }
   }
 
   getMemory () {
     return this.meshes
-      .map((m) => estimateBytesUsed(m.three.geometry))
+      .map((m) => estimateBytesUsed(m.mesh.geometry))
       .reduce((n1, n2) => n1 + n2, 0)
   }
 
@@ -79,15 +100,26 @@ export class Scene {
     return this._instanceToMeshes.get(instance)
   }
 
-  /**
-   * Applies given transform matrix to all Meshes and bounding box.
-   */
-  applyMatrix4 (matrix: THREE.Matrix4) {
-    for (let m = 0; m < this.meshes.length; m++) {
-      this.meshes[m].three.matrixAutoUpdate = false
-      this.meshes[m].three.matrix.copy(matrix)
+  getMeshesFromInstances (instances: number[] | undefined) {
+    if (!instances?.length) return
+
+    const meshes: Submesh[] = []
+    for (let i = 0; i < instances.length; i++) {
+      const instance = instances[i]
+      if (instance < 0) continue
+      const submeshes = this.getMeshFromInstance(instance)
+      submeshes?.forEach((s) => meshes.push(s))
     }
-    this._boundingBox.applyMatrix4(matrix)
+    if (meshes.length === 0) return
+    return meshes
+  }
+
+  get renderer () {
+    return this._renderer
+  }
+
+  set renderer (value: IRenderer) {
+    this._renderer = value
   }
 
   get vim () {
@@ -102,25 +134,36 @@ export class Scene {
     this.meshes.forEach((m) => (m.vim = value))
   }
 
+  addSubmesh (submesh: Submesh) {
+    const meshes = this._instanceToMeshes.get(submesh.instance) ?? []
+    meshes.push(submesh)
+    this._instanceToMeshes.set(submesh.instance, meshes)
+    this.setDirty()
+    if (this.vim) {
+      const obj = this.vim.getObjectFromInstance(submesh.instance)
+      obj._addMesh(submesh)
+    }
+  }
+
   /**
    * Add an instanced mesh to the Scene and recomputes fields as needed.
    * @param mesh Is expected to have:
    * userData.instances = number[] (indices of the g3d instances that went into creating the mesh)
    * userData.boxes = THREE.Box3[] (bounding box of each instance)
    */
-  addMesh (mesh: Mesh) {
-    const subs = mesh.getSubmeshes()
-    subs.forEach((s) => {
-      const set = this._instanceToMeshes.get(s.instance) ?? []
-      set.push(s)
-      this._instanceToMeshes.set(s.instance, set)
-    })
+  addMesh (mesh: Mesh | InsertableMesh | InstancedMesh) {
+    this.renderer?.add(mesh.mesh)
+    mesh.vim = this.vim
 
-    this._boundingBox =
-      this._boundingBox?.union(mesh.boundingBox) ?? mesh.boundingBox.clone()
+    mesh.mesh.matrixAutoUpdate = false
+    mesh.mesh.matrix.copy(this._matrix)
+    this.updateBox(mesh.boundingBox)
+
+    mesh.getSubmeshes().forEach((s) => this.addSubmesh(s))
+    mesh.setMaterial(this.material)
 
     this.meshes.push(mesh)
-    this.updated = true
+    this.setDirty()
     return this
   }
 
@@ -136,9 +179,13 @@ export class Scene {
       this._instanceToMeshes.set(instance, set)
     })
 
-    this._boundingBox =
-      this._boundingBox?.union(other._boundingBox) ?? other._boundingBox.clone()
-    this.updated = true
+    if (other._boundingBox) {
+      this._boundingBox =
+        this._boundingBox?.union(other._boundingBox) ??
+        other._boundingBox.clone()
+    }
+
+    this.setDirty()
     return this
   }
 
@@ -154,19 +201,31 @@ export class Scene {
    */
   set material (value: THREE.Material | undefined) {
     if (this._material === value) return
-    this.updated = true
+    this.setDirty()
     this._material = value
     this.meshes.forEach((m) => m.setMaterial(value))
+  }
+
+  /**
+   * Unloads and disposes all meshes and leaves the scene ready to add new ones.
+   */
+  clear () {
+    this.renderer?.remove(this)
+
+    for (const m of this.meshes) {
+      m.mesh.geometry.dispose()
+    }
+    this.meshes.length = 0
+    this._instanceToMeshes.clear()
+
+    this.renderer?.add(this)
   }
 
   /**
    * Disposes of all resources.
    */
   dispose () {
-    for (let i = 0; i < this.meshes.length; i++) {
-      this.meshes[i].three.geometry.dispose()
-    }
-    this.meshes.length = 0
-    this._instanceToMeshes.clear()
+    this.clear()
+    this._renderer = null
   }
 }

@@ -14,7 +14,6 @@
         margin: 0;
         padding: 0;
         overflow: hidden;
-        background: radial-gradient(circle at center, #d8d8e6, #8a8a8a);
         /*This prevents touches from being eaten up by the browser.*/
         touch-action: none;
       }
@@ -27,94 +26,54 @@
   </head>
   <body>
     <script src="https://unpkg.com/three@0.143"></script>
-    <script src="https://unpkg.com/vim-webgl-viewer@1.5.11"></script>
+    <script src="https://unpkg.com/vim-webgl-viewer@2.0.0"></script>
     <script>
+
       // Parse URL for source file
       const params = new URLSearchParams(window.location.search)
       const url = params.has('vim')
         ? params.get('vim')
-        : 'https://vim02.azureedge.net/samples/residence.v1.2.75.vim'
-
-      // Parse URL for transparency mode
-      let transparency = 'all'
-      if (params.has('transparency')) {
-        const t = params.get('transparency')
-        transparency = VIM.Transparency.isValid(t) ? t : 'all'
-      }
-
-      // Parse URL for streaming method
-      let streamBim = false
-      let streamGeometry = false
-      if (params.has('download')) {
-        const t = params.get('download')
-        const [bim, geo] =
-          t === 'geometry'
-            ? [true, false]
-            : t === 'stream'
-            ? [true, true]
-            : [false, false]
-        streamBim = bim
-        streamGeometry = geo
-      }
-
-      // Parse URL for initial selection
-      let selection = []
-      if (params.has('selection')) {
-        const p = params.get('selection')
-        selection = p?.split('+').map((s) => Number.parseInt(s))
-      }
+        : null
 
       let time
       const viewer = new VIM.Viewer()
-      let request
-      load(url)
+
+      load(url ?? "https://vim02.azureedge.net/samples/residence.v1.2.75.vim")
+      // load(url ?? "https://vim02.azureedge.net/samples/residence.v1.2.75.vimx")
       addLoadButton()
 
-      async function load(url) {
+      async function load (url) {
         time = Date.now()
-        const vim = await VIM.VimX.load(url, {
-          legacy: true,
-          rotation: new VIM.THREE.Vector3(270, 0, 0),
+        viewer.gizmos.loading.visible = true
+
+        const vim = await VIM.open(url,
+          {
+            legacy : true,
+            rotation: new VIM.THREE.Vector3(270, 0, 0)
+          }, (p) => console.log(`Downloading Vim (${(p.loaded / 1000).toFixed(0)} kb)`) 
+        ) 
+        viewer.add(vim)
+
+        vim.loadAll().then(() =>{
+          viewer.gizmos.loading.visible = false
+          console.log(`loaded in ${(Date.now() - time) / 1000} seconds`)
         })
-        onVimLoaded(vim)
-      }
+        
+        viewer.camera.snap(true).frame(vim)
 
-      async function onVimLoaded(vim) {
-        if (vim instanceof VIM.VimRequest) {
-          request = vim
-          await request.send()
-          viewer.add(request.vim)
-        }
-        if (vim instanceof VIM.Vim) {
-          viewer.add(vim)
-        }
-        if (vim instanceof VIM.VimX) {
-          viewer.add(vim)
-          vim.onCompleted.subscribe(() =>
-            console.log(`loaded in ${(Date.now() - time) / 1000} seconds`)
-          )
-
-          const connection = vim.onUpdate.subscribe(() => {
-            console.log(vim.sceneLegacy.getBoundingBox())
-            viewer.camera.lerp(1).frame(vim.sceneLegacy.getBoundingBox())
-            connection()
-          })
-          vim.scene.start()
-        }
-
+        // Useful for debuging in console.
         globalThis.vim = vim
         globalThis.viewer = viewer
         globalThis.THREE = THREE
       }
 
-      function addLoadButton() {
+      function addLoadButton () {
         const input = document.createElement('input')
         input.type = 'file'
         document.body.prepend(input)
 
         input.onchange = (e) => {
           viewer.clear()
-          request?.abort()
           // getting a hold of the file reference
           const file = e.target.files[0]
 

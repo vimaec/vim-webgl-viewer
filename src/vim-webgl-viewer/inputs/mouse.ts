@@ -2,7 +2,6 @@
  * @module viw-webgl-viewer/inputs
  */
 
-
 import * as THREE from 'three'
 import { InputHandler } from './inputHandler'
 import { InputAction } from '../raycaster'
@@ -15,9 +14,20 @@ type Modifier = 'ctrl' | 'shift' | 'none'
  */
 export class MouseHandler extends InputHandler {
   private readonly _idleDelayMs = 150
+
+  /**
+   * The speed factor for zoom movements.
+   */
   zoomSpeed = 1
-  panSpeed = 100
+
+  /**
+   * The speed factor for rotations movements.
+   */
   rotateSpeed = 1
+  
+  /**
+   * The speed factor for orbit movements.
+   */
   orbitSpeed = 1
 
   // State
@@ -58,7 +68,7 @@ export class MouseHandler extends InputHandler {
   }
 
   private get gizmoRect () {
-    return this._viewer.gizmoRectangle
+    return this._viewer.gizmos.rectangle
   }
 
   protected override addListeners (): void {
@@ -194,16 +204,16 @@ export class MouseHandler extends InputHandler {
   private onMouseMainDrag (delta: THREE.Vector2) {
     switch (this.inputs.pointerActive) {
       case 'orbit':
-        this.camera.do().orbit(this.toRotation(delta, this.orbitSpeed))
+        this.camera.snap().orbit(this.toRotation(delta, this.orbitSpeed))
         break
       case 'look':
-        this.camera.do().rotate(this.toRotation(delta, this.rotateSpeed))
+        this.camera.snap().rotate(this.toRotation(delta, this.rotateSpeed))
         break
       case 'pan':
-        this.camera.do().move2(delta.multiplyScalar(this.panSpeed), 'XY')
+        this.pan(delta)
         break
       case 'zoom':
-        this.camera.do().zoom(1 + delta.y * this.zoomSpeed)
+        this.camera.snap().zoom(1 + delta.y * this.zoomSpeed)
         break
       case 'rect':
         if (!this._hasCameraMoved) {
@@ -215,11 +225,18 @@ export class MouseHandler extends InputHandler {
   }
 
   private onMouseMiddleDrag (delta: THREE.Vector2) {
-    this.camera.do().move2(delta.multiplyScalar(100), 'XY')
+    this.pan(delta)
   }
 
+  private pan(delta: THREE.Vector2){
+    const size = this.camera.frustrumSizeAt(this.camera.target)
+    size.multiply(delta).multiplyScalar(2)
+    this.camera.snap().move2(size, 'XY')
+  }
+
+
   private onMouseRightDrag (delta: THREE.Vector2) {
-    this.camera.do().rotate(this.toRotation(delta, this.rotateSpeed))
+    this.camera.snap().rotate(this.toRotation(delta, this.rotateSpeed))
   }
 
   private onMouseWheel = (event: WheelEvent) => {
@@ -234,7 +251,7 @@ export class MouseHandler extends InputHandler {
     if (event.ctrlKey) {
       this.camera.speed -= scrollValue
     } else {
-      const zoom = Math.pow(1.3, scrollValue)
+      const zoom = Math.pow(1.5, scrollValue)
       this.camera.lerp(0.75).zoom(zoom)
     }
   }
@@ -251,11 +268,10 @@ export class MouseHandler extends InputHandler {
 
   private onMouseUp = (event: MouseEvent) => {
     event.stopImmediatePropagation()
-    this.resetIdle()
     const btn = this.getButton(event)
     if (btn === this._buttonDown) return // the active button is still down.
 
-    this._viewer.gizmoRectangle.visible = false
+    this._viewer.gizmos.rectangle.visible = false
     event.preventDefault()
     if (!this._buttonDown) return
 
@@ -312,7 +328,6 @@ export class MouseHandler extends InputHandler {
       position,
       this.raycaster
     )
-
     this._viewer.inputs.MainAction(action)
   }
 

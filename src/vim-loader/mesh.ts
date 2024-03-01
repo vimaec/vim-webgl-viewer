@@ -3,10 +3,9 @@
  */
 
 import * as THREE from 'three'
-import { G3d, MeshSection } from 'vim-format'
-import { Geometry, Transparency } from './geometry'
-import { VimMaterials } from './materials/materials'
+import { InsertableSubmesh } from './progressive/insertableSubmesh'
 import { Vim } from './vim'
+import { InstancedSubmesh } from './progressive/instancedSubmesh'
 
 /**
  * Wrapper around THREE.Mesh
@@ -17,7 +16,7 @@ export class Mesh {
   /**
    * the wrapped THREE mesh
    */
-  three: THREE.Mesh
+  mesh: THREE.Mesh
 
   /**
    * Vim file from which this mesh was created.
@@ -25,7 +24,7 @@ export class Mesh {
   vim: Vim | undefined
 
   /**
-   * Wether the mesh is merged or not.
+   * Whether the mesh is merged or not.
    */
   merged: boolean
 
@@ -63,8 +62,8 @@ export class Mesh {
     instance: number[],
     boxes: THREE.Box3[]
   ) {
-    this.three = mesh
-    this.three.userData.vim = this
+    this.mesh = mesh
+    this.mesh.userData.vim = this
     this.instances = instance
     this.boxes = boxes
     this.boundingBox = this.unionAllBox(boxes)
@@ -101,12 +100,12 @@ export class Mesh {
 
     if (value) {
       if (!this._material) {
-        this._material = this.three.material
+        this._material = this.mesh.material
       }
-      this.three.material = value
+      this.mesh.material = value
     } else {
       if (this._material) {
-        this.three.material = this._material
+        this.mesh.material = this._material
         this._material = undefined
       }
     }
@@ -116,7 +115,7 @@ export class Mesh {
    * Returns submesh for given index.
    */
   getSubMesh (index: number) {
-    return new Submesh(this, index)
+    return new StandardSubmesh(this, index)
   }
 
   /**
@@ -127,7 +126,7 @@ export class Mesh {
       throw new Error('Can only be called when mesh.merged = true')
     }
     const index = this.binarySearch(this.submeshes, faceIndex * 3)
-    return new Submesh(this, index)
+    return new StandardSubmesh(this, index)
   }
 
   /**
@@ -135,7 +134,7 @@ export class Mesh {
    * @returns Returns all submeshes
    */
   getSubmeshes () {
-    return this.instances.map((s, i) => new Submesh(this, i))
+    return this.instances.map((s, i) => new StandardSubmesh(this, i))
   }
 
   private binarySearch (array: number[], element: number) {
@@ -164,10 +163,10 @@ export class Mesh {
   }
 }
 
-/**
- * Represents one specific VIM instance as it is part of a Mesh.
- */
-export class Submesh {
+export type MergedSubmesh = StandardSubmesh | InsertableSubmesh
+export type Submesh = MergedSubmesh | InstancedSubmesh
+
+export class StandardSubmesh {
   mesh: Mesh
   index: number
 
@@ -176,11 +175,15 @@ export class Submesh {
     this.index = index
   }
 
+  equals (other: Submesh) {
+    return this.mesh === other.mesh && this.index === other.index
+  }
+
   /**
    * Returns parent three mesh.
    */
   get three () {
-    return this.mesh.three
+    return this.mesh.mesh
   }
 
   /**

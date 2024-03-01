@@ -11,7 +11,7 @@ import {
   MeasureStyle,
   MeasureElement
 } from './measureHtml'
-import { Camera } from '../../camera/camera'
+import { ICamera } from '../../camera/camera'
 
 /**
  * Wrapper for a two points line drawn using MeshLine
@@ -92,10 +92,10 @@ class MeasureMarker {
   mesh: THREE.Mesh
   private _material: THREE.Material
   private _materialAlways: THREE.Material
-  private _camera: Camera
+  private _camera: ICamera
   private disconnect: () => void
 
-  constructor (color: THREE.Color, camera: Camera, viewer: Viewer) {
+  constructor (color: THREE.Color, camera: ICamera) {
     this._material = new THREE.MeshBasicMaterial({
       color
     })
@@ -159,13 +159,11 @@ export class MeasureGizmo {
 
     this._startMarker = new MeasureMarker(
       new THREE.Color('#FFB700'),
-      this._viewer.camera,
-      this._viewer
+      viewer.camera
     )
     this._endMarker = new MeasureMarker(
       new THREE.Color('#0590CC'),
-      this._viewer.camera,
-      this._viewer
+      viewer.camera
     )
 
     this._line = new MeasureLine(canvasSize, new THREE.Color(1, 1, 1), 'Dist')
@@ -194,7 +192,6 @@ export class MeasureGizmo {
     )
 
     this._viewer.renderer.add(this._group)
-    this._viewer.renderer.textEnabled = true
   }
 
   private _animate () {
@@ -330,6 +327,5 @@ export class MeasureGizmo {
     this._lineX.dispose()
     this._lineY.dispose()
     this._lineZ.dispose()
-    this._viewer.renderer.textEnabled = false
   }
 }

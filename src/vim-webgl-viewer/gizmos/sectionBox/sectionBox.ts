@@ -10,7 +10,7 @@ import { SignalDispatcher } from 'ste-signals'
 import { SimpleEventDispatcher } from 'ste-simple-events'
 
 /**
- * Gizmo for section box, it acts as a proxy between renderer and user.
+ * Gizmo for section box, serving as a proxy between the renderer and the user.
  */
 export class SectionBox {
   // dependencies
@@ -106,7 +106,7 @@ export class SectionBox {
   }
 
   /**
-   * When true the section gizmo will section the model with clipping planes.
+   * Determines whether the section gizmo will section the model with clipping planes.
    */
   get clip () {
     return this._clip ?? false
@@ -120,7 +120,7 @@ export class SectionBox {
   }
 
   /**
-   * When true the section gizmo will react to user inputs.
+   * Determines whether the gizmo reacts to user inputs.
    */
   get interactive () {
     return this._interactive ?? false
@@ -136,7 +136,7 @@ export class SectionBox {
   }
 
   /**
-   * When true the section gizmo will be rendered.
+   * Determines whether the gizmo will be rendered.
    */
   get visible () {
     return this._visible ?? false
@@ -154,9 +154,12 @@ export class SectionBox {
   }
 
   /**
-   * Sets the section gizmo size to match given box
+   * Sets the section gizmo size to match the given box.
+   * @param {THREE.Box3} box - The box to match the section gizmo size to.
+   * @param {number} [padding=1] - The padding to apply to the box.
    */
   public fitBox (box: THREE.Box3, padding = 1) {
+    if(!box) return
     const b = box.expandByScalar(padding)
     this._cube.fitBox(b)
     this._outline.fitBox(b)
@@ -174,7 +177,9 @@ export class SectionBox {
     this.renderer.needsUpdate = true
   }
 
-  /** Removes gizmo from rendering and inputs and dispose all resources. */
+  /** 
+   * Removes gizmo from rendering and inputs and dispose all resources.
+   */
   dispose () {
     this.renderer.remove(this._cube)
     this.renderer.remove(this._outline)
