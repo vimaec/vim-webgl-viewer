@@ -17,25 +17,7 @@ import { IObject, ObjectType } from './objectInterface'
  * High level api to interact with the loaded vim geometry and data.
  */
 export class Object implements IObject {
-  /**
-   * Indicate wether this object is architectural or markup.
-   */
-  public readonly type: ObjectType = "Architectural"
-  /**
-   * The vim object from which this object came from.
-   */
-  readonly vim: Vim
 
-  /**
-   * The bim element index associated with this object.
-   */
-  readonly element: number
-
-  /**
-   * The geometry instances  associated with this object.
-   */
-  readonly instances: number[] | undefined
-  
   private _color: THREE.Color | undefined
   private _boundingBox: THREE.Box3 | undefined
   private _meshes: Submesh[] | undefined
@@ -47,58 +29,32 @@ export class Object implements IObject {
   private _colorAttribute: ColorAttribute
 
   /**
-   * Constructs a new instance of Object.
-   * @param {Vim} vim The Vim instance.
-   * @param {number} element The element index.
-   * @param {number[] | undefined} instances An optional array of instance numbers.
-   * @param {Submesh[] | undefined} meshes An optional array of submeshes.
+   * Indicate wether this object is architectural or markup.
    */
-  constructor (
-    vim: Vim,
-    element: number,
-    instances: number[] | undefined,
-    meshes: Submesh[] | undefined
-  ) {
-    this.vim = vim
-    this.element = element
-    this.instances = instances
-    this._meshes = meshes
-
-    this._outlineAttribute = new ObjectAttribute(
-      false,
-      'selected',
-      'selected',
-      meshes,
-      (v) => (v ? 1 : 0)
-    )
-
-    this._visibleAttribute = new ObjectAttribute(
-      true,
-      'ignore',
-      'ignore',
-      meshes,
-      (v) => (v ? 0 : 1)
-    )
-
-    this._focusedAttribute = new ObjectAttribute(
-      false,
-      'focused',
-      'focused',
-      meshes,
-      (v) => (v ? 1 : 0)
-    )
-
-    this._coloredAttribute = new ObjectAttribute(
-      false,
-      'colored',
-      'colored',
-      meshes,
-      (v) => (v ? 1 : 0)
-    )
-
-    this._colorAttribute = new ColorAttribute(meshes, undefined, vim)
-  }
+  public readonly type: ObjectType = "Architectural"
   
+  /**
+   * The vim object from which this object came from.
+   */
+  readonly vim: Vim
+
+  /**
+   * The bim element index associated with this object.
+   */
+  readonly element: number
+
+  /**
+   * The ID of the element associated with this object.
+   */
+  get elementId () : bigint {
+    return this.vim.map.getElementId(this.element)
+  }
+
+  /**
+   * The geometry instances  associated with this object.
+   */
+  readonly instances: number[] | undefined
+
   /**
    * Checks if this object has associated geometry.
    * @returns {boolean} True if this object has geometry, otherwise false.
@@ -106,7 +62,7 @@ export class Object implements IObject {
   get hasMesh () {
     return (this._meshes?.length ?? 0) > 0
   }
-
+  
   /**
    * Determines wether to render selection outline for this object or not.
    */
@@ -165,38 +121,56 @@ export class Object implements IObject {
   }
 
   /**
-   * Internal - Replace this object meshes and apply color as needed.
+   * Constructs a new instance of Object.
+   * @param {Vim} vim The Vim instance.
+   * @param {number} element The element index.
+   * @param {number[] | undefined} instances An optional array of instance numbers.
+   * @param {Submesh[] | undefined} meshes An optional array of submeshes.
    */
-  private updateMeshes (meshes: Submesh[] | undefined) {
+  constructor (
+    vim: Vim,
+    element: number,
+    instances: number[] | undefined,
+    meshes: Submesh[] | undefined
+  ) {
+    this.vim = vim
+    this.element = element
+    this.instances = instances
     this._meshes = meshes
-    this.vim.scene.setDirty()
 
-    this._outlineAttribute.updateMeshes(meshes)
-    this._visibleAttribute.updateMeshes(meshes)
-    this._focusedAttribute.updateMeshes(meshes)
-    this._coloredAttribute.updateMeshes(meshes)
-    this._colorAttribute.updateMeshes(meshes)
-  }
+    this._outlineAttribute = new ObjectAttribute(
+      false,
+      'selected',
+      'selected',
+      meshes,
+      (v) => (v ? 1 : 0)
+    )
 
-  /**
-   * Internal method used to replace this object's meshes and apply color as needed.
-   * @param {Submesh} mesh The new mesh to be added.
-   * @throws {Error} Throws an error if the provided mesh instance does not match any existing instances.
-   */
-  _addMesh (mesh: Submesh) {
-    if (this.instances.findIndex((i) => i === mesh.instance) < 0) {
-      throw new Error('Cannot update mismatched instance')
-    }
+    this._visibleAttribute = new ObjectAttribute(
+      true,
+      'ignore',
+      'ignore',
+      meshes,
+      (v) => (v ? 0 : 1)
+    )
 
-    if (this._meshes) {
-      if (this._meshes.findIndex((m) => m.equals(mesh)) < 0) {
-        this._meshes.push(mesh)
-        this.updateMeshes(this._meshes)
-      }
-    } else {
-      this._meshes = [mesh]
-      this.updateMeshes(this._meshes)
-    }
+    this._focusedAttribute = new ObjectAttribute(
+      false,
+      'focused',
+      'focused',
+      meshes,
+      (v) => (v ? 1 : 0)
+    )
+
+    this._coloredAttribute = new ObjectAttribute(
+      false,
+      'colored',
+      'colored',
+      meshes,
+      (v) => (v ? 1 : 0)
+    )
+
+    this._colorAttribute = new ColorAttribute(meshes, undefined, vim)
   }
 
   /**
@@ -213,13 +187,6 @@ export class Object implements IObject {
    */
   async getBimParameters (): Promise<VimHelpers.ElementParameter[]> {
     return VimHelpers.getElementParameters(this.vim.bim, this.element)
-  }
-
-  /**
-   * The ID of the element associated with this object.
-   */
-  get elementId () : bigint {
-    return this.vim.map.getElementId(this.element)
   }
 
   /**
@@ -253,6 +220,38 @@ export class Object implements IObject {
    */
   public getCenter (target: THREE.Vector3 = new THREE.Vector3()) {
     return this.getBoundingBox()?.getCenter(target)
+  }
+
+  /**
+   * Internal method used to replace this object's meshes and apply color as needed.
+   * @param {Submesh} mesh The new mesh to be added.
+   * @throws {Error} Throws an error if the provided mesh instance does not match any existing instances.
+   */
+  _addMesh (mesh: Submesh) {
+    if (this.instances.findIndex((i) => i === mesh.instance) < 0) {
+      throw new Error('Cannot update mismatched instance')
+    }
+
+    if (this._meshes) {
+      if (this._meshes.findIndex((m) => m.equals(mesh)) < 0) {
+        this._meshes.push(mesh)
+        this.updateMeshes(this._meshes)
+      }
+    } else {
+      this._meshes = [mesh]
+      this.updateMeshes(this._meshes)
+    }
+  }
+
+  private updateMeshes (meshes: Submesh[] | undefined) {
+    this._meshes = meshes
+    this.vim.scene.setDirty()
+
+    this._outlineAttribute.updateMeshes(meshes)
+    this._visibleAttribute.updateMeshes(meshes)
+    this._focusedAttribute.updateMeshes(meshes)
+    this._coloredAttribute.updateMeshes(meshes)
+    this._colorAttribute.updateMeshes(meshes)
   }
 }
 

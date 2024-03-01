@@ -12,62 +12,83 @@ export type ObjectType = "Architectural" | "Marker"
  * API to interact with an object that is both visible and related to a bim element.
  */
 export interface IObject {
+  /**
+   * Indicate wether this object is architectural or markup.
+   */
   type: ObjectType;
+
+  /**
+   * The vim object from which this object came from.
+   */
   vim: Vim;
+
+  /**
+   * The bim element index associated with this object.
+   */
   element: number;
+
+  /**
+   * The ID of the element associated with this object.
+   */
   elementId: BigInt;
+
+  /**
+   * The geometry instances  associated with this object.
+   */
   instances: number[] | undefined;
 
   /**
-   * Returns true if this object has geometry
+   * Checks if this object has associated geometry.
+   * @returns {boolean} True if this object has geometry, otherwise false.
    */
   hasMesh: boolean;
 
   /**
-   * Toggles selection outline for this object.
-   * @param value true to show object, false to hide object.
+   * Determines wether to render selection outline for this object or not.
    */
   outline: boolean;
 
-  /**
-   * Toggles focused highlight for this object.
-   * @param value true to highlight object.
+ /**
+   * Determines wether to render focus highlight for this object or not.
    */
   focused: boolean;
 
-  /**
-   * Toggles visibility of this object.
-   * @param value true to show object, false to hide object.
+   /**
+   * Determines wether to render this object or not.
    */
   visible: boolean;
 
   /**
-   * Changes the display color of this object.
-   * @param color Color to apply, undefined to revert to default color.
+   * Gets or sets the display color of this object.
+   * @param {THREE.Color | undefined} color The color to apply. Pass undefined to revert to the default color.
+   * @returns {THREE.Color} The current color of the object.
    */
   color: THREE.Color;
 
   /**
-   * Returns Bim data for the element associated with this object.
-   * Returns undefined if no associated bim
+   * Asynchronously retrieves Bim data for the element associated with this object.
+   * @returns {IElement} An object containing the bim data for this element.
    */
   getBimElement(): Promise<IElement>;
 
   /**
-   * Returns Bim data for the element associated with this object.
+   * Asynchronously retrieves Bim parameters for the element associated with this object.
+   * @returns {VimHelpers.ElementParameter[]} An array of all bim parameters for this elements.
    */
   getBimParameters(): Promise<VimHelpers.ElementParameter[]>;
 
   /**
-   * returns the bounding box of the object from cache or computed if needed.
-   * Returns undefined if object has no geometry.
+   * Retrieves the bounding box of the object from cache or computes it if needed.
+   * Returns undefined if the object has no geometry.
+   * @returns {THREE.Box3 | undefined} The bounding box of the object, or undefined if the object has no geometry.
    */
   getBoundingBox(target?: THREE.Box3): THREE.Box3;
 
   /**
-   * Returns the center position of this object
-   * @param target Vector3 where to copy data. A new instance is created if none provided.
-   * Returns undefined if object has no geometry.
+   * Retrieves the center position of this object.
+   * @param {THREE.Vector3} [target=new THREE.Vector3()] Optional parameter specifying where to copy the center position data.
+   * A new instance is created if none is provided.
+   * @returns {THREE.Vector3 | undefined} The center position of the object, or undefined if the object has no geometry.
    */
   getCenter(target: THREE.Vector3): THREE.Vector3;
 }

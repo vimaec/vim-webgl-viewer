@@ -1,21 +1,35 @@
-import { VimDocument, IElement } from 'vim-format'
+import { IElement } from 'vim-format'
 import { ElementParameter } from 'vim-format/dist/vimHelpers'
 import { Vim } from '../../../vim-loader/vim'
-import { Submesh } from '../../../vim-loader/mesh'
 import { Viewer } from '../../viewer'
 import * as THREE from 'three'
 import { IObject, ObjectType } from '../../../vim-loader/objectInterface'
 import { dot } from '../../../images'
 
+/**
+ * Marker gizmo that display an interactive sprite at a 3D positions
+ * Marker gizmos are still under development.
+ */
 export class GizmoMarker implements IObject {
   public readonly type: ObjectType = "Marker"
   private _viewer: Viewer
   private _sprite: THREE.Sprite
   private _material : THREE.SpriteMaterial
+  private _loaded = false
 
+  /**
+   * The vim object from which this object came from.
+   */
   vim: Vim
-  bim: VimDocument
+
+  /**
+   * The bim element index associated with this object.
+   */
   element: number
+
+  /**
+   * The geometry instances  associated with this object.
+   */
   instances: number[]
 
   constructor (viewer: Viewer) {
@@ -28,33 +42,38 @@ export class GizmoMarker implements IObject {
     this.focused = false
   }
 
-  private loadTexture(data: string){
-    const image = new Image()
-    image.src = data
-    const texture = new THREE.Texture()
-    texture.image = image
-    image.onload = () => {
-      texture.needsUpdate = true
-    }
-    return texture
-  }
-
   get position() {
     return this._sprite.position;
   }
 
+  /**
+   *  Adds this marker to the renderer 
+   */
   load(){
-    this._viewer.renderer.add(this._sprite)
+    if(!this._loaded){
+      this._loaded = this._viewer.renderer.add(this._sprite)
+    }
   }
 
+  /**
+   * Removes this marker from the renderer.
+   */
   unload(){
-    this._viewer.renderer.remove(this._sprite)
+    if(this._loaded){
+      this._viewer.renderer.remove(this._sprite)
+    }
   }
 
+   /**
+   * Always false
+   */
   get hasMesh (): boolean {
     return false
   }
 
+  /**
+   * Applies a color override instead of outlines.
+   */
   get outline (): boolean {
     return !this.color.equals(new THREE.Color('white'))
   }
@@ -63,6 +82,9 @@ export class GizmoMarker implements IObject {
     this.color = value ? new THREE.Color('red') : new THREE.Color('white')
   }
 
+  /**
+   * Enlarges the gizmo to indicate focus.
+   */
   get focused (): boolean {
     return this._sprite.scale.x === 8
   }
@@ -76,12 +98,19 @@ export class GizmoMarker implements IObject {
     this._viewer.renderer.needsUpdate = true
   }
 
+  /**
+   * Determines if the gizmo will be rendered.
+   */
   get visible (): boolean {
-    throw new Error('Method not implemented.')
+    return this._loaded
   }
 
   set visible (value: boolean) {
-    throw new Error('Method not implemented.')
+    if(value){
+      this.load()
+    }else{
+      this.unload()
+    }
   }
 
   get color (): THREE.Color {
@@ -91,10 +120,6 @@ export class GizmoMarker implements IObject {
   set color (color: THREE.Color) {
     this._material.color.copy(color)
     this._viewer.renderer.needsUpdate = true
-  }
-
-  addMesh (mesh: Submesh): void {
-    throw new Error('Method not implemented.')
   }
 
   getBimElement (): Promise<IElement> {
@@ -109,11 +134,33 @@ export class GizmoMarker implements IObject {
     throw new Error('Method not implemented.')
   }
 
+ /**
+   * Retrieves the bounding box of the object from cache or computes it if needed.
+   * Returns a unit box arount the marker position.
+   * @returns {THREE.Box3 | undefined} The bounding box of the object.
+   */
   getBoundingBox (): THREE.Box3 {
     return new THREE.Box3().setFromCenterAndSize(this.position.clone(), new THREE.Vector3(1,1,1))
   }
 
+   /**
+   * Retrieves the center position of this object.
+   * @param {THREE.Vector3} [target=new THREE.Vector3()] Optional parameter specifying where to copy the center position data.
+   * A new instance is created if none is provided.
+   * @returns {THREE.Vector3 | undefined} The center position of the object.
+   */
   public getCenter (target?: THREE.Vector3): THREE.Vector3 {
     return (target ?? new THREE.Vector3()).copy(this.position)
+  }
+
+  private loadTexture(data: string){
+    const image = new Image()
+    image.src = data
+    const texture = new THREE.Texture()
+    texture.image = image
+    image.onload = () => {
+      texture.needsUpdate = true
+    }
+    return texture
   }
 }
