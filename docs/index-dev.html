@@ -48,7 +48,6 @@
 
         const vim = await VIM.open(url,
           {
-            legacy : true,
             rotation: new VIM.THREE.Vector3(270, 0, 0)
           }, (p) => console.log(`Downloading Vim (${(p.loaded / 1000).toFixed(0)} kb)`) 
         ) 
