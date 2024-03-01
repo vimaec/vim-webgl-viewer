@@ -26,7 +26,7 @@
   </head>
   <body>
     <script src="https://unpkg.com/three@0.143"></script>
-    <script src="https://unpkg.com/vim-webgl-viewer@1.6.5"></script>
+    <script src="https://unpkg.com/vim-webgl-viewer@2.0.0"></script>
     <script>
 
       // Parse URL for source file
@@ -59,7 +59,7 @@
           console.log(`loaded in ${(Date.now() - time) / 1000} seconds`)
         })
         
-        viewer.camera.do(true).frame(vim)
+        viewer.camera.snap(true).frame(vim)
 
         // Useful for debuging in console.
         globalThis.vim = vim
