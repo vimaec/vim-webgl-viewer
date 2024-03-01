@@ -12,7 +12,7 @@ import { ISignal, SignalDispatcher } from 'ste-signals'
 import { PerspectiveWrapper } from './perspective'
 import { OrthographicWrapper } from './orthographic'
 import { CameraLerp } from './cameraMovementLerp'
-import { CameraMovementDo } from './cameraMovementDo'
+import { CameraMovementSnap } from './cameraMovementSnap'
 import { CameraMovement } from './cameraMovement'
 
 /**
@@ -56,7 +56,7 @@ export interface ICamera {
    * @param {boolean} [force=false] - Set to true to ignore locked axis and rotation.
    * @returns {CameraMovement} The camera movement api.
    */
-  do (force?: boolean) : CameraMovement
+  snap (force?: boolean) : CameraMovement
 
   /**
    * Interface for smoothly moving the camera over time.
@@ -144,7 +144,7 @@ export class Camera implements ICamera {
   private _viewport: Viewport
   _scene: RenderScene // make private again
   private _lerp: CameraLerp
-  private _movement: CameraMovementDo
+  private _movement: CameraMovementSnap
 
   // movements
   private _inputVelocity = new THREE.Vector3()
@@ -253,7 +253,7 @@ export class Camera implements ICamera {
       new THREE.OrthographicCamera()
     )
 
-    this._movement = new CameraMovementDo(this)
+    this._movement = new CameraMovementSnap(this)
     this._lerp = new CameraLerp(this, this._movement)
 
     this._scene = scene
@@ -261,8 +261,8 @@ export class Camera implements ICamera {
 
 
     this.applySettings(settings)
-    this.do(true).setDistance(-1000)
-    this.do(true).orbitTowards(this._defaultForward)
+    this.snap(true).setDistance(-1000)
+    this.snap(true).orbitTowards(this._defaultForward)
   }
 
   /**
@@ -270,7 +270,7 @@ export class Camera implements ICamera {
    * @param {boolean} [force=false] - Set to true to ignore locked axis and rotation.
    * @returns {CameraMovement} The camera movement api.
    */
-  do (force: boolean = false) : CameraMovement {
+  snap (force: boolean = false) : CameraMovement {
     this._force = force
     this._lerp.cancel()
     return this._movement as CameraMovement
@@ -482,7 +482,7 @@ export class Camera implements ICamera {
       .clone()
       .multiplyScalar(deltaTime * this.getVelocityMultiplier())
 
-    this.do().move3(deltaPosition)
+    this.snap().move3(deltaPosition)
     return true
   }
 

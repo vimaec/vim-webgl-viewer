@@ -26,13 +26,14 @@ async function load (url: string | ArrayBuffer) {
     }, (p) => console.log(`Downloading Vim (${(p.loaded / 1000).toFixed(0)} kb)`) 
   ) 
   viewer.add(vim)
+  
 
   vim.loadAll().then(() =>{
     viewer.gizmos.loading.visible = false
     console.log(`loaded in ${(Date.now() - time) / 1000} seconds`)
   })
   
-  viewer.camera.do(true).frame(vim)
+  viewer.camera.snap(true).frame(vim)
 
   // Useful for debuging in console.
   globalThis.vim = vim

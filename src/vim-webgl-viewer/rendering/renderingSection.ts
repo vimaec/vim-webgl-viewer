@@ -60,7 +60,7 @@ export class RenderingSection {
   }
 
   /**
-   * Determines wether objecets outside the section box will be culled or not.
+   * Determines whether objecets outside the section box will be culled or not.
    */
   set active (value: boolean) {
     this._materials.clippingPlanes = this.planes

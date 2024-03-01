@@ -19,12 +19,12 @@ export type VimSettings = {
   position: THREE.Vector3
   
   /**
-   * The scaling factor applied to the vim object.
+   * The XYZ rotation applied to the vim object.
    */
   rotation: THREE.Vector3
 
   /**
-   * Scale factor for the vim
+   * The scaling factor applied to the vim object.
    */
   scale: number
 

@@ -29,7 +29,7 @@ export class Object implements IObject {
   private _colorAttribute: ColorAttribute
 
   /**
-   * Indicate wether this object is architectural or markup.
+   * Indicate whether this object is architectural or markup.
    */
   public readonly type: ObjectType = "Architectural"
   
@@ -64,7 +64,7 @@ export class Object implements IObject {
   }
   
   /**
-   * Determines wether to render selection outline for this object or not.
+   * Determines whether to render selection outline for this object or not.
    */
   get outline () {
     return this._outlineAttribute.value
@@ -78,7 +78,7 @@ export class Object implements IObject {
   }
 
   /**
-   * Determines wether to render focus highlight for this object or not.
+   * Determines whether to render focus highlight for this object or not.
    */
   get focused () {
     return this._focusedAttribute.value
@@ -91,7 +91,7 @@ export class Object implements IObject {
   }
 
    /**
-   * Determines wether to render this object or not.
+   * Determines whether to render this object or not.
    */
   get visible () {
     return this._visibleAttribute.value

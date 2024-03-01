@@ -16,14 +16,14 @@ export class InsertableMesh {
   vim: Vim
 
   /**
-   * Wether the mesh is merged or not.
+   * Whether the mesh is merged or not.
    */
   get merged () {
     return true
   }
 
   /**
-   * Wether the mesh is transparent or not.
+   * Whether the mesh is transparent or not.
    */
   transparent: boolean
 

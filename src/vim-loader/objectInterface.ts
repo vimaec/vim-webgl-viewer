@@ -13,7 +13,7 @@ export type ObjectType = "Architectural" | "Marker"
  */
 export interface IObject {
   /**
-   * Indicate wether this object is architectural or markup.
+   * Indicate whether this object is architectural or markup.
    */
   type: ObjectType;
 
@@ -44,17 +44,17 @@ export interface IObject {
   hasMesh: boolean;
 
   /**
-   * Determines wether to render selection outline for this object or not.
+   * Determines whether to render selection outline for this object or not.
    */
   outline: boolean;
 
  /**
-   * Determines wether to render focus highlight for this object or not.
+   * Determines whether to render focus highlight for this object or not.
    */
   focused: boolean;
 
    /**
-   * Determines wether to render this object or not.
+   * Determines whether to render this object or not.
    */
   visible: boolean;
 

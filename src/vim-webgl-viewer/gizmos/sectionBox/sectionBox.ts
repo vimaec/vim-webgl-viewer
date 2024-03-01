@@ -120,7 +120,7 @@ export class SectionBox {
   }
 
   /**
-   * Determines wether the gizmo reacts to user inputs.
+   * Determines whether the gizmo reacts to user inputs.
    */
   get interactive () {
     return this._interactive ?? false
@@ -136,7 +136,7 @@ export class SectionBox {
   }
 
   /**
-   * Determines wether the gizmo will be rendered.
+   * Determines whether the gizmo will be rendered.
    */
   get visible () {
     return this._visible ?? false

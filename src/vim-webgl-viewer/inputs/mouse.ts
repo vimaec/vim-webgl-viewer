@@ -204,16 +204,16 @@ export class MouseHandler extends InputHandler {
   private onMouseMainDrag (delta: THREE.Vector2) {
     switch (this.inputs.pointerActive) {
       case 'orbit':
-        this.camera.do().orbit(this.toRotation(delta, this.orbitSpeed))
+        this.camera.snap().orbit(this.toRotation(delta, this.orbitSpeed))
         break
       case 'look':
-        this.camera.do().rotate(this.toRotation(delta, this.rotateSpeed))
+        this.camera.snap().rotate(this.toRotation(delta, this.rotateSpeed))
         break
       case 'pan':
         this.pan(delta)
         break
       case 'zoom':
-        this.camera.do().zoom(1 + delta.y * this.zoomSpeed)
+        this.camera.snap().zoom(1 + delta.y * this.zoomSpeed)
         break
       case 'rect':
         if (!this._hasCameraMoved) {
@@ -231,12 +231,12 @@ export class MouseHandler extends InputHandler {
   private pan(delta: THREE.Vector2){
     const size = this.camera.frustrumSizeAt(this.camera.target)
     size.multiply(delta).multiplyScalar(2)
-    this.camera.do().move2(size, 'XY')
+    this.camera.snap().move2(size, 'XY')
   }
 
 
   private onMouseRightDrag (delta: THREE.Vector2) {
-    this.camera.do().rotate(this.toRotation(delta, this.rotateSpeed))
+    this.camera.snap().rotate(this.toRotation(delta, this.rotateSpeed))
   }
 
   private onMouseWheel = (event: WheelEvent) => {

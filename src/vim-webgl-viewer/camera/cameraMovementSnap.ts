@@ -6,7 +6,7 @@ import { CameraMovement } from './cameraMovement'
 import { Object } from '../../vim-loader/object'
 import * as THREE from 'three'
 
-export class CameraMovementDo extends CameraMovement {
+export class CameraMovementSnap extends CameraMovement {
   /**
    * Moves the camera closer or farther away from orbit target.
    * @param amount movement size.

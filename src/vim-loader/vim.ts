@@ -60,7 +60,7 @@ export class Vim {
   readonly settings: VimSettings
 
   /**
-   * Mostly Internal - The scene this in which the vim geometry is added.
+   * Mostly Internal - The scene in which the vim geometry is added.
    */
   readonly scene: Scene
 

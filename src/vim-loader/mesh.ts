@@ -24,7 +24,7 @@ export class Mesh {
   vim: Vim | undefined
 
   /**
-   * Wether the mesh is merged or not.
+   * Whether the mesh is merged or not.
    */
   merged: boolean
 
