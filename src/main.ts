@@ -1,5 +1,5 @@
-import * as VIM from '.'
-import * as THREE from 'three'
+import {Viewer, open, THREE} from '.'
+
 
 // Parse URL for source file
 const params = new URLSearchParams(window.location.search)
@@ -8,7 +8,7 @@ const url = params.has('vim')
   : null
 
 let time: number
-const viewer = new VIM.Viewer()
+const viewer = new Viewer()
 
 load(url ?? "https://vim02.azureedge.net/samples/residence.v1.2.75.vim")
 // load(url ?? "https://vim02.azureedge.net/samples/residence.v1.2.75.vimx")
@@ -19,10 +19,10 @@ async function load (url: string | ArrayBuffer) {
   time = Date.now()
   viewer.gizmos.loading.visible = true
 
-  const vim = await VIM.open(url,
+  const vim = await open(url,
     {
       legacy : true,
-      rotation: new VIM.THREE.Vector3(270, 0, 0)
+      rotation: new THREE.Vector3(270, 0, 0)
     }, (p) => console.log(`Downloading Vim (${(p.loaded / 1000).toFixed(0)} kb)`) 
   ) 
   viewer.add(vim)
@@ -38,7 +38,6 @@ async function load (url: string | ArrayBuffer) {
   // Useful for debuging in console.
   globalThis.vim = vim
   globalThis.viewer = viewer
-  globalThis.THREE = THREE
 }
 
 function addLoadButton () {
