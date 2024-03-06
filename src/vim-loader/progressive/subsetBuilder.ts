@@ -58,7 +58,9 @@ export class VimSubsetBuilder implements SubsetBuilder {
     this._onUpdate.dispatch()
   }
 
-  clear () {}
+  clear () {
+    this._onUpdate.dispatch()
+  }
 
   dispose () {}
 }
@@ -102,6 +104,7 @@ export class VimxSubsetBuilder {
     this._localVimx.abort()
     this._set.forEach((s) => s.dispose())
     this._set.clear()
+    this._onUpdate.dispatch()
   }
 
   dispose () {

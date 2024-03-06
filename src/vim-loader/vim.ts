@@ -319,9 +319,10 @@ export class Vim {
    */
   clear () {
     this._elementToObject.clear()
-    this.scene.clear()
-    this._builder.clear()
     this._loadedInstances.clear()
+    this.scene.clear()
+    // Clearing this one last because it dispatches the signal
+    this._builder.clear()
   }
 
   /**
