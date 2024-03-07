@@ -3,7 +3,7 @@
  */
 
 import * as THREE from 'three'
-import { VimDocument, G3d, VimHeader, FilterMode } from 'vim-format'
+import { VimDocument, G3d, VimHeader, FilterModeNext, FilterMode } from 'vim-format'
 import { Scene } from './scene'
 import { VimSettings } from './vimSettings'
 import { Object } from './object'
