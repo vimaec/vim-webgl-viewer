@@ -28,33 +28,68 @@ export type Settings = {
    * Webgl canvas related options
    */
   canvas: {
-    /** Canvas dom model id. If none provided a new canvas will be created */
+    /**
+     * Canvas dom model id. If none provided a new canvas will be created
+     * Default: undefined.
+     */
     id: string | undefined
-    /** Limits how often canvas will be resized if window is resized. */
+
+    /**
+     * Limits how often canvas will be resized if window is resized in ms.
+     * Default: 200
+     */
     resizeDelay: number
   }
   /**
    * Three.js camera related options
    */
   camera: {
-    /** Start with orthographic camera */
+    /**
+     * Start with orthographic camera
+     * Default: false
+     */
     orthographic: boolean
 
-    /** Vector3 of 0 or 1 to enable/disable movement along each axis */
+    /**
+     * Vector3 of 0 or 1 to enable/disable movement along each axis
+     * Default: THREE.Vector3(1, 1, 1)
+     */
     allowedMovement: THREE.Vector3
 
-    /** Vector2 of 0 or 1 to enable/disable rotation around x or y. */
+    /**
+     * Vector2 of 0 or 1 to enable/disable rotation around x or y.
+     * Default: THREE.Vector2(1, 1)
+     */
     allowedRotation: THREE.Vector2
 
-    /** Near clipping plane distance */
+    /**
+     * Near clipping plane distance
+     * Default: 0.01
+     */
     near: number
-    /** Far clipping plane distance */
+
+    /**
+     * Far clipping plane distance
+     * Default: 15000
+     */
     far: number
-    /** Fov angle in degrees */
+
+    /**
+     * Fov angle in degrees
+     * Default: 50
+     */
     fov: number
-    /** Zoom level */
+
+    /**
+     * Camera zoom level
+     * Default: 1
+     */
     zoom: number
-    /** Initial forward of the camera */
+
+    /**
+     * Initial forward of the camera
+     * THREE.Vector3(1, -1, 1)
+     */
     forward: THREE.Vector3
 
     /** Camera controls related options */
@@ -64,26 +99,59 @@ export type Settings = {
        * <p>Camera has two modes: First person and orbit</p>
        * <p>First person allows to moves the camera around freely</p>
        * <p>Orbit rotates the camera around a focus point</p>
+       * Default: true
        */
       orbit: boolean
-      /** Camera rotation speed factor */
+
+      /**
+       * Camera rotation speed factor
+       * Default: 1
+       */
       rotateSpeed: number
-      /** Orbit speed. */
+      
+      /**
+       * Camera orbit rotation speed factor.
+       * Default: 1
+       */
       orbitSpeed: number
-      /** Camera movement speed factor */
+
+      /**
+       * Camera movement speed factor
+       * Default: 1
+       */
       moveSpeed: number
     }
+
     /** Camera gizmo related options */
     gizmo: {
-      /** Enables/Disables camera gizmo. */
+      /**
+      * Enables/Disables camera gizmo.
+      * Default: true
+      */
       enable: boolean
-      /** Size of camera gizmo. */
+
+      /**
+      * Size of camera gizmo.
+      * Default: 0.01
+      */
       size: number
-      /** Color of camera gizmo. */
+
+      /**
+      * Color of camera gizmo.
+      * Default: THREE.Color(255, 255, 255)
+      */
       color: THREE.Color
-      /** Opacity of camera gizmo. */
+
+      /** 
+      * Opacity of the camera gizmo.
+      * Default: 0.5
+      */
       opacity: number
-      /** Opacity always shown. */
+
+      /**
+      * Opacity of the camera gizmo when behind objects.
+      * Default: 0.125
+      */
       opacityAlways: number
     }
   }
@@ -91,76 +159,133 @@ export type Settings = {
    * Rendering background options
    */
   background: {
+    /** 
+     * Color of the cavas background
+     * Default: THREE.Color('#96999f')
+     */
     color: THREE.Color
   }
   /**
    * Ground plane under the scene options.
    */
   groundPlane: {
-    /** Enables/Disables plane under scene */
+    /**
+    * Enables/Disables plane under scene
+    * Default: true
+    */
     visible: boolean
+
+    /**
+    * Controls how the texture will be retrieved using the texture field.
+    * Default: base64
+    */
     encoding: TextureEncoding
-    /** Local or remote texture url for plane */
+
+    /**
+    * Local or remote texture url for plane
+    * Default: Vim halo ground provided with the viewer.
+    */
     texture: string
-    /** Opacity of the plane */
+
+    /**
+    * Opacity of the plane
+    * Default: 1
+    */
     opacity: number
-    /** Color of the plane */
+
+    /**
+    * Color of the plane
+    * Default: THREE.Color(0xff, 0xff, 0xff)
+    */
     color: THREE.Color
-    /** Actual size is SceneRadius*size */
+
+    /**
+    * Size of the ground plane relative to the model
+    * Default: 5
+    */
     size: number
   }
-  /**
-   * Skylight (hemisphere light) options
-   */
-  skylight: {
-    /** Skylight sky Color. */
-    skyColor: THREE.Color
-    /** Skylight ground color. */
-    groundColor: THREE.Color
-    /** Skylight intensity. */
-    intensity: number
-  }
 
+/**
+* Object highlight on click options
+*/
+materials: {
   /**
-   * Object highlight on click options
-   */
-  materials: {
-    /** Highlight on hover options */
-    highlight: {
-      /** Highlight color */
-      color: THREE.Color
-      /** Highlight opacity */
-      opacity: number
-    }
-
-    /** Isolation materials options */
-    isolation: {
-      /** Isolation materials color */
-      color: THREE.Color
-      /** Isolation materials opacity */
-      opacity: number
-    }
-    /** Section box intersection highlight options */
-    section: {
-      /** Intersection highlight stroke width. */
-      strokeWidth: number;
-      /** Intersection highlight stroke  falloff. */
-      strokeFalloff: number;
-      /** Intersection highlight stroke  color. */
-      strokeColor: THREE.Color;
-    }
-    /** Selection outline options */
-    outline: {
-      /** Selection outline intensity. */
-      intensity: number;
-      /** Selection outline falloff. */
-      falloff: number;
-      /** Selection outline blur. */
-      blur: number;
-      /** Selecetion outline color. */
-      color: THREE.Color;
-    }
+  * Highlight on hover options
+  */
+  highlight: {
+    /**
+    * Highlight color
+    * Default: rgb(106, 210, 255)
+    */
+    color: THREE.Color
+    /**
+    * Highlight opacity
+    * Default: 0.5
+    */
+    opacity: number
   }
+  /**
+  * Isolation materials options
+  */
+  isolation: {
+    /**
+    * Isolation materials color
+    * Default: rgb(78, 82, 92)
+    */
+    color: THREE.Color
+    /**
+    * Isolation materials opacity
+    * Default: 0.08
+    */
+    opacity: number
+  }
+  /**
+  * Section box intersection highlight options
+  */
+  section: {
+    /**
+    * Intersection highlight stroke width.
+    * Default: 0.01
+    */
+    strokeWidth: number;
+    /**
+    * Intersection highlight stroke falloff.
+    * Default: 0.75
+    */
+    strokeFalloff: number;
+    /**
+    * Intersection highlight stroke color.
+    * Default: rgb(246, 246, 246)
+    */
+    strokeColor: THREE.Color;
+  }
+  /**
+  * Selection outline options
+  */
+  outline: {
+    /**
+    * Selection outline intensity.
+    * Default: 3
+    */
+    intensity: number;
+    /**
+    * Selection outline falloff.
+    * Default: 3
+    */
+    falloff: number;
+    /**
+    * Selection outline blur.
+    * Default: 2
+    */
+    blur: number;
+    /**
+    * Selection outline color.
+    * Default: rgb(0, 255, 255)
+    */
+    color: THREE.Color;
+  }
+}
 
   /**
    * Axes gizmo options
@@ -168,7 +293,30 @@ export type Settings = {
   axes: Partial<GizmoOptions>
 
   /**
+   * Skylight (hemisphere light) options
+   */
+  skylight: {
+    /**
+    * Skylight sky Color.
+    * Default: THREE.Color(153, 204, 255)
+    */
+    skyColor: THREE.Color
+
+    /**
+    * Skylight ground color.
+    * Default: THREE.Color(242, 213, 181)
+    */
+    groundColor: THREE.Color
+
+    /**
+    * Skylight intensity.
+    * Default: 0.8
+    */
+    intensity: number
+  }
+  /**
    * Sunlight (directional light) options
+   * Two Blue-Green lights at odd angles. See defaultViewerSettings.
    */
   sunLights: {
     /** Light position. */
@@ -180,14 +328,17 @@ export type Settings = {
   }[]
 
   rendering: {
-    /** Enable on-demand rendering. */
+    /**
+     * Enable on-demand rendering which wait for changes before rendering to the canvas.
+     * Default: true
+     */
     onDemand: boolean
   }
 }
 
 export type PartialSettings = RecursivePartial<Settings>
 
-const defaultConfig: Settings = {
+export const defaultViewerSettings: Settings = {
   canvas: {
     id: undefined,
     resizeDelay: 200
@@ -229,7 +380,7 @@ const defaultConfig: Settings = {
   skylight: {
     skyColor: new THREE.Color().setHSL(0.6, 1, 0.6),
     groundColor: new THREE.Color().setHSL(0.095, 1, 0.75),
-    intensity: 0.8
+    intensity: 0.8  
   },
   sunLights: [
     {
@@ -272,6 +423,6 @@ const defaultConfig: Settings = {
 
 export function getSettings (options?: PartialSettings) {
   return options
-    ? (deepmerge(defaultConfig, options, undefined) as Settings)
-    : (defaultConfig as Settings)
+    ? (deepmerge(defaultViewerSettings, options, undefined) as Settings)
+    : (defaultViewerSettings as Settings)
 }
