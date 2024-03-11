@@ -3,7 +3,7 @@
  */
 
 import * as THREE from 'three'
-import { VimDocument, G3d, VimHeader, FilterMode } from 'vim-format'
+import { VimDocument, G3d, VimHeader, FilterModeNext, FilterMode } from 'vim-format'
 import { Scene } from './scene'
 import { VimSettings } from './vimSettings'
 import { Object } from './object'
@@ -319,9 +319,10 @@ export class Vim {
    */
   clear () {
     this._elementToObject.clear()
-    this.scene.clear()
-    this._builder.clear()
     this._loadedInstances.clear()
+    this.scene.clear()
+    // Clearing this one last because it dispatches the signal
+    this._builder.clear()
   }
 
   /**

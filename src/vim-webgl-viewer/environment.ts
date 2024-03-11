@@ -68,7 +68,7 @@ export class GroundPlane {
     this.mesh.scale.copy(scale)
   }
 
-  applyTexture (encoding: 'url' | 'base64' | undefined, source: string) {
+  applyTexture (encoding: TextureEncoding, source: string) {
     // Check for changes
     if (source === this._source) return
     this._source = source
