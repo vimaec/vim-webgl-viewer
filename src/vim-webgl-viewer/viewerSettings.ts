@@ -87,7 +87,7 @@ export type Settings = {
     zoom: number
 
     /**
-     * Initial forward of the camera
+     * Initial forward vector of the camera
      * THREE.Vector3(1, -1, 1)
      */
     forward: THREE.Vector3
@@ -226,16 +226,16 @@ materials: {
     opacity: number
   }
   /**
-  * Isolation materials options
+  * Isolation material options
   */
   isolation: {
     /**
-    * Isolation materials color
+    * Isolation material color
     * Default: rgb(78, 82, 92)
     */
     color: THREE.Color
     /**
-    * Isolation materials opacity
+    * Isolation material opacity
     * Default: 0.08
     */
     opacity: number
