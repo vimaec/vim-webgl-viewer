@@ -120,6 +120,13 @@ export type Settings = {
        * Default: 1
        */
       moveSpeed: number
+
+      /**
+       * Camera movement speed factor on mouse scroll
+       * Default: 1
+       */
+      scrollSpeed: number
+      
     }
 
     /** Camera gizmo related options */
@@ -357,7 +364,8 @@ export const defaultViewerSettings: Settings = {
       orbit: true,
       rotateSpeed: 1,
       orbitSpeed: 1,
-      moveSpeed: 1
+      moveSpeed: 1,
+      scrollSpeed: 1.5
     },
 
     gizmo: {
