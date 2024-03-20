@@ -3,7 +3,7 @@
  */
 
 import * as THREE from 'three'
-import { StandardMaterial } from './standardMaterial'
+import { StandardMaterial, createOpaque, createTransparent } from './standardMaterial'
 import { createMaskMaterial } from './maskMaterial'
 import { createIsolationMaterial } from './isolationMaterial'
 import { OutlineMaterial } from './outlineMaterial'
@@ -81,8 +81,8 @@ export class ViewerMaterials {
     outline?: OutlineMaterial,
     merge?: MergeMaterial
   ) {
-    this.opaque = opaque ?? new StandardMaterial(createOpaque())
-    this.transparent = transparent ?? new StandardMaterial(createTransparent())
+    this.opaque = opaque ?? createOpaque()
+    this.transparent = transparent ?? createTransparent()
     this.simple = simple ?? createSimpleMaterial()
     this.wireframe = wireframe ?? createWireframe()
     this.isolation = isolation ?? createIsolationMaterial()
@@ -329,31 +329,6 @@ export class ViewerMaterials {
     this.mask.dispose()
     this.outline.dispose()
   }
-}
-
-/**
- * Creates a new instance of the default loader opaque material.
- * @returns {THREE.MeshPhongMaterial} A new instance of MeshPhongMaterial with transparency.
- */
-export function createOpaque () {
-  return new THREE.MeshPhongMaterial({
-    color: 0x999999,
-    vertexColors: true,
-    flatShading: true,
-    side: THREE.DoubleSide,
-    shininess: 5
-  })
-}
-
-/**
- * Creates a new instance of the default loader transparent material.
- * @returns {THREE.MeshPhongMaterial} A new instance of MeshPhongMaterial with transparency.
- */
-export function createTransparent () {
-  const mat = createOpaque()
-  mat.transparent = true
-  mat.shininess = 70
-  return mat
 }
 
 /**
