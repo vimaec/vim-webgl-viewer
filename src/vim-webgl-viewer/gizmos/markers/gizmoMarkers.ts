@@ -20,9 +20,10 @@ export class GizmoMarkers {
   add(position: THREE.Vector3) {
 
     var marker = new GizmoMarker(this._viewer);
-    marker.position.copy(position);
+    marker.position = position;
     marker.load();
     this._markers.push(marker);
+    return marker
   }
 
   /**

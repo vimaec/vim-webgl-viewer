@@ -4,46 +4,109 @@ import { Vim } from '../../../vim-loader/vim'
 import { Viewer } from '../../viewer'
 import * as THREE from 'three'
 import { IObject, ObjectType } from '../../../vim-loader/objectInterface'
-import { dot } from '../../../images'
+import { SimpleInstanceSubmesh } from '../../../vim-loader/mesh'
+import { ObjectAttribute } from '../../../vim-loader/objectAttributes'
+import { StandardMaterial } from '../../../vim-loader/materials/standardMaterial'
+import { ColorAttribute } from '../../../vim-loader/colorAttributes'
 
 /**
- * Marker gizmo that display an interactive sprite at a 3D positions
+ * Marker gizmo that display an interactive sphere at a 3D positions
  * Marker gizmos are still under development.
  */
 export class GizmoMarker implements IObject {
   public readonly type: ObjectType = "Marker"
   private _viewer: Viewer
-  private _sprite: THREE.Sprite
-  private _material : THREE.SpriteMaterial
+  private _mesh : THREE.InstancedMesh
   private _loaded = false
 
   /**
    * The vim object from which this object came from.
    */
-  vim: Vim
+  vim: Vim | undefined
 
   /**
    * The bim element index associated with this object.
    */
-  element: number
+  element: number | undefined
 
   /**
    * The geometry instances  associated with this object.
    */
-  instances: number[]
+  instances: number[] | undefined
 
+  private _outlineAttribute: ObjectAttribute<boolean>
+  private _visibleAttribute: ObjectAttribute<boolean>
+  private _coloredAttribute: ObjectAttribute<boolean>
+  private _focusedAttribute: ObjectAttribute<boolean>
+  private _colorAttribute: ColorAttribute
+  
   constructor (viewer: Viewer) {
     this._viewer = viewer
 
-    const texture = this.loadTexture(dot)
-    this._material = new THREE.SpriteMaterial({ map:texture, depthTest: false })
-    this._sprite = new THREE.Sprite(this._material)
-    this._sprite.userData.vim = this
-    this.focused = false
+    const mat = new StandardMaterial(new THREE.MeshPhongMaterial({
+      color: 0x999999,
+      vertexColors: true,
+      flatShading: true,
+      shininess: 1,
+      transparent: true,
+      depthTest: false
+    })).material
+
+    const sphere = new THREE.SphereBufferGeometry(1, 8, 8)
+    this._mesh = new THREE.InstancedMesh(sphere, mat, 1)
+    this._mesh.renderOrder = 100
+    
+    const m = new SimpleInstanceSubmesh(this._mesh, 0)
+    this._mesh.userData.vim = this
+   
+    this._outlineAttribute = new ObjectAttribute(
+      false,
+      'selected',
+      'selected',
+      [m],
+      (v) => (v ? 1 : 0)
+    )
+
+    this._visibleAttribute = new ObjectAttribute(
+      true,
+      'ignore',
+      'ignore',
+      [m],
+      (v) => (v ? 0 : 1)
+    )
+
+    this._focusedAttribute = new ObjectAttribute(
+      false,
+      'focused',
+      'focused',
+      [m],
+      (v) => (v ? 1 : 0)
+    )
+
+    this._coloredAttribute = new ObjectAttribute(
+      false,
+      'colored',
+      'colored',
+      [m],
+      (v) => (v ? 1 : 0)
+    )
+
+    this._colorAttribute = new ColorAttribute([m], undefined, undefined)
+    this.color = new THREE.Color(1,0.1,0.1)
+  }
+
+  /** Sets the position of the marker in the 3d scene */
+  set position(value: THREE.Vector3){
+    const m = new THREE.Matrix4()
+    m.compose(value, new THREE.Quaternion(), new THREE.Vector3(1,1,1))
+    this._mesh.setMatrixAt(0, m)
+    this._mesh.instanceMatrix.needsUpdate = true;
   }
 
   get position() {
-    return this._sprite.position;
+    const m = new THREE.Matrix4()
+    this._mesh.getMatrixAt(0, m);
+    return new THREE.Vector3().setFromMatrixPosition(m)
   }
 
   /**
@@ -51,7 +114,7 @@ export class GizmoMarker implements IObject {
    */
   load(){
     if(!this._loaded){
-      this._loaded = this._viewer.renderer.add(this._sprite)
+      this._loaded = this._viewer.renderer.add(this._mesh)
     }
   }
 
@@ -60,7 +123,7 @@ export class GizmoMarker implements IObject {
    */
   unload(){
     if(this._loaded){
-      this._viewer.renderer.remove(this._sprite)
+      this._viewer.renderer.remove(this._mesh)
     }
   }
 
@@ -75,26 +138,22 @@ export class GizmoMarker implements IObject {
    * Applies a color override instead of outlines.
    */
   get outline (): boolean {
-    return !this.color.equals(new THREE.Color('white'))
+    return this._outlineAttribute.value
   }
 
   set outline (value: boolean) {
-    this.color = value ? new THREE.Color('red') : new THREE.Color('white')
+    this._outlineAttribute.apply(value)
   }
 
   /**
    * Enlarges the gizmo to indicate focus.
    */
   get focused (): boolean {
-    return this._sprite.scale.x === 8
+    return  this._focusedAttribute.value
   }
 
   set focused (value: boolean) {
-    if (value) {
-      this._sprite.scale.set(8, 8, 8)
-    } else {
-      this._sprite.scale.set(5, 5, 5)
-    }
+    this._focusedAttribute.apply(value)
     this._viewer.renderer.needsUpdate = true
   }
 
@@ -102,23 +161,26 @@ export class GizmoMarker implements IObject {
    * Determines if the gizmo will be rendered.
    */
   get visible (): boolean {
-    return this._loaded
+    return this._visibleAttribute.value
   }
 
   set visible (value: boolean) {
-    if(value){
-      this.load()
-    }else{
-      this.unload()
-    }
+    this._visibleAttribute.apply(value)
+    this._viewer.renderer.needsUpdate = true
   }
 
   get color (): THREE.Color {
-    return this._material.color
+    return this._colorAttribute.value
   }
 
   set color (color: THREE.Color) {
-    this._material.color.copy(color)
+    if(color){
+      this._coloredAttribute.apply(true)
+      this._colorAttribute.apply(color)
+    }
+    else{
+      this._coloredAttribute.apply(false)
+    }
     this._viewer.renderer.needsUpdate = true
   }
 
@@ -151,16 +213,5 @@ export class GizmoMarker implements IObject {
    */
   public getCenter (target?: THREE.Vector3): THREE.Vector3 {
     return (target ?? new THREE.Vector3()).copy(this.position)
-  }
-
-  private loadTexture(data: string){
-    const image = new Image()
-    image.src = data
-    const texture = new THREE.Texture()
-    texture.image = image
-    image.onload = () => {
-      texture.needsUpdate = true
-    }
-    return texture
   }
 }

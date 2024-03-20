@@ -6,16 +6,17 @@ import * as THREE from 'three'
 import { MergedSubmesh, Submesh } from './mesh'
 import { Vim } from './vim'
 import { InsertableSubmesh } from './progressive/insertableSubmesh'
+import { AttributeTarget } from './objectAttributes'
 
 export class ColorAttribute {
   readonly vim: Vim
-  private _meshes: Submesh[] | undefined
+  private _meshes: AttributeTarget[] | undefined
   private _value: THREE.Color | undefined
 
   constructor (
-    meshes: Submesh[] | undefined,
+    meshes: AttributeTarget[] | undefined,
     value: THREE.Color | undefined,
-    vim: Vim
+    vim: Vim | undefined
   ) {
     this._meshes = meshes
     this._value = value
@@ -154,7 +155,7 @@ export class ColorAttribute {
    * @param index index of the instanced instance
    * @param color rgb representation of the color to apply
    */
-  private applyInstancedColor (sub: Submesh, color: THREE.Color | undefined) {
+  private applyInstancedColor (sub: AttributeTarget, color: THREE.Color | undefined) {
     const colors = this.getOrAddInstanceColorAttribute(
       sub.three as THREE.InstancedMesh
     )

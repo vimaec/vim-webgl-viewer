@@ -57,11 +57,9 @@ export class RaycastResult {
     intersections: ThreeIntersectionList
   ): [THREE.Intersection, GizmoMarker] | [] {
     for (let i = 0; i < intersections.length; i++) {
-      if (intersections[i].object instanceof THREE.Sprite) {
-        const sprite = intersections[i].object as THREE.Sprite
-        if (sprite.userData.vim instanceof GizmoMarker) {
-          return [intersections[i], sprite.userData.vim as GizmoMarker]
-        }
+      const data = intersections[i].object.userData.vim
+      if(data instanceof GizmoMarker){
+        return [intersections[i], data as GizmoMarker]
       }
     }
     return []
