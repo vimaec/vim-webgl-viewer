@@ -16,8 +16,7 @@ import { ColorAttribute } from '../../../vim-loader/colorAttributes'
 export class GizmoMarker implements IObject {
   public readonly type: ObjectType = "Marker"
   private _viewer: Viewer
-  private _mesh : THREE.InstancedMesh
-  private _loaded = false
+  private _submesh: SimpleInstanceSubmesh
 
   /**
    * The vim object from which this object came from.
@@ -40,30 +39,16 @@ export class GizmoMarker implements IObject {
   private _focusedAttribute: ObjectAttribute<boolean>
   private _colorAttribute: ColorAttribute
   
-  constructor (viewer: Viewer) {
+  constructor (viewer: Viewer, submesh: SimpleInstanceSubmesh) {
     this._viewer = viewer
+    this._submesh = submesh
 
-    const mat = new StandardMaterial(new THREE.MeshPhongMaterial({
-      color: 0x999999,
-      vertexColors: true,
-      flatShading: true,
-      shininess: 1,
-      transparent: true,
-      depthTest: false
-    })).material
-
-    const sphere = new THREE.SphereBufferGeometry(1, 8, 8)
-    this._mesh = new THREE.InstancedMesh(sphere, mat, 1)
-    this._mesh.renderOrder = 100
-    
-    const m = new SimpleInstanceSubmesh(this._mesh, 0)
-    this._mesh.userData.vim = this
-   
+    const array = [submesh]
     this._outlineAttribute = new ObjectAttribute(
       false,
       'selected',
       'selected',
-      [m],
+      array,
       (v) => (v ? 1 : 0)
     )
 
@@ -71,7 +56,7 @@ export class GizmoMarker implements IObject {
       true,
       'ignore',
       'ignore',
-      [m],
+      array,
       (v) => (v ? 0 : 1)
     )
 
@@ -79,7 +64,7 @@ export class GizmoMarker implements IObject {
       false,
       'focused',
       'focused',
-      [m],
+      array,
       (v) => (v ? 1 : 0)
     )
 
@@ -87,44 +72,37 @@ export class GizmoMarker implements IObject {
       false,
       'colored',
       'colored',
-      [m],
+      array,
       (v) => (v ? 1 : 0)
     )
 
-    this._colorAttribute = new ColorAttribute([m], undefined, undefined)
+    this._colorAttribute = new ColorAttribute(array, undefined, undefined)
     this.color = new THREE.Color(1,0.1,0.1)
+  }
+
+  updateMesh(mesh: SimpleInstanceSubmesh){
+    this._submesh = mesh
+    const array = [this._submesh]
+    this._visibleAttribute.updateMeshes(array)
+    this._focusedAttribute.updateMeshes(array)
+    this._outlineAttribute.updateMeshes(array)
+    this._colorAttribute.updateMeshes(array)
+    this._coloredAttribute.updateMeshes(array)
+    this._viewer.renderer.needsUpdate = true
   }
 
   /** Sets the position of the marker in the 3d scene */
   set position(value: THREE.Vector3){
     const m = new THREE.Matrix4()
     m.compose(value, new THREE.Quaternion(), new THREE.Vector3(1,1,1))
-    this._mesh.setMatrixAt(0, m)
-    this._mesh.instanceMatrix.needsUpdate = true;
+    this._submesh.mesh.setMatrixAt(this._submesh.index, m)
+    this._submesh.mesh.instanceMatrix.needsUpdate = true;
   }
 
   get position() {
     const m = new THREE.Matrix4()
-    this._mesh.getMatrixAt(0, m);
+    this._submesh.mesh.getMatrixAt(0, m);
     return new THREE.Vector3().setFromMatrixPosition(m)
-  }
-
-  /**
-   *  Adds this marker to the renderer 
-   */
-  load(){
-    if(!this._loaded){
-      this._loaded = this._viewer.renderer.add(this._mesh)
-    }
-  }
-
-  /**
-   * Removes this marker from the renderer.
-   */
-  unload(){
-    if(this._loaded){
-      this._viewer.renderer.remove(this._mesh)
-    }
   }
 
    /**

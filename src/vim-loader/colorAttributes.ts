@@ -23,7 +23,7 @@ export class ColorAttribute {
     this.vim = vim
   }
 
-  updateMeshes (meshes: Submesh[] | undefined) {
+  updateMeshes (meshes: AttributeTarget[] | undefined) {
     this._meshes = meshes
     if (this._value !== undefined) {
       this.apply(this._value)
@@ -170,7 +170,13 @@ export class ColorAttribute {
   }
 
   private getOrAddInstanceColorAttribute (mesh: THREE.InstancedMesh) {
-    if (mesh.instanceColor) return mesh.instanceColor
+    if (mesh.instanceColor &&
+      mesh.instanceColor.count <= mesh.instanceMatrix.count
+    ){
+      return mesh.instanceColor
+    }
+        
+    // mesh.count is not always === to capacity so we use instanceMatrix.count
     const count = mesh.instanceMatrix.count
     // Add color instance attribute
     const colors = new Float32Array(count * 3)

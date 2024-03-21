@@ -10,6 +10,7 @@ import { Viewport } from './viewport'
 import { Camera } from './camera/camera'
 import { Renderer } from './rendering/renderer'
 import { GizmoMarker } from './gizmos/markers/gizmoMarker'
+import { GizmoMarkers } from './gizmos/markers/gizmoMarkers'
 
 /**
  * Type alias for THREE intersection array
@@ -58,8 +59,11 @@ export class RaycastResult {
   ): [THREE.Intersection, GizmoMarker] | [] {
     for (let i = 0; i < intersections.length; i++) {
       const data = intersections[i].object.userData.vim
-      if(data instanceof GizmoMarker){
-        return [intersections[i], data as GizmoMarker]
+      
+      if(data instanceof GizmoMarkers){
+        const instance = intersections[i].instanceId
+        const marker = data.getMarkerFromIndex(instance)
+        return [intersections[i], marker]
       }
     }
     return []

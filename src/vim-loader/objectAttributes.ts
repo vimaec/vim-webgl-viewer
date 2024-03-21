@@ -67,8 +67,9 @@ export class ObjectAttribute<T> {
       this.instanceAttribute
     ) as THREE.BufferAttribute
 
-    if (!attribute) {
-      const array = new Float32Array(mesh.count)
+    if (!attribute || attribute.count < mesh.instanceMatrix.count) {
+      // mesh.count is not always === to capacity so we use instanceMatrix.count
+      const array = new Float32Array(mesh.instanceMatrix.count)
       attribute = new THREE.InstancedBufferAttribute(array, 1)
       geometry.setAttribute(this.instanceAttribute, attribute)
     }
