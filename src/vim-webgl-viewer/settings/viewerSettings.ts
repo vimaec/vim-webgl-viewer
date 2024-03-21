@@ -6,7 +6,6 @@ import * as THREE from 'three'
 import deepmerge from 'deepmerge'
 import { GizmoOptions } from '../gizmos/gizmoAxes'
 import {defaultViewerSettings} from './defaultViewerSettings'
-import {parseSettingsFromUrl} from './viewerSettingsParsing'
 
 export type TextureEncoding = 'url' | 'base64' | undefined
 export { GizmoOptions } from '../gizmos/gizmoAxes'
@@ -23,17 +22,19 @@ export type RecursivePartial<T> = {
     : T[P]
 }
 
+/**
+ * Same as the Setting type but any field can be undefined.
+ */
 export type PartialSettings = RecursivePartial<Settings>
 
-export function getSettingsWithDefault (settings?: PartialSettings) {
+/**
+ * Returns a full viewer settings where all unassigned values are replaced with the default values.
+ * @param settings optional values to use instead of default.
+ */
+export function getViewerSettings (settings?: PartialSettings) {
   return settings
     ? (deepmerge(defaultViewerSettings, settings, {arrayMerge:(x,y,_) => y}) as Settings)
     : (defaultViewerSettings as Settings)
-}
-
-export function getUrlSettings(settings?: PartialSettings, url?: string){
-  const urlSettings = parseSettingsFromUrl(url)
-  return deepmerge(settings, urlSettings) as Settings
 }
 
 /** Viewer related options independant from vims */

@@ -1,43 +1,21 @@
 import * as THREE from 'three'
 import { GizmoOptions } from '../gizmos/gizmoAxes'
 import { PartialSettings, Settings } from './viewerSettings'
+import deepmerge from 'deepmerge';
 
-function strToBool(str: string): boolean {
-  return JSON.parse(str.toLowerCase()) as boolean;
+/**
+ * Parses the url for settings and merges the result with the optional provided settings.
+ * URL settings have priority
+ * @param settings Settings to use if not defined in the url. 
+ * @param url URL string with standard parameters.
+ * @returns A PartialSettings object that can further be merged with default values.
+ */
+export function getViewerSettingsFromUrl(settings?: PartialSettings, url?: string){
+  const urlSettings = parseSettingsFromUrl(url)
+  return deepmerge(settings, urlSettings) as PartialSettings
 }
 
-function strToVector3(str: string){
-  if(str[0] !== '(') return
-  if(str[str.length - 1] !== ')') return
-  const split = str.split(',')
-  if(split.length !== 3) return
-  try{
-    const x = Number.parseFloat(split[0])
-    const y = Number.parseFloat(split[1])
-    const z = Number.parseFloat(split[2])
-    return new THREE.Vector3(x,y,z)
-  }
-  catch{}
-}
-
-function strToVector2(str: string){
-  if(str[0] !== '(') return
-  if(str[str.length - 1] !== ')') return
-  const split = str.split(',')
-  if(split.length !== 2) return
-  try{
-    const x = Number.parseFloat(split[0])
-    const y = Number.parseFloat(split[1])
-    return new THREE.Vector2(x,y)
-  }
-  catch{}
-}
-
-function strToColor(str: string){
-  return new THREE.Color(str)
-}
-
-export function parseSettingsFromUrl(url: string){
+function parseSettingsFromUrl(url: string){
   
   const params = new URLSearchParams(url)
   function get<T>(key: string, parse? :(str: string) => T){
@@ -123,27 +101,63 @@ export function parseSettingsFromUrl(url: string){
     }
   } as Settings
 
-  return removeUndefinedProps(parsed) as PartialSettings
+  // We remove undefined propertes because deepmerge only writes properties that not declared.
+  return removeUndefinedProperties(parsed) as PartialSettings
 
 }
 
-function removeUndefinedProps(obj) {
+function strToBool(str: string): boolean {
+  return JSON.parse(str.toLowerCase()) as boolean;
+}
+
+function strToVector3(str: string){
+  if(str[0] !== '(') return
+  if(str[str.length - 1] !== ')') return
+  const split = str.split(',')
+  if(split.length !== 3) return
+  try{
+    const x = Number.parseFloat(split[0])
+    const y = Number.parseFloat(split[1])
+    const z = Number.parseFloat(split[2])
+    return new THREE.Vector3(x,y,z)
+  }
+  catch{}
+}
+
+function strToVector2(str: string){
+  if(str[0] !== '(') return
+  if(str[str.length - 1] !== ')') return
+  const split = str.split(',')
+  if(split.length !== 2) return
+  try{
+    const x = Number.parseFloat(split[0])
+    const y = Number.parseFloat(split[1])
+    return new THREE.Vector2(x,y)
+  }
+  catch{}
+}
+
+function strToColor(str: string){
+  return new THREE.Color(str)
+}
+
+function removeUndefinedProperties(obj) {
   if (typeof obj !== 'object' || obj === null) {
       return obj;
   }
 
   if (Array.isArray(obj)) {
-      return obj.map(removeUndefinedProps);
+      return obj.map(removeUndefinedProperties);
   }
 
-  const newObj = {};
+  const result = {};
   for (const key in obj) {
       if (Object.prototype.hasOwnProperty.call(obj, key)) {
-          const value = removeUndefinedProps(obj[key]);
+          const value = removeUndefinedProperties(obj[key]);
           if (value !== undefined) {
-              newObj[key] = value;
+              result[key] = value;
           }
       }
   }
-  return newObj;
+  return result;
 }

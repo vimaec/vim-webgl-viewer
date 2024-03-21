@@ -5,7 +5,7 @@
 import * as THREE from 'three'
 
 // internal
-import { Settings, getSettingsWithDefault, PartialSettings } from './settings/viewerSettings'
+import { Settings, getViewerSettings, PartialSettings } from './settings/viewerSettings'
 import { Camera, ICamera } from './camera/camera'
 import { Input } from './inputs/input'
 import { Selection } from './selection'
@@ -98,7 +98,7 @@ export class Viewer {
   private _updateId: number
 
   constructor (settings?: PartialSettings) {
-    this.settings = getSettingsWithDefault(settings)
+    this.settings = getViewerSettings(settings)
 
     this.materials = ViewerMaterials.getInstance()
 

@@ -3,6 +3,9 @@ import { floor } from '../../images'
 import { GizmoOptions } from '../gizmos/gizmoAxes'
 import { Settings } from './viewerSettings'
 
+/**
+ * Defines the default values for the VIM Viewer settings.
+ */
 export const defaultViewerSettings: Settings = {
   canvas: {
     id: undefined,
