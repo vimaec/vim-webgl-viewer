@@ -7,7 +7,7 @@ import { StandardMaterial, createOpaque, createTransparent } from './standardMat
 import { createMaskMaterial } from './maskMaterial'
 import { createIsolationMaterial } from './isolationMaterial'
 import { OutlineMaterial } from './outlineMaterial'
-import { Settings } from '../../vim-webgl-viewer/settings/viewerSettings'
+import { ViewerSettings } from '../../vim-webgl-viewer/settings/viewerSettings'
 import { MergeMaterial } from './mergeMaterial'
 import { createSimpleMaterial } from './simpleMaterial'
 import { SignalDispatcher } from 'ste-signals'
@@ -93,9 +93,9 @@ export class ViewerMaterials {
 
   /**
    * Updates material settings based on the provided configuration.
-   * @param {Settings} settings - The settings to apply to the materials.
+   * @param {ViewerSettings} settings - The settings to apply to the materials.
    */
-  applySettings (settings: Settings) {
+  applySettings (settings: ViewerSettings) {
     this.isolationOpacity = settings.materials.isolation.opacity
     this.isolationColor = settings.materials.isolation.color
 

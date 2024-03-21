@@ -1,12 +1,12 @@
 import * as THREE from 'three'
 import { floor } from '../../images'
 import { GizmoOptions } from '../gizmos/gizmoAxes'
-import { Settings } from './viewerSettings'
+import { ViewerSettings } from './viewerSettings'
 
 /**
  * Defines the default values for the VIM Viewer settings.
  */
-export const defaultViewerSettings: Settings = {
+export const defaultViewerSettings: ViewerSettings = {
   canvas: {
     id: undefined,
     resizeDelay: 200

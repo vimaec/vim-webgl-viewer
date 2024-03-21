@@ -25,20 +25,20 @@ export type RecursivePartial<T> = {
 /**
  * Same as the Setting type but any field can be undefined.
  */
-export type PartialSettings = RecursivePartial<Settings>
+export type PartialViewerSettings = RecursivePartial<ViewerSettings>
 
 /**
  * Returns a full viewer settings where all unassigned values are replaced with the default values.
  * @param settings optional values to use instead of default.
  */
-export function getViewerSettings (settings?: PartialSettings) {
+export function getViewerSettings (settings?: PartialViewerSettings) {
   return settings
-    ? (deepmerge(defaultViewerSettings, settings, {arrayMerge:(x,y,_) => y}) as Settings)
-    : (defaultViewerSettings as Settings)
+    ? (deepmerge(defaultViewerSettings, settings, {arrayMerge:(x,y,_) => y}) as ViewerSettings)
+    : (defaultViewerSettings as ViewerSettings)
 }
 
 /** Viewer related options independant from vims */
-export type Settings = {
+export type ViewerSettings = {
   /**
    * Webgl canvas related options
    */

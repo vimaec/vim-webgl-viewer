@@ -3,7 +3,7 @@
  */
 
 import * as THREE from 'three'
-import { Settings } from '../settings/viewerSettings'
+import { ViewerSettings } from '../settings/viewerSettings'
 
 export class OrthographicWrapper {
   camera: THREE.OrthographicCamera
@@ -12,7 +12,7 @@ export class OrthographicWrapper {
     this.camera = camera
   }
 
-  applySettings (settings: Settings) {
+  applySettings (settings: ViewerSettings) {
     this.camera.zoom = settings.camera.zoom
     this.camera.near = -settings.camera.far
     this.camera.far = settings.camera.far

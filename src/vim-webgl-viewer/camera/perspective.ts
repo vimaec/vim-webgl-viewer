@@ -3,7 +3,7 @@
  */
 
 import * as THREE from 'three'
-import { Settings } from '../settings/viewerSettings'
+import { ViewerSettings } from '../settings/viewerSettings'
 
 export class PerspectiveWrapper {
   camera: THREE.PerspectiveCamera
@@ -12,7 +12,7 @@ export class PerspectiveWrapper {
     this.camera = camera
   }
 
-  applySettings (settings: Settings) {
+  applySettings (settings: ViewerSettings) {
     this.camera.fov = settings.camera.fov
     this.camera.zoom = settings.camera.zoom
     this.camera.near = settings.camera.near

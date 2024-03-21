@@ -1,6 +1,6 @@
 import * as THREE from 'three'
 import { GizmoOptions } from '../gizmos/gizmoAxes'
-import { PartialSettings, Settings } from './viewerSettings'
+import { PartialViewerSettings , ViewerSettings } from './viewerSettings'
 import deepmerge from 'deepmerge';
 
 /**
@@ -10,9 +10,9 @@ import deepmerge from 'deepmerge';
  * @param url URL string with standard parameters.
  * @returns A PartialSettings object that can further be merged with default values.
  */
-export function getViewerSettingsFromUrl(settings?: PartialSettings, url?: string){
+export function getViewerSettingsFromUrl(url?: string, settings?: PartialViewerSettings){
   const urlSettings = parseSettingsFromUrl(url)
-  return deepmerge(settings, urlSettings) as PartialSettings
+  return deepmerge(settings, urlSettings) as PartialViewerSettings
 }
 
 function parseSettingsFromUrl(url: string){
@@ -99,10 +99,10 @@ function parseSettingsFromUrl(url: string){
     rendering: {
       onDemand: get('rendering.onDemand', strToBool)
     }
-  } as Settings
+  } as ViewerSettings
 
   // We remove undefined propertes because deepmerge only writes properties that not declared.
-  return removeUndefinedProperties(parsed) as PartialSettings
+  return removeUndefinedProperties(parsed) as PartialViewerSettings
 
 }
 
