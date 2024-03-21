@@ -3,10 +3,6 @@ import { floor } from '../../images'
 import { GizmoOptions } from '../gizmos/gizmoAxes'
 import { Settings } from './viewerSettings'
 
-export type TextureEncoding = 'url' | 'base64' | undefined
-export { GizmoOptions } from '../gizmos/gizmoAxes'
-
-
 export const defaultViewerSettings: Settings = {
   canvas: {
     id: undefined,

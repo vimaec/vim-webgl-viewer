@@ -1,12 +1,6 @@
 import * as THREE from 'three'
-import { floor } from '../../images'
 import { GizmoOptions } from '../gizmos/gizmoAxes'
-import { defaultViewerSettings } from './defaultViewerSettings'
 import { PartialSettings, Settings } from './viewerSettings'
-
-export type TextureEncoding = 'url' | 'base64' | undefined
-export { GizmoOptions } from '../gizmos/gizmoAxes'
-
 
 function strToBool(str: string): boolean {
   return JSON.parse(str.toLowerCase()) as boolean;

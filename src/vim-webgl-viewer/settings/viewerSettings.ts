@@ -23,6 +23,19 @@ export type RecursivePartial<T> = {
     : T[P]
 }
 
+export type PartialSettings = RecursivePartial<Settings>
+
+export function getSettingsWithDefault (settings?: PartialSettings) {
+  return settings
+    ? (deepmerge(defaultViewerSettings, settings, {arrayMerge:(x,y,_) => y}) as Settings)
+    : (defaultViewerSettings as Settings)
+}
+
+export function getUrlSettings(settings?: PartialSettings, url?: string){
+  const urlSettings = parseSettingsFromUrl(url)
+  return deepmerge(settings, urlSettings) as Settings
+}
+
 /** Viewer related options independant from vims */
 export type Settings = {
   /**
@@ -344,15 +357,3 @@ materials: {
   }
 }
 
-export type PartialSettings = RecursivePartial<Settings>
-
-export function getSettings (settings?: PartialSettings) {
-  return settings
-    ? (deepmerge(defaultViewerSettings, settings, {arrayMerge:(x,y,_) => y}) as Settings)
-    : (defaultViewerSettings as Settings)
-}
-
-export function getUrlSettings(settings?: PartialSettings, url?: string){
-  const urlSettings = parseSettingsFromUrl(url)
-  return deepmerge(settings, urlSettings) as Settings
-}
