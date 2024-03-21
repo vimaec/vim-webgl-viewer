@@ -12,7 +12,7 @@ import { CSS2DRenderer } from 'three/examples/jsm/renderers/CSS2DRenderer'
 import { Camera } from '../camera/camera'
 import { RenderingSection } from './renderingSection'
 import { RenderingComposer } from './renderingComposer'
-import { Settings } from '../viewerSettings'
+import { Settings } from '../settings/viewerSettings'
 import { SignalDispatcher } from 'ste-signals'
 
 /**

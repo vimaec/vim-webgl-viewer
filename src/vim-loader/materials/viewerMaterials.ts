@@ -7,7 +7,7 @@ import { StandardMaterial, createOpaque, createTransparent } from './standardMat
 import { createMaskMaterial } from './maskMaterial'
 import { createIsolationMaterial } from './isolationMaterial'
 import { OutlineMaterial } from './outlineMaterial'
-import { Settings } from '../../vim-webgl-viewer/viewerSettings'
+import { Settings } from '../../vim-webgl-viewer/settings/viewerSettings'
 import { MergeMaterial } from './mergeMaterial'
 import { createSimpleMaterial } from './simpleMaterial'
 import { SignalDispatcher } from 'ste-signals'

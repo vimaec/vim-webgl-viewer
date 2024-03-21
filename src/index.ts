@@ -10,7 +10,7 @@ export * from './vim-loader/legacy/vimRequest'
 export * from './vim-loader/geometry'
 export type { PointerMode, InputScheme } from './vim-webgl-viewer/inputs/input'
 export { DefaultInputScheme, KEYS } from './vim-webgl-viewer/inputs/input'
-export * from './vim-webgl-viewer/viewerSettings'
+export * from './vim-webgl-viewer/settings/viewerSettings'
 export {
   RaycastResult as HitTestResult,
   InputAction

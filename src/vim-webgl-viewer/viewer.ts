@@ -5,7 +5,7 @@
 import * as THREE from 'three'
 
 // internal
-import { Settings, getSettings, PartialSettings } from './viewerSettings'
+import { Settings, getSettings, PartialSettings } from './settings/viewerSettings'
 import { Camera, ICamera } from './camera/camera'
 import { Input } from './inputs/input'
 import { Selection } from './selection'
@@ -97,8 +97,8 @@ export class Viewer {
   private _onVimLoaded = new SignalDispatcher()
   private _updateId: number
 
-  constructor (options?: PartialSettings) {
-    this.settings = getSettings(options)
+  constructor (settings?: PartialSettings) {
+    this.settings = getSettings(settings)
 
     this.materials = ViewerMaterials.getInstance()
 

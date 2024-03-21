@@ -5,7 +5,7 @@
 import * as THREE from 'three'
 
 import { Viewport } from '../viewport'
-import { Settings } from '../viewerSettings'
+import { Settings } from '../settings/viewerSettings'
 import { RenderScene } from '../rendering/renderScene'
 import { clamp } from 'three/src/math/MathUtils'
 import { ISignal, SignalDispatcher } from 'ste-signals'

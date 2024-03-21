@@ -5,7 +5,7 @@ import * as THREE from 'three'
 import { MathUtils } from 'three'
 import { Renderer } from '../rendering/renderer'
 import { Camera } from '../camera/camera'
-import { Settings } from '../viewerSettings'
+import { Settings } from '../settings/viewerSettings'
 import { Input } from '../inputs/input'
 
 /**

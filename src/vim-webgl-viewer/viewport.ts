@@ -5,7 +5,7 @@
 import { SignalDispatcher } from 'ste-signals'
 import * as THREE from 'three'
 import { CSS2DRenderer } from 'three/examples/jsm/renderers/CSS2DRenderer'
-import { Settings } from './viewerSettings'
+import { Settings } from './settings/viewerSettings'
 
 export class Viewport {
   /**

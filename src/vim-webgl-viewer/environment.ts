@@ -3,7 +3,7 @@
  */
 
 import * as THREE from 'three'
-import { TextureEncoding, Settings } from './viewerSettings'
+import { TextureEncoding, Settings } from './settings/viewerSettings'
 import { Box3 } from 'three'
 
 /**

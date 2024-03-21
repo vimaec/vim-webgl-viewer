@@ -3,7 +3,7 @@
  */
 
 import * as THREE from 'three'
-import { Settings } from '../viewerSettings'
+import { Settings } from '../settings/viewerSettings'
 
 export class OrthographicWrapper {
   camera: THREE.OrthographicCamera
