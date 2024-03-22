@@ -139,6 +139,7 @@ export type ViewerSettings = {
       /**
        * Camera movement speed factor on mouse scroll
        * Default: 1
+       * Range: [0.1, 10]
        */
       scrollSpeed: number
       

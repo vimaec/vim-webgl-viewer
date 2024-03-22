@@ -17,8 +17,16 @@ export class MouseHandler extends InputHandler {
 
   /**
    * The speed factor for zoom movements using the scroll wheel.
+   * Range: [0.1, 10]
    */
-  scrollSpeed = 1.5
+  get scrollSpeed(){
+    return this._scrollSpeed
+  }
+
+  set scrollSpeed(value: number){
+    this._scrollSpeed = Math.min(Math.max(0.1, value), 10)
+  }
+  private _scrollSpeed = 1.5
 
   /**
    * The speed factor for zoom movements when using zoom mode.
