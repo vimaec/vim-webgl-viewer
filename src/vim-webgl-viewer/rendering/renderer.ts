@@ -12,7 +12,7 @@ import { CSS2DRenderer } from 'three/examples/jsm/renderers/CSS2DRenderer'
 import { Camera } from '../camera/camera'
 import { RenderingSection } from './renderingSection'
 import { RenderingComposer } from './renderingComposer'
-import { Settings } from '../viewerSettings'
+import { ViewerSettings } from '../settings/viewerSettings'
 import { SignalDispatcher } from 'ste-signals'
 
 /**
@@ -86,7 +86,7 @@ export class Renderer implements IRenderer {
     viewport: Viewport,
     materials: ViewerMaterials,
     camera: Camera,
-    settings: Settings
+    settings: ViewerSettings
   ) {
     this._viewport = viewport
     this._scene = scene

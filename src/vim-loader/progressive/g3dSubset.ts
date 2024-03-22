@@ -332,44 +332,6 @@ export class G3dSubset {
       return box
     }
   }
-
-  /*
-  getAverageBoundingBox () {
-    if (this._instances.length === 0) return
-    if (this._source instanceof G3dScene) {
-      const center = new THREE.Vector3()
-      const dist = new THREE.Vector3(1, 1, 1)
-
-      const min = new THREE.Vector3()
-      const max = new THREE.Vector3()
-      const pos = new THREE.Vector3()
-
-      // Compute center
-      for (let i = 0; i < this._instances.length; i++) {
-        const instance = this._instances[i]
-        min.fromArray(this._source.getInstanceMin(instance))
-        max.fromArray(this._source.getInstanceMax(instance))
-        center.add(min).add(max)
-      }
-      center.divideScalar(2 * this._instances.length)
-
-      // Compute average distance
-      for (let i = 0; i < this._instances.length; i++) {
-        const instance = this._instances[i]
-        min.fromArray(this._source.getInstanceMin(instance))
-        max.fromArray(this._source.getInstanceMax(instance))
-
-        pos.copy(min).lerp(max, 0.5) // center
-        pos.sub(center) // delta
-        pos.set(Math.abs(pos.x), Math.abs(pos.y), Math.abs(pos.z)) // dist
-        dist.add(pos)
-      }
-      dist.divideScalar(this._instances.length).multiplyScalar(5)
-
-      return new THREE.Box3().setFromCenterAndSize(center, dist)
-    }
-  }
-  */
 }
 
 function minBox (box: THREE.Box3, other: Float32Array) {

@@ -5,7 +5,7 @@
 import { SignalDispatcher } from 'ste-signals'
 import * as THREE from 'three'
 import { CSS2DRenderer } from 'three/examples/jsm/renderers/CSS2DRenderer'
-import { Settings } from './viewerSettings'
+import { ViewerSettings } from './settings/viewerSettings'
 
 export class Viewport {
   /**
@@ -32,9 +32,9 @@ export class Viewport {
 
   /**
    * Constructs a new instance of the class with the provided settings.
-   * @param {Settings} settings The settings object defining viewer configurations.
+   * @param {ViewerSettings} settings The settings object defining viewer configurations.
    */
-  constructor (settings: Settings) {
+  constructor (settings: ViewerSettings) {
     const { canvas, owned } = Viewport.getOrCreateCanvas(settings.canvas.id)
     this.canvas = canvas
     this.textRenderer = this.createTextRenderer()

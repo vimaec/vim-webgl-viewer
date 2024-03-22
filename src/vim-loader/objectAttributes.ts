@@ -3,7 +3,10 @@
  */
 
 import * as THREE from 'three'
-import { MergedSubmesh, Submesh } from './mesh'
+import { MergedSubmesh, SimpleInstanceSubmesh, Submesh } from './mesh'
+
+export type AttributeTarget = Submesh | SimpleInstanceSubmesh
+
 
 export class ObjectAttribute<T> {
   readonly vertexAttribute: string
@@ -12,13 +15,13 @@ export class ObjectAttribute<T> {
   readonly toNumber: (value: T) => number
 
   private _value: T
-  private _meshes: Submesh[] | undefined
+  private _meshes: AttributeTarget[] | undefined
 
   constructor (
     value: T,
     vertexAttribute: string,
     instanceAttribute: string,
-    meshes: Submesh[] | undefined,
+    meshes: AttributeTarget[] | undefined,
     toNumber: (value: T) => number
   ) {
     this._value = value
@@ -29,7 +32,7 @@ export class ObjectAttribute<T> {
     this.toNumber = toNumber
   }
 
-  updateMeshes (meshes: Submesh[] | undefined) {
+  updateMeshes (meshes: AttributeTarget[] | undefined) {
     this._meshes = meshes
     const v = this._value
     this._value = this.defaultValue
@@ -57,15 +60,16 @@ export class ObjectAttribute<T> {
     return true
   }
 
-  private applyInstanced (sub: Submesh, number: number) {
+  private applyInstanced (sub: AttributeTarget, number: number) {
     const mesh = sub.three as THREE.InstancedMesh
     const geometry = mesh.geometry
     let attribute = geometry.getAttribute(
       this.instanceAttribute
     ) as THREE.BufferAttribute
 
-    if (!attribute) {
-      const array = new Float32Array(mesh.count)
+    if (!attribute || attribute.count < mesh.instanceMatrix.count) {
+      // mesh.count is not always === to capacity so we use instanceMatrix.count
+      const array = new Float32Array(mesh.instanceMatrix.count)
       attribute = new THREE.InstancedBufferAttribute(array, 1)
       geometry.setAttribute(this.instanceAttribute, attribute)
     }

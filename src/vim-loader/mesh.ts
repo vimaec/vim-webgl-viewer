@@ -164,7 +164,20 @@ export class Mesh {
 }
 
 export type MergedSubmesh = StandardSubmesh | InsertableSubmesh
-export type Submesh = MergedSubmesh | InstancedSubmesh
+export type Submesh = MergedSubmesh | InstancedSubmesh 
+
+export class SimpleInstanceSubmesh
+{
+  mesh: THREE.InstancedMesh
+  get three() {return this.mesh} 
+  index : number
+  readonly merged = false
+
+  constructor(mesh: THREE.InstancedMesh, index : number){
+    this.mesh = mesh
+    this.index = index
+  }
+}
 
 export class StandardSubmesh {
   mesh: Mesh

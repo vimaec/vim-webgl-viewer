@@ -3,12 +3,13 @@
  */
 
 import * as THREE from 'three'
-import { StandardMaterial } from './standardMaterial'
+import { StandardMaterial, createOpaque, createTransparent } from './standardMaterial'
 import { createMaskMaterial } from './maskMaterial'
 import { createIsolationMaterial } from './isolationMaterial'
 import { OutlineMaterial } from './outlineMaterial'
-import { Settings } from '../../vim-webgl-viewer/viewerSettings'
+import { ViewerSettings } from '../../vim-webgl-viewer/settings/viewerSettings'
 import { MergeMaterial } from './mergeMaterial'
+import { createSimpleMaterial } from './simpleMaterial'
 import { SignalDispatcher } from 'ste-signals'
 
 /**
@@ -29,19 +30,23 @@ export class ViewerMaterials {
   }
 
   /**
-   * Material used for opaque model geometry
+   * Material used for opaque model geometry.
    */
   opaque: StandardMaterial
   /**
-   * Material used for transparent model geometry
+   * Material used for transparent model geometry.
    */
   transparent: StandardMaterial
   /**
-   * Material used when creating wireframe geometry of the model
+   * Material used for maximum performance.
+   */
+  simple: THREE.Material
+  /**
+   * Material used when creating wireframe geometry of the model.
    */
   wireframe: THREE.LineBasicMaterial
   /**
-   * Material used to show traces of hidden objects
+   * Material used to show traces of hidden objects.
    */
   isolation: THREE.Material
   /**
@@ -69,15 +74,16 @@ export class ViewerMaterials {
   constructor (
     opaque?: StandardMaterial,
     transparent?: StandardMaterial,
+    simple?: THREE.Material,
     wireframe?: THREE.LineBasicMaterial,
     isolation?: THREE.Material,
     mask?: THREE.ShaderMaterial,
     outline?: OutlineMaterial,
-    merge?: MergeMaterial,
-    grid?: THREE.ShaderMaterial
+    merge?: MergeMaterial
   ) {
-    this.opaque = opaque ?? new StandardMaterial(createOpaque())
-    this.transparent = transparent ?? new StandardMaterial(createTransparent())
+    this.opaque = opaque ?? createOpaque()
+    this.transparent = transparent ?? createTransparent()
+    this.simple = simple ?? createSimpleMaterial()
     this.wireframe = wireframe ?? createWireframe()
     this.isolation = isolation ?? createIsolationMaterial()
     this.mask = mask ?? createMaskMaterial()
@@ -87,9 +93,9 @@ export class ViewerMaterials {
 
   /**
    * Updates material settings based on the provided configuration.
-   * @param {Settings} settings - The settings to apply to the materials.
+   * @param {ViewerSettings} settings - The settings to apply to the materials.
    */
-  applySettings (settings: Settings) {
+  applySettings (settings: ViewerSettings) {
     this.isolationOpacity = settings.materials.isolation.opacity
     this.isolationColor = settings.materials.isolation.color
 
@@ -323,31 +329,6 @@ export class ViewerMaterials {
     this.mask.dispose()
     this.outline.dispose()
   }
-}
-
-/**
- * Creates a new instance of the default loader opaque material.
- * @returns {THREE.MeshPhongMaterial} A new instance of MeshPhongMaterial with transparency.
- */
-export function createOpaque () {
-  return new THREE.MeshPhongMaterial({
-    color: 0x999999,
-    vertexColors: true,
-    flatShading: true,
-    side: THREE.DoubleSide,
-    shininess: 5
-  })
-}
-
-/**
- * Creates a new instance of the default loader transparent material.
- * @returns {THREE.MeshPhongMaterial} A new instance of MeshPhongMaterial with transparency.
- */
-export function createTransparent () {
-  const mat = createOpaque()
-  mat.transparent = true
-  mat.shininess = 70
-  return mat
 }
 
 /**

@@ -20,17 +20,17 @@ export interface IObject {
   /**
    * The vim object from which this object came from.
    */
-  vim: Vim;
+  vim: Vim | undefined;
 
   /**
    * The bim element index associated with this object.
    */
-  element: number;
+  element: number | undefined;
 
   /**
    * The ID of the element associated with this object.
    */
-  elementId: BigInt;
+  elementId: BigInt | undefined;
 
   /**
    * The geometry instances  associated with this object.

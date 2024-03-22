@@ -9,6 +9,39 @@ import * as THREE from 'three'
  */
 export type ShaderUniforms = { [uniform: string]: THREE.IUniform<any> }
 
+export function createOpaque(){
+  return new StandardMaterial(createBasicOpaque())
+}
+
+export function createTransparent(){
+  return new StandardMaterial(createBasicTransparent())
+}
+
+/**
+ * Creates a new instance of the default loader opaque material.
+ * @returns {THREE.MeshPhongMaterial} A new instance of MeshPhongMaterial with transparency.
+ */
+export function createBasicOpaque () {
+  return new THREE.MeshPhongMaterial({
+    color: 0x999999,
+    vertexColors: true,
+    flatShading: true,
+    side: THREE.DoubleSide,
+    shininess: 5
+  })
+}
+
+/**
+ * Creates a new instance of the default loader transparent material.
+ * @returns {THREE.MeshPhongMaterial} A new instance of MeshPhongMaterial with transparency.
+ */
+export function createBasicTransparent () {
+  const mat = createBasicOpaque()
+  mat.transparent = true
+  mat.shininess = 70
+  return mat
+}
+
 /**
  * Material used for both opaque and tranparent surfaces of a VIM model.
  */

@@ -5,7 +5,7 @@ import * as THREE from 'three'
 import { MathUtils } from 'three'
 import { Renderer } from '../rendering/renderer'
 import { Camera } from '../camera/camera'
-import { Settings } from '../viewerSettings'
+import { ViewerSettings } from '../settings/viewerSettings'
 import { Input } from '../inputs/input'
 
 /**
@@ -43,7 +43,7 @@ export class GizmoOrbit {
     renderer: Renderer,
     camera: Camera,
     input: Input,
-    settings: Settings
+    settings: ViewerSettings
   ) {
     this._renderer = renderer
     this._camera = camera
@@ -167,7 +167,7 @@ export class GizmoOrbit {
     this._renderer.needsUpdate = true
   }
 
-  private applySettings (settings: Settings) {
+  private applySettings (settings: ViewerSettings) {
     this._active = settings.camera.gizmo.enable
     this.setColor(settings.camera.gizmo.color)
     this.setSize(settings.camera.gizmo.size)
