@@ -25,7 +25,7 @@
     />
   </head>
   <body>
-    <script src="https://unpkg.com/vim-webgl-viewer@2.0.1-dev.26"></script>
+    <script src="https://unpkg.com/vim-webgl-viewer@2.0.2"></script>
     <script>
 
       // Parse URL for source file
@@ -35,7 +35,7 @@
         : null
 
       let time
-      const viewer = new VIM.Viewer()
+      const viewer = new VIM.Viewer(VIM.getViewerSettingsFromUrl(window.location.search))
 
       load(url ?? "https://vim02.azureedge.net/samples/residence.v1.2.75.vim")
       // load(url ?? "https://vim02.azureedge.net/samples/residence.v1.2.75.vimx")

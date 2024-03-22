@@ -35,7 +35,7 @@
         : null
 
       let time
-      const viewer = new VIM.Viewer()
+      const viewer = new VIM.Viewer(VIM.getViewerSettingsFromUrl(window.location.search))
 
       load(url ?? "https://vim02.azureedge.net/samples/residence.v1.2.75.vim")
       // load(url ?? "https://vim02.azureedge.net/samples/residence.v1.2.75.vimx")
