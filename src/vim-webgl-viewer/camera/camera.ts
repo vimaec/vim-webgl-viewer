@@ -182,7 +182,10 @@ export class Camera implements ICamera {
   }
   private _hasMoved: boolean
 
-  
+  get isLerping(){
+    return this._lerp.isLerping
+  }
+
   /**
    * A signal that is dispatched when the camera is moved.
    */
