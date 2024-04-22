@@ -98,6 +98,8 @@ export interface ICamera {
    */
   get forward () : THREE.Vector3
 
+  get isLerping () : boolean
+
   /**
    * The camera speed factor.
    */
