@@ -372,6 +372,7 @@ export class Camera implements ICamera {
    * Immediately stops the camera movement.
    */
   stop () {
+    this._lerp.cancel()
     this._inputVelocity.set(0, 0, 0)
     this._velocity.set(0, 0, 0)
   }
