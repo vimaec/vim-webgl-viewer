@@ -22,6 +22,10 @@ export class CameraLerp extends CameraMovement {
     this._movement = movement
   }
 
+  get isLerping(){
+    return this._clock.running
+  }
+
   init (duration: number) {
     this.cancel()
     this._duration = duration

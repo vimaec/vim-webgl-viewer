@@ -8,19 +8,19 @@ import { SectionBox } from './sectionBox/sectionBox'
 import { GizmoMarkers } from './markers/gizmoMarkers'
 import { Camera } from '../camera/camera'
 
-
 /**
  * Represents a collection of gizmos used for various visualization and interaction purposes within the viewer.
  */
 export class Gizmos {
   private readonly viewer: Viewer
 
-   /**
+  /**
    * The interface to start and manage measure tool interaction.
    */
-  get measure(){
+  get measure () {
     return this._measure as IMeasure
   }
+
   private readonly _measure: Measure
 
   /**
@@ -65,7 +65,7 @@ export class Gizmos {
       viewer.settings
     )
     this.rectangle = new GizmoRectangle(viewer)
-    this.axes = new GizmoAxes(camera, viewer.settings.axes)
+    this.axes = new GizmoAxes(camera, viewer.viewport, viewer.settings.axes)
     this.markers = new GizmoMarkers(viewer)
     viewer.viewport.canvas.parentElement?.prepend(this.axes.canvas)
   }

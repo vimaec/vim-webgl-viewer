@@ -15,13 +15,21 @@ export class Viewport {
   /** HTML Element in which text is rendered */
   readonly textRenderer : CSS2DRenderer
 
-  get text(){
+  get text () {
     return this.textRenderer.domElement
   }
 
   private _unregisterResize: Function | undefined
   private _ownedCanvas: boolean
   private _onResize: SignalDispatcher = new SignalDispatcher()
+  private _onReparent: SignalDispatcher = new SignalDispatcher()
+
+  /**
+   * Signal dispatched when the canvas reparented.
+   */
+  get onReparent () {
+    return this._onReparent.asEvent()
+  }
 
   /**
    * Signal dispatched when the canvas is resized.
@@ -81,6 +89,17 @@ export class Viewport {
     text.style.pointerEvents = 'none'
     this.canvas.parentElement.append(text)
     return renderer
+  }
+
+  get parent () {
+    return this.canvas.parentElement
+  }
+
+  reparent (parent: HTMLElement) {
+    if (this.parent === parent) return
+    parent.appendChild(this.canvas)
+    parent.appendChild(this.text)
+    this._onReparent.dispatch()
   }
 
   /**
