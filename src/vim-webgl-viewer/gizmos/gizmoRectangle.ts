@@ -58,7 +58,7 @@ export class GizmoRectangle {
     ;(this.line.material as THREE.Material).dispose()
   }
 
-  /** 
+  /**
    * Indicates whether the gizmo is visible.
    */
   get visible () {
@@ -137,9 +137,9 @@ export class GizmoRectangle {
    * Returns the bounding box of the selection.
    * The bounding box is the projection of the selection rectangle
    * onto the plane coplanar to the closest hit of 5 raycasts: one in each corner and one in the center.
-   * X-----X 
+   * X-----X
    * |  X  |
-   * X-----X 
+   * X-----X
    * @returns {THREE.Box3} The bounding box of the selection.
    */
   getBoundingBox (target: THREE.Box3 = new THREE.Box3()) {

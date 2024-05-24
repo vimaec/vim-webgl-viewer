@@ -1,5 +1,5 @@
 import { Viewer } from '../viewer'
-import { GizmoAxes } from './gizmoAxes'
+import { GizmoAxes } from './axes/gizmoAxes'
 import { GizmoLoading } from './gizmoLoading'
 import { GizmoOrbit } from './gizmoOrbit'
 import { GizmoRectangle } from './gizmoRectangle'

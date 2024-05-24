@@ -22,7 +22,7 @@ export class CameraLerp extends CameraMovement {
     this._movement = movement
   }
 
-  get isLerping(){
+  get isLerping () {
     return this._clock.running
   }
 

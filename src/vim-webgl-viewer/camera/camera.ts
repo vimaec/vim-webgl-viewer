@@ -81,7 +81,7 @@ export interface ICamera {
   /**
    * The quaternion representing the orientation of the object.
    */
-  get quaternion ()  : THREE.Quaternion
+  get quaternion () : THREE.Quaternion
 
    /**
    * The position of the camera.
@@ -166,25 +166,25 @@ export class Camera implements ICamera {
   _savedPosition: THREE.Vector3 = new THREE.Vector3(0, 0, -5)
   _savedTarget: THREE.Vector3 = new THREE.Vector3(0, 0, 0)
 
-  
   /**
    * A signal that is dispatched when camera settings change.
    */
   get onSettingsChanged () {
     return this._onValueChanged.asEvent()
   }
+
   private _onValueChanged = new SignalDispatcher()
 
-  
   /**
    * True if the camera has moved this frame.
    */
-  get hasMoved() {
+  get hasMoved () {
     return this._hasMoved
   }
+
   private _hasMoved: boolean
 
-  get isLerping(){
+  get isLerping () {
     return this._lerp.isLerping
   }
 
@@ -194,6 +194,7 @@ export class Camera implements ICamera {
   get onMoved (): ISignal {
     return this._onMoved.asEvent()
   }
+
   private _onMoved = new SignalDispatcher()
 
   /** Ignore movement permissions when true */
@@ -264,7 +265,6 @@ export class Camera implements ICamera {
     this._scene = scene
     this._viewport = viewport
 
-
     this.applySettings(settings)
     this.snap(true).setDistance(-1000)
     this.snap(true).orbitTowards(this._defaultForward)
@@ -281,7 +281,7 @@ export class Camera implements ICamera {
     return this._movement as CameraMovement
   }
 
-/**
+  /**
    * Interface for smoothly moving the camera over time.
    * @param {number} [duration=1] - The duration of the camera movement animation.
    * @param {boolean} [force=false] - Set to true to ignore locked axis and rotation.
@@ -303,7 +303,7 @@ export class Camera implements ICamera {
     return this.camPerspective.frustrumSizeAt(point)
   }
 
-   /**
+  /**
    * The current THREE Camera
    */
   get three () {
@@ -353,7 +353,7 @@ export class Camera implements ICamera {
     this._onValueChanged.dispatch()
   }
 
-   /**
+  /**
    * The current or target velocity of the camera.
    */
   get localVelocity () {
@@ -372,7 +372,6 @@ export class Camera implements ICamera {
     this._inputVelocity.setZ(-this._inputVelocity.z)
   }
 
-  
   /**
    * Immediately stops the camera movement.
    */
@@ -422,7 +421,6 @@ export class Camera implements ICamera {
     this._savedTarget.copy(this._target)
   }
 
-  
   /**
    * Represents whether the camera projection is orthographic.
    */

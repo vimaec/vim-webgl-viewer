@@ -22,7 +22,7 @@ export class TouchHandler extends InputHandler {
    */
   rotateSpeed = 1
 
-   /**
+  /**
    * Speed factor for orbit movements
    */
   orbitSpeed = 1

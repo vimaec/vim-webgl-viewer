@@ -94,9 +94,9 @@ export class Selection {
   }
 
   /**
-   * Selects the given objects and unselects all other objects. 
+   * Selects the given objects and unselects all other objects.
    * Pass `null`, `undefined`, or an empty array as argument to clear selection.
-   * @param {IObject | IObject[] | undefined} object The object or array of objects to select, 
+   * @param {IObject | IObject[] | undefined} object The object or array of objects to select,
    *        or `null`, `undefined`, or an empty array to clear the selection.
    */
   select (object: IObject | IObject[] | undefined) {

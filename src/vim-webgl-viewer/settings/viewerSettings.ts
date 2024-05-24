@@ -4,11 +4,11 @@
 
 import * as THREE from 'three'
 import deepmerge from 'deepmerge'
-import { GizmoOptions } from '../gizmos/gizmoAxes'
-import {defaultViewerSettings} from './defaultViewerSettings'
+import { AxesSettings } from '../gizmos/axes/axesSettings'
+import { defaultViewerSettings } from './defaultViewerSettings'
 
 export type TextureEncoding = 'url' | 'base64' | undefined
-export { GizmoOptions } from '../gizmos/gizmoAxes'
+export { AxesSettings } from '../gizmos/axes/axesSettings'
 
 /**
  * Makes all field optional recursively
@@ -20,21 +20,6 @@ export type RecursivePartial<T> = {
     : T[P] extends object
     ? RecursivePartial<T[P]>
     : T[P]
-}
-
-/**
- * Same as the Setting type but any field can be undefined.
- */
-export type PartialViewerSettings = RecursivePartial<ViewerSettings>
-
-/**
- * Returns a full viewer settings where all unassigned values are replaced with the default values.
- * @param settings optional values to use instead of default.
- */
-export function getViewerSettings (settings?: PartialViewerSettings) {
-  return settings
-    ? (deepmerge(defaultViewerSettings, settings, {arrayMerge:(x,y,_) => y}) as ViewerSettings)
-    : (defaultViewerSettings as ViewerSettings)
 }
 
 /** Viewer related options independant from vims */
@@ -123,7 +108,7 @@ export type ViewerSettings = {
        * Default: 1
        */
       rotateSpeed: number
-      
+
       /**
        * Camera orbit rotation speed factor.
        * Default: 1
@@ -142,7 +127,7 @@ export type ViewerSettings = {
        * Range: [0.1, 10]
        */
       scrollSpeed: number
-      
+
     }
 
     /** Camera gizmo related options */
@@ -165,7 +150,7 @@ export type ViewerSettings = {
       */
       color: THREE.Color
 
-      /** 
+      /**
       * Opacity of the camera gizmo.
       * Default: 0.5
       */
@@ -182,7 +167,7 @@ export type ViewerSettings = {
    * Rendering background options
    */
   background: {
-    /** 
+    /**
      * Color of the cavas background
      * Default: THREE.Color('#96999f')
      */
@@ -313,7 +298,7 @@ materials: {
   /**
    * Axes gizmo options
    */
-  axes: Partial<GizmoOptions>
+  axes: Partial<AxesSettings>
 
   /**
    * Skylight (hemisphere light) options
@@ -359,3 +344,17 @@ materials: {
   }
 }
 
+/**
+ * Same as the Setting type but any field can be undefined.
+ */
+export type PartialViewerSettings = RecursivePartial<ViewerSettings>
+
+/**
+ * Returns a full viewer settings where all unassigned values are replaced with the default values.
+ * @param settings optional values to use instead of default.
+ */
+export function getViewerSettings (settings?: PartialViewerSettings) {
+  return settings
+    ? (deepmerge(defaultViewerSettings, settings, { arrayMerge: (x, y, _) => y }) as ViewerSettings)
+    : (defaultViewerSettings as ViewerSettings)
+}

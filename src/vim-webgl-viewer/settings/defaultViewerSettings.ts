@@ -1,6 +1,6 @@
 import * as THREE from 'three'
 import { floor } from '../../images'
-import { GizmoOptions } from '../gizmos/gizmoAxes'
+import { AxesSettings } from '../gizmos/axes/axesSettings'
 import { ViewerSettings } from './viewerSettings'
 
 /**
@@ -49,7 +49,7 @@ export const defaultViewerSettings: ViewerSettings = {
   skylight: {
     skyColor: new THREE.Color().setHSL(0.6, 1, 0.6),
     groundColor: new THREE.Color().setHSL(0.095, 1, 0.75),
-    intensity: 0.8  
+    intensity: 0.8
   },
   sunLights: [
     {
@@ -84,7 +84,7 @@ export const defaultViewerSettings: ViewerSettings = {
       color: new THREE.Color(0, 1, 1)
     }
   },
-  axes: new GizmoOptions(),
+  axes: new AxesSettings(),
   rendering: {
     onDemand: true
   }

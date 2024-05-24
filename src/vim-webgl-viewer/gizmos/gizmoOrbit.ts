@@ -73,7 +73,6 @@ export class GizmoOrbit {
     this.show(true)
   }
 
-  
   /**
    * Determines whether the orbit gizmo is enabled.
    */
@@ -238,5 +237,4 @@ export class GizmoOrbit {
       this._gizmos = undefined
     }
   }
-
 }

@@ -2,7 +2,7 @@
 import './style.css'
 export * as THREE from 'three'
 
-export {IProgressLogs} from 'vim-format'
+export { IProgressLogs } from 'vim-format'
 export * from './vim-loader/progressive/open'
 export * from './vim-loader/progressive/vimx'
 export * from './vim-webgl-viewer/viewer'
