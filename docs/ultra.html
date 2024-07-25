@@ -45,7 +45,7 @@
       async function load (url) {
         ULTRA.createComponent(container, async ref => {
           await ref.viewer.connect()
-          const request = ref.viewer.load(url)
+          const request = ref.load(url)
           await request.wait()
           if(request.isSuccess()){
             const vim = request.getVim()
