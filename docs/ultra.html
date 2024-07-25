@@ -51,6 +51,9 @@
             const vim = request.getVim()
             ref.viewer.frameAll(0)
           }
+          if(request.isError){
+            console.error('Could not open vim file at: ' + url)
+          }
         });
       }
     </script>
