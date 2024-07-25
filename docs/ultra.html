@@ -45,7 +45,7 @@
       load(url ?? "https://vim02.azureedge.net/samples/residence.v1.2.75.vim")
 
       async function load (url) {
-        await ref = ULTRA.createComponent(container)
+        const ref = await ULTRA.createComponent(container)
         await ref.connect()
         const request = ref.load(url)
         await request.wait()
