@@ -47,11 +47,11 @@
           await ref.viewer.connect()
           const request = ref.viewer.load(url)
           await request.wait()
-          if(request.isSuccess){
+          if(request.isSuccess()){
             const vim = request.getVim()
             ref.viewer.frameAll(0)
           }
-          if(request.isError){
+          if(request.isError()){
             console.error('Could not open vim file at: ' + url)
           }
         });
