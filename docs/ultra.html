@@ -45,7 +45,7 @@
       async function load (url) {
         ULTRA.createComponent(container, async ref => {
           await ref.viewer.connect()
-          const request = ref.viewer.load('https://vim02.azureedge.net/samples/residence.v1.2.75.vim')
+          const request = ref.viewer.load(url)
           await request.wait()
           if(request.isSuccess){
             const vim = request.getVim()
