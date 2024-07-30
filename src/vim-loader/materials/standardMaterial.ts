@@ -9,11 +9,11 @@ import * as THREE from 'three'
  */
 export type ShaderUniforms = { [uniform: string]: THREE.IUniform<any> }
 
-export function createOpaque(){
+export function createOpaque () {
   return new StandardMaterial(createBasicOpaque())
 }
 
-export function createTransparent(){
+export function createTransparent () {
   return new StandardMaterial(createBasicTransparent())
 }
 
@@ -23,11 +23,11 @@ export function createTransparent(){
  */
 export function createBasicOpaque () {
   return new THREE.MeshPhongMaterial({
-    color: 0x999999,
+    color: 0xcccccc,
     vertexColors: true,
     flatShading: true,
     side: THREE.DoubleSide,
-    shininess: 5
+    shininess: 20
   })
 }
 
@@ -60,6 +60,18 @@ export class StandardMaterial {
   constructor (material: THREE.Material) {
     this.material = material
     this.patchShader(material)
+  }
+
+  get color () {
+    if (this.material instanceof THREE.MeshPhongMaterial) {
+      return this.material.color
+    }
+  }
+
+  set color (color: THREE.Color) {
+    if (this.material instanceof THREE.MeshPhongMaterial) {
+      this.material.color = color
+    }
   }
 
   get focusIntensity () {

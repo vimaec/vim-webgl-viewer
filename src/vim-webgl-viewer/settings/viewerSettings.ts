@@ -219,6 +219,12 @@ export type ViewerSettings = {
 */
 materials: {
   /**
+  * Default color of standard material
+  */
+  standard: {
+    color: THREE.Color
+  }
+  /**
   * Highlight on hover options
   */
   highlight: {
