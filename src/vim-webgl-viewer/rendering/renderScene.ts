@@ -49,6 +49,22 @@ export class RenderScene {
   }
 
   /**
+   * Returns the bounding box of the average center of all meshes.
+   * Less precise but is more stable against outliers.
+   */
+  getAverageBoundingBox () {
+    if (this._scenes.length === 0) {
+      return new THREE.Box3()
+    }
+    const result = new THREE.Box3()
+    result.copy(this._scenes[0].getAverageBoundingBox())
+    for (let i = 1; i < this._scenes.length; i++) {
+      result.union(this._scenes[i].getAverageBoundingBox())
+    }
+    return result
+  }
+
+  /**
    * Add object to be rendered
    */
   add (target: Scene | THREE.Object3D) {

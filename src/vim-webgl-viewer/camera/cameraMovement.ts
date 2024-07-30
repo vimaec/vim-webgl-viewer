@@ -148,10 +148,10 @@ export abstract class CameraMovement {
       target = target.getBoundingBox()
     }
     if ((target instanceof Vim)) {
-      target = target.scene.getBoundingBox()
+      target = target.scene.getAverageBoundingBox()
     }
     if (target === 'all') {
-      target = this._camera._scene.getBoundingBox()
+      target = this._camera._scene.getAverageBoundingBox()
     }
     if (target instanceof THREE.Box3) {
       target = target.getBoundingSphere(new THREE.Sphere())
