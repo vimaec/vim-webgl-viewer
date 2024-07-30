@@ -71,8 +71,22 @@ function parseSettingsFromUrl (url: string) {
       groundColor: get('skylight.groundColor', strToColor),
       intensity: get('skylight.intensity', Number.parseFloat)
     },
-    sunLights: undefined,
+    sunLights: [
+      {
+        color: get('sunLights.0.color', strToColor),
+        intensity: get('sunLights.0.intensity', Number.parseFloat),
+        position: get('sunLights.0.position', strToVector3)
+      },
+      {
+        color: get('sunLights.1.color', strToColor),
+        intensity: get('sunLights.1.intensity', Number.parseFloat),
+        position: get('sunLights.1.position', strToVector3)
+      }
+    ],
     materials: {
+      standard: {
+        color: get('materials.standard.color', strToColor)
+      },
       highlight: {
         color: get('materials.highlight.color', strToColor),
         opacity: get('materials.highlight.opacity', Number.parseFloat)
@@ -133,6 +147,9 @@ function strToVector2 (str: string) {
 }
 
 function strToColor (str: string) {
+  if (str.startsWith('0x')) {
+    return new THREE.Color(parseInt(str))
+  }
   return new THREE.Color(str)
 }
 
