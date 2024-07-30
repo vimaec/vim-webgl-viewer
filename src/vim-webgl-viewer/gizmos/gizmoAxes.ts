@@ -4,6 +4,7 @@
 
 import * as THREE from 'three'
 import { Camera } from '../camera/camera'
+import { Viewport } from '../viewport'
 
 // TODO make things private cleanup api.
 export class Axis {
@@ -85,6 +86,7 @@ export class GizmoAxes {
   private _canvas: HTMLCanvasElement
   private context: CanvasRenderingContext2D
   private rect: DOMRect
+  private _reparentConnection: Function
 
   // state
   private isDragging: boolean
@@ -99,13 +101,14 @@ export class GizmoAxes {
   /**
    * The canvas on which the axes are drawn.
    */
-  get canvas() {
+  get canvas () {
     return this._canvas
   }
 
-  constructor (camera: Camera, options?: Partial<GizmoOptions>) {
+  constructor (camera: Camera, viewport: Viewport, options?: Partial<GizmoOptions>) {
     this.options = new GizmoOptions(options)
     this.camera = camera
+    this._reparentConnection = viewport.onReparent.subscribe(() => viewport.parent.appendChild(this._canvas))
     this.pointer = new THREE.Vector3()
     this.dragStart = new THREE.Vector2()
     this.dragLast = new THREE.Vector2()
@@ -258,7 +261,7 @@ export class GizmoAxes {
     }
   }
 
-  private  toMouseVector (e: MouseEvent, target: THREE.Vector3) {
+  private toMouseVector (e: MouseEvent, target: THREE.Vector3) {
     return target.set(e.clientX - this.rect.left, e.clientY - this.rect.top, 0)
   }
 
@@ -417,7 +420,10 @@ export class GizmoAxes {
   /**
    * Disposes of the gizmo, removing event listeners and cleaning up resources.
    */
-  dispose(){
+  dispose () {
+    this._reparentConnection?.()
+    this._reparentConnection = undefined
+
     this._canvas.removeEventListener('pointerdown', this.onPointerDown, false)
     this._canvas.removeEventListener('pointerenter', this.onPointerEnter, false)
     this._canvas.removeEventListener('pointermove', this.onPointerDrag, false)
