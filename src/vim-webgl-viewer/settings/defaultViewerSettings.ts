@@ -15,7 +15,7 @@ export const defaultViewerSettings: ViewerSettings = {
     orthographic: false,
     allowedMovement: new THREE.Vector3(1, 1, 1),
     allowedRotation: new THREE.Vector2(1, 1),
-    near: 0.01,
+    near: 0.001,
     far: 15000,
     fov: 50,
     zoom: 1,

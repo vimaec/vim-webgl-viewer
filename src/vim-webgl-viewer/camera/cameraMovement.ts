@@ -166,8 +166,9 @@ export abstract class CameraMovement {
     // Compute best distance to frame sphere
     const fov = (this._camera.camPerspective.camera.fov * Math.PI) / 180
     const dist = (sphere.radius * 1.2) / Math.tan(fov / 2)
+    const safeDist = Math.max(dist, this._camera.camPerspective.camera.near * 2)
 
-    const pos = direction.multiplyScalar(-dist).add(sphere.center)
+    const pos = direction.multiplyScalar(-safeDist).add(sphere.center)
 
     this.set(pos, sphere.center)
   }
