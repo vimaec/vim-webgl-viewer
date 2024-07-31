@@ -39,7 +39,7 @@ export class SubsetRequest {
 
   private _synchronizer: LoadingSynchronizer
   private _meshFactory: InstancedMeshFactory
-  private _meshes = new Array<InstancedMesh>()
+  private _meshes: InstancedMesh[] = []
   private _pushedMesh = 0
 
   private _disposed: boolean = false

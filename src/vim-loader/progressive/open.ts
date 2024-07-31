@@ -110,8 +110,7 @@ async function loadFromVimX (
     mapping,
     builder,
     typeof source === 'string' ? source : undefined,
-    'vimx',
-    false
+    'vimx'
   )
 
   if (remoteVimx.bfast.source instanceof RemoteBuffer) {
@@ -163,8 +162,7 @@ async function loadFromVim (
     mapping,
     builder,
     typeof source === 'string' ? source : undefined,
-    'vim',
-    false
+    'vim'
   )
 
   if (bfast.source instanceof RemoteBuffer) {

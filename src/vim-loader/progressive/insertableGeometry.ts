@@ -26,7 +26,7 @@ export class InsertableGeometry {
   materials: G3dMaterial
   offsets: G3dMeshOffsets
   geometry: THREE.BufferGeometry
-  submeshes = new Array<GeometrySubmesh>()
+  submeshes: GeometrySubmesh[] = []
   boundingBox: THREE.Box3
 
   private _computeBoundingBox = false
@@ -87,7 +87,7 @@ export class InsertableGeometry {
 
   // TODO: remove the need for mesh argument.
   insert (mesh: G3dMesh, at: number) {
-    const added = new Array<number>()
+    const added: number[] = []
     const section = this.offsets.section
     const indexStart = mesh.getIndexStart(section)
     const indexEnd = mesh.getIndexEnd(section)
@@ -118,8 +118,8 @@ export class InsertableGeometry {
     let colorOut = 0
 
     const instanceCount = this.offsets.getMeshInstanceCount(at)
-    for (let instance_i = 0; instance_i < instanceCount; instance_i++) {
-      const instance = this.offsets.getMeshInstance(at, instance_i)
+    for (let instanceIndex = 0; instanceIndex < instanceCount; instanceIndex++) {
+      const instance = this.offsets.getMeshInstance(at, instanceIndex)
       const arr1 = mesh.scene.getInstanceMatrix(instance)
       // console.assert(this.float32ArraysAreEqual(arr1, arr2))
 
@@ -130,7 +130,7 @@ export class InsertableGeometry {
 
       // Append indices
       submesh.start = indexOffset + indexOut
-      const vertexMergeOffset = vertexCount * instance_i
+      const vertexMergeOffset = vertexCount * instanceIndex
       for (let index = indexStart; index < indexEnd; index++) {
         this.setIndex(
           indexOffset + indexOut,
@@ -191,7 +191,7 @@ export class InsertableGeometry {
   }
 
   insertFromG3d (g3d: G3d, mesh: number) {
-    const added = new Array<number>()
+    const added: number[] = []
     const meshG3dIndex = this.offsets.getSourceMesh(mesh)
     const subStart = g3d.getMeshSubmeshStart(meshG3dIndex, this.offsets.section)
     const subEnd = g3d.getMeshSubmeshEnd(meshG3dIndex, this.offsets.section)
