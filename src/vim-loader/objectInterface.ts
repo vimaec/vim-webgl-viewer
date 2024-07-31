@@ -2,11 +2,11 @@
  * @module vim-loader
  */
 
-import * as THREE from 'three';
-import { Vim } from './vim';
-import { IElement, VimHelpers } from 'vim-format';
+import * as THREE from 'three'
+import { Vim } from './vim'
+import { IElement, VimHelpers } from 'vim-format'
 
-export type ObjectType = "Architectural" | "Marker"
+export type ObjectType = 'Architectural' | 'Marker'
 
 /**
  * API to interact with an object that is both visible and related to a bim element.

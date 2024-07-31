@@ -4,7 +4,6 @@
 
 import * as THREE from 'three'
 import { Mesh, Submesh } from './mesh'
-import { SceneBuilder } from './legacy/sceneBuilder'
 import { Vim } from './vim'
 import { estimateBytesUsed } from 'three/examples/jsm/utils/BufferGeometryUtils'
 import { InsertableMesh } from './progressive/insertableMesh'
@@ -15,7 +14,9 @@ import { getAverageBoundingBox } from './averageBoundingBox'
  * Interface for a renderer object, providing methods to add and remove objects from a scene, update bounding boxes, and notify scene updates.
  */
 export interface IRenderer {
+  // eslint-disable-next-line no-use-before-define
   add(scene: Scene | THREE.Object3D)
+  // eslint-disable-next-line no-use-before-define
   remove(scene: Scene)
   updateBox(box: THREE.Box3)
   notifySceneUpdate()
@@ -28,13 +29,12 @@ export interface IRenderer {
 // TODO: Only expose what should be public to vim.scene
 export class Scene {
   // Dependencies
-  readonly builder: SceneBuilder
   private _renderer: IRenderer
   private _vim: Vim | undefined
   private _matrix = new THREE.Matrix4()
 
   // State
-  insertables = new Array<InsertableMesh>()
+  insertables: InsertableMesh[] = []
   meshes: (Mesh | InsertableMesh | InstancedMesh)[] = []
 
   private _outlineCount: number = 0
@@ -45,9 +45,8 @@ export class Scene {
   private _instanceToMeshes: Map<number, Submesh[]> = new Map()
   private _material: THREE.Material | undefined
 
-  constructor (builder: SceneBuilder | undefined, matrix: THREE.Matrix4) {
+  constructor (matrix: THREE.Matrix4) {
     this._matrix = matrix
-    this.builder = builder
   }
 
   setDirty () {
@@ -207,7 +206,7 @@ export class Scene {
       this._boundingBox =
         this._boundingBox?.union(other._boundingBox) ??
         other._boundingBox.clone()
-        this._averageBoundingBox = undefined
+      this._averageBoundingBox = undefined
     }
 
     this.setDirty()
