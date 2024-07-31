@@ -3,7 +3,7 @@
  */
 
 import * as THREE from 'three'
-import { VimDocument, G3d, VimHeader, FilterModeNext, FilterMode } from 'vim-format'
+import { VimDocument, G3d, VimHeader, FilterMode } from 'vim-format'
 import { Scene } from './scene'
 import { VimSettings } from './vimSettings'
 import { Object } from './object'
@@ -25,11 +25,6 @@ type VimFormat = 'vim' | 'vimx'
  */
 export class Vim {
   /**
-   * Indicates whether the vim was opened using the legacy pipeline or not.
-   */
-  readonly isLegacy: boolean
-
-  /**
    * Indicates whether the vim was opened from a vim or vimx file.
    */
   readonly format: VimFormat
@@ -39,7 +34,7 @@ export class Vim {
    */
   readonly source: string | undefined
 
-   /**
+  /**
    * The header for this vim.
    */
   readonly header: VimHeader | undefined
@@ -96,6 +91,7 @@ export class Vim {
   get onDispose () {
     return this._onDispose as ISignal
   }
+
   private _onDispose = new SignalDispatcher()
 
   /**
@@ -120,9 +116,7 @@ export class Vim {
     map: ElementMapping | ElementNoMapping | ElementMapping2,
     builder: SubsetBuilder,
     source: string,
-    format: VimFormat,
-    isLegacy: boolean
-  ) {
+    format: VimFormat) {
     this.header = header
     this.bim = document
     this.g3d = g3d
@@ -134,7 +128,6 @@ export class Vim {
     this._builder = builder
     this.source = source
     this.format = format
-    this.isLegacy = isLegacy
   }
 
   /**
@@ -211,7 +204,7 @@ export class Vim {
    * @returns {Object[]} An array containing all objects within the Vim.
    */
   getObjects () {
-    const result = new Array<Object>()
+    const result: Object[] = []
     for (const e of this.map.getElements()) {
       const obj = this.getObjectFromElement(e)
       result.push(obj)
@@ -226,7 +219,7 @@ export class Vim {
    */
   getObjectsInSubset (subset: G3dSubset) {
     const set = new Set<Object>()
-    const result = new Array<Object>()
+    const result: Object[] = []
     const count = subset.getInstanceCount()
     for (let i = 0; i < count; i++) {
       const instance = subset.getVimInstance(i)
@@ -244,10 +237,6 @@ export class Vim {
    * @returns {G3dSubset} A subset containing all instances.
    */
   getFullSet (): G3dSubset {
-    if(this.isLegacy){
-      console.log("getFullSet Not supported in legacy loading. Ignoring.")
-      return 
-    }
     return this._builder.getFullSet()
   }
 
@@ -256,12 +245,6 @@ export class Vim {
    * @param {LoadPartialSettings} [settings] - Optional settings for the loading process.
    */
   async loadAll (settings?: LoadPartialSettings) {
-    if(this.isLegacy){
-      this._builder.onUpdate
-      console.log("loadAll Not supported in legacy loading. Ignoring.")
-      return 
-    }
-
     return this.loadSubset(this.getFullSet(), settings)
   }
 
@@ -271,11 +254,6 @@ export class Vim {
    * @param {LoadPartialSettings} [settings] - Optional settings for the loading process.
    */
   async loadSubset (subset: G3dSubset, settings?: LoadPartialSettings) {
-    if(this.isLegacy){
-      console.log("loadSubset Not supported in legacy loading. Ignoring.")
-      return
-    }
-
     subset = subset.except('instance', this._loadedInstances)
     const count = subset.getInstanceCount()
     for (let i = 0; i < count; i++) {
@@ -305,11 +283,6 @@ export class Vim {
     filter: number[],
     settings?: LoadPartialSettings
   ) {
-    if(this.isLegacy){
-      console.log("loadFilter Not supported in legacy loading. Ignoring.")
-      return
-    }
-
     const subset = this.getFullSet().filter(filterMode, filter)
     await this.loadSubset(subset, settings)
   }
