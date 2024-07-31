@@ -91,7 +91,9 @@ export class Scene {
     this.meshes.forEach((m) => {
       const subs = m.getSubmeshes()
       subs.forEach((s) => {
-        points.push(s.boundingBox.getCenter(new THREE.Vector3()))
+        const p = s.boundingBox.getCenter(new THREE.Vector3())
+        p.applyMatrix4(this._matrix)
+        points.push(p)
       })
     })
     this._averageBoundingBox = getAverageBoundingBox(points)
