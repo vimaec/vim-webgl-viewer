@@ -232,7 +232,9 @@ export class GizmoAxes {
       if (axis.line) this.drawLine(center2, pos2, axis.line, color)
 
       // Draw the circle for the axis
-      this.drawCircle(axis.position, axis.size, highlight ? '#FFFFFF' : color)
+      const circleColor = new THREE.Color(color)
+      circleColor.multiplyScalar(highlight ? 1.5 : 1)
+      this.drawCircle(axis.position, axis.size, `#${circleColor.getHexString()}`)
 
       // Write the axis label (X,Y,Z) if provided
       if (axis.label) {
