@@ -40,7 +40,7 @@ export class BoxInputs {
 
   private reg = (
     // eslint-disable-next-line no-undef
-    handler: DocumentAndElementEventHandlers,
+    handler: HTMLElement | Window,
     type: string,
     listener: (event: any) => void
   ) => {
