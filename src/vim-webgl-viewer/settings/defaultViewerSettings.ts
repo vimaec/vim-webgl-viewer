@@ -32,9 +32,9 @@ export const defaultViewerSettings: ViewerSettings = {
     gizmo: {
       enable: true,
       size: 0.01,
-      color: new THREE.Color(0xff, 0xff, 0xff),
-      opacity: 0.5,
-      opacityAlways: 0.125
+      color: new THREE.Color(0x444444),
+      opacity: 0.3,
+      opacityAlways: 0.02
     }
   },
   background: { color: new THREE.Color('#ffffff') },

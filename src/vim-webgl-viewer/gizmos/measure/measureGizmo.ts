@@ -166,7 +166,7 @@ export class MeasureGizmo {
       viewer.camera
     )
 
-    this._line = new MeasureLine(canvasSize, new THREE.Color(1, 1, 1), 'Dist')
+    this._line = new MeasureLine(canvasSize, new THREE.Color(0x000000), 'Dist')
     this._lineX = new MeasureLine(canvasSize, new THREE.Color(1, 0, 0), 'X')
     this._lineY = new MeasureLine(canvasSize, new THREE.Color(0, 1, 0), 'Y')
     this._lineZ = new MeasureLine(canvasSize, new THREE.Color(0, 0, 1), 'Z')

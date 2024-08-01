@@ -22,6 +22,8 @@ export class BoxInputs {
   raycaster: THREE.Raycaster = new THREE.Raycaster()
   lastBox: THREE.Box3 = new THREE.Box3()
   unregisters: (() => void)[] = []
+  lastMouse : MouseEvent
+  ctrlDown: boolean = false
 
   // Called when mouse enters or leave a face
   onFaceEnter: ((normal: THREE.Vector3) => void) | undefined
@@ -37,7 +39,8 @@ export class BoxInputs {
   }
 
   private reg = (
-    handler: HTMLElement,
+    // eslint-disable-next-line no-undef
+    handler: DocumentAndElementEventHandlers,
     type: string,
     listener: (event: any) => void
   ) => {
@@ -48,7 +51,10 @@ export class BoxInputs {
   register () {
     if (this.unregister.length > 0) return
     const canvas = this.viewer.viewport.canvas
-    this.reg(canvas, 'pointerdown', this.onMouseClick.bind(this))
+    this.reg(window, 'keydown', this.onKey.bind(this))
+    this.reg(window, 'keyup', this.onKey.bind(this))
+
+    this.reg(canvas, 'pointerdown', this.onMouseDown.bind(this))
     this.reg(canvas, 'pointermove', this.onMouseMove.bind(this))
     this.reg(canvas, 'pointerup', this.onMouseUp.bind(this))
   }
@@ -58,13 +64,26 @@ export class BoxInputs {
     this.unregisters.length = 0
   }
 
+  onKey (event: KeyboardEvent) {
+    console.log('onKey')
+    if (this.ctrlDown !== event.ctrlKey) {
+      console.log('Key Change!')
+      this.ctrlDown = event.ctrlKey
+      this.onMouseMove(this.lastMouse)
+    }
+  }
+
   onMouseMove (event: any) {
+    this.lastMouse = event
     if (this.mouseDown) {
       this.onDrag(event)
       return
     }
 
-    const hits = this.raycast(new THREE.Vector2(event.offsetX, event.offsetY))
+    const hits = this.raycast(
+      new THREE.Vector2(event.offsetX, event.offsetY),
+      this.ctrlDown
+    )
     const hit = hits?.[0]
     const norm = hit?.face?.normal
     if (!norm) {
@@ -102,8 +121,11 @@ export class BoxInputs {
     }
   }
 
-  onMouseClick (event: any) {
-    const hits = this.raycast(new THREE.Vector2(event.offsetX, event.offsetY))
+  onMouseDown (event: MouseEvent) {
+    const hits = this.raycast(
+      new THREE.Vector2(event.offsetX, event.offsetY),
+      this.ctrlDown
+    )
     const hit = hits?.[0]
     if (!hit?.face?.normal) return
 
@@ -160,8 +182,13 @@ export class BoxInputs {
     return result
   }
 
-  raycast (position: THREE.Vector2) {
+  raycast (position: THREE.Vector2, reverse: boolean) {
     this.raycaster = this.viewer.raycaster.fromPoint2(position, this.raycaster)
+    if (reverse) {
+      this.raycaster.ray.set(
+        this.raycaster.ray.origin.clone().add(this.raycaster.ray.direction.clone().multiplyScalar(this.viewer.settings.camera.far)),
+        this.raycaster.ray.direction.negate())
+    }
     return this.raycaster.intersectObject(this.cube)
   }
 }
