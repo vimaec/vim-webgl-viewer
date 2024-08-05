@@ -37,7 +37,7 @@ export const defaultViewerSettings: ViewerSettings = {
       opacityAlways: 0.02
     }
   },
-  background: { color: new THREE.Color('#ffffff') },
+  background: { color: new THREE.Color('#0xf1f2f4') },
   groundPlane: {
     visible: false,
     encoding: 'base64',
