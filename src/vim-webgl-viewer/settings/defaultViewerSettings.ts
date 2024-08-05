@@ -47,20 +47,20 @@ export const defaultViewerSettings: ViewerSettings = {
     size: 5
   },
   skylight: {
-    skyColor: new THREE.Color().setHSL(0.60, 1, 0.50),
-    groundColor: new THREE.Color().setHSL(0.09, 1, 0.5),
-    intensity: 1
+    skyColor: new THREE.Color().setHSL(0.6, 1, 0.6),
+    groundColor: new THREE.Color().setHSL(0.095, 1, 0.75),
+    intensity: 0.8
   },
   sunLights: [
     {
       position: new THREE.Vector3(-45.0, 40, -23),
-      color: new THREE.Color().setHSL(0.092, 1, 0.85),
-      intensity: 1
+      color: new THREE.Color().setHSL(0.1, 1, 0.95),
+      intensity: 0.8
     },
     {
       position: new THREE.Vector3(45.0, 40, 23),
-      color: new THREE.Color().setHSL(0.092, 1, 0.85),
-      intensity: 0.4
+      color: new THREE.Color().setHSL(0.1, 1, 0.95),
+      intensity: 0.2
     }
   ],
   materials: {
