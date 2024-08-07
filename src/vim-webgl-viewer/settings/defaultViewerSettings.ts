@@ -37,29 +37,29 @@ export const defaultViewerSettings: ViewerSettings = {
       opacityAlways: 0.02
     }
   },
-  background: { color: new THREE.Color('#0xf1f2f4') },
+  background: { color: new THREE.Color(0xc1c2c6) },
   groundPlane: {
     visible: false,
     encoding: 'base64',
     texture: floor,
     opacity: 1,
-    color: new THREE.Color(0xff, 0xff, 0xff),
+    color: new THREE.Color(0xffffff),
     size: 5
   },
   skylight: {
-    skyColor: new THREE.Color().setHSL(0.6, 1, 0.6),
-    groundColor: new THREE.Color().setHSL(0.095, 1, 0.75),
+    skyColor: new THREE.Color(0xffffff),
+    groundColor: new THREE.Color(0xffffff),
     intensity: 0.8
   },
   sunLights: [
     {
       position: new THREE.Vector3(-45.0, 40, -23),
-      color: new THREE.Color().setHSL(0.1, 1, 0.95),
+      color: new THREE.Color(0xffffff),
       intensity: 0.8
     },
     {
       position: new THREE.Vector3(45.0, 40, 23),
-      color: new THREE.Color().setHSL(0.1, 1, 0.95),
+      color: new THREE.Color(0xffffff),
       intensity: 0.2
     }
   ],
@@ -68,7 +68,7 @@ export const defaultViewerSettings: ViewerSettings = {
       color: new THREE.Color('#cccccc')
     },
     highlight: {
-      color: new THREE.Color(0x6a, 0xd2, 0xff),
+      color: new THREE.Color(0x6ad2ff),
       opacity: 0.5
     },
     isolation: {
@@ -78,13 +78,13 @@ export const defaultViewerSettings: ViewerSettings = {
     section: {
       strokeWidth: 0.01,
       strokeFalloff: 0.75,
-      strokeColor: new THREE.Color(0xf6, 0xf6, 0xf6)
+      strokeColor: new THREE.Color(0xf6f6f6)
     },
     outline: {
       intensity: 3,
       falloff: 3,
       blur: 2,
-      color: new THREE.Color(0, 1, 1)
+      color: new THREE.Color(0x00ffff)
     }
   },
   axes: new AxesSettings(),
