@@ -312,12 +312,6 @@ export class MeasureGizmo {
    */
   dispose () {
     if (this._animId !== undefined) cancelAnimationFrame(this._animId)
-    // A quirk of css2d object is they need to be removed individually.
-    this._group.remove(this._label)
-    this._group.remove(this._line.label)
-    this._group.remove(this._lineX.label)
-    this._group.remove(this._lineY.label)
-    this._group.remove(this._lineZ.label)
 
     this._viewer.renderer.remove(this._group)
 

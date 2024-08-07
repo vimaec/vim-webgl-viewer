@@ -100,6 +100,7 @@ export class RenderScene {
   }
 
   private unparent2dObjects (target : THREE.Object3D) {
+    // A quirk of css2d object is they need to be removed individually.
     if (target instanceof THREE.Group) {
       for (const child of target.children) {
         if (child instanceof CSS2DObject) {
