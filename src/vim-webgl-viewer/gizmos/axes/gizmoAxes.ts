@@ -27,6 +27,7 @@ export class GizmoAxes {
   private _axes: Axis[]
 
   // state
+  private _pointerInside = false
   private _isDragging = false
   private _isDragSignificant = false
   private _dragStart = new THREE.Vector2()
@@ -56,7 +57,6 @@ export class GizmoAxes {
     this._context.imageSmoothingQuality = 'high'
 
     this.resize(this._options.size)
-    this.animate()
   }
 
   reparent (parent: HTMLElement) {
@@ -82,11 +82,6 @@ export class GizmoAxes {
     this._axes = createAxes(this._options)
   }
 
-  private animate () {
-    this.update()
-    requestAnimationFrame(() => this.animate())
-  }
-
   private createCanvas () {
     const canvas = document.createElement('canvas')
     canvas.classList.add(this._options.className)
@@ -94,6 +89,7 @@ export class GizmoAxes {
 
     canvas.addEventListener('pointerdown', this.onPointerDown, false)
     canvas.addEventListener('pointerenter', this.onPointerEnter, false)
+    canvas.addEventListener('pointerleave', this.onPointerLeave, false)
     canvas.addEventListener('pointermove', this.onPointerMove, false)
     return canvas
   }
@@ -130,6 +126,12 @@ export class GizmoAxes {
   }
 
   private onPointerEnter = () => {
+    this._pointerInside = true
+    this._rect = this._canvas.getBoundingClientRect()
+  }
+
+  private onPointerLeave = () => {
+    this._pointerInside = false
     this._rect = this._canvas.getBoundingClientRect()
   }
 
@@ -194,7 +196,11 @@ export class GizmoAxes {
     this._selectedAxis = null
   }
 
-  private update = () => {
+  public update = () => {
+    if (!this._camera.hasMoved && !this._pointerInside && !this._isDragging) {
+      return
+    }
+
     this._invRotMat.extractRotation(this._camera.matrix).invert()
 
     for (let i = 0, length = this._axes.length; i < length; i++) {
