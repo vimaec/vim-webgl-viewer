@@ -440,11 +440,13 @@ export class Camera implements ICamera {
 
   update (deltaTime: number) {
     this._lerp.update()
-    this.applyVelocity(deltaTime)
+    if (this.applyVelocity(deltaTime)) {
+      this.applyVelocityOrthographic()
+    }
+
     this._hasMoved = this.checkForMovement()
     if (this._hasMoved) {
-      this.camOrthographic.camera.position.copy(this.position)
-      this.camOrthographic.camera.quaternion.copy(this.quaternion)
+      this.updateOrthographic()
       this._onMoved.dispatch()
     }
     return this._hasMoved
@@ -453,9 +455,16 @@ export class Camera implements ICamera {
   private updateProjection () {
     const aspect = this._viewport.getAspectRatio()
     this.camPerspective.updateProjection(aspect)
+    this.updateOrthographic()
+  }
 
+  private updateOrthographic () {
+    const aspect = this._viewport.getAspectRatio()
     const size = this.camPerspective.frustrumSizeAt(this.target)
+
     this.camOrthographic.updateProjection(size, aspect)
+    this.camOrthographic.camera.position.copy(this.position)
+    this.camOrthographic.camera.quaternion.copy(this.quaternion)
   }
 
   private applyVelocity (deltaTime: number) {
@@ -468,7 +477,7 @@ export class Camera implements ICamera {
       this._velocity.z === 0
     ) {
       // Skip update if unneeded.
-      return
+      return false
     }
 
     // Update the camera velocity
@@ -481,13 +490,14 @@ export class Camera implements ICamera {
     // Stop movement if velocity is too low
     if (this._velocity.lengthSq() < deltaTime / 10) {
       this._velocity.set(0, 0, 0)
-      return
+      return false
     }
 
     // Apply velocity to move the camera
     this._tmp1.copy(this._velocity)
       .multiplyScalar(deltaTime * this.getVelocityMultiplier())
     this.snap().move3(this._tmp1)
+    return true
   }
 
   private getVelocityMultiplier () {
@@ -510,5 +520,21 @@ export class Camera implements ICamera {
     this._lastQuaternion.copy(this.quaternion)
     this._lastTarget.copy(this._target)
     return result
+  }
+
+  private applyVelocityOrthographic () {
+    if (this.orthographic) {
+      // Cancel target movement in Z in orthographic mode.
+      const delta = this._tmp1.copy(this._lastTarget).sub(this.position)
+      const dist = delta.dot(this.forward)
+      this.target.copy(this.forward).multiplyScalar(dist).add(this.position)
+
+      // Prevent orthograpic camera from moving past orbit.
+      const prev = this._tmp1.copy(this._lastPosition).sub(this._target)
+      const next = this._tmp2.copy(this.position).sub(this._target)
+      if (prev.dot(next) < 0 || next.lengthSq() < 1) {
+        this.position.copy(this._target).add(this.forward.multiplyScalar(-1))
+      }
+    }
   }
 }
