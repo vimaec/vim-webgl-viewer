@@ -70,6 +70,10 @@ export class Gizmos {
     viewer.viewport.canvas.parentElement?.prepend(this.axes.canvas)
   }
 
+  updateAfterCamera () {
+    this.axes.update()
+  }
+
   /**
    * Disposes of all gizmos.
    */
