@@ -66,6 +66,7 @@ export class GizmoRectangle {
   }
 
   set visible (value: boolean) {
+    if (value === this.line.visible) return
     this.viewer.renderer.needsUpdate = true
     this.line.visible = value
   }
