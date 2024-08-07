@@ -44,7 +44,7 @@ export class RenderingComposer {
   private _selectionRenderPass: RenderPass
   private _transferPass: TransferPass
   private _outlines: boolean
-  private _clock: THREE.Clock = new THREE.Clock()
+  private _clock: THREE.Clock
   private _nextAATime: number
   onDemand: boolean
 
