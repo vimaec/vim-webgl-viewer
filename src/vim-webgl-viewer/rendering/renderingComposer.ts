@@ -203,7 +203,7 @@ export class RenderingComposer {
   }
 
   render (updated: boolean, antialias: boolean) {
-    const time = new Date().getTime()
+    const time = Date.now()
     if (updated) {
       this._nextAATime = time + 20
     }

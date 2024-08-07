@@ -61,10 +61,10 @@ export class TouchHandler extends InputHandler {
   }
 
   private onTap = (position: THREE.Vector2) => {
-    const time = new Date().getTime()
+    const time = Date.now()
     const double =
       this._lastTapMs && time - this._lastTapMs < this.DOUBLE_TAP_DELAY_MS
-    this._lastTapMs = new Date().getTime()
+    this._lastTapMs = time
 
     const action = new InputAction(
       double ? 'double' : 'main',
@@ -81,7 +81,7 @@ export class TouchHandler extends InputHandler {
     if (!event || !event.touches || !event.touches.length) {
       return
     }
-    this._touchStartTime = new Date().getTime()
+    this._touchStartTime = Date.now()
 
     if (event.touches.length === 1) {
       this._touch = this.touchToVector(event.touches[0])
@@ -175,7 +175,7 @@ export class TouchHandler extends InputHandler {
 
   private onTouchEnd = (event: any) => {
     if (this.isSingleTouch() && this._touchStart && this._touch) {
-      const touchDurationMs = new Date().getTime() - this._touchStartTime!
+      const touchDurationMs = Date.now() - this._touchStartTime!
       const length = this._touch.distanceTo(this._touchStart)
       if (
         touchDurationMs < this.TAP_DURATION_MS &&
