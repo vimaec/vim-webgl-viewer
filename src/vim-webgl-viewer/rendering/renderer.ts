@@ -223,10 +223,11 @@ export class Renderer implements IRenderer {
       this.needsUpdate,
       this.antialias && !this.skipAntialias && !this._camera.hasMoved
     )
+
     this._needsUpdate = false
     this.skipAntialias = false
 
-    if (this.textEnabled) {
+    if (this.textEnabled && this._scene.has2dObjects()) {
       this.textRenderer.render(this._scene.scene, this._camera.three)
     }
 
