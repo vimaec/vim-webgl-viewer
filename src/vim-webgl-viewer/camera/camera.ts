@@ -162,6 +162,10 @@ export class Camera implements ICamera {
   private _lastQuaternion = new THREE.Quaternion()
   private _lastTarget = new THREE.Vector3()
 
+  // Reuseable vectors for calculations
+  private _tmp1 = new THREE.Vector3()
+  private _tmp2 = new THREE.Vector3()
+
   // saves
   _savedPosition: THREE.Vector3 = new THREE.Vector3(0, 0, -5)
   _savedTarget: THREE.Vector3 = new THREE.Vector3(0, 0, 0)
@@ -264,7 +268,7 @@ export class Camera implements ICamera {
 
     this._scene = scene
     this._viewport = viewport
-
+    this._viewport.onResize.sub(() => this.updateProjection())
     this.applySettings(settings)
     this.snap(true).setDistance(-1000)
     this.snap(true).orbitTowards(this._defaultForward)
@@ -435,17 +439,15 @@ export class Camera implements ICamera {
   }
 
   update (deltaTime: number) {
-    if (this.applyVelocity(deltaTime)) {
-      this.updateOrthographic()
-    }
-
-    const moved = this.checkForMovement()
-    if (moved) {
+    this._lerp.update()
+    this.applyVelocity(deltaTime)
+    this._hasMoved = this.checkForMovement()
+    if (this._hasMoved) {
       this.camOrthographic.camera.position.copy(this.position)
       this.camOrthographic.camera.quaternion.copy(this.quaternion)
+      this._onMoved.dispatch()
     }
-    this.updateProjection()
-    return moved
+    return this._hasMoved
   }
 
   private updateProjection () {
@@ -466,44 +468,26 @@ export class Camera implements ICamera {
       this._velocity.z === 0
     ) {
       // Skip update if unneeded.
-      return false
+      return
     }
 
-    // Update the camera velocity and position
+    // Update the camera velocity
     const invBlendFactor = Math.pow(this._velocityBlendFactor, deltaTime)
     const blendFactor = 1.0 - invBlendFactor
     this._velocity.multiplyScalar(invBlendFactor)
-    const deltaVelocity = this._inputVelocity
-      .clone()
-      .multiplyScalar(blendFactor)
-    this._velocity.add(deltaVelocity)
+    this._tmp1.copy(this._inputVelocity).multiplyScalar(blendFactor)
+    this._velocity.add(this._tmp1)
+
+    // Stop movement if velocity is too low
     if (this._velocity.lengthSq() < deltaTime / 10) {
       this._velocity.set(0, 0, 0)
-      return false
+      return
     }
 
-    const deltaPosition = this._velocity
-      .clone()
+    // Apply velocity to move the camera
+    this._tmp1.copy(this._velocity)
       .multiplyScalar(deltaTime * this.getVelocityMultiplier())
-
-    this.snap().move3(deltaPosition)
-    return true
-  }
-
-  private updateOrthographic () {
-    if (this.orthographic) {
-      // Cancel target movement in Z in orthographic mode.
-      const delta = this._lastTarget.clone().sub(this.position)
-      const dist = delta.dot(this.forward)
-      this.target.copy(this.forward).multiplyScalar(dist).add(this.position)
-
-      // Prevent orthograpic camera from moving past orbit.
-      const prev = this._lastPosition.clone().sub(this._target)
-      const next = this.position.clone().sub(this._target)
-      if (prev.dot(next) < 0 || next.lengthSq() < 1) {
-        this.position.copy(this._target).add(this.forward.multiplyScalar(-1))
-      }
-    }
+    this.snap().move3(this._tmp1)
   }
 
   private getVelocityMultiplier () {
@@ -514,18 +498,17 @@ export class Camera implements ICamera {
   }
 
   private checkForMovement () {
-    this._hasMoved = false
+    let result = false
     if (
       !this._lastPosition.equals(this.position) ||
       !this._lastQuaternion.equals(this.quaternion) ||
       !this._lastTarget.equals(this._target)
     ) {
-      this._hasMoved = true
-      this._onMoved.dispatch()
+      result = true
     }
     this._lastPosition.copy(this.position)
     this._lastQuaternion.copy(this.quaternion)
     this._lastTarget.copy(this._target)
-    return this._hasMoved
+    return result
   }
 }
