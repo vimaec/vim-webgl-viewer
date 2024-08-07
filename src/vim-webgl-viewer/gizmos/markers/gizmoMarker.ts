@@ -76,7 +76,7 @@ export class GizmoMarker implements IObject {
     )
 
     this._colorAttribute = new ColorAttribute(array, undefined, undefined)
-    this.color = new THREE.Color(1, 0.1, 0.1)
+    this.color = new THREE.Color(0xff1a1a)
   }
 
   updateMesh (mesh: SimpleInstanceSubmesh) {

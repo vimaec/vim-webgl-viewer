@@ -95,14 +95,14 @@ export class RenderingComposer {
     // Render pass when camera is moving
     this._renderPass = new RenderPass(this._scene.scene, this._camera)
     this._renderPass.renderToScreen = false
-    this._renderPass.clearColor = new THREE.Color(0, 0, 0)
+    this._renderPass.clearColor = new THREE.Color(0x000000)
     this._renderPass.clearAlpha = 0
 
     // SSAA Render pass when camera is idle
     this._ssaaRenderPass = new SSAARenderPass(
       this._scene.scene,
       this._camera,
-      new THREE.Color(0, 0, 0),
+      new THREE.Color(0x000000),
       0
     )
     this._ssaaRenderPass.renderToScreen = false

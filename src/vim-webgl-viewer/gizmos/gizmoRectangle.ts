@@ -18,7 +18,7 @@ export class GizmoRectangle {
 
     const mat = new THREE.LineBasicMaterial({
       depthTest: false,
-      color: new THREE.Color(0, 1, 0),
+      color: new THREE.Color(0x00ff00),
       // Transparent so it is drawn in the transparent pass, and always appear on top.
       transparent: true,
       opacity: 1

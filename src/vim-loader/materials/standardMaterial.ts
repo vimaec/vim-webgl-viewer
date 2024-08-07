@@ -51,11 +51,11 @@ export class StandardMaterial {
 
   // Parameters
   _focusIntensity: number = 0.5
-  _focusColor: THREE.Color = new THREE.Color(1, 1, 1)
+  _focusColor: THREE.Color = new THREE.Color(0xffffff)
 
   _sectionStrokeWitdh: number = 0.01
   _sectionStrokeFallof: number = 0.75
-  _sectionStrokeColor: THREE.Color = new THREE.Color(0xf6, 0xf6, 0xf6)
+  _sectionStrokeColor: THREE.Color = new THREE.Color(0xf6f6f6)
 
   constructor (material: THREE.Material) {
     this.material = material

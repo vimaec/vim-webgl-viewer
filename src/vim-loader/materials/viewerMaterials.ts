@@ -67,9 +67,9 @@ export class ViewerMaterials {
   private _clippingPlanes: THREE.Plane[] | undefined
   private _sectionStrokeWitdh: number = 0.01
   private _sectionStrokeFallof: number = 0.75
-  private _sectionStrokeColor: THREE.Color = new THREE.Color(0xf6, 0xf6, 0xf6)
+  private _sectionStrokeColor: THREE.Color = new THREE.Color(0xf6f6f6)
   private _focusIntensity: number = 0.75
-  private _focusColor: THREE.Color = new THREE.Color(1, 1, 1)
+  private _focusColor: THREE.Color = new THREE.Color(0xffffff)
   private _onUpdate = new SignalDispatcher()
 
   constructor (

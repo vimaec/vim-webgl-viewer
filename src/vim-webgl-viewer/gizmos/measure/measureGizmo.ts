@@ -104,7 +104,7 @@ class MeasureMarker {
       transparent: true,
       opacity: 0.2,
       depthTest: false,
-      color: new THREE.Color(0, 0.75, 1)
+      color: new THREE.Color(0x00bfff)
     })
 
     const g = new THREE.SphereGeometry(1)
@@ -158,18 +158,18 @@ export class MeasureGizmo {
     const canvasSize = this._viewer.viewport.getSize()
 
     this._startMarker = new MeasureMarker(
-      new THREE.Color('#FFB700'),
+      new THREE.Color(0xffb700),
       viewer.camera
     )
     this._endMarker = new MeasureMarker(
-      new THREE.Color('#0590CC'),
+      new THREE.Color(0x0590cc),
       viewer.camera
     )
 
     this._line = new MeasureLine(canvasSize, new THREE.Color(0x000000), 'Dist')
-    this._lineX = new MeasureLine(canvasSize, new THREE.Color(1, 0, 0), 'X')
-    this._lineY = new MeasureLine(canvasSize, new THREE.Color(0, 1, 0), 'Y')
-    this._lineZ = new MeasureLine(canvasSize, new THREE.Color(0, 0, 1), 'Z')
+    this._lineX = new MeasureLine(canvasSize, new THREE.Color(0xff0000), 'X')
+    this._lineY = new MeasureLine(canvasSize, new THREE.Color(0x00ff00), 'Y')
+    this._lineZ = new MeasureLine(canvasSize, new THREE.Color(0x0000ff), 'Z')
 
     this._html = createMeasureElement('all')
     this._label = new CSS2DObject(this._html.div)

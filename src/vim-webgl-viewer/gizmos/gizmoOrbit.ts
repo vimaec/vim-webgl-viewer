@@ -18,7 +18,7 @@ export class GizmoOrbit {
 
   // Settings
   private _size: number = 1
-  private _color: THREE.Color = new THREE.Color('blue')
+  private _color: THREE.Color = new THREE.Color(0x000000)
   private _opacity: number = 0.2
   private _opacityAlways: number = 0.5
   private _showDurationMs: number = 1000

@@ -272,6 +272,7 @@ export class Camera implements ICamera {
     this.applySettings(settings)
     this.snap(true).setDistance(-1000)
     this.snap(true).orbitTowards(this._defaultForward)
+    this.updateProjection()
   }
 
   /**
