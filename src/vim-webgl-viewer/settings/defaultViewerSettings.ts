@@ -56,7 +56,7 @@ export const defaultViewerSettings: ViewerSettings = {
     groundColor: new THREE.Color(0xffffff),
     intensity: 0.8
   },
-  sunLights: [
+  sunlights: [
     {
       followCamera: true,
       position: new THREE.Vector3(1000, 1000, 1000),

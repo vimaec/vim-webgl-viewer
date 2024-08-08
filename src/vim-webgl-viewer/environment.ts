@@ -160,8 +160,8 @@ export class Environment {
 
     camera.onMoved.subscribe(() => {
       this.sunLights.forEach((s, i) => {
-        if (settings.sunLights[i].followCamera) {
-          s.position.copy(settings.sunLights[i].position)
+        if (settings.sunlights[i].followCamera) {
+          s.position.copy(settings.sunlights[i].position)
           s.position.applyQuaternion(camera.quaternion)
         }
       })
@@ -189,14 +189,14 @@ export class Environment {
     this.skyLight.intensity = settings.skylight.intensity
 
     // Sunlights
-    const count = settings.sunLights.length
+    const count = settings.sunlights.length
     for (let i = 0; i < count; i++) {
       if (!this.sunLights[i]) {
         this.sunLights[i] = new THREE.DirectionalLight()
       }
-      const color = settings.sunLights[i].color
-      const pos = settings.sunLights[i].position
-      const intensity = settings.sunLights[i].intensity
+      const color = settings.sunlights[i].color
+      const pos = settings.sunlights[i].position
+      const intensity = settings.sunlights[i].intensity
       if (color) {
         this.sunLights[i].color.copy(color)
       }

@@ -350,7 +350,7 @@ materials: {
    * Sunlight (directional light) options
    * Two Blue-Green lights at odd angles. See defaultViewerSettings.
    */
-  sunLights: {
+  sunlights: {
     followCamera: boolean;
     /** Light position. */
     position: THREE.Vector3;
