@@ -351,6 +351,7 @@ materials: {
    * Two Blue-Green lights at odd angles. See defaultViewerSettings.
    */
   sunLights: {
+    followCamera: boolean;
     /** Light position. */
     position: THREE.Vector3;
     /** Light color. */

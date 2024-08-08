@@ -58,12 +58,14 @@ export const defaultViewerSettings: ViewerSettings = {
   },
   sunLights: [
     {
-      position: new THREE.Vector3(-45.0, 40, -23),
+      followCamera: true,
+      position: new THREE.Vector3(1000, 1000, 1000),
       color: new THREE.Color(0xffffff),
       intensity: 0.8
     },
     {
-      position: new THREE.Vector3(45.0, 40, 23),
+      followCamera: true,
+      position: new THREE.Vector3(-1000, -1000, -1000),
       color: new THREE.Color(0xffffff),
       intensity: 0.2
     }

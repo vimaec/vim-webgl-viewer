@@ -158,6 +158,15 @@ export class Environment {
     this.sunLights = []
     this.applySettings(settings)
     this._skybox = new Skybox(camera, settings)
+
+    camera.onMoved.subscribe(() => {
+      this.sunLights.forEach((s, i) => {
+        if (settings.sunLights[i].followCamera) {
+          s.position.copy(settings.sunLights[i].position)
+          s.position.applyQuaternion(camera.quaternion)
+        }
+      })
+    })
   }
 
   loadGroundTexture (encoding: TextureEncoding, url: string) {

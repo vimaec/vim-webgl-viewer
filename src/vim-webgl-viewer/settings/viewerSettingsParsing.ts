@@ -78,11 +78,13 @@ function parseSettingsFromUrl (url: string) {
     },
     sunLights: [
       {
+        followCamera: get('sunLights.0.followCamera', strToBool),
         color: get('sunLights.0.color', strToColor),
         intensity: get('sunLights.0.intensity', Number.parseFloat),
         position: get('sunLights.0.position', strToVector3)
       },
       {
+        followCamera: get('sunLights.1.followCamera', strToBool),
         color: get('sunLights.1.color', strToColor),
         intensity: get('sunLights.1.intensity', Number.parseFloat),
         position: get('sunLights.1.position', strToVector3)
@@ -164,7 +166,7 @@ function removeUndefinedProperties (obj) {
   }
 
   if (Array.isArray(obj)) {
-    return obj.map(removeUndefinedProperties)
+    return obj.map(removeUndefinedProperties).filter((value) => value !== undefined)
   }
 
   const result = {}
@@ -176,5 +178,9 @@ function removeUndefinedProperties (obj) {
       }
     }
   }
+
+  // reject empty objects
+  if (Object.keys(result).length === 0) return undefined
+
   return result
 }
