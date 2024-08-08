@@ -17,8 +17,8 @@ export class LoadingSynchronizer {
   mergeAction: (mesh: G3dMesh, index: number) => void
   instanceAction: (mesh: G3dMesh, index: number) => void
 
-  mergeQueue = new Array<() => void>()
-  instanceQueue = new Array<() => void>()
+  mergeQueue: (() => void)[] = []
+  instanceQueue: (() => void)[] = []
 
   constructor (
     uniques: G3dSubset,
@@ -72,7 +72,7 @@ export class LoadingSynchronizer {
   }
 
   private getSortedPromises () {
-    const promises = new Array<Promise<void>>()
+    const promises: Promise<void>[] = []
 
     const uniqueCount = this.uniques.getMeshCount()
     const nonUniquesCount = this.nonUniques.getMeshCount()

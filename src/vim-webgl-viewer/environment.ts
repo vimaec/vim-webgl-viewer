@@ -5,6 +5,31 @@
 import * as THREE from 'three'
 import { TextureEncoding, ViewerSettings } from './settings/viewerSettings'
 import { Box3 } from 'three'
+import { createSkyboxMaterial } from '../vim-loader/materials/skyboxMaterial'
+import { ICamera } from './camera/camera'
+
+export class Skybox {
+  private _material : THREE.Material
+  private _plane : THREE.PlaneGeometry
+  mesh : THREE.Mesh
+
+  constructor (camera: ICamera, settings: ViewerSettings) {
+    this._material = createSkyboxMaterial(
+      settings.skybox.skyColor,
+      settings.skybox.groundColor,
+      settings.skybox.sharpness
+    )
+    this._plane = new THREE.PlaneGeometry()
+    this.mesh = new THREE.Mesh(this._plane, this._material)
+
+    camera.onMoved.subscribe(() => {
+      this.mesh.position.copy(camera.position).add(camera.forward)
+      this.mesh.quaternion.copy(camera.quaternion)
+      const size = camera.frustrumSizeAt(this.mesh.position)
+      this.mesh.scale.set(size.x, size.y, 1)
+    })
+  }
+}
 
 /**
  * Manages the THREE.Mesh for the ground plane under the vims
@@ -16,6 +41,7 @@ export class GroundPlane {
   private _size: number = 1
 
   // disposable
+
   private _geometry: THREE.PlaneGeometry
   private _material: THREE.MeshBasicMaterial
   private _texture: THREE.Texture | undefined
@@ -119,16 +145,27 @@ export class Environment {
   skyLight: THREE.HemisphereLight
   sunLights: THREE.DirectionalLight[]
   private _groundPlane: GroundPlane
+  private _skybox: Skybox
 
   get groundPlane () {
     return this._groundPlane.mesh
   }
 
-  constructor (settings: ViewerSettings) {
+  constructor (camera:ICamera, settings: ViewerSettings) {
     this._groundPlane = new GroundPlane()
     this.skyLight = new THREE.HemisphereLight()
     this.sunLights = []
     this.applySettings(settings)
+    this._skybox = new Skybox(camera, settings)
+
+    camera.onMoved.subscribe(() => {
+      this.sunLights.forEach((s, i) => {
+        if (settings.sunlights[i].followCamera) {
+          s.position.copy(settings.sunlights[i].position)
+          s.position.applyQuaternion(camera.quaternion)
+        }
+      })
+    })
   }
 
   loadGroundTexture (encoding: TextureEncoding, url: string) {
@@ -139,7 +176,7 @@ export class Environment {
    * Returns all three objects composing the environment
    */
   getObjects (): THREE.Object3D[] {
-    return [this._groundPlane.mesh, this.skyLight, ...this.sunLights]
+    return [this._groundPlane.mesh, this.skyLight, ...this.sunLights, this._skybox.mesh]
   }
 
   applySettings (settings: ViewerSettings) {
@@ -152,14 +189,14 @@ export class Environment {
     this.skyLight.intensity = settings.skylight.intensity
 
     // Sunlights
-    const count = settings.sunLights.length
+    const count = settings.sunlights.length
     for (let i = 0; i < count; i++) {
       if (!this.sunLights[i]) {
         this.sunLights[i] = new THREE.DirectionalLight()
       }
-      const color = settings.sunLights[i].color
-      const pos = settings.sunLights[i].position
-      const intensity = settings.sunLights[i].intensity
+      const color = settings.sunlights[i].color
+      const pos = settings.sunlights[i].position
+      const intensity = settings.sunlights[i].intensity
       if (color) {
         this.sunLights[i].color.copy(color)
       }

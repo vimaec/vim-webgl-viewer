@@ -114,40 +114,45 @@ export class VimxSubsetBuilder {
 
 export class DummySubsetBuilder implements SubsetBuilder {
   get onUpdate () {
-    
     return new AlwaysTrueSignal()
   }
-  get isLoading() {
+
+  get isLoading () {
     return false
   }
 
-  getFullSet(): G3dSubset {
+  getFullSet (): G3dSubset {
     throw new Error('Method not implemented.')
   }
-  loadSubset(subset: G3dSubset, settings?: Partial<LoadSettings>) {}
-  clear() {  }
-  dispose() {  }
+
+  loadSubset (subset: G3dSubset, settings?: Partial<LoadSettings>) {}
+  clear () { }
+  dispose () { }
 }
 
-class AlwaysTrueSignal implements ISignal{
+class AlwaysTrueSignal implements ISignal {
   count: number
-  subscribe(fn: ISignalHandler): () => void {
+  subscribe (fn: ISignalHandler): () => void {
     fn(null)
-    return () =>{}
+    return () => {}
   }
-  sub(fn: ISignalHandler): () => void {
+
+  sub (fn: ISignalHandler): () => void {
     fn(null)
-    return () =>{}
+    return () => {}
   }
-  unsubscribe(fn: ISignalHandler): void {}
-  unsub(fn: ISignalHandler): void {}
-  one(fn: ISignalHandler): () => void {
+
+  unsubscribe (fn: ISignalHandler): void {}
+  unsub (fn: ISignalHandler): void {}
+  one (fn: ISignalHandler): () => void {
     fn(null)
-    return () =>{}
+    return () => {}
   }
-  has(fn: ISignalHandler): boolean {
+
+  has (fn: ISignalHandler): boolean {
     return false
   }
-  clear(): void {}
+
+  clear (): void {}
   onSubscriptionChange: ISubscribable<SubscriptionChangeEventHandler>
 }

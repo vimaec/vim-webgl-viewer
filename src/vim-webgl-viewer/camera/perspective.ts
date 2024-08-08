@@ -27,7 +27,7 @@ export class PerspectiveWrapper {
 
   frustrumSizeAt (point: THREE.Vector3) {
     const dist = this.camera.position.distanceTo(point)
-    const size = dist * Math.tan((this.camera.fov / 2) * (Math.PI / 180))
-    return new THREE.Vector2(size, size)
+    const size = 2 * dist * Math.tan((this.camera.fov / 2) * (Math.PI / 180))
+    return new THREE.Vector2(size * this.camera.aspect, size)
   }
 }

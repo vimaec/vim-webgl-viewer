@@ -47,7 +47,7 @@ export function createMergeMaterial () {
     uniforms: {
       sourceA: { value: null },
       sourceB: { value: null },
-      color: { value: new THREE.Color(1, 1, 1) }
+      color: { value: new THREE.Color(0xffffff) }
     },
     vertexShader: `
        varying vec2 vUv;

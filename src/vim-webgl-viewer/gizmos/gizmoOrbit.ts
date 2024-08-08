@@ -2,7 +2,6 @@
  * @module viw-webgl-viewer/gizmos
  */
 import * as THREE from 'three'
-import { MathUtils } from 'three'
 import { Renderer } from '../rendering/renderer'
 import { Camera } from '../camera/camera'
 import { ViewerSettings } from '../settings/viewerSettings'
@@ -19,10 +18,9 @@ export class GizmoOrbit {
 
   // Settings
   private _size: number = 1
-  private _color: THREE.Color = new THREE.Color('blue')
+  private _color: THREE.Color = new THREE.Color(0x000000)
   private _opacity: number = 0.2
   private _opacityAlways: number = 0.5
-  private _fadeDurationMs: number = 200
   private _showDurationMs: number = 1000
 
   // Resources
@@ -35,7 +33,6 @@ export class GizmoOrbit {
 
   // State
   private _timeout: ReturnType<typeof setTimeout> | undefined
-  private _fadeEnd: number = 0
   private _active: boolean = true
   private _animation: number = 0
 
@@ -73,7 +70,6 @@ export class GizmoOrbit {
     this.show(true)
   }
 
-  
   /**
    * Determines whether the orbit gizmo is enabled.
    */
@@ -100,7 +96,10 @@ export class GizmoOrbit {
     this._gizmos!.visible = show
     // Hide after one second since last request
     if (show) {
-      this._timeout = setTimeout(() => this.fadeOut(), this._showDurationMs)
+      this._timeout = setTimeout(() => {
+        this._gizmos.visible = false
+        this._renderer.needsUpdate = true
+      }, this._showDurationMs)
     }
   }
 
@@ -145,28 +144,6 @@ export class GizmoOrbit {
     this._materialAlways!.color = color
   }
 
-  private fadeOut (fading?: boolean) {
-    const now = new Date().getTime()
-
-    if (!fading) {
-      this._fadeEnd = now + this._fadeDurationMs
-    }
-
-    if (now > this._fadeEnd) {
-      // restore opacity values and hide for good
-      this._gizmos!.visible = false
-      this._material!.opacity = this._opacity
-      this._materialAlways!.opacity = this._opacityAlways
-    } else {
-      // lerp and loop until fade is over
-      this._animation = requestAnimationFrame(() => this.fadeOut(true))
-      const t = Math.pow((this._fadeEnd - now) / this._fadeDurationMs, 4)
-      this._material!.opacity = MathUtils.lerp(0, this._opacity, t)
-      this._materialAlways!.opacity = MathUtils.lerp(0, this._opacityAlways, t)
-    }
-    this._renderer.needsUpdate = true
-  }
-
   private applySettings (settings: ViewerSettings) {
     this._active = settings.camera.gizmo.enable
     this.setColor(settings.camera.gizmo.color)
@@ -182,7 +159,7 @@ export class GizmoOrbit {
     if (!this._gizmos) return
 
     const frustrum = this._camera.frustrumSizeAt(this._gizmos.position)
-    const min = Math.min(frustrum.x, frustrum.y)
+    const min = Math.min(frustrum.x, frustrum.y) / 2
     const h = min * this._size
     this._gizmos.scale.set(h, h, h)
   }
@@ -238,5 +215,4 @@ export class GizmoOrbit {
       this._gizmos = undefined
     }
   }
-
 }

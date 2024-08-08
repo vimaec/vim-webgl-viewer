@@ -22,7 +22,7 @@ export class CameraLerp extends CameraMovement {
     this._movement = movement
   }
 
-  get isLerping(){
+  get isLerping () {
     return this._clock.running
   }
 
@@ -30,7 +30,6 @@ export class CameraLerp extends CameraMovement {
     this.cancel()
     this._duration = duration
     this._clock.start()
-    this.animate()
   }
 
   cancel () {
@@ -38,18 +37,13 @@ export class CameraLerp extends CameraMovement {
     this.onProgress = undefined
   }
 
-  animate () {
-    if (this._clock.running) {
-      this.update()
-      requestAnimationFrame(() => this.animate())
-    }
-  }
-
   easeOutCubic (x: number): number {
     return 1 - Math.pow(1 - x, 3)
   }
 
   update () {
+    if (!this._clock.running) return
+
     let t = this._clock.getElapsedTime() / this._duration
     t = this.easeOutCubic(t)
     if (t >= 1) {

@@ -118,9 +118,17 @@ export class Viewport {
    */
   getParentSize () {
     return new THREE.Vector2(
-      this.canvas.parentElement?.clientWidth ?? this.canvas.clientWidth,
-      this.canvas.parentElement?.clientHeight ?? this.canvas.clientHeight
+      this.getParentWidth(),
+      this.getParentHeight()
     )
+  }
+
+  private getParentWidth () {
+    return this.canvas.parentElement?.clientWidth ?? this.canvas.clientWidth
+  }
+
+  private getParentHeight () {
+    return this.canvas.parentElement?.clientHeight ?? this.canvas.clientHeight
   }
 
   /**
@@ -136,8 +144,7 @@ export class Viewport {
    * @returns {number} The aspect ratio (width divided by height) of the parent element.
    */
   getAspectRatio () {
-    const size = this.getParentSize()
-    return size.x / size.y
+    return this.getParentWidth() / this.getParentHeight()
   }
 
   /**

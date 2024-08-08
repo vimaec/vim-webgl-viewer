@@ -16,6 +16,7 @@ import { SignalDispatcher } from 'ste-signals'
  * Defines the materials to be used by the vim loader and allows for material injection.
  */
 export class ViewerMaterials {
+  // eslint-disable-next-line no-use-before-define
   static instance: ViewerMaterials
 
   static createInstance (instance: ViewerMaterials) {
@@ -66,9 +67,9 @@ export class ViewerMaterials {
   private _clippingPlanes: THREE.Plane[] | undefined
   private _sectionStrokeWitdh: number = 0.01
   private _sectionStrokeFallof: number = 0.75
-  private _sectionStrokeColor: THREE.Color = new THREE.Color(0xf6, 0xf6, 0xf6)
+  private _sectionStrokeColor: THREE.Color = new THREE.Color(0xf6f6f6)
   private _focusIntensity: number = 0.75
-  private _focusColor: THREE.Color = new THREE.Color(1, 1, 1)
+  private _focusColor: THREE.Color = new THREE.Color(0xffffff)
   private _onUpdate = new SignalDispatcher()
 
   constructor (
@@ -96,6 +97,9 @@ export class ViewerMaterials {
    * @param {ViewerSettings} settings - The settings to apply to the materials.
    */
   applySettings (settings: ViewerSettings) {
+    this.opaque.color = settings.materials.standard.color
+    this.transparent.color = settings.materials.standard.color
+
     this.isolationOpacity = settings.materials.isolation.opacity
     this.isolationColor = settings.materials.isolation.color
 
@@ -148,7 +152,7 @@ export class ViewerMaterials {
     this._onUpdate.dispatch()
   }
 
-   /**
+  /**
    * Determines the color intensity of the highlight effect on mouse hover.
    */
   get focusIntensity () {

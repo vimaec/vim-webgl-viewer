@@ -163,17 +163,17 @@ export class Mesh {
   }
 }
 
+// eslint-disable-next-line no-use-before-define
 export type MergedSubmesh = StandardSubmesh | InsertableSubmesh
-export type Submesh = MergedSubmesh | InstancedSubmesh 
+export type Submesh = MergedSubmesh | InstancedSubmesh
 
-export class SimpleInstanceSubmesh
-{
+export class SimpleInstanceSubmesh {
   mesh: THREE.InstancedMesh
-  get three() {return this.mesh} 
+  get three () { return this.mesh }
   index : number
   readonly merged = false
 
-  constructor(mesh: THREE.InstancedMesh, index : number){
+  constructor (mesh: THREE.InstancedMesh, index : number) {
     this.mesh = mesh
     this.index = index
   }

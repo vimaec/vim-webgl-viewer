@@ -117,7 +117,7 @@ export class Viewer {
     this.materials.applySettings(this.settings)
 
     // Ground plane and lights
-    this._environment = new Environment(this.settings)
+    this._environment = new Environment(this.camera, this.settings)
     this._environment.getObjects().forEach((o) => this.renderer.add(o))
     this.renderer.onBoxUpdated.subscribe((_) => {
       const box = this.renderer.getBoundingBox()
@@ -141,9 +141,16 @@ export class Viewer {
 
   // Calls render, and asks the framework to prepare the next frame
   private animate () {
+    const deltaTime = this._clock.getDelta()
     this._updateId = requestAnimationFrame(() => this.animate())
+
     // Camera
-    this.renderer.needsUpdate = this._camera.update(this._clock.getDelta())
+    this.renderer.needsUpdate = this._camera.update(deltaTime)
+
+    // Gizmos
+    this.selection.update()
+    this.gizmos.updateAfterCamera()
+
     // Rendering
     this.renderer.render()
   }

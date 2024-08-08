@@ -12,12 +12,12 @@ export type FileType = 'vim' | 'vimx' | undefined
  * Represents settings for configuring the behavior and rendering of a vim object.
  */
 export type VimSettings = {
-  
+
   /**
    * The positional offset for the vim object.
    */
   position: THREE.Vector3
-  
+
   /**
    * The XYZ rotation applied to the vim object.
    */
@@ -39,11 +39,11 @@ export type VimSettings = {
    */
   transparency: Transparency.Mode
 
-  /** 
+  /**
    * Set to true to enable verbose HTTP logging.
    */
   verboseHttp: boolean
-  
+
   // VIMX
 
   /**
@@ -51,7 +51,7 @@ export type VimSettings = {
    */
   fileType: FileType
 
-  /** 
+  /**
    * Set to true to stream geometry to the scene. Only supported with vimx files.
    */
   progressive: boolean
@@ -60,38 +60,6 @@ export type VimSettings = {
    * The time in milliseconds between each scene refresh during progressive loading.
    */
   progressiveInterval: number
-
-  // LEGACY
-
-  /** 
-   * Set to true to use the legacy loading pipeline.
-   */
-  legacy: boolean
-
-  /** 
-   * The instance indices of objects to load. All objects are loaded if no value is provided in the legacy pipeline.
-   */
-  legacyInstances: number[]
-
-  /** 
-   * Set to true to prevent downloading strings in the legacy pipeline.
-   */
-  legacyNoStrings: boolean
-
-  /** 
-   * Set to true to prevent downloading the element/geometry map in the legacy pipeline.
-   */
-  legacyNoMap: boolean
-
-  /** 
-   * Set to true to prevent downloading the header in the legacy pipeline.
-   */
-  legacyNoHeader: boolean
-
-  /** 
-   * Set to true to load and display rooms in the legacy pipeline.
-   */
-  legacyLoadRooms: boolean
 }
 
 /**
@@ -108,15 +76,7 @@ export const defaultConfig: VimSettings = {
   // progressive
   fileType: undefined,
   progressive: false,
-  progressiveInterval: 1000,
-
-  //legacy
-  legacy: false,
-  legacyInstances: undefined,
-  legacyNoStrings: false,
-  legacyNoMap: false,
-  legacyNoHeader: false,
-  legacyLoadRooms: false
+  progressiveInterval: 1000
 }
 
 /**

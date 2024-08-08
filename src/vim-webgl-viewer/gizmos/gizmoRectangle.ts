@@ -18,7 +18,7 @@ export class GizmoRectangle {
 
     const mat = new THREE.LineBasicMaterial({
       depthTest: false,
-      color: new THREE.Color(0, 1, 0),
+      color: new THREE.Color(0x00ff00),
       // Transparent so it is drawn in the transparent pass, and always appear on top.
       transparent: true,
       opacity: 1
@@ -58,7 +58,7 @@ export class GizmoRectangle {
     ;(this.line.material as THREE.Material).dispose()
   }
 
-  /** 
+  /**
    * Indicates whether the gizmo is visible.
    */
   get visible () {
@@ -66,6 +66,7 @@ export class GizmoRectangle {
   }
 
   set visible (value: boolean) {
+    if (value === this.line.visible) return
     this.viewer.renderer.needsUpdate = true
     this.line.visible = value
   }
@@ -137,9 +138,9 @@ export class GizmoRectangle {
    * Returns the bounding box of the selection.
    * The bounding box is the projection of the selection rectangle
    * onto the plane coplanar to the closest hit of 5 raycasts: one in each corner and one in the center.
-   * X-----X 
+   * X-----X
    * |  X  |
-   * X-----X 
+   * X-----X
    * @returns {THREE.Box3} The bounding box of the selection.
    */
   getBoundingBox (target: THREE.Box3 = new THREE.Box3()) {

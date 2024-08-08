@@ -7,7 +7,6 @@ import { MergedSubmesh, SimpleInstanceSubmesh, Submesh } from './mesh'
 
 export type AttributeTarget = Submesh | SimpleInstanceSubmesh
 
-
 export class ObjectAttribute<T> {
   readonly vertexAttribute: string
   readonly instanceAttribute: string
