@@ -131,7 +131,7 @@ function strToBool (str: string): boolean {
 function strToVector3 (str: string) {
   if (str[0] !== '(') return
   if (str[str.length - 1] !== ')') return
-  const split = str.split(',')
+  const split = str.slice(1, -1).split(',')
   if (split.length !== 3) return
   try {
     const x = Number.parseFloat(split[0])
