@@ -58,6 +58,11 @@ function parseSettingsFromUrl (url: string) {
     background: {
       color: get('background.color', strToColor)
     },
+    skybox: {
+      skyColor: get('skybox.skyColor', strToColor),
+      groundColor: get('skybox.groundColor', strToColor),
+      sharpness: get('skybox.sharpness', Number.parseFloat)
+    },
     groundPlane: {
       visible: get('groundPlane.visible', strToBool),
       encoding: get('groundPlane.encoding'),

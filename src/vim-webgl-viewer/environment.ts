@@ -5,6 +5,32 @@
 import * as THREE from 'three'
 import { TextureEncoding, ViewerSettings } from './settings/viewerSettings'
 import { Box3 } from 'three'
+import { createSkyboxMaterial } from '../vim-loader/materials/skyboxMaterial'
+import { ICamera } from './camera/camera'
+
+export class Skybox {
+  private _material : THREE.Material
+  private _plane : THREE.PlaneGeometry
+  mesh : THREE.Mesh
+
+  constructor (camera: ICamera, settings: ViewerSettings) {
+    this._material = createSkyboxMaterial(
+      settings.skybox.skyColor,
+      settings.skybox.groundColor,
+      settings.skybox.sharpness
+    )
+    this._plane = new THREE.PlaneGeometry()
+    this.mesh = new THREE.Mesh(this._plane, this._material)
+
+    camera.onMoved.subscribe(() => {
+      const pos = camera.position.clone()
+        .add(camera.forward.clone().multiplyScalar(1))
+      this.mesh.position.copy(pos)
+      this.mesh.quaternion.copy(camera.quaternion)
+      this.mesh.scale.set(1, 1, 1)
+    })
+  }
+}
 
 /**
  * Manages the THREE.Mesh for the ground plane under the vims
@@ -16,6 +42,7 @@ export class GroundPlane {
   private _size: number = 1
 
   // disposable
+
   private _geometry: THREE.PlaneGeometry
   private _material: THREE.MeshBasicMaterial
   private _texture: THREE.Texture | undefined
@@ -119,16 +146,18 @@ export class Environment {
   skyLight: THREE.HemisphereLight
   sunLights: THREE.DirectionalLight[]
   private _groundPlane: GroundPlane
+  private _skybox: Skybox
 
   get groundPlane () {
     return this._groundPlane.mesh
   }
 
-  constructor (settings: ViewerSettings) {
+  constructor (camera:ICamera, settings: ViewerSettings) {
     this._groundPlane = new GroundPlane()
     this.skyLight = new THREE.HemisphereLight()
     this.sunLights = []
     this.applySettings(settings)
+    this._skybox = new Skybox(camera, settings)
   }
 
   loadGroundTexture (encoding: TextureEncoding, url: string) {
@@ -139,7 +168,7 @@ export class Environment {
    * Returns all three objects composing the environment
    */
   getObjects (): THREE.Object3D[] {
-    return [this._groundPlane.mesh, this.skyLight, ...this.sunLights]
+    return [this._groundPlane.mesh, this.skyLight, ...this.sunLights, this._skybox.mesh]
   }
 
   applySettings (settings: ViewerSettings) {

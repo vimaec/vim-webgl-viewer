@@ -38,6 +38,11 @@ export const defaultViewerSettings: ViewerSettings = {
     }
   },
   background: { color: new THREE.Color(0xc1c2c6) },
+  skybox: {
+    skyColor: new THREE.Color(0xade1e6), // Light sky blue pastel
+    groundColor: new THREE.Color(0xd1b17f), // Light earthy brown pastel
+    sharpness: 2
+  },
   groundPlane: {
     visible: false,
     encoding: 'base64',

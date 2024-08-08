@@ -117,7 +117,7 @@ export class Viewer {
     this.materials.applySettings(this.settings)
 
     // Ground plane and lights
-    this._environment = new Environment(this.settings)
+    this._environment = new Environment(this.camera, this.settings)
     this._environment.getObjects().forEach((o) => this.renderer.add(o))
     this.renderer.onBoxUpdated.subscribe((_) => {
       const box = this.renderer.getBoundingBox()

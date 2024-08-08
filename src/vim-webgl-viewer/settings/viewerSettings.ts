@@ -172,7 +172,25 @@ export type ViewerSettings = {
      * Default: THREE.Color('#96999f')
      */
     color: THREE.Color
-  }
+  },
+  /**
+   * Skybox options
+   */
+  skybox:{
+    /**
+     * Color for the lower part of the skybox.
+     */
+    groundColor: THREE.Color
+    /**
+     * Color for the upper part of the skybox.
+     */
+    skyColor: THREE.Color
+
+    /**
+     * Controls the gradient transition between the sky and the ground.
+     */
+    sharpness: number
+  },
   /**
    * Ground plane under the scene options.
    */
