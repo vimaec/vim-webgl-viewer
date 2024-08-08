@@ -305,7 +305,7 @@ export class Camera implements ICamera {
    * @returns {number} The frustum size at the specified point.
    */
   frustrumSizeAt (point: THREE.Vector3) {
-    return this.camPerspective.frustrumSizeAt(point)
+    return this.orthographic ? this.camOrthographic.frustrumSizeAt(point) : this.camPerspective.frustrumSizeAt(point)
   }
 
   /**
@@ -437,6 +437,7 @@ export class Camera implements ICamera {
     if (value === this._orthographic) return
     this._orthographic = value
     this._onValueChanged.dispatch()
+    this._onMoved.dispatch()
   }
 
   update (deltaTime: number) {
@@ -457,6 +458,7 @@ export class Camera implements ICamera {
     const aspect = this._viewport.getAspectRatio()
     this.camPerspective.updateProjection(aspect)
     this.updateOrthographic()
+    this._onMoved.dispatch()
   }
 
   private updateOrthographic () {

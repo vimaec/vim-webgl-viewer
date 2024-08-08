@@ -245,7 +245,7 @@ export class MouseHandler extends InputHandler {
 
   private pan (delta: THREE.Vector2) {
     const size = this.camera.frustrumSizeAt(this.camera.target)
-    size.multiply(delta).multiplyScalar(2)
+    size.multiply(delta)
     this.camera.snap().move2(size, 'XY')
   }
 

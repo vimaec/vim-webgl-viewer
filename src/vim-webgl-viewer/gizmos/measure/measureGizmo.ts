@@ -120,7 +120,7 @@ class MeasureMarker {
 
   updateScale () {
     const scale =
-      this._camera.frustrumSizeAt(this.mesh.position).y * this.MARKER_SIZE
+      this._camera.frustrumSizeAt(this.mesh.position).y / 2 * this.MARKER_SIZE
     this.mesh.scale.set(scale, scale, scale)
     this.mesh.updateMatrix()
   }
@@ -226,7 +226,7 @@ export class MeasureGizmo {
   ) {
     if (!first || !second) return
     const length = first.distanceTo(second)
-    const ratio = length / this._viewer.camera.frustrumSizeAt(first).y
+    const ratio = length / (this._viewer.camera.frustrumSizeAt(first).y / 2)
     return ratio
   }
 

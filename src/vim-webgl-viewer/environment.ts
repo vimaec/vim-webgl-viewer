@@ -23,11 +23,10 @@ export class Skybox {
     this.mesh = new THREE.Mesh(this._plane, this._material)
 
     camera.onMoved.subscribe(() => {
-      const pos = camera.position.clone()
-        .add(camera.forward.clone().multiplyScalar(1))
-      this.mesh.position.copy(pos)
+      this.mesh.position.copy(camera.position).add(camera.forward)
       this.mesh.quaternion.copy(camera.quaternion)
-      this.mesh.scale.set(1, 1, 1)
+      const size = camera.frustrumSizeAt(this.mesh.position)
+      this.mesh.scale.set(size.x, size.y, 1)
     })
   }
 }

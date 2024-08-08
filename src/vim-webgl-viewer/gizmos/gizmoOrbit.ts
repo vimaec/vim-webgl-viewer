@@ -159,7 +159,7 @@ export class GizmoOrbit {
     if (!this._gizmos) return
 
     const frustrum = this._camera.frustrumSizeAt(this._gizmos.position)
-    const min = Math.min(frustrum.x, frustrum.y)
+    const min = Math.min(frustrum.x, frustrum.y) / 2
     const h = min * this._size
     this._gizmos.scale.set(h, h, h)
   }
