@@ -14,8 +14,18 @@ export class GroundPlane {
   private _source: string | undefined
   private _size: number = 1
 
-  // disposable
+  /**
+   * Whether the ground plane is visible or not.
+   */
+  get visible () {
+    return this.mesh.visible
+  }
 
+  set visible (value: boolean) {
+    this.mesh.visible = value
+  }
+
+  // disposable
   private _geometry: THREE.PlaneGeometry
   private _material: THREE.MeshBasicMaterial
   private _texture: THREE.Texture | undefined
