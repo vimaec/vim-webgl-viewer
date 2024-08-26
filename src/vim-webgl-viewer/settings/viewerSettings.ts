@@ -178,6 +178,11 @@ export type ViewerSettings = {
    */
   skybox:{
     /**
+     * Enables/Disables skybox.
+     */
+    enable: boolean
+
+    /**
      * Color for the lower part of the skybox.
      */
     groundColor: THREE.Color

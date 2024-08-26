@@ -11,6 +11,7 @@ import { ViewerSettings } from '../../vim-webgl-viewer/settings/viewerSettings'
 import { MergeMaterial } from './mergeMaterial'
 import { createSimpleMaterial } from './simpleMaterial'
 import { SignalDispatcher } from 'ste-signals'
+import { SkyboxMaterial } from './skyboxMaterial'
 
 /**
  * Defines the materials to be used by the vim loader and allows for material injection.
@@ -33,36 +34,41 @@ export class ViewerMaterials {
   /**
    * Material used for opaque model geometry.
    */
-  opaque: StandardMaterial
+  readonly opaque: StandardMaterial
   /**
    * Material used for transparent model geometry.
    */
-  transparent: StandardMaterial
+  readonly transparent: StandardMaterial
   /**
    * Material used for maximum performance.
    */
-  simple: THREE.Material
+  readonly simple: THREE.Material
   /**
    * Material used when creating wireframe geometry of the model.
    */
-  wireframe: THREE.LineBasicMaterial
+  readonly wireframe: THREE.LineBasicMaterial
   /**
    * Material used to show traces of hidden objects.
    */
-  isolation: THREE.Material
+  readonly isolation: THREE.Material
   /**
    * Material used to filter out what is not selected for selection outline effect.
    */
-  mask: THREE.ShaderMaterial
+  readonly mask: THREE.ShaderMaterial
   /**
    * Material used for selection outline effect.
    */
-  outline: OutlineMaterial
+  readonly outline: OutlineMaterial
+
+  /**
+   * Material used for the skybox effect.
+   */
+  readonly skyBox: SkyboxMaterial
 
   /**
    * Material used to merge outline effect with scene render.
    */
-  merge: MergeMaterial
+  readonly merge: MergeMaterial
 
   private _clippingPlanes: THREE.Plane[] | undefined
   private _sectionStrokeWitdh: number = 0.01
@@ -80,7 +86,8 @@ export class ViewerMaterials {
     isolation?: THREE.Material,
     mask?: THREE.ShaderMaterial,
     outline?: OutlineMaterial,
-    merge?: MergeMaterial
+    merge?: MergeMaterial,
+    skyBox?: SkyboxMaterial
   ) {
     this.opaque = opaque ?? createOpaque()
     this.transparent = transparent ?? createTransparent()
@@ -90,6 +97,7 @@ export class ViewerMaterials {
     this.mask = mask ?? createMaskMaterial()
     this.outline = outline ?? new OutlineMaterial()
     this.merge = merge ?? new MergeMaterial()
+    this.skyBox = skyBox ?? new SkyboxMaterial()
   }
 
   /**
@@ -321,6 +329,33 @@ export class ViewerMaterials {
   set outlineIntensity (value: number) {
     if (this.outline.strokeMultiplier === value) return
     this.outline.strokeMultiplier = value
+    this._onUpdate.dispatch()
+  }
+
+  get skyboxSkyColor () {
+    return this.skyBox.skyColor
+  }
+
+  set skyboxSkyColor (value: THREE.Color) {
+    this.skyBox.skyColor = value
+    this._onUpdate.dispatch()
+  }
+
+  get skyboxGroundColor () {
+    return this.skyBox.groundColor
+  }
+
+  set skyboxGroundColor (value: THREE.Color) {
+    this.skyBox.groundColor = value
+    this._onUpdate.dispatch()
+  }
+
+  get skyboxSharpness () {
+    return this.skyBox.sharpness
+  }
+
+  set skyboxSharpness (value: number) {
+    this.skyBox.sharpness = value
     this._onUpdate.dispatch()
   }
 

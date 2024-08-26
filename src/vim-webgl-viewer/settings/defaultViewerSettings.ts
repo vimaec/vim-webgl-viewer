@@ -39,8 +39,9 @@ export const defaultViewerSettings: ViewerSettings = {
   },
   background: { color: new THREE.Color(0xc1c2c6) },
   skybox: {
-    skyColor: new THREE.Color(0xade1e6), // Light sky blue pastel
-    groundColor: new THREE.Color(0xd1b17f), // Light earthy brown pastel
+    enable: true,
+    skyColor: new THREE.Color(0xe6f4fa), // Light sky blue pastel
+    groundColor: new THREE.Color(0xdfdfe1), // Light earthy brown pastel
     sharpness: 2
   },
   groundPlane: {
@@ -72,14 +73,14 @@ export const defaultViewerSettings: ViewerSettings = {
   ],
   materials: {
     standard: {
-      color: new THREE.Color('#cccccc')
+      color: new THREE.Color(0x999999)
     },
     highlight: {
       color: new THREE.Color(0x6ad2ff),
       opacity: 0.5
     },
     isolation: {
-      color: new THREE.Color('#4E525C'),
+      color: new THREE.Color(0x4E525C),
       opacity: 0.08
     },
     section: {

@@ -9,7 +9,7 @@ import { ViewerSettings, getViewerSettings, PartialViewerSettings } from './sett
 import { Camera, ICamera } from './camera/camera'
 import { Input } from './inputs/input'
 import { Selection } from './selection'
-import { Environment, IEnvironment } from './environment'
+import { Environment } from './environment/environment'
 import { Raycaster } from './raycaster'
 import { RenderScene } from './rendering/renderScene'
 import { Viewport } from './viewport'
@@ -62,17 +62,15 @@ export class Viewer {
   readonly materials: ViewerMaterials
 
   /**
+   * The environment of the viewer, including the ground plane and lights.
+   */
+  readonly environment: Environment
+
+  /**
    * The interface for manipulating the viewer's camera.
    */
   get camera () {
     return this._camera as ICamera
-  }
-
-  /**
-   * The interface for manipulating THREE elements that are not directly related to Vim objects.
-   */
-  get environment () {
-    return this._environment as IEnvironment
   }
 
   /**
@@ -88,7 +86,6 @@ export class Viewer {
   }
 
   private _camera: Camera
-  private _environment: Environment
   private _clock = new THREE.Clock()
 
   // State
@@ -117,12 +114,7 @@ export class Viewer {
     this.materials.applySettings(this.settings)
 
     // Ground plane and lights
-    this._environment = new Environment(this.camera, this.settings)
-    this._environment.getObjects().forEach((o) => this.renderer.add(o))
-    this.renderer.onBoxUpdated.subscribe((_) => {
-      const box = this.renderer.getBoundingBox()
-      this._environment.adaptToContent(box)
-    })
+    this.environment = new Environment(this.camera, this.renderer, this.materials, this.settings)
 
     // Input and Selection
     this.selection = new Selection(this.materials)
@@ -219,7 +211,7 @@ export class Viewer {
   dispose () {
     cancelAnimationFrame(this._updateId)
     this.selection.dispose()
-    this._environment.dispose()
+    this.environment.dispose()
     this.selection.clear()
     this.viewport.dispose()
     this.renderer.dispose()
