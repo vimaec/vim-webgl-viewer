@@ -1,5 +1,4 @@
 import * as THREE from 'three'
-import { AxesSettings } from '../gizmos/axes/axesSettings'
 import { PartialViewerSettings, ViewerSettings } from './viewerSettings'
 import deepmerge from 'deepmerge'
 
@@ -12,7 +11,7 @@ import deepmerge from 'deepmerge'
  */
 export function getViewerSettingsFromUrl (url?: string, settings?: PartialViewerSettings) {
   const urlSettings = parseSettingsFromUrl(url)
-  return deepmerge(settings, urlSettings) as PartialViewerSettings
+  return deepmerge(settings, urlSettings ?? {}) as PartialViewerSettings
 }
 
 function parseSettingsFromUrl (url: string) {
@@ -114,14 +113,15 @@ function parseSettingsFromUrl (url: string) {
         color: get('materials.outline.color', strToColor)
       }
     },
-    axes: new AxesSettings(),
+    axes: undefined,
     rendering: {
       onDemand: get('rendering.onDemand', strToBool)
     }
   } as ViewerSettings
 
   // We remove undefined propertes because deepmerge only writes properties that not declared.
-  return removeUndefinedProperties(parsed) as PartialViewerSettings
+  const result = removeUndefinedProperties(parsed) as PartialViewerSettings
+  return result
 }
 
 function strToBool (str: string): boolean {
@@ -166,7 +166,8 @@ function removeUndefinedProperties (obj) {
   }
 
   if (Array.isArray(obj)) {
-    return obj.map(removeUndefinedProperties).filter((value) => value !== undefined)
+    const array = obj.map(removeUndefinedProperties).filter((value) => value !== undefined)
+    return array.length === 0 ? undefined : array
   }
 
   const result = {}
@@ -180,7 +181,9 @@ function removeUndefinedProperties (obj) {
   }
 
   // reject empty objects
-  if (Object.keys(result).length === 0) return undefined
+  if (Object.keys(result).length === 0) {
+    return undefined
+  }
 
   return result
 }

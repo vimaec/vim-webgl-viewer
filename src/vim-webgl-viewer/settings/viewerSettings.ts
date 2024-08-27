@@ -4,6 +4,7 @@
 
 import * as THREE from 'three'
 import deepmerge from 'deepmerge'
+import { isPlainObject } from 'is-plain-object'
 import { AxesSettings } from '../gizmos/axes/axesSettings'
 import { defaultViewerSettings } from './defaultViewerSettings'
 
@@ -385,7 +386,7 @@ export type PartialViewerSettings = RecursivePartial<ViewerSettings>
  */
 export function getViewerSettings (settings?: PartialViewerSettings) {
   return settings
-    ? (deepmerge(defaultViewerSettings, settings, { arrayMerge: combineMerge }) as ViewerSettings)
+    ? (deepmerge(defaultViewerSettings, settings, { arrayMerge: combineMerge, isMergeableObject: isPlainObject }) as ViewerSettings)
     : (defaultViewerSettings as ViewerSettings)
 }
 
