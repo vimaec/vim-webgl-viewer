@@ -132,6 +132,19 @@ export class ViewerMaterials {
   }
 
   /**
+   * Determines the color of the model regular opaque and transparent materials.
+   */
+  get modelColor () {
+    return this.opaque.color
+  }
+
+  set modelColor (color: THREE.Color) {
+    this.opaque.color = color
+    this.transparent.color = color
+    this._onUpdate.dispatch()
+  }
+
+  /**
    * Determines the opacity of the isolation material.
    */
   get isolationOpacity () {
