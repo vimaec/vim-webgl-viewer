@@ -81,4 +81,8 @@ export class Skybox {
       this.mesh.scale.set(size.x, size.y, 1)
     })
   }
+
+  dispose () {
+    this._plane.dispose()
+  }
 }
