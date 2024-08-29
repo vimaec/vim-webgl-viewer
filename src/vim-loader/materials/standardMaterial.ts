@@ -46,7 +46,7 @@ export function createBasicTransparent () {
  * Material used for both opaque and tranparent surfaces of a VIM model.
  */
 export class StandardMaterial {
-  material: THREE.Material
+  material: THREE.MeshPhongMaterial
   uniforms: ShaderUniforms | undefined
 
   // Parameters
@@ -57,7 +57,7 @@ export class StandardMaterial {
   _sectionStrokeFallof: number = 0.75
   _sectionStrokeColor: THREE.Color = new THREE.Color(0xf6f6f6)
 
-  constructor (material: THREE.Material) {
+  constructor (material: THREE.MeshPhongMaterial) {
     this.material = material
     this.patchShader(material)
   }
@@ -66,12 +66,11 @@ export class StandardMaterial {
     if (this.material instanceof THREE.MeshPhongMaterial) {
       return this.material.color
     }
+    return new THREE.Color(0xffffff)
   }
 
   set color (color: THREE.Color) {
-    if (this.material instanceof THREE.MeshPhongMaterial) {
-      this.material.color = color
-    }
+    this.material.color = color
   }
 
   get focusIntensity () {
