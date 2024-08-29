@@ -23,7 +23,7 @@ export class GizmoAxes {
 
   // setup
   private _rect: DOMRect
-  private _reparentConnection: Function
+  private _reparentConnection: () => void
   private _axes: Axis[]
 
   // state
