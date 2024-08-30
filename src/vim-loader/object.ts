@@ -17,7 +17,6 @@ import { IObject, ObjectType } from './objectInterface'
  * High level api to interact with the loaded vim geometry and data.
  */
 export class Object implements IObject {
-
   private _color: THREE.Color | undefined
   private _boundingBox: THREE.Box3 | undefined
   private _meshes: Submesh[] | undefined
@@ -31,8 +30,8 @@ export class Object implements IObject {
   /**
    * Indicate whether this object is architectural or markup.
    */
-  public readonly type: ObjectType = "Architectural"
-  
+  public readonly type: ObjectType = 'Architectural'
+
   /**
    * The vim object from which this object came from.
    */
@@ -62,7 +61,7 @@ export class Object implements IObject {
   get hasMesh () {
     return (this._meshes?.length ?? 0) > 0
   }
-  
+
   /**
    * Determines whether to render selection outline for this object or not.
    */
@@ -90,7 +89,7 @@ export class Object implements IObject {
     }
   }
 
-   /**
+  /**
    * Determines whether to render this object or not.
    */
   get visible () {
@@ -115,7 +114,6 @@ export class Object implements IObject {
   set color (color: THREE.Color | undefined) {
     this._color = color
     this.vim.scene.setDirty()
-    this._color = this._color
     this._coloredAttribute.apply(this._color !== undefined)
     this._colorAttribute.apply(this._color)
   }
@@ -254,4 +252,3 @@ export class Object implements IObject {
     this._colorAttribute.updateMeshes(meshes)
   }
 }
-

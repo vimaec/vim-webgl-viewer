@@ -33,7 +33,7 @@ export class G3dSubset {
 
     // Consider removing this if too slow.
     if (!instances) {
-      instances = new Array<number>()
+      instances = []
       for (let i = 0; i < source.instanceMeshes.length; i++) {
         if (source.instanceMeshes[i] >= 0) {
           instances.push(i)
@@ -42,12 +42,8 @@ export class G3dSubset {
     }
     this._instances = instances
 
-    const map2 = new Map<number, Array<number>>()
-    for (const instance of instances) {
-    }
-
     // Compute mesh data.
-    this._meshes = new Array<number>()
+    this._meshes = []
     const map = new Map<number, Array<number>>()
     for (const instance of instances) {
       const mesh = source.instanceMeshes[instance]
@@ -302,7 +298,7 @@ export class G3dSubset {
     has: boolean = true
   ) {
     const set = filter instanceof Set ? filter : new Set(filter)
-    const result = new Array<number>()
+    const result: number[] = []
     for (const i of this._instances) {
       const value = array[i]
       if (set.has(value) === has && this._source.instanceMeshes[i] >= 0) {

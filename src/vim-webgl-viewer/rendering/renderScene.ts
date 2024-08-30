@@ -4,6 +4,7 @@
 
 import * as THREE from 'three'
 import { Scene } from '../../vim-loader/scene'
+import { CSS2DObject } from 'three/examples/jsm/renderers/CSS2DRenderer'
 
 /**
  * Wrapper around the THREE scene that tracks bounding box and other information.
@@ -14,9 +15,10 @@ export class RenderScene {
   // state
   boxUpdated = false
 
-  private _scenes: Scene[] = []
+  private _vimScenes: Scene[] = []
   private _boundingBox: THREE.Box3 | undefined
-  private _memory: number = 0
+  private _memory = 0
+  private _2dCount = 0
 
   constructor () {
     this.scene = new THREE.Scene()
@@ -26,8 +28,12 @@ export class RenderScene {
     return this._memory
   }
 
+  has2dObjects () {
+    return this._2dCount > 0
+  }
+
   hasOutline () {
-    for (const s of this._scenes) {
+    for (const s of this._vimScenes) {
       if (s.hasOutline) return true
     }
     return false
@@ -35,7 +41,7 @@ export class RenderScene {
 
   /** Clears the scene updated flags */
   clearUpdateFlags () {
-    this._scenes.forEach((s) => s.clearUpdateFlag())
+    this._vimScenes.forEach((s) => s.clearUpdateFlag())
   }
 
   /**
@@ -49,13 +55,58 @@ export class RenderScene {
   }
 
   /**
+   * Returns the bounding box of the average center of all meshes.
+   * Less precise but is more stable against outliers.
+   */
+  getAverageBoundingBox () {
+    if (this._vimScenes.length === 0) {
+      return new THREE.Box3()
+    }
+    const result = new THREE.Box3()
+    result.copy(this._vimScenes[0].getAverageBoundingBox())
+    for (let i = 1; i < this._vimScenes.length; i++) {
+      result.union(this._vimScenes[i].getAverageBoundingBox())
+    }
+    return result
+  }
+
+  /**
    * Add object to be rendered
    */
   add (target: Scene | THREE.Object3D) {
     if (target instanceof Scene) {
       this.addScene(target)
-    } else {
-      this.scene.add(target)
+      return
+    }
+
+    this._2dCount += this.count2dObjects(target)
+    this.scene.add(target)
+  }
+
+  private count2dObjects (target : THREE.Object3D) {
+    if (target instanceof CSS2DObject) {
+      return 1
+    }
+    if (target instanceof THREE.Group) {
+      let result = 0
+      for (const child of target.children) {
+        if (child instanceof CSS2DObject) {
+          result++
+        }
+      }
+      return result
+    }
+    return 0
+  }
+
+  private unparent2dObjects (target : THREE.Object3D) {
+    // A quirk of css2d object is they need to be removed individually.
+    if (target instanceof THREE.Group) {
+      for (const child of target.children) {
+        if (child instanceof CSS2DObject) {
+          target.remove(child)
+        }
+      }
     }
   }
 
@@ -65,9 +116,12 @@ export class RenderScene {
   remove (target: Scene | THREE.Object3D) {
     if (target instanceof Scene) {
       this.removeScene(target)
-    } else {
-      this.scene.remove(target)
+      return
     }
+
+    this._2dCount -= this.count2dObjects(target)
+    this.unparent2dObjects(target)
+    this.scene.remove(target)
   }
 
   /**
@@ -80,7 +134,7 @@ export class RenderScene {
   }
 
   private addScene (scene: Scene) {
-    this._scenes.push(scene)
+    this._vimScenes.push(scene)
     scene.meshes.forEach((m) => {
       this.scene.add(m.mesh)
     })
@@ -99,7 +153,7 @@ export class RenderScene {
 
   private removeScene (scene: Scene) {
     // Remove from array
-    this._scenes = this._scenes.filter((f) => f !== scene)
+    this._vimScenes = this._vimScenes.filter((f) => f !== scene)
 
     // Remove all meshes from three scene
     for (let i = 0; i < scene.meshes.length; i++) {
@@ -108,8 +162,8 @@ export class RenderScene {
 
     // Recompute bounding box
     this._boundingBox =
-      this._scenes.length > 0
-        ? this._scenes
+      this._vimScenes.length > 0
+        ? this._vimScenes
           .map((s) => s.getBoundingBox())
           .reduce((b1, b2) => b1.union(b2))
         : undefined

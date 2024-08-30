@@ -4,11 +4,12 @@
 
 import * as THREE from 'three'
 import deepmerge from 'deepmerge'
-import { GizmoOptions } from '../gizmos/gizmoAxes'
-import {defaultViewerSettings} from './defaultViewerSettings'
+import { isPlainObject } from 'is-plain-object'
+import { AxesSettings } from '../gizmos/axes/axesSettings'
+import { defaultViewerSettings } from './defaultViewerSettings'
 
 export type TextureEncoding = 'url' | 'base64' | undefined
-export { GizmoOptions } from '../gizmos/gizmoAxes'
+export { AxesSettings } from '../gizmos/axes/axesSettings'
 
 /**
  * Makes all field optional recursively
@@ -20,21 +21,6 @@ export type RecursivePartial<T> = {
     : T[P] extends object
     ? RecursivePartial<T[P]>
     : T[P]
-}
-
-/**
- * Same as the Setting type but any field can be undefined.
- */
-export type PartialViewerSettings = RecursivePartial<ViewerSettings>
-
-/**
- * Returns a full viewer settings where all unassigned values are replaced with the default values.
- * @param settings optional values to use instead of default.
- */
-export function getViewerSettings (settings?: PartialViewerSettings) {
-  return settings
-    ? (deepmerge(defaultViewerSettings, settings, {arrayMerge:(x,y,_) => y}) as ViewerSettings)
-    : (defaultViewerSettings as ViewerSettings)
 }
 
 /** Viewer related options independant from vims */
@@ -123,7 +109,7 @@ export type ViewerSettings = {
        * Default: 1
        */
       rotateSpeed: number
-      
+
       /**
        * Camera orbit rotation speed factor.
        * Default: 1
@@ -142,7 +128,7 @@ export type ViewerSettings = {
        * Range: [0.1, 10]
        */
       scrollSpeed: number
-      
+
     }
 
     /** Camera gizmo related options */
@@ -165,7 +151,7 @@ export type ViewerSettings = {
       */
       color: THREE.Color
 
-      /** 
+      /**
       * Opacity of the camera gizmo.
       * Default: 0.5
       */
@@ -182,12 +168,35 @@ export type ViewerSettings = {
    * Rendering background options
    */
   background: {
-    /** 
+    /**
      * Color of the cavas background
      * Default: THREE.Color('#96999f')
      */
     color: THREE.Color
-  }
+  },
+  /**
+   * Skybox options
+   */
+  skybox:{
+    /**
+     * Enables/Disables skybox.
+     */
+    enable: boolean
+
+    /**
+     * Color for the lower part of the skybox.
+     */
+    groundColor: THREE.Color
+    /**
+     * Color for the upper part of the skybox.
+     */
+    skyColor: THREE.Color
+
+    /**
+     * Controls the gradient transition between the sky and the ground.
+     */
+    sharpness: number
+  },
   /**
    * Ground plane under the scene options.
    */
@@ -233,6 +242,12 @@ export type ViewerSettings = {
 * Object highlight on click options
 */
 materials: {
+  /**
+  * Default color of standard material
+  */
+  standard: {
+    color: THREE.Color
+  }
   /**
   * Highlight on hover options
   */
@@ -313,7 +328,7 @@ materials: {
   /**
    * Axes gizmo options
    */
-  axes: Partial<GizmoOptions>
+  axes: Partial<AxesSettings>
 
   /**
    * Skylight (hemisphere light) options
@@ -341,7 +356,8 @@ materials: {
    * Sunlight (directional light) options
    * Two Blue-Green lights at odd angles. See defaultViewerSettings.
    */
-  sunLights: {
+  sunlights: {
+    followCamera: boolean;
     /** Light position. */
     position: THREE.Vector3;
     /** Light color. */
@@ -359,3 +375,33 @@ materials: {
   }
 }
 
+/**
+ * Same as the Setting type but any field can be undefined.
+ */
+export type PartialViewerSettings = RecursivePartial<ViewerSettings>
+
+/**
+ * Returns a full viewer settings where all unassigned values are replaced with the default values.
+ * @param settings optional values to use instead of default.
+ */
+export function getViewerSettings (settings?: PartialViewerSettings) {
+  return settings
+    ? (deepmerge(defaultViewerSettings, settings, { arrayMerge: combineMerge, isMergeableObject: isPlainObject }) as ViewerSettings)
+    : (defaultViewerSettings as ViewerSettings)
+}
+
+//  https://www.npmjs.com/package/deepmerge#arraymerge-example-combine-arrays
+const combineMerge = (target, source, options) => {
+  const destination = target.slice()
+
+  source.forEach((item, index) => {
+    if (typeof destination[index] === 'undefined') {
+      destination[index] = options.cloneUnlessOtherwiseSpecified(item, options)
+    } else if (options.isMergeableObject(item)) {
+      destination[index] = deepmerge(target[index], item, options)
+    } else if (target.indexOf(item) === -1) {
+      destination.push(item)
+    }
+  })
+  return destination
+}

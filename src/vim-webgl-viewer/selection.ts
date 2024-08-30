@@ -19,8 +19,7 @@ export class Selection {
   private _objects = new Set<IObject>()
   private _focusedObject: IObject | undefined
   private _vim: Vim | undefined
-  private _lastFocusTime: number = new Date().getTime()
-  private _animationId: number = -1
+  private _lastFocusTime: number = Date.now()
 
   // Disposable State
   private _onValueChanged = new SignalDispatcher()
@@ -28,7 +27,6 @@ export class Selection {
 
   constructor (materials: ViewerMaterials) {
     this._materials = materials
-    this.animate()
   }
 
   /**
@@ -89,14 +87,14 @@ export class Selection {
     if (this._focusedObject) this._focusedObject.focused = false
     if (object) object.focused = true
     this._focusedObject = object
-    this._lastFocusTime = new Date().getTime()
+    this._lastFocusTime = Date.now()
     this._materials.focusIntensity = 0
   }
 
   /**
-   * Selects the given objects and unselects all other objects. 
+   * Selects the given objects and unselects all other objects.
    * Pass `null`, `undefined`, or an empty array as argument to clear selection.
-   * @param {IObject | IObject[] | undefined} object The object or array of objects to select, 
+   * @param {IObject | IObject[] | undefined} object The object or array of objects to select,
    *        or `null`, `undefined`, or an empty array to clear the selection.
    */
   select (object: IObject | IObject[] | undefined) {
@@ -219,7 +217,6 @@ export class Selection {
    * Disposes of all resources and stops animations.
    */
   dispose () {
-    cancelAnimationFrame(this._animationId)
     this._unsub.forEach((u) => u())
     this._unsub.length = 0
   }
@@ -236,11 +233,11 @@ export class Selection {
     }
   }
 
-  private animate () {
-    const time = new Date().getTime()
+  public update () {
+    if (!this._focusedObject) return
+    const time = Date.now()
     const timeElapsed = time - this._lastFocusTime
     const focus = Math.min(timeElapsed / 100, 1)
     this._materials.focusIntensity = focus / 2
-    this._animationId = requestAnimationFrame(() => this.animate())
   }
 }

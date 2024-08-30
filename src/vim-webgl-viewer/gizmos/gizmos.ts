@@ -1,5 +1,5 @@
 import { Viewer } from '../viewer'
-import { GizmoAxes } from './gizmoAxes'
+import { GizmoAxes } from './axes/gizmoAxes'
 import { GizmoLoading } from './gizmoLoading'
 import { GizmoOrbit } from './gizmoOrbit'
 import { GizmoRectangle } from './gizmoRectangle'
@@ -68,6 +68,10 @@ export class Gizmos {
     this.axes = new GizmoAxes(camera, viewer.viewport, viewer.settings.axes)
     this.markers = new GizmoMarkers(viewer)
     viewer.viewport.canvas.parentElement?.prepend(this.axes.canvas)
+  }
+
+  updateAfterCamera () {
+    this.axes.update()
   }
 
   /**

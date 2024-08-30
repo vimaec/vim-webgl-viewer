@@ -159,7 +159,7 @@ export class SectionBox {
    * @param {number} [padding=1] - The padding to apply to the box.
    */
   public fitBox (box: THREE.Box3, padding = 1) {
-    if(!box) return
+    if (!box) return
     const b = box.expandByScalar(padding)
     this._cube.fitBox(b)
     this._outline.fitBox(b)
@@ -177,7 +177,7 @@ export class SectionBox {
     this.renderer.needsUpdate = true
   }
 
-  /** 
+  /**
    * Removes gizmo from rendering and inputs and dispose all resources.
    */
   dispose () {

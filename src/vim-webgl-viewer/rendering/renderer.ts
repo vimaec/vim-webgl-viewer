@@ -23,7 +23,7 @@ export class Renderer implements IRenderer {
    * The THREE WebGL renderer.
    */
   readonly renderer: THREE.WebGLRenderer
-  
+
   /**
    * The THREE sample ui renderer
    */
@@ -55,7 +55,7 @@ export class Renderer implements IRenderer {
 
   // 3GB
   private maxMemory = 3 * Math.pow(10, 9)
-  
+
   /**
    * Indicates whether the scene needs to be re-rendered.
    * Can only be set to true. Cleared on each render.
@@ -141,7 +141,7 @@ export class Renderer implements IRenderer {
 
   /**
    * Gets or sets the background color or texture of the scene.
-   */ 
+   */
   get background () {
     return this._scene.scene.background
   }
@@ -154,8 +154,8 @@ export class Renderer implements IRenderer {
   /**
    * Signal dispatched at the end of each frame if the scene was updated, such as visibility changes.
    */
-  get onSceneUpdated() {
-    return this._onSceneUpdate.asEvent();
+  get onSceneUpdated () {
+    return this._onSceneUpdate.asEvent()
   }
 
   /**
@@ -223,10 +223,11 @@ export class Renderer implements IRenderer {
       this.needsUpdate,
       this.antialias && !this.skipAntialias && !this._camera.hasMoved
     )
+
     this._needsUpdate = false
     this.skipAntialias = false
 
-    if (this.textEnabled) {
+    if (this.textEnabled && this._scene.has2dObjects()) {
       this.textRenderer.render(this._scene.scene, this._camera.three)
     }
 

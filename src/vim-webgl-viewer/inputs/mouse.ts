@@ -19,13 +19,14 @@ export class MouseHandler extends InputHandler {
    * The speed factor for zoom movements using the scroll wheel.
    * Range: [0.1, 10]
    */
-  get scrollSpeed(){
+  get scrollSpeed () {
     return this._scrollSpeed
   }
 
-  set scrollSpeed(value: number){
+  set scrollSpeed (value: number) {
     this._scrollSpeed = Math.min(Math.max(0.1, value), 10)
   }
+
   private _scrollSpeed = 1.5
 
   /**
@@ -37,7 +38,7 @@ export class MouseHandler extends InputHandler {
    * The speed factor for rotations movements.
    */
   rotateSpeed = 1
-  
+
   /**
    * The speed factor for orbit movements.
    */
@@ -242,12 +243,11 @@ export class MouseHandler extends InputHandler {
     this.pan(delta)
   }
 
-  private pan(delta: THREE.Vector2){
+  private pan (delta: THREE.Vector2) {
     const size = this.camera.frustrumSizeAt(this.camera.target)
-    size.multiply(delta).multiplyScalar(2)
+    size.multiply(delta)
     this.camera.snap().move2(size, 'XY')
   }
-
 
   private onMouseRightDrag (delta: THREE.Vector2) {
     this.camera.snap().rotate(this.toRotation(delta, this.rotateSpeed))

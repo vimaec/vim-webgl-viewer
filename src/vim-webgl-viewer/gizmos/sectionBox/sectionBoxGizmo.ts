@@ -39,7 +39,10 @@ export class BoxOutline extends THREE.LineSegments {
       3, 7
     ]
     const geo = new THREE.BufferGeometry()
-    const mat = new THREE.LineBasicMaterial()
+    const mat = new THREE.LineBasicMaterial({
+      opacity: 1,
+      color: new THREE.Color(0x000000)
+    })
     geo.setAttribute('position', new THREE.BufferAttribute(vertices, 3))
     geo.setIndex(indices)
     super(geo, mat)
@@ -77,9 +80,9 @@ export class BoxMesh extends THREE.Mesh {
   constructor () {
     const geo = new THREE.BoxGeometry()
     const mat = new THREE.MeshBasicMaterial({
-      opacity: 0.1,
+      opacity: 0.3,
       transparent: true,
-      color: new THREE.Color(0, 0.5, 1),
+      color: new THREE.Color(0x0050bb),
       depthTest: false
     })
 
@@ -124,12 +127,13 @@ export class BoxHighlight extends THREE.Mesh {
     geo.setIndex([0, 1, 2, 0, 2, 3])
 
     const mat = new THREE.MeshBasicMaterial({
-      opacity: 0.5,
+      opacity: 0.7,
       transparent: true,
       depthTest: false,
       side: THREE.DoubleSide
     })
     super(geo, mat)
+    this.renderOrder = 1
     // Because position is always (0,0,0)
     this.frustumCulled = false
   }
