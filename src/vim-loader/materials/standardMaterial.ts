@@ -9,11 +9,11 @@ import * as THREE from 'three'
  */
 export type ShaderUniforms = { [uniform: string]: THREE.IUniform<any> }
 
-export function createOpaque(){
+export function createOpaque () {
   return new StandardMaterial(createBasicOpaque())
 }
 
-export function createTransparent(){
+export function createTransparent () {
   return new StandardMaterial(createBasicTransparent())
 }
 
@@ -23,11 +23,11 @@ export function createTransparent(){
  */
 export function createBasicOpaque () {
   return new THREE.MeshPhongMaterial({
-    color: 0x999999,
+    color: 0xcccccc,
     vertexColors: true,
     flatShading: true,
     side: THREE.DoubleSide,
-    shininess: 5
+    shininess: 20
   })
 }
 
@@ -46,20 +46,31 @@ export function createBasicTransparent () {
  * Material used for both opaque and tranparent surfaces of a VIM model.
  */
 export class StandardMaterial {
-  material: THREE.Material
+  material: THREE.MeshPhongMaterial
   uniforms: ShaderUniforms | undefined
 
   // Parameters
   _focusIntensity: number = 0.5
-  _focusColor: THREE.Color = new THREE.Color(1, 1, 1)
+  _focusColor: THREE.Color = new THREE.Color(0xffffff)
 
   _sectionStrokeWitdh: number = 0.01
   _sectionStrokeFallof: number = 0.75
-  _sectionStrokeColor: THREE.Color = new THREE.Color(0xf6, 0xf6, 0xf6)
+  _sectionStrokeColor: THREE.Color = new THREE.Color(0xf6f6f6)
 
-  constructor (material: THREE.Material) {
+  constructor (material: THREE.MeshPhongMaterial) {
     this.material = material
     this.patchShader(material)
+  }
+
+  get color () {
+    if (this.material instanceof THREE.MeshPhongMaterial) {
+      return this.material.color
+    }
+    return new THREE.Color(0xffffff)
+  }
+
+  set color (color: THREE.Color) {
+    this.material.color = color
   }
 
   get focusIntensity () {

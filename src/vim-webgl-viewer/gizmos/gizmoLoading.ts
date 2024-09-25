@@ -4,7 +4,6 @@
 
 import { Viewer } from '../viewer'
 
-
 /**
  * The loading indicator gizmo.
  */
@@ -17,7 +16,7 @@ export class GizmoLoading {
   constructor (viewer: Viewer) {
     this._viewer = viewer
     this._spinner = this.createBar()
-    this. _visible = false
+    this._visible = false
   }
 
   private createBar () {

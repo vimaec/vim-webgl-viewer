@@ -3,24 +3,34 @@
  */
 
 import * as THREE from 'three'
-import { TextureEncoding, ViewerSettings } from './settings/viewerSettings'
-import { Box3 } from 'three'
+import { TextureEncoding, ViewerSettings } from '../settings/viewerSettings'
 
 /**
  * Manages the THREE.Mesh for the ground plane under the vims
  */
 export class GroundPlane {
-  mesh: THREE.Mesh
+  readonly mesh: THREE.Mesh
 
   private _source: string | undefined
   private _size: number = 1
+
+  /**
+   * Whether the ground plane is visible or not.
+   */
+  get visible () {
+    return this.mesh.visible
+  }
+
+  set visible (value: boolean) {
+    this.mesh.visible = value
+  }
 
   // disposable
   private _geometry: THREE.PlaneGeometry
   private _material: THREE.MeshBasicMaterial
   private _texture: THREE.Texture | undefined
 
-  constructor () {
+  constructor (settings : ViewerSettings) {
     this._geometry = new THREE.PlaneGeometry()
     this._material = new THREE.MeshBasicMaterial({
       transparent: true,
@@ -30,9 +40,7 @@ export class GroundPlane {
     this.mesh = new THREE.Mesh(this._geometry, this._material)
     // Makes ground plane be drawn first so that isolation material is drawn on top.
     this.mesh.renderOrder = -1
-  }
 
-  applyViewerSettings (settings: ViewerSettings) {
     this._size = settings.groundPlane.size
     // Visibily
     this.mesh.visible = settings.groundPlane.visible
@@ -110,96 +118,4 @@ export class GroundPlane {
 
     this._texture = undefined
   }
-}
-
-/**
- * Manages ground plane and lights that are part of the THREE.Scene to render but not part of the Vims.
- */
-export class Environment {
-  skyLight: THREE.HemisphereLight
-  sunLights: THREE.DirectionalLight[]
-  private _groundPlane: GroundPlane
-
-  get groundPlane () {
-    return this._groundPlane.mesh
-  }
-
-  constructor (settings: ViewerSettings) {
-    this._groundPlane = new GroundPlane()
-    this.skyLight = new THREE.HemisphereLight()
-    this.sunLights = []
-    this.applySettings(settings)
-  }
-
-  loadGroundTexture (encoding: TextureEncoding, url: string) {
-    this._groundPlane.applyTexture(encoding, url)
-  }
-
-  /**
-   * Returns all three objects composing the environment
-   */
-  getObjects (): THREE.Object3D[] {
-    return [this._groundPlane.mesh, this.skyLight, ...this.sunLights]
-  }
-
-  applySettings (settings: ViewerSettings) {
-    // Plane
-    this._groundPlane.applyViewerSettings(settings)
-
-    // Skylight
-    this.skyLight.color.copy(settings.skylight.skyColor)
-    this.skyLight.groundColor.copy(settings.skylight.groundColor)
-    this.skyLight.intensity = settings.skylight.intensity
-
-    // Sunlights
-    const count = settings.sunLights.length
-    for (let i = 0; i < count; i++) {
-      if (!this.sunLights[i]) {
-        this.sunLights[i] = new THREE.DirectionalLight()
-      }
-      const color = settings.sunLights[i].color
-      const pos = settings.sunLights[i].position
-      const intensity = settings.sunLights[i].intensity
-      if (color) {
-        this.sunLights[i].color.copy(color)
-      }
-      if (pos) {
-        this.sunLights[i].position.copy(pos)
-      }
-      if (intensity) {
-        this.sunLights[i].intensity = intensity
-      }
-    }
-  }
-
-  /**
-   * Adjust scale so that it matches box dimensions.
-   */
-  adaptToContent (box: Box3) {
-    // Plane
-    this._groundPlane.adaptToContent(box)
-  }
-
-  dispose () {
-    this.sunLights.forEach((s) => s.dispose())
-    this.skyLight.dispose()
-    this._groundPlane.dispose()
-  }
-}
-
-export interface IEnvironment {
-  /**
-   * The skylight in the scene.
-   */
-  skyLight: THREE.HemisphereLight
-
-  /**
-   * The array of directional lights in the scene.
-   */
-  sunLights: THREE.DirectionalLight[]
-
-  /**
-   * The ground plane under the model in the scene.
-   */
-  groundPlane: THREE.Mesh
 }

@@ -12,6 +12,13 @@ export class OrthographicWrapper {
     this.camera = camera
   }
 
+  frustrumSizeAt (point: THREE.Vector3) {
+    return new THREE.Vector2(
+      this.camera.right - this.camera.left,
+      this.camera.top - this.camera.bottom
+    )
+  }
+
   applySettings (settings: ViewerSettings) {
     this.camera.zoom = settings.camera.zoom
     this.camera.near = -settings.camera.far

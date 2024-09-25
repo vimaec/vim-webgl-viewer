@@ -148,10 +148,10 @@ export abstract class CameraMovement {
       target = target.getBoundingBox()
     }
     if ((target instanceof Vim)) {
-      target = target.scene.getBoundingBox()
+      target = target.scene.getAverageBoundingBox()
     }
     if (target === 'all') {
-      target = this._camera._scene.getBoundingBox()
+      target = this._camera._scene.getAverageBoundingBox()
     }
     if (target instanceof THREE.Box3) {
       target = target.getBoundingSphere(new THREE.Sphere())
@@ -166,8 +166,9 @@ export abstract class CameraMovement {
     // Compute best distance to frame sphere
     const fov = (this._camera.camPerspective.camera.fov * Math.PI) / 180
     const dist = (sphere.radius * 1.2) / Math.tan(fov / 2)
+    const safeDist = Math.max(dist, this._camera.camPerspective.camera.near * 2)
 
-    const pos = direction.multiplyScalar(-dist).add(sphere.center)
+    const pos = direction.multiplyScalar(-safeDist).add(sphere.center)
 
     this.set(pos, sphere.center)
   }

@@ -1,4 +1,4 @@
-import {Viewer, open, THREE, getViewerSettingsFromUrl} from '.'
+import { Viewer, open, THREE, getViewerSettingsFromUrl } from '.'
 
 // Parse URL for source file
 const params = new URLSearchParams(window.location.search)
@@ -8,15 +8,17 @@ const url = params.has('vim')
 
 let time: number
 
-const viewer = new Viewer(getViewerSettingsFromUrl(window.location.search))
+const viewer = new Viewer({
+  ...getViewerSettingsFromUrl(window.location.search)
+})
 
-load(url ?? "https://vim02.azureedge.net/samples/residence.v1.2.75.vim")
-//load(url ?? "https://vimdevelopment01storage.blob.core.windows.net/samples/TowerS-ARCHITECTURE-ALL.v1.2.50.vimx")
-//load(url ?? "https://vimdevelopment01storage.blob.core.windows.net/samples/BIM1-AUTOP_ARC_2023.vimx")
-
+load(url ?? 'https://vim02.azureedge.net/samples/residence.v1.2.75.vim')
+// load(url ?? './F_A_X_X_0_001.vim')
+// load(url ?? "https://vimdevelopment01storage.blob.core.windows.net/samples/TowerS-ARCHITECTURE-ALL.v1.2.50.vimx")
+// load(url ?? "https://vimdevelopment01storage.blob.core.windows.net/samples/BIM1-AUTOP_ARC_2023.vimx")
+// load('https://vim.azureedge.net/samples/TowerS-ARCHITECTURE.1.2.88-ALL.vim')
 
 addLoadButton()
-
 
 async function load (url: string | ArrayBuffer) {
   time = Date.now()
@@ -25,16 +27,14 @@ async function load (url: string | ArrayBuffer) {
   const vim = await open(url,
     {
       rotation: new THREE.Vector3(270, 0, 0)
-    }, (p) => console.log(`Downloading Vim (${(p.loaded / 1000).toFixed(0)} kb)`) 
-  ) 
-  viewer.add(vim)
-  
-  vim.loadAll().then(() =>{
-    viewer.gizmos.loading.visible = false
-    console.log(`loaded in ${(Date.now() - time) / 1000} seconds`)
-  })
+    }, (p) => console.log(`Downloading Vim (${(p.loaded / 1000).toFixed(0)} kb)`)
+  )
 
+  viewer.add(vim)
+  await vim.loadAll()
   viewer.camera.snap(true).frame(vim)
+  viewer.camera.save()
+  viewer.gizmos.loading.visible = false
 
   // Useful for debuging in console.
   globalThis.THREE = THREE

@@ -3,7 +3,7 @@
  */
 
 import * as THREE from 'three'
-import { MergedSubmesh, Submesh } from './mesh'
+import { MergedSubmesh } from './mesh'
 import { Vim } from './vim'
 import { InsertableSubmesh } from './progressive/insertableSubmesh'
 import { AttributeTarget } from './objectAttributes'
@@ -172,10 +172,10 @@ export class ColorAttribute {
   private getOrAddInstanceColorAttribute (mesh: THREE.InstancedMesh) {
     if (mesh.instanceColor &&
       mesh.instanceColor.count <= mesh.instanceMatrix.count
-    ){
+    ) {
       return mesh.instanceColor
     }
-        
+
     // mesh.count is not always === to capacity so we use instanceMatrix.count
     const count = mesh.instanceMatrix.count
     // Add color instance attribute

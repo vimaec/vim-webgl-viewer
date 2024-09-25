@@ -104,7 +104,7 @@ class MeasureMarker {
       transparent: true,
       opacity: 0.2,
       depthTest: false,
-      color: new THREE.Color(0, 0.75, 1)
+      color: new THREE.Color(0x00bfff)
     })
 
     const g = new THREE.SphereGeometry(1)
@@ -120,7 +120,7 @@ class MeasureMarker {
 
   updateScale () {
     const scale =
-      this._camera.frustrumSizeAt(this.mesh.position).y * this.MARKER_SIZE
+      this._camera.frustrumSizeAt(this.mesh.position).y / 2 * this.MARKER_SIZE
     this.mesh.scale.set(scale, scale, scale)
     this.mesh.updateMatrix()
   }
@@ -158,18 +158,18 @@ export class MeasureGizmo {
     const canvasSize = this._viewer.viewport.getSize()
 
     this._startMarker = new MeasureMarker(
-      new THREE.Color('#FFB700'),
+      new THREE.Color(0xffb700),
       viewer.camera
     )
     this._endMarker = new MeasureMarker(
-      new THREE.Color('#0590CC'),
+      new THREE.Color(0x0590cc),
       viewer.camera
     )
 
-    this._line = new MeasureLine(canvasSize, new THREE.Color(1, 1, 1), 'Dist')
-    this._lineX = new MeasureLine(canvasSize, new THREE.Color(1, 0, 0), 'X')
-    this._lineY = new MeasureLine(canvasSize, new THREE.Color(0, 1, 0), 'Y')
-    this._lineZ = new MeasureLine(canvasSize, new THREE.Color(0, 0, 1), 'Z')
+    this._line = new MeasureLine(canvasSize, new THREE.Color(0x000000), 'Dist')
+    this._lineX = new MeasureLine(canvasSize, new THREE.Color(0xff0000), 'X')
+    this._lineY = new MeasureLine(canvasSize, new THREE.Color(0x00ff00), 'Y')
+    this._lineZ = new MeasureLine(canvasSize, new THREE.Color(0x0000ff), 'Z')
 
     this._html = createMeasureElement('all')
     this._label = new CSS2DObject(this._html.div)
@@ -226,7 +226,7 @@ export class MeasureGizmo {
   ) {
     if (!first || !second) return
     const length = first.distanceTo(second)
-    const ratio = length / this._viewer.camera.frustrumSizeAt(first).y
+    const ratio = length / (this._viewer.camera.frustrumSizeAt(first).y / 2)
     return ratio
   }
 
@@ -312,12 +312,6 @@ export class MeasureGizmo {
    */
   dispose () {
     if (this._animId !== undefined) cancelAnimationFrame(this._animId)
-    // A quirk of css2d object is they need to be removed individually.
-    this._group.remove(this._label)
-    this._group.remove(this._line.label)
-    this._group.remove(this._lineX.label)
-    this._group.remove(this._lineY.label)
-    this._group.remove(this._lineZ.label)
 
     this._viewer.renderer.remove(this._group)
 

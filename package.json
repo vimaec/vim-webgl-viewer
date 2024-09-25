@@ -1,6 +1,6 @@
 {
   "name": "vim-webgl-viewer",
-  "version": "2.0.2-d",
+  "version": "2.0.5",
   "description": "A high-performance 3D viewer and VIM file loader built on top of Three.JS.",
   "files": [
     "dist"
@@ -21,7 +21,7 @@
   "scripts": {
     "dev": "vite --host",
     "build": "vite build && npm run declarations",
-    "package" : "npm run build && npm publish",
+    "package": "npm run build && npm publish",
     "serve-docs": "http-server ./docs -o --host",
     "eslint": "eslint --ext .js,.ts src --fix",
     "documentation": "typedoc --entryPointStrategy expand --mergeModulesMergeMode module --out docs/api --excludePrivate ./src/vim-webgl-viewer/ ./src/vim-loader/ && git add ./docs/",
@@ -29,7 +29,6 @@
   },
   "devDependencies": {
     "@types/node": "^18.11.11",
-    "@types/three": "^0.143.0",
     "@typescript-eslint/eslint-plugin": "^5.45.1",
     "@typescript-eslint/parser": "^5.45.1",
     "eslint": "^8.29.0",
@@ -51,11 +50,13 @@
     "three"
   ],
   "dependencies": {
-    "three": "0.143.0",
+    "@types/three": "^0.143.0",
     "deepmerge": "^4.2.2",
+    "is-plain-object": "^5.0.0",
     "ste-events": "^3.0.7",
     "ste-signals": "^3.0.9",
     "ste-simple-events": "^3.0.7",
+    "three": "0.143.0",
     "vim-format": "1.0.6"
   },
   "keywords": [

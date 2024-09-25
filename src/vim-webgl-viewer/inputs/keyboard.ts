@@ -2,7 +2,6 @@
  * @module viw-webgl-viewer/inputs
  */
 
-
 import * as THREE from 'three'
 import { InputHandler } from './inputHandler'
 

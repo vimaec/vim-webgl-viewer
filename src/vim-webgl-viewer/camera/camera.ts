@@ -81,7 +81,7 @@ export interface ICamera {
   /**
    * The quaternion representing the orientation of the object.
    */
-  get quaternion ()  : THREE.Quaternion
+  get quaternion () : THREE.Quaternion
 
    /**
    * The position of the camera.
@@ -162,29 +162,33 @@ export class Camera implements ICamera {
   private _lastQuaternion = new THREE.Quaternion()
   private _lastTarget = new THREE.Vector3()
 
+  // Reuseable vectors for calculations
+  private _tmp1 = new THREE.Vector3()
+  private _tmp2 = new THREE.Vector3()
+
   // saves
   _savedPosition: THREE.Vector3 = new THREE.Vector3(0, 0, -5)
   _savedTarget: THREE.Vector3 = new THREE.Vector3(0, 0, 0)
 
-  
   /**
    * A signal that is dispatched when camera settings change.
    */
   get onSettingsChanged () {
     return this._onValueChanged.asEvent()
   }
+
   private _onValueChanged = new SignalDispatcher()
 
-  
   /**
    * True if the camera has moved this frame.
    */
-  get hasMoved() {
+  get hasMoved () {
     return this._hasMoved
   }
+
   private _hasMoved: boolean
 
-  get isLerping(){
+  get isLerping () {
     return this._lerp.isLerping
   }
 
@@ -194,6 +198,7 @@ export class Camera implements ICamera {
   get onMoved (): ISignal {
     return this._onMoved.asEvent()
   }
+
   private _onMoved = new SignalDispatcher()
 
   /** Ignore movement permissions when true */
@@ -263,11 +268,11 @@ export class Camera implements ICamera {
 
     this._scene = scene
     this._viewport = viewport
-
-
+    this._viewport.onResize.sub(() => this.updateProjection())
     this.applySettings(settings)
     this.snap(true).setDistance(-1000)
     this.snap(true).orbitTowards(this._defaultForward)
+    this.updateProjection()
   }
 
   /**
@@ -281,7 +286,7 @@ export class Camera implements ICamera {
     return this._movement as CameraMovement
   }
 
-/**
+  /**
    * Interface for smoothly moving the camera over time.
    * @param {number} [duration=1] - The duration of the camera movement animation.
    * @param {boolean} [force=false] - Set to true to ignore locked axis and rotation.
@@ -300,10 +305,10 @@ export class Camera implements ICamera {
    * @returns {number} The frustum size at the specified point.
    */
   frustrumSizeAt (point: THREE.Vector3) {
-    return this.camPerspective.frustrumSizeAt(point)
+    return this.orthographic ? this.camOrthographic.frustrumSizeAt(point) : this.camPerspective.frustrumSizeAt(point)
   }
 
-   /**
+  /**
    * The current THREE Camera
    */
   get three () {
@@ -353,7 +358,7 @@ export class Camera implements ICamera {
     this._onValueChanged.dispatch()
   }
 
-   /**
+  /**
    * The current or target velocity of the camera.
    */
   get localVelocity () {
@@ -372,7 +377,6 @@ export class Camera implements ICamera {
     this._inputVelocity.setZ(-this._inputVelocity.z)
   }
 
-  
   /**
    * Immediately stops the camera movement.
    */
@@ -422,7 +426,6 @@ export class Camera implements ICamera {
     this._savedTarget.copy(this._target)
   }
 
-  
   /**
    * Represents whether the camera projection is orthographic.
    */
@@ -434,28 +437,37 @@ export class Camera implements ICamera {
     if (value === this._orthographic) return
     this._orthographic = value
     this._onValueChanged.dispatch()
+    this._onMoved.dispatch()
   }
 
   update (deltaTime: number) {
+    this._lerp.update()
     if (this.applyVelocity(deltaTime)) {
-      this.updateOrthographic()
+      this.applyVelocityOrthographic()
     }
 
-    const moved = this.checkForMovement()
-    if (moved) {
-      this.camOrthographic.camera.position.copy(this.position)
-      this.camOrthographic.camera.quaternion.copy(this.quaternion)
+    this._hasMoved = this.checkForMovement()
+    if (this._hasMoved) {
+      this.updateOrthographic()
+      this._onMoved.dispatch()
     }
-    this.updateProjection()
-    return moved
+    return this._hasMoved
   }
 
   private updateProjection () {
     const aspect = this._viewport.getAspectRatio()
     this.camPerspective.updateProjection(aspect)
+    this.updateOrthographic()
+    this._onMoved.dispatch()
+  }
 
+  private updateOrthographic () {
+    const aspect = this._viewport.getAspectRatio()
     const size = this.camPerspective.frustrumSizeAt(this.target)
+
     this.camOrthographic.updateProjection(size, aspect)
+    this.camOrthographic.camera.position.copy(this.position)
+    this.camOrthographic.camera.quaternion.copy(this.quaternion)
   }
 
   private applyVelocity (deltaTime: number) {
@@ -471,41 +483,24 @@ export class Camera implements ICamera {
       return false
     }
 
-    // Update the camera velocity and position
+    // Update the camera velocity
     const invBlendFactor = Math.pow(this._velocityBlendFactor, deltaTime)
     const blendFactor = 1.0 - invBlendFactor
     this._velocity.multiplyScalar(invBlendFactor)
-    const deltaVelocity = this._inputVelocity
-      .clone()
-      .multiplyScalar(blendFactor)
-    this._velocity.add(deltaVelocity)
+    this._tmp1.copy(this._inputVelocity).multiplyScalar(blendFactor)
+    this._velocity.add(this._tmp1)
+
+    // Stop movement if velocity is too low
     if (this._velocity.lengthSq() < deltaTime / 10) {
       this._velocity.set(0, 0, 0)
       return false
     }
 
-    const deltaPosition = this._velocity
-      .clone()
+    // Apply velocity to move the camera
+    this._tmp1.copy(this._velocity)
       .multiplyScalar(deltaTime * this.getVelocityMultiplier())
-
-    this.snap().move3(deltaPosition)
+    this.snap().move3(this._tmp1)
     return true
-  }
-
-  private updateOrthographic () {
-    if (this.orthographic) {
-      // Cancel target movement in Z in orthographic mode.
-      const delta = this._lastTarget.clone().sub(this.position)
-      const dist = delta.dot(this.forward)
-      this.target.copy(this.forward).multiplyScalar(dist).add(this.position)
-
-      // Prevent orthograpic camera from moving past orbit.
-      const prev = this._lastPosition.clone().sub(this._target)
-      const next = this.position.clone().sub(this._target)
-      if (prev.dot(next) < 0 || next.lengthSq() < 1) {
-        this.position.copy(this._target).add(this.forward.multiplyScalar(-1))
-      }
-    }
   }
 
   private getVelocityMultiplier () {
@@ -516,18 +511,33 @@ export class Camera implements ICamera {
   }
 
   private checkForMovement () {
-    this._hasMoved = false
+    let result = false
     if (
       !this._lastPosition.equals(this.position) ||
       !this._lastQuaternion.equals(this.quaternion) ||
       !this._lastTarget.equals(this._target)
     ) {
-      this._hasMoved = true
-      this._onMoved.dispatch()
+      result = true
     }
     this._lastPosition.copy(this.position)
     this._lastQuaternion.copy(this.quaternion)
     this._lastTarget.copy(this._target)
-    return this._hasMoved
+    return result
+  }
+
+  private applyVelocityOrthographic () {
+    if (this.orthographic) {
+      // Cancel target movement in Z in orthographic mode.
+      const delta = this._tmp1.copy(this._lastTarget).sub(this.position)
+      const dist = delta.dot(this.forward)
+      this.target.copy(this.forward).multiplyScalar(dist).add(this.position)
+
+      // Prevent orthograpic camera from moving past orbit.
+      const prev = this._tmp1.copy(this._lastPosition).sub(this._target)
+      const next = this._tmp2.copy(this.position).sub(this._target)
+      if (prev.dot(next) < 0 || next.lengthSq() < 1) {
+        this.position.copy(this._target).add(this.forward.multiplyScalar(-1))
+      }
+    }
   }
 }

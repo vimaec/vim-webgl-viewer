@@ -118,11 +118,11 @@ export class ElementMapping {
     return this._instanceToElement.get(instance)
   }
 
-/**
- * Retrieves the element ID corresponding to the provided element index.
- * @param {number} element The element index.
- * @returns {bigint} The element ID associated with the given index.
- */
+  /**
+   * Retrieves the element ID corresponding to the provided element index.
+   * @param {number} element The element index.
+   * @returns {bigint} The element ID associated with the given index.
+   */
   getElementId (element: number) {
     return this._elementIds[element]
   }

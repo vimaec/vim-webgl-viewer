@@ -4,18 +4,19 @@
 
 import * as THREE from 'three'
 import { Mesh, Submesh } from './mesh'
-import { SceneBuilder } from './legacy/sceneBuilder'
 import { Vim } from './vim'
 import { estimateBytesUsed } from 'three/examples/jsm/utils/BufferGeometryUtils'
 import { InsertableMesh } from './progressive/insertableMesh'
 import { InstancedMesh } from './progressive/instancedMesh'
-
+import { getAverageBoundingBox } from './averageBoundingBox'
 
 /**
  * Interface for a renderer object, providing methods to add and remove objects from a scene, update bounding boxes, and notify scene updates.
  */
 export interface IRenderer {
+  // eslint-disable-next-line no-use-before-define
   add(scene: Scene | THREE.Object3D)
+  // eslint-disable-next-line no-use-before-define
   remove(scene: Scene)
   updateBox(box: THREE.Box3)
   notifySceneUpdate()
@@ -25,27 +26,27 @@ export interface IRenderer {
  * Represents a scene that contains multiple meshes.
  * It tracks the global bounding box as meshes are added and maintains a mapping between g3d instance indices and meshes.
  */
-//TODO: Only expose what should be public to vim.scene
+// TODO: Only expose what should be public to vim.scene
 export class Scene {
   // Dependencies
-  readonly builder: SceneBuilder
   private _renderer: IRenderer
   private _vim: Vim | undefined
   private _matrix = new THREE.Matrix4()
 
   // State
-  insertables = new Array<InsertableMesh>()
+  insertables: InsertableMesh[] = []
   meshes: (Mesh | InsertableMesh | InstancedMesh)[] = []
 
   private _outlineCount: number = 0
   private _boundingBox: THREE.Box3
 
+  private _averageBoundingBox: THREE.Box3 | undefined
+
   private _instanceToMeshes: Map<number, Submesh[]> = new Map()
   private _material: THREE.Material | undefined
 
-  constructor (builder: SceneBuilder | undefined, matrix: THREE.Matrix4) {
+  constructor (matrix: THREE.Matrix4) {
     this._matrix = matrix
-    this.builder = builder
   }
 
   setDirty () {
@@ -77,11 +78,33 @@ export class Scene {
     return this._boundingBox ? target.copy(this._boundingBox) : undefined
   }
 
+  /**
+   * Returns the bounding box of the average center of all meshes.
+   * Less precise but is more stable against outliers.
+   */
+  getAverageBoundingBox () {
+    if (this._averageBoundingBox) {
+      return this._averageBoundingBox
+    }
+    const points = [] as THREE.Vector3[]
+    this.meshes.forEach((m) => {
+      const subs = m.getSubmeshes()
+      subs.forEach((s) => {
+        const p = s.boundingBox.getCenter(new THREE.Vector3())
+        p.applyMatrix4(this._matrix)
+        points.push(p)
+      })
+    })
+    this._averageBoundingBox = getAverageBoundingBox(points)
+    return this._averageBoundingBox
+  }
+
   updateBox (box: THREE.Box3) {
     if (box !== undefined) {
       const b = box.clone().applyMatrix4(this._matrix)
       this._boundingBox = this._boundingBox?.union(b) ?? b
       this.renderer?.updateBox(this._boundingBox)
+      this._averageBoundingBox = undefined
     }
   }
 
@@ -183,6 +206,7 @@ export class Scene {
       this._boundingBox =
         this._boundingBox?.union(other._boundingBox) ??
         other._boundingBox.clone()
+      this._averageBoundingBox = undefined
     }
 
     this.setDirty()
@@ -219,6 +243,8 @@ export class Scene {
     this._instanceToMeshes.clear()
 
     this.renderer?.add(this)
+    this._boundingBox = undefined
+    this._averageBoundingBox = undefined
   }
 
   /**

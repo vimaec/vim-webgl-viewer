@@ -18,7 +18,7 @@ export function createSimpleMaterial () {
       fillColor: { value: new THREE.Vector3(0, 0, 0) }
     },
     vertexColors: true,
-    //transparent: true,
+    //  transparent: true,
     clipping: true,
     vertexShader: /* glsl */ `
 
