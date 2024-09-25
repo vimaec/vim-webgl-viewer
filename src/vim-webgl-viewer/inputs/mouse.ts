@@ -141,7 +141,7 @@ export class MouseHandler extends InputHandler {
   }
 
   private onMouseMove = (event: any) => {
-    event.stopImmediatePropagation()
+    // We don't stop propagation, mouse move is harmless.
     this._lastPosition = new THREE.Vector2(event.offsetX, event.offsetY)
 
     if (

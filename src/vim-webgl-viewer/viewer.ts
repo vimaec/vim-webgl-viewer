@@ -15,7 +15,6 @@ import { RenderScene } from './rendering/renderScene'
 import { Viewport } from './viewport'
 import { Gizmos } from './gizmos/gizmos'
 
-
 // loader
 import { Renderer } from './rendering/renderer'
 import { ISignal, SignalDispatcher } from 'ste-signals'
@@ -84,7 +83,7 @@ export class Viewer {
   /**
    * A signal that is dispatched when a new Vim object is loaded or unloaded.
    */
-  get onVimLoaded () : ISignal{
+  get onVimLoaded () : ISignal {
     return this._onVimLoaded.asEvent()
   }
 
@@ -117,7 +116,7 @@ export class Viewer {
     this.gizmos = new Gizmos(this, this._camera)
     this.materials.applySettings(this.settings)
 
-    // Ground plane and lights 
+    // Ground plane and lights
     this._environment = new Environment(this.settings)
     this._environment.getObjects().forEach((o) => this.renderer.add(o))
     this.renderer.onBoxUpdated.subscribe((_) => {
@@ -163,7 +162,6 @@ export class Viewer {
   get vimCount () {
     return this._vims.size
   }
-
 
   /**
    * Adds a Vim object to the renderer, triggering the appropriate actions and dispatching events upon successful addition.

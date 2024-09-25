@@ -98,6 +98,8 @@ export interface ICamera {
    */
   get forward () : THREE.Vector3
 
+  get isLerping () : boolean
+
   /**
    * The camera speed factor.
    */
@@ -182,7 +184,10 @@ export class Camera implements ICamera {
   }
   private _hasMoved: boolean
 
-  
+  get isLerping(){
+    return this._lerp.isLerping
+  }
+
   /**
    * A signal that is dispatched when the camera is moved.
    */
@@ -372,6 +377,7 @@ export class Camera implements ICamera {
    * Immediately stops the camera movement.
    */
   stop () {
+    this._lerp.cancel()
     this._inputVelocity.set(0, 0, 0)
     this._velocity.set(0, 0, 0)
   }

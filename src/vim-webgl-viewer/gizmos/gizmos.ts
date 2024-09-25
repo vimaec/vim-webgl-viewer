@@ -65,7 +65,7 @@ export class Gizmos {
       viewer.settings
     )
     this.rectangle = new GizmoRectangle(viewer)
-    this.axes = new GizmoAxes(camera, viewer.settings.axes)
+    this.axes = new GizmoAxes(camera, viewer.viewport, viewer.settings.axes)
     this.markers = new GizmoMarkers(viewer)
     viewer.viewport.canvas.parentElement?.prepend(this.axes.canvas)
   }
