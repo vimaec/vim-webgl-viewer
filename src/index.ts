@@ -19,6 +19,7 @@ export {
   InputAction
 } from './vim-webgl-viewer/raycaster'
 
+export { type SelectableObject } from './vim-webgl-viewer/selection'
 export * from './vim-loader/progressive/insertableMesh'
 export * from './vim-loader/progressive/g3dSubset'
 export * from './vim-loader/geometry'
