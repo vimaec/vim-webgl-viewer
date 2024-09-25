@@ -3,8 +3,8 @@
  */
 
 import { Camera } from './camera'
-import { Object } from '../../vim-loader/object'
-import { IObject } from '../../vim-loader/objectInterface'
+import { Object3D } from '../../vim-loader/object3D'
+import { SelectableObject } from '../../vim-webgl-viewer/selection'
 import * as THREE from 'three'
 import { GizmoMarker } from '../gizmos/markers/gizmoMarker'
 import { Vim } from '../../vim-loader/vim'
@@ -21,7 +21,7 @@ export abstract class CameraMovement {
    * @param {THREE.Vector3} vector - The 3D vector representing the direction and distance of movement.
    */
   abstract move3(vector: THREE.Vector3): void
-  
+
   /**
    * Moves the camera in a specified 2D direction within a plane defined by the given axes.
    * @param {THREE.Vector2} vector - The 2D vector representing the direction of movement.
@@ -86,22 +86,22 @@ export abstract class CameraMovement {
 
     // Clone to avoid side effect on argument
     const _direction = direction.clone()
-    
+
     // Makes the azimuth be zero for vertical directions
     // This avoids weird spin around the axis.
-    if(_direction.x === 0 && _direction.z ===0){
+    if (_direction.x === 0 && _direction.z === 0) {
       _direction.x = this._camera.forward.x * 0.001
       _direction.z = this._camera.forward.z * 0.001
       _direction.normalize()
     }
-    
+
     // Remove Y component.
     const flatForward = forward.clone().setY(0)
     const flatDirection = _direction.clone().setY(0)
 
     // Compute angle between vectors on a flat plane.
     const cross = flatForward.clone().cross(flatDirection)
-    const clockwise = cross.y == 0 ? 1 : Math.sign(cross.y)
+    const clockwise = cross.y === 0 ? 1 : Math.sign(cross.y)
     const azimuth = flatForward.angleTo(flatDirection) * clockwise
 
     // Compute the declination angle between the two vectors.
@@ -119,9 +119,9 @@ export abstract class CameraMovement {
 
   /**
    * Rotates the camera without moving so that it looks at the specified target.
-   * @param {Object | THREE.Vector3} target - The target object or position to look at.
+   * @param {Object3D | THREE.Vector3} target - The target object or position to look at.
    */
-  abstract target(target: Object | THREE.Vector3): void
+  abstract target(target: Object3D | THREE.Vector3): void
 
   /**
    * Resets the camera to its last saved position and orientation.
@@ -135,21 +135,19 @@ export abstract class CameraMovement {
    */
   abstract set(position: THREE.Vector3, target?: THREE.Vector3)
 
-
   /**
    * Sets the camera's orientation and position to focus on the specified target.
    * @param {IObject | Vim | THREE.Sphere | THREE.Box3 | 'all' | undefined} target - The target object, or 'all' to frame all objects.
    * @param {THREE.Vector3} [forward] - Optional forward direction after framing.
    */
   frame (
-    target: IObject | Vim | THREE.Sphere | THREE.Box3 | 'all' | undefined,
+    target: SelectableObject | Vim | THREE.Sphere | THREE.Box3 | 'all' | undefined,
     forward?: THREE.Vector3
   ): void {
-    
-    if ((target instanceof GizmoMarker) || (target instanceof Object)) {
+    if ((target instanceof GizmoMarker) || (target instanceof Object3D)) {
       target = target.getBoundingBox()
     }
-    if ((target instanceof Vim) ) {
+    if ((target instanceof Vim)) {
       target = target.scene.getBoundingBox()
     }
     if (target === 'all') {
@@ -164,7 +162,7 @@ export abstract class CameraMovement {
   }
 
   protected frameSphere (sphere: THREE.Sphere, forward?: THREE.Vector3) {
-    var direction = this.getNormalizedDirection(forward)
+    const direction = this.getNormalizedDirection(forward)
     // Compute best distance to frame sphere
     const fov = (this._camera.camPerspective.camera.fov * Math.PI) / 180
     const dist = (sphere.radius * 1.2) / Math.tan(fov / 2)
@@ -174,11 +172,11 @@ export abstract class CameraMovement {
     this.set(pos, sphere.center)
   }
 
-  private getNormalizedDirection(forward?: THREE.Vector3){
-    if(!forward){
+  private getNormalizedDirection (forward?: THREE.Vector3) {
+    if (!forward) {
       return this._camera.forward
     }
-    if(forward.x ===0 && forward.y === 0 && forward.z ===0){
+    if (forward.x === 0 && forward.y === 0 && forward.z === 0) {
       return this._camera.forward
     }
     return forward.clone().normalize()
