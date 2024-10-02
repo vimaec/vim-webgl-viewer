@@ -11,12 +11,11 @@ import { IElement, VimHelpers } from 'vim-format'
 import { ObjectAttribute } from './objectAttributes'
 import { ColorAttribute } from './colorAttributes'
 import { Submesh } from './mesh'
-import { IObject, ObjectType } from './objectInterface'
 
 /**
  * High level api to interact with the loaded vim geometry and data.
  */
-export class Object implements IObject {
+export class Object3D {
   private _color: THREE.Color | undefined
   private _boundingBox: THREE.Box3 | undefined
   private _meshes: Submesh[] | undefined
@@ -30,7 +29,7 @@ export class Object implements IObject {
   /**
    * Indicate whether this object is architectural or markup.
    */
-  public readonly type: ObjectType = 'Architectural'
+  public readonly type = 'Object3D'
 
   /**
    * The vim object from which this object came from.

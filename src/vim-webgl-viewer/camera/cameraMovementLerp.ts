@@ -4,7 +4,7 @@
 
 import * as THREE from 'three'
 import { Camera } from './camera'
-import { Object } from '../../vim-loader/object'
+import { Object3D } from '../../vim-loader/object3D'
 import { CameraMovementSnap } from './cameraMovementSnap'
 import { CameraMovement } from './cameraMovement'
 
@@ -122,8 +122,8 @@ export class CameraLerp extends CameraMovement {
     }
   }
 
-  target (target: Object | THREE.Vector3): void {
-    const pos = target instanceof Object ? target.getCenter() : target
+  target (target: Object3D | THREE.Vector3): void {
+    const pos = target instanceof Object3D ? target.getCenter() : target
     const next = pos.clone().sub(this._camera.position)
     const start = this._camera.quaternion.clone()
     const rot = new THREE.Quaternion().setFromUnitVectors(

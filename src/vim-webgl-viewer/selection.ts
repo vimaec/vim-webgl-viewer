@@ -4,8 +4,11 @@
 
 import * as THREE from 'three'
 import { Vim, ViewerMaterials } from '..'
-import { IObject } from '../vim-loader/objectInterface'
 import { SignalDispatcher } from 'ste-signals'
+import { GizmoMarker } from './gizmos/markers/gizmoMarker'
+import { Object3D } from '../vim-loader/object3D'
+
+export type SelectableObject = Object3D | GizmoMarker
 
 /**
  * Provides selection behaviour for the viewer
@@ -16,8 +19,8 @@ export class Selection {
   private _materials: ViewerMaterials
 
   // State
-  private _objects = new Set<IObject>()
-  private _focusedObject: IObject | undefined
+  private _objects = new Set<SelectableObject>()
+  private _focusedObject: SelectableObject | undefined
   private _vim: Vim | undefined
   private _lastFocusTime: number = Date.now()
 
@@ -81,7 +84,7 @@ export class Selection {
    * Adds focus highlight to a single object. Pass `undefined` to remove the highlight.
    * @param {IObject | undefined} object The object to focus on, or `undefined` to remove the highlight.
    */
-  focus (object: IObject | undefined) {
+  focus (object: SelectableObject | undefined) {
     if (this._focusedObject === object) return
 
     if (this._focusedObject) this._focusedObject.focused = false
@@ -97,7 +100,7 @@ export class Selection {
    * @param {IObject | IObject[] | undefined} object The object or array of objects to select,
    *        or `null`, `undefined`, or an empty array to clear the selection.
    */
-  select (object: IObject | IObject[] | undefined) {
+  select (object: SelectableObject | SelectableObject[] | undefined) {
     object =
       object === undefined ? [] : Array.isArray(object) ? object : [object]
 
@@ -127,7 +130,7 @@ export class Selection {
    * @param {IObject} object The object to check for selection.
    * @returns {boolean} True if the object is selected, false otherwise.
    */
-  has (object: IObject) {
+  has (object: SelectableObject) {
     return this._objects.has(object)
   }
 
@@ -142,7 +145,7 @@ export class Selection {
    * Adds the given objects to the current selection.
    * @param {...IObject[]} objects The objects to add to the selection.
    */
-  add (...objects: IObject[]) {
+  add (...objects: SelectableObject[]) {
     if (!objects) return
     if (objects.length === 0) return
     const count = this._objects.size
@@ -161,7 +164,7 @@ export class Selection {
    * Removes the given objects from the current selection.
    * @param {...IObject[]} objects The objects to remove from the selection.
    */
-  remove (...objects: IObject[]) {
+  remove (...objects: SelectableObject[]) {
     if (!objects) return
     if (objects.length === 0) return
     const count = this._objects.size
@@ -183,7 +186,7 @@ export class Selection {
    * - Removes selected elements of the given objects from the selection.
    * @param {...IObject[]} objects The objects to toggle selection for.
    */
-  toggle (...objects: IObject []) {
+  toggle (...objects: SelectableObject []) {
     if (!objects) return
     if (objects.length === 0) return
     const count = this._objects.size

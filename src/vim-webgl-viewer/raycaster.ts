@@ -3,7 +3,7 @@
  */
 
 import * as THREE from 'three'
-import { Object } from '../vim-loader/object'
+import { Object3D } from '../vim-loader/object3D'
 import { Mesh } from '../vim-loader/mesh'
 import { RenderScene } from './rendering/renderScene'
 import { Viewport } from './viewport'
@@ -26,7 +26,7 @@ export type ActionModifier = 'none' | 'shift' | 'ctrl'
  * Highlevel aggregate of information about a raycast result
  */
 export class RaycastResult {
-  object: Object | GizmoMarker | undefined
+  object: Object3D | GizmoMarker | undefined
   intersections: ThreeIntersectionList
   firstHit: THREE.Intersection | undefined
 
@@ -46,7 +46,7 @@ export class RaycastResult {
 
   private GetFirstVimHit (
     intersections: ThreeIntersectionList
-  ): [THREE.Intersection, Object] | [] {
+  ): [THREE.Intersection, Object3D] | [] {
     for (let i = 0; i < intersections.length; i++) {
       const obj = this.getVimObjectFromHit(intersections[i])
       if (obj?.visible) return [intersections[i], obj]

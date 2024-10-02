@@ -3,8 +3,8 @@
  */
 
 import { Camera } from './camera'
-import { Object } from '../../vim-loader/object'
-import { IObject } from '../../vim-loader/objectInterface'
+import { Object3D } from '../../vim-loader/object3D'
+import { SelectableObject } from '../../vim-webgl-viewer/selection'
 import * as THREE from 'three'
 import { GizmoMarker } from '../gizmos/markers/gizmoMarker'
 import { Vim } from '../../vim-loader/vim'
@@ -119,9 +119,9 @@ export abstract class CameraMovement {
 
   /**
    * Rotates the camera without moving so that it looks at the specified target.
-   * @param {Object | THREE.Vector3} target - The target object or position to look at.
+   * @param {Object3D | THREE.Vector3} target - The target object or position to look at.
    */
-  abstract target(target: Object | THREE.Vector3): void
+  abstract target(target: Object3D | THREE.Vector3): void
 
   /**
    * Resets the camera to its last saved position and orientation.
@@ -141,10 +141,10 @@ export abstract class CameraMovement {
    * @param {THREE.Vector3} [forward] - Optional forward direction after framing.
    */
   frame (
-    target: IObject | Vim | THREE.Sphere | THREE.Box3 | 'all' | undefined,
+    target: SelectableObject | Vim | THREE.Sphere | THREE.Box3 | 'all' | undefined,
     forward?: THREE.Vector3
   ): void {
-    if ((target instanceof GizmoMarker) || (target instanceof Object)) {
+    if ((target instanceof GizmoMarker) || (target instanceof Object3D)) {
       target = target.getBoundingBox()
     }
     if ((target instanceof Vim)) {
