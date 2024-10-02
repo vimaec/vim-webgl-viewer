@@ -29,7 +29,7 @@ export class Object3D {
   /**
    * Indicate whether this object is architectural or markup.
    */
-  public readonly type = 'Architectural'
+  public readonly type = 'Object3D'
 
   /**
    * The vim object from which this object came from.
