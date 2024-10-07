@@ -11,6 +11,7 @@ import { Camera } from './camera/camera'
 import { Renderer } from './rendering/renderer'
 import { GizmoMarker } from './gizmos/markers/gizmoMarker'
 import { GizmoMarkers } from './gizmos/markers/gizmoMarkers'
+import { Plan2D } from './gizmos/plan2D'
 
 /**
  * Type alias for THREE intersection array
@@ -26,12 +27,14 @@ export type ActionModifier = 'none' | 'shift' | 'ctrl'
  * Highlevel aggregate of information about a raycast result
  */
 export class RaycastResult {
-  object: Object3D | GizmoMarker | undefined
+  object: Object3D | GizmoMarker | Plan2D | undefined
   intersections: ThreeIntersectionList
   firstHit: THREE.Intersection | undefined
 
   constructor (intersections: ThreeIntersectionList) {
     this.intersections = intersections
+
+    // Markers have priority over other objects
     const [markerHit, marker] = this.GetFirstMarkerHit(intersections)
     if (marker) {
       this.object = marker
@@ -39,15 +42,22 @@ export class RaycastResult {
       return
     }
 
-    const [objectHit, obj] = this.GetFirstVimHit(intersections)
+    const [objectHit, obj] = this.GetFirstHit(intersections)
     this.firstHit = objectHit
     this.object = obj
   }
 
-  private GetFirstVimHit (
+  private GetFirstHit (
     intersections: ThreeIntersectionList
-  ): [THREE.Intersection, Object3D] | [] {
+  ): [THREE.Intersection, Object3D | Plan2D] | [] {
     for (let i = 0; i < intersections.length; i++) {
+      // Check for Plan2D
+      const data = intersections[i].object.userData.vim
+      if (data instanceof Plan2D) {
+        return [intersections[i], data]
+      }
+
+      // Check for visible vim object
       const obj = this.getVimObjectFromHit(intersections[i])
       if (obj?.visible) return [intersections[i], obj]
     }

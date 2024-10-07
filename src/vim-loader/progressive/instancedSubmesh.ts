@@ -8,6 +8,7 @@ import { InstancedMesh } from './instancedMesh'
 export class InstancedSubmesh {
   mesh: InstancedMesh
   index: number
+  readonly merged = false
 
   constructor (mesh: InstancedMesh, index: number) {
     this.mesh = mesh
@@ -23,13 +24,6 @@ export class InstancedSubmesh {
    */
   get three () {
     return this.mesh.mesh
-  }
-
-  /**
-   * True if parent mesh is merged.
-   */
-  get merged () {
-    return false
   }
 
   /**

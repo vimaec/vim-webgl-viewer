@@ -7,6 +7,7 @@ import { IMeasure, Measure } from './measure/measure'
 import { SectionBox } from './sectionBox/sectionBox'
 import { GizmoMarkers } from './markers/gizmoMarkers'
 import { Camera } from '../camera/camera'
+import { Plans2D } from './plans2D'
 
 /**
  * Represents a collection of gizmos used for various visualization and interaction purposes within the viewer.
@@ -53,6 +54,8 @@ export class Gizmos {
    */
   readonly markers: GizmoMarkers
 
+  readonly plans : Plans2D
+
   constructor (viewer: Viewer, camera : Camera) {
     this.viewer = viewer
     this._measure = new Measure(viewer)
@@ -67,6 +70,7 @@ export class Gizmos {
     this.rectangle = new GizmoRectangle(viewer)
     this.axes = new GizmoAxes(camera, viewer.viewport, viewer.settings.axes)
     this.markers = new GizmoMarkers(viewer)
+    this.plans = new Plans2D(viewer)
     viewer.viewport.canvas.parentElement?.prepend(this.axes.canvas)
   }
 
