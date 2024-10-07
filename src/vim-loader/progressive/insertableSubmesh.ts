@@ -9,6 +9,7 @@ export class InsertableSubmesh {
   mesh: InsertableMesh
   index: number
   private _colors: Float32Array
+  readonly merged = true
 
   constructor (mesh: InsertableMesh, index: number) {
     this.mesh = mesh
@@ -24,13 +25,6 @@ export class InsertableSubmesh {
    */
   get three () {
     return this.mesh.mesh
-  }
-
-  /**
-   * True if parent mesh is merged.
-   */
-  get merged () {
-    return true
   }
 
   private get submesh () {

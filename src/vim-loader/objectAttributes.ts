@@ -3,9 +3,9 @@
  */
 
 import * as THREE from 'three'
-import { MergedSubmesh, SimpleInstanceSubmesh, Submesh } from './mesh'
+import { MergedSubmesh, SimpleInstanceSubmesh, SimpleMesh, Submesh } from './mesh'
 
-export type AttributeTarget = Submesh | SimpleInstanceSubmesh
+export type AttributeTarget = Submesh | SimpleInstanceSubmesh | SimpleMesh
 
 export class ObjectAttribute<T> {
   readonly vertexAttribute: string
@@ -51,7 +51,7 @@ export class ObjectAttribute<T> {
     for (let m = 0; m < this._meshes.length; m++) {
       const sub = this._meshes[m]
       if (sub.merged) {
-        this.applyMerged(sub as MergedSubmesh, number)
+        this.applyMerged(sub, number)
       } else {
         this.applyInstanced(sub, number)
       }

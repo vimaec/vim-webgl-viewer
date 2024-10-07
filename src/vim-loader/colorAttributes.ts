@@ -3,7 +3,7 @@
  */
 
 import * as THREE from 'three'
-import { MergedSubmesh } from './mesh'
+import { MergedSubmesh, SimpleMesh } from './mesh'
 import { Vim } from './vim'
 import { InsertableSubmesh } from './progressive/insertableSubmesh'
 import { AttributeTarget } from './objectAttributes'
@@ -99,6 +99,9 @@ export class ColorAttribute {
     if (!this.vim) return
     if (sub instanceof InsertableSubmesh) {
       this.resetMergedInsertableColor(sub)
+      return
+    }
+    if (sub instanceof SimpleMesh) {
       return
     }
 

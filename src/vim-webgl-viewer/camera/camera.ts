@@ -116,6 +116,11 @@ export interface ICamera {
   stop () : void
 
   /**
+   * Immediately stops the camera movement. And prevents any further movement until set to false.
+   */
+  freeze: boolean
+
+  /**
    * The target at which the camera is looking at and around which it rotates.
    */
   get target () : THREE.Vector3
@@ -152,6 +157,7 @@ export class Camera implements ICamera {
   private _inputVelocity = new THREE.Vector3()
   private _velocity = new THREE.Vector3()
   private _speed: number = 0
+  private _freeze: boolean = false
 
   // orbit
   private _orthographic: boolean = false
@@ -204,13 +210,25 @@ export class Camera implements ICamera {
   /** Ignore movement permissions when true */
   private _force: boolean = false
 
+  get freeze () {
+    return this._freeze
+  }
+
+  set freeze (value: boolean) {
+    this._freeze = value
+  }
+
   /**
    * Represents allowed movement along each axis using a Vector3 object.
    * Each component of the Vector3 should be either 0 or 1 to enable/disable movement along the corresponding axis.
    */
   private _allowedMovement = new THREE.Vector3(1, 1, 1)
   get allowedMovement () {
-    return this._force ? new THREE.Vector3(1, 1, 1) : this._allowedMovement
+    return this._force
+      ? new THREE.Vector3(1, 1, 1)
+      : this._freeze
+        ? new THREE.Vector3(0, 0, 0)
+        : this._allowedMovement
   }
 
   set allowedMovement (axes: THREE.Vector3) {
@@ -225,7 +243,11 @@ export class Camera implements ICamera {
    * Each component of the Vector2 should be either 0 or 1 to enable/disable rotation around the corresponding axis.
    */
   get allowedRotation () {
-    return this._force ? new THREE.Vector2(1, 1) : this._allowedRotation
+    return this._force
+      ? new THREE.Vector2(1, 1)
+      : this._freeze
+        ? new THREE.Vector2(0, 0)
+        : this._allowedRotation
   }
 
   set allowedRotation (axes: THREE.Vector2) {

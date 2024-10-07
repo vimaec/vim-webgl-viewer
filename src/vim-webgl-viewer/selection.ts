@@ -7,8 +7,9 @@ import { Vim, ViewerMaterials } from '..'
 import { SignalDispatcher } from 'ste-signals'
 import { GizmoMarker } from './gizmos/markers/gizmoMarker'
 import { Object3D } from '../vim-loader/object3D'
+import { Plan2D } from './gizmos/plan2D'
 
-export type SelectableObject = Object3D | GizmoMarker
+export type SelectableObject = Object3D | GizmoMarker | Plan2D
 
 /**
  * Provides selection behaviour for the viewer

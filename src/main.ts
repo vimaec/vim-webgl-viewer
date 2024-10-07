@@ -1,4 +1,5 @@
-import { Viewer, open, THREE, getViewerSettingsFromUrl } from '.'
+import { Viewer, open, getViewerSettingsFromUrl } from '.'
+import * as THREE from 'three'
 
 // Parse URL for source file
 const params = new URLSearchParams(window.location.search)
@@ -35,6 +36,10 @@ async function load (url: string | ArrayBuffer) {
   viewer.camera.snap(true).frame(vim)
   viewer.camera.save()
   viewer.gizmos.loading.visible = false
+
+  const plan = await viewer.gizmos.plans.addPlan('https://vimdevelopment01storage.blob.core.windows.net/samples/floor_plan.png')
+  const plan2 = await viewer.gizmos.plans.addPlan('https://vimdevelopment01storage.blob.core.windows.net/samples/floor_plan.pdf')
+  plan.color = new THREE.Color(0x00ff00)
 
   // Useful for debuging in console.
   globalThis.THREE = THREE

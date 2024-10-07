@@ -115,7 +115,7 @@ export class Mesh {
    * Returns submesh for given index.
    */
   getSubMesh (index: number) {
-    return new StandardSubmesh(this, index)
+    return new SealedSubmesh(this, index)
   }
 
   /**
@@ -126,7 +126,7 @@ export class Mesh {
       throw new Error('Can only be called when mesh.merged = true')
     }
     const index = this.binarySearch(this.submeshes, faceIndex * 3)
-    return new StandardSubmesh(this, index)
+    return new SealedSubmesh(this, index)
   }
 
   /**
@@ -134,7 +134,7 @@ export class Mesh {
    * @returns Returns all submeshes
    */
   getSubmeshes () {
-    return this.instances.map((s, i) => new StandardSubmesh(this, i))
+    return this.instances.map((s, i) => new SealedSubmesh(this, i))
   }
 
   private binarySearch (array: number[], element: number) {
@@ -164,7 +164,8 @@ export class Mesh {
 }
 
 // eslint-disable-next-line no-use-before-define
-export type MergedSubmesh = StandardSubmesh | InsertableSubmesh
+export type MergedSubmesh = SealedSubmesh | InsertableSubmesh | SimpleMesh
+// eslint-disable-next-line no-use-before-define
 export type Submesh = MergedSubmesh | InstancedSubmesh
 
 export class SimpleInstanceSubmesh {
@@ -179,7 +180,21 @@ export class SimpleInstanceSubmesh {
   }
 }
 
-export class StandardSubmesh {
+export class SimpleMesh {
+  mesh: THREE.Mesh
+  get three () { return this.mesh }
+  readonly index : number = 0
+  readonly merged = true
+  readonly meshStart = 0
+  readonly meshEnd : number
+
+  constructor (mesh: THREE.Mesh) {
+    this.mesh = mesh
+    this.meshEnd = mesh.geometry.index!.count
+  }
+}
+
+export class SealedSubmesh {
   mesh: Mesh
   index: number
 
