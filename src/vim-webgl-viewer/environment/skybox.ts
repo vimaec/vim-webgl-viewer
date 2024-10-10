@@ -72,7 +72,12 @@ export class Skybox {
     this._plane = new THREE.PlaneGeometry()
     this._material = materials.skyBox
     this.mesh = new THREE.Mesh(this._plane, materials.skyBox)
+
+    // Apply settings
     this.enable = settings.skybox.enable
+    this.skyColor = settings.skybox.skyColor
+    this.groundColor = settings.skybox.groundColor
+    this.sharpness = settings.skybox.sharpness
 
     camera.onMoved.subscribe(() => {
       this.mesh.position.copy(camera.position).add(camera.forward)
