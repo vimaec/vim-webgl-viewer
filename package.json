@@ -53,6 +53,7 @@
     "@types/three": "^0.143.0",
     "deepmerge": "^4.2.2",
     "is-plain-object": "^5.0.0",
+    "pdfjs-dist": "^4.6.82",
     "ste-events": "^3.0.7",
     "ste-signals": "^3.0.9",
     "ste-simple-events": "^3.0.7",
