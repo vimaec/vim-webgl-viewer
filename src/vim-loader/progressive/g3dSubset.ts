@@ -2,7 +2,7 @@
  * @module vim-loader
  */
 
-import { G3d, MeshSection, G3dScene, FilterModeNext, FilterMode } from 'vim-format'
+import { G3d, MeshSection, G3dScene, FilterMode } from 'vim-format'
 import { G3dMeshOffsets, G3dMeshCounts } from './g3dOffsets'
 import * as THREE from 'three'
 
@@ -261,7 +261,7 @@ export class G3dSubset {
   }
 
   private _filter (
-    mode: FilterModeNext,
+    mode: FilterMode,
     filter: number[] | Set<number>,
     has: boolean
   ): G3dSubset {
