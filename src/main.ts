@@ -1,4 +1,4 @@
-import { Viewer, open, THREE, getViewerSettingsFromUrl } from '.'
+import { Viewer, request, THREE, getViewerSettingsFromUrl } from '.'
 
 // Parse URL for source file
 const params = new URLSearchParams(window.location.search)
@@ -24,14 +24,30 @@ async function load (url: string | ArrayBuffer) {
   time = Date.now()
   viewer.gizmos.loading.visible = true
 
-  const vim = await open(url,
-    {
-      rotation: new THREE.Vector3(270, 0, 0)
-    }, (p) => console.log(`Downloading Vim (${(p.loaded / 1000).toFixed(0)} kb)`)
-  )
+  const r = request({
+    url: 'https://saas-api-dev.vimaec.com/api/public/8A12977A-E69B-42DC-D05B-08DCE88D23C7/2024.10.11',
+    headers: {
+      Authorization: 'yJSkyCvwpksvnajChA64ofKQS2KnB24ADHENUYKYTZFZc4SzcWa5WPwJNzTvrsZ8sv8SL8R69c92TUThFkLi1YsvpGxnZFExWs5mbQisuWyhBPAXosSEUhPXyUaXHHBJ'
+    }
+  },
+  {
+    rotation: new THREE.Vector3(270, 0, 0)
+  })
 
-  viewer.add(vim)
+  for await (const progress of r.getProgress()) {
+    console.log(`Downloading Vim (${(progress.loaded / 1000).toFixed(0)} kb)`)
+  }
+
+  const result = await r.getResult()
+  if (result.isError()) {
+    console.error(result.error)
+    return
+  }
+
+  const vim = result.result
+
   await vim.loadAll()
+  viewer.add(vim)
   viewer.camera.snap(true).frame(vim)
   viewer.camera.save()
   viewer.gizmos.loading.visible = false
