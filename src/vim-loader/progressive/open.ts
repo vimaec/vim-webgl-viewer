@@ -19,17 +19,11 @@ import {
   VimDocument,
   G3d,
   G3dMaterial,
-  BFastSource
+  VimSource
 } from 'vim-format'
 import { VimSubsetBuilder, VimxSubsetBuilder } from './subsetBuilder'
 import { VimMeshFactory } from './legacyMeshFactory'
 import { DefaultLog } from 'vim-format/dist/logging'
-
-type RequestOptions = {
-  url?: string,
-  buffer?: ArrayBuffer,
-  headers?: Record<string, string>,
-}
 
 /**
  * Asynchronously opens a vim object from a given source with the provided settings.
@@ -39,7 +33,7 @@ type RequestOptions = {
  * @returns {Promise<void>} A Promise that resolves when the vim object is successfully opened.
  */
 export async function open (
-  source: BFastSource | BFast,
+  source: VimSource | BFast,
   settings: VimPartialSettings,
   onProgress?: (p: IProgressLogs) => void
 ) {
@@ -81,8 +75,8 @@ async function requestFileType (bfast: BFast) {
 }
 
 /**
-   * Loads a Vimx file from source
-   */
+ * Loads a Vimx file from source
+ */
 async function loadFromVimX (
   bfast: BFast,
   settings: VimSettings,
@@ -94,9 +88,7 @@ async function loadFromVimX (
     remoteVimx.bfast.source.onProgress = onProgress
   }
 
-  console.log('Downloading Scene Index..')
   const vimx = await Vimx.fromRemote(remoteVimx, !settings.progressive)
-  console.log('Scene Index Downloaded.')
 
   // Create scene
   const scene = new Scene(settings.matrix)
@@ -127,8 +119,8 @@ async function loadFromVimX (
 }
 
 /**
-   * Loads a Vim file from source
-   */
+ * Loads a Vim file from source
+ */
 async function loadFromVim (
   bfast: BFast,
   settings: VimSettings,
@@ -176,139 +168,4 @@ async function loadFromVim (
   }
 
   return vim
-}
-
-export function request (options: RequestOptions, settings? : VimPartialSettings) {
-  return new VimRequest(options, settings)
-}
-
-class SuccessResult<T> {
-  result: T
-
-  constructor (result: T) {
-    this.result = result
-  }
-
-  isSuccess (): true {
-    return true
-  }
-
-  isError (): false {
-    return false
-  }
-}
-
-class ErrorResult {
-  error: string
-
-  constructor (error: string) {
-    this.error = error
-  }
-
-  isSuccess (): false {
-    return false
-  }
-
-  isError (): this is ErrorResult {
-    return true
-  }
-}
-
-type RequestResult<T> = SuccessResult<T> | ErrorResult
-
-class VimRequest {
-  private _source: BFastSource
-  private _settings : VimPartialSettings
-  private _bfast : BFast
-
-  // Result states
-  private _isDone: boolean = false
-  private _vimResult?: Vim
-  private _error?: any
-
-  // Promise to wait for the next progress update
-  private _progressQueue: IProgressLogs[] = []
-  private _progressPromise: Promise<void>
-  private _progressResolve!: () => void
-
-  // Promise to wait for the request to complete
-  private _completionPromise: Promise<void>
-  private _completionResolve!: () => void
-
-  constructor (source: BFastSource, settings: VimPartialSettings) {
-    this._source = source
-    this._settings = settings
-
-    // Initialize the progress promise
-    this._progressPromise = new Promise<void>((resolve) => {
-      this._progressResolve = resolve
-    })
-
-    // Initialize the completion promise
-    this._completionPromise = new Promise<void>((resolve) => {
-      this._completionResolve = resolve
-    })
-
-    this.startRequest()
-  }
-
-  async getResult (): Promise<RequestResult<Vim>> {
-    await this._completionPromise
-    return this._error ? new ErrorResult(this._error) : new SuccessResult(this._vimResult)
-  }
-
-  /**
-   * Initiates the asynchronous request and handles progress updates.
-   */
-  private startRequest () {
-    this._bfast = new BFast(this._source)
-    open(this._bfast, this._settings, (progress: IProgressLogs) => {
-      // Push progress updates to the queue
-      this._progressQueue.push(progress)
-      // Resolve the promise to notify the generator
-      this._progressResolve()
-      // Create a new promise for the next update
-      this._progressPromise = new Promise<void>((resolve) => {
-        this._progressResolve = resolve
-      })
-    })
-      .then((vim: Vim) => {
-        // Operation completed successfully
-        this._vimResult = vim
-        this._isDone = true
-        this._progressResolve() // Resolve to unblock the generator
-        this._completionResolve() // Resolve the completion promise
-      })
-      .catch((err: any) => {
-        // An error occurred
-        this._error = err
-        this._isDone = true
-        this._progressResolve() // Resolve to unblock the generator
-        this._completionResolve() // Resolve the completion promise
-      })
-  }
-
-  /**
-   * Async generator that yields progress updates.
-   * @returns An AsyncGenerator yielding IProgressLogs.
-   */
-  async * getProgress (): AsyncGenerator<IProgressLogs, void, void> {
-    while (!this._isDone || this._progressQueue.length > 0) {
-      // Wait for new progress updates or completion
-      await this._progressPromise
-      // Yield all progress updates in the queue
-      while (this._progressQueue.length > 0) {
-        const progress = this._progressQueue.shift()!
-        yield progress // Yield progress update
-      }
-    }
-  }
-
-  abort () {
-    this._bfast.abort()
-    this._isDone = true
-    this._error = 'Request aborted'
-    this._progressResolve()
-    this._completionResolve()
-  }
 }

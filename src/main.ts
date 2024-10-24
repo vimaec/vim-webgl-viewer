@@ -6,22 +6,14 @@ const url = params.has('vim')
   ? params.get('vim')
   : null
 
-let time: number
-
 const viewer = new Viewer({
   ...getViewerSettingsFromUrl(window.location.search)
 })
 
 load(url ?? 'https://vim02.azureedge.net/samples/residence.v1.2.75.vim')
-// load(url ?? './F_A_X_X_0_001.vim')
-// load(url ?? "https://vimdevelopment01storage.blob.core.windows.net/samples/TowerS-ARCHITECTURE-ALL.v1.2.50.vimx")
-// load(url ?? "https://vimdevelopment01storage.blob.core.windows.net/samples/BIM1-AUTOP_ARC_2023.vimx")
-// load('https://vim.azureedge.net/samples/TowerS-ARCHITECTURE.1.2.88-ALL.vim')
-
 addLoadButton()
 
 async function load (url: string | ArrayBuffer) {
-  time = Date.now()
   viewer.gizmos.loading.visible = true
 
   const r = request({
