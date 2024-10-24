@@ -18,7 +18,8 @@ import {
   IProgressLogs,
   VimDocument,
   G3d,
-  G3dMaterial
+  G3dMaterial,
+  VimSource
 } from 'vim-format'
 import { VimSubsetBuilder, VimxSubsetBuilder } from './subsetBuilder'
 import { VimMeshFactory } from './legacyMeshFactory'
@@ -26,48 +27,47 @@ import { DefaultLog } from 'vim-format/dist/logging'
 
 /**
  * Asynchronously opens a vim object from a given source with the provided settings.
- * @param {string | ArrayBuffer} source - The source of the vim object, either a string or an ArrayBuffer.
+ * @param {string | BFast} source - The source of the vim object, either a string or a BFast.
  * @param {VimPartialSettings} settings - The settings to configure the behavior of the vim object.
  * @param {(p: IProgressLogs) => void} [onProgress] - Optional callback function to track progress logs.
  * @returns {Promise<void>} A Promise that resolves when the vim object is successfully opened.
  */
 export async function open (
-  source: string | ArrayBuffer,
+  source: VimSource | BFast,
   settings: VimPartialSettings,
   onProgress?: (p: IProgressLogs) => void
 ) {
+  const bfast = source instanceof BFast ? source : new BFast(source)
   const fullSettings = getFullSettings(settings)
-  const type = await determineFileType(source, fullSettings)!
+  const type = await determineFileType(bfast, fullSettings)!
 
   if (type === 'vim') {
-    return loadFromVim(source, fullSettings, onProgress)
+    return loadFromVim(bfast, fullSettings, onProgress)
   }
 
   if (type === 'vimx') {
-    return loadFromVimX(source, fullSettings, onProgress)
+    return loadFromVimX(bfast, fullSettings, onProgress)
   }
 
   throw new Error('Cannot determine the appropriate loading strategy.')
 }
 
 async function determineFileType (
-  vimPath: string | ArrayBuffer,
+  bfast: BFast,
   settings: VimSettings
 ) {
   if (settings?.fileType === 'vim') return 'vim'
   if (settings?.fileType === 'vimx') return 'vimx'
-  return requestFileType(vimPath)
+  return requestFileType(bfast)
 }
 
-async function requestFileType (vimPath: string | ArrayBuffer) {
-  if (typeof vimPath === 'string') {
-    if (vimPath.endsWith('vim')) return 'vim'
-    if (vimPath.endsWith('vimx')) return 'vimx'
+async function requestFileType (bfast: BFast) {
+  if (bfast.url) {
+    if (bfast.url.endsWith('vim')) return 'vim'
+    if (bfast.url.endsWith('vimx')) return 'vimx'
   }
 
-  const bfast = new BFast(vimPath)
   const header = await requestHeader(bfast)
-
   if (header.vim !== undefined) return 'vim'
   if (header.vimx !== undefined) return 'vimx'
 
@@ -75,22 +75,20 @@ async function requestFileType (vimPath: string | ArrayBuffer) {
 }
 
 /**
-   * Loads a Vimx file from source
-   */
+ * Loads a Vimx file from source
+ */
 async function loadFromVimX (
-  source: string | ArrayBuffer,
+  bfast: BFast,
   settings: VimSettings,
   onProgress: (p: IProgressLogs) => void
 ) {
   // Fetch geometry data
-  const remoteVimx = new RemoteVimx(source)
+  const remoteVimx = new RemoteVimx(bfast)
   if (remoteVimx.bfast.source instanceof RemoteBuffer) {
     remoteVimx.bfast.source.onProgress = onProgress
   }
 
-  console.log('Downloading Scene Index..')
   const vimx = await Vimx.fromRemote(remoteVimx, !settings.progressive)
-  console.log('Scene Index Downloaded.')
 
   // Create scene
   const scene = new Scene(settings.matrix)
@@ -109,7 +107,7 @@ async function loadFromVimX (
     settings,
     mapping,
     builder,
-    typeof source === 'string' ? source : undefined,
+    typeof bfast.source === 'string' ? bfast.source : undefined,
     'vimx'
   )
 
@@ -121,15 +119,15 @@ async function loadFromVimX (
 }
 
 /**
-   * Loads a Vim file from source
-   */
+ * Loads a Vim file from source
+ */
 async function loadFromVim (
-  source: string | ArrayBuffer,
+  bfast: BFast,
   settings: VimSettings,
   onProgress?: (p: IProgressLogs) => void
 ) {
   const fullSettings = getFullSettings(settings)
-  const bfast = new BFast(source)
+
   if (bfast.source instanceof RemoteBuffer) {
     bfast.source.onProgress = onProgress
     if (settings.verboseHttp) {
@@ -161,7 +159,7 @@ async function loadFromVim (
     fullSettings,
     mapping,
     builder,
-    typeof source === 'string' ? source : undefined,
+    typeof bfast.source === 'string' ? bfast.source : undefined,
     'vim'
   )
 
