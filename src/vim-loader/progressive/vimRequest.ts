@@ -12,16 +12,25 @@ import {
   BFast, IProgressLogs, VimSource
 } from 'vim-format'
 
-export type RequestOptions = {
+export type RequestSource = {
   url?: string,
   buffer?: ArrayBuffer,
   headers?: Record<string, string>,
 }
 
-export function request (options: RequestOptions, settings? : VimPartialSettings) {
+/**
+ * Initiates a request to load a VIM object from a given source.
+ * @param options a url where to find the vim file or a buffer of a vim file.
+ * @param settings the settings to configure how the vim will be loaded.
+ * @returns a request object that can be used to track progress and get the result.
+ */
+export function request (options: RequestSource, settings? : VimPartialSettings) {
   return new VimRequest(options, settings)
 }
 
+/**
+ * A class that represents a request to load a VIM object from a given source.
+ */
 export class VimRequest {
   private _source: VimSource
   private _settings : VimPartialSettings

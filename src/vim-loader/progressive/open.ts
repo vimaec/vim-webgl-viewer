@@ -27,7 +27,7 @@ import { DefaultLog } from 'vim-format/dist/logging'
 
 /**
  * Asynchronously opens a vim object from a given source with the provided settings.
- * @param {string | ArrayBuffer} source - The source of the vim object, either a string or an ArrayBuffer.
+ * @param {string | BFast} source - The source of the vim object, either a string or a BFast.
  * @param {VimPartialSettings} settings - The settings to configure the behavior of the vim object.
  * @param {(p: IProgressLogs) => void} [onProgress] - Optional callback function to track progress logs.
  * @returns {Promise<void>} A Promise that resolves when the vim object is successfully opened.
