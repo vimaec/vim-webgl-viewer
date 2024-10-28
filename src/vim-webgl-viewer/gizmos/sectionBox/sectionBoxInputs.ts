@@ -24,6 +24,7 @@ export class BoxInputs {
   unregisters: (() => void)[] = []
   lastMouse : PointerEvent
   ctrlDown: boolean = false
+  capturedId : number | undefined
 
   // Called when mouse enters or leave a face
   onFaceEnter: ((normal: THREE.Vector3) => void) | undefined
@@ -59,10 +60,22 @@ export class BoxInputs {
     this.reg(canvas, 'pointerup', this.onMouseUp.bind(this))
   }
 
+  capturePointer (pointerId: number) {
+    this.releasePointer()
+    this.viewer.viewport.canvas.setPointerCapture(pointerId)
+    this.capturedId = pointerId
+  }
+
+  releasePointer () {
+    if (this.capturedId === undefined) return
+    this.viewer.viewport.canvas.releasePointerCapture(this.capturedId)
+    this.capturedId = undefined
+  }
+
   unregister () {
     this.ctrlDown = false
     this.mouseDown = false
-    this.viewer.viewport.canvas.releasePointerCapture(this.lastMouse.pointerId)
+    this.releasePointer()
     this.viewer.inputs.registerAll()
     this.unregisters.forEach((unreg) => unreg())
     this.unregisters.length = 0
@@ -109,7 +122,7 @@ export class BoxInputs {
   }
 
   onMouseUp (event: PointerEvent) {
-    this.viewer.viewport.canvas.releasePointerCapture(event.pointerId)
+    this.releasePointer()
     if (this.mouseDown) {
       this.mouseDown = false
       this.viewer.inputs.registerAll()
@@ -130,7 +143,8 @@ export class BoxInputs {
     )
     const hit = hits?.[0]
     if (!hit?.face?.normal) return
-    this.viewer.viewport.canvas.setPointerCapture(event.pointerId)
+
+    this.capturePointer(event.pointerId)
 
     this.lastBox.copy(this.sharedBox)
     this.faceNormal = hit.face.normal

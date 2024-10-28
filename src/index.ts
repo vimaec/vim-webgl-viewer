@@ -1,9 +1,12 @@
 // Links files to generate package type exports
 import './style.css'
+import { BFastSource } from 'vim-format'
 export * as THREE from 'three'
 
+export type VimSource = BFastSource
 export { IProgressLogs } from 'vim-format'
 export * from './vim-loader/progressive/open'
+export * from './vim-loader/progressive/vimRequest'
 export * from './vim-loader/progressive/vimx'
 export * from './vim-webgl-viewer/viewer'
 export * from './vim-loader/geometry'
