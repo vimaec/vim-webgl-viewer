@@ -22,8 +22,9 @@ export class BoxInputs {
   raycaster: THREE.Raycaster = new THREE.Raycaster()
   lastBox: THREE.Box3 = new THREE.Box3()
   unregisters: (() => void)[] = []
-  lastMouse : MouseEvent
+  lastMouse : PointerEvent
   ctrlDown: boolean = false
+  capturedId : number | undefined
 
   // Called when mouse enters or leave a face
   onFaceEnter: ((normal: THREE.Vector3) => void) | undefined
@@ -59,21 +60,35 @@ export class BoxInputs {
     this.reg(canvas, 'pointerup', this.onMouseUp.bind(this))
   }
 
+  capturePointer (pointerId: number) {
+    this.releasePointer()
+    this.viewer.viewport.canvas.setPointerCapture(pointerId)
+    this.capturedId = pointerId
+  }
+
+  releasePointer () {
+    if (this.capturedId === undefined) return
+    this.viewer.viewport.canvas.releasePointerCapture(this.capturedId)
+    this.capturedId = undefined
+  }
+
   unregister () {
+    this.ctrlDown = false
+    this.mouseDown = false
+    this.releasePointer()
+    this.viewer.inputs.registerAll()
     this.unregisters.forEach((unreg) => unreg())
     this.unregisters.length = 0
   }
 
   onKey (event: KeyboardEvent) {
-    console.log('onKey')
     if (this.ctrlDown !== event.ctrlKey) {
-      console.log('Key Change!')
       this.ctrlDown = event.ctrlKey
       this.onMouseMove(this.lastMouse)
     }
   }
 
-  onMouseMove (event: any) {
+  onMouseMove (event: PointerEvent) {
     this.lastMouse = event
     if (this.mouseDown) {
       this.onDrag(event)
@@ -106,9 +121,9 @@ export class BoxInputs {
     this.onFaceEnter?.(this.faceNormal)
   }
 
-  onMouseUp (event: any) {
+  onMouseUp (event: PointerEvent) {
+    this.releasePointer()
     if (this.mouseDown) {
-      // this.faceNormal = new THREE.Vector3()
       this.mouseDown = false
       this.viewer.inputs.registerAll()
       if (event.pointerType === 'mouse') {
@@ -121,13 +136,15 @@ export class BoxInputs {
     }
   }
 
-  onMouseDown (event: MouseEvent) {
+  onMouseDown (event: PointerEvent) {
     const hits = this.raycast(
       new THREE.Vector2(event.offsetX, event.offsetY),
       this.ctrlDown
     )
     const hit = hits?.[0]
     if (!hit?.face?.normal) return
+
+    this.capturePointer(event.pointerId)
 
     this.lastBox.copy(this.sharedBox)
     this.faceNormal = hit.face.normal

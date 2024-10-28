@@ -132,6 +132,7 @@ export class SectionBox {
     if (this._interactive && !value) this._inputs.unregister()
     this._interactive = value
     this._highlight.visible = false
+    this.renderer.needsUpdate = true
     this._onStateChanged.dispatch()
   }
 
@@ -149,8 +150,8 @@ export class SectionBox {
     this._outline.visible = value
     this._highlight.visible = value
     if (value) this.update()
-    this._onStateChanged.dispatch()
     this.renderer.needsUpdate = true
+    this._onStateChanged.dispatch()
   }
 
   /**
